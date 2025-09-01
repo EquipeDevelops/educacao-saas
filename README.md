@@ -94,7 +94,7 @@ Após configurar o `.env`, você precisa garantir que o seu Prisma Client esteja
 npx prisma generate
 ```
 
-### 6. Populando o Banco com Dados Iniciais (Seeding)
+### 6. Populando o Banco com Dados Iniciais (Seeding, A FAZER, WORKING IN PROGRESS)
 
 Para ter dados iniciais de teste (como usuários admin ou configurações padrão), rode o comando de "seeding":
 
