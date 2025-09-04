@@ -11,11 +11,13 @@ datasource db {
 }
 
 enum PapelUsuario {
-  ADMIN
-  ALUNO
+  ADMINISTRADOR_SISTEMA
+  ADMINISTRADOR_INSTITUICAO
   PROFESSOR
+  ALUNO
+  RESPONSAVEL
+  VISITANTE
 }
-
 model Instituicao {
   id                 String               @id @default(auto()) @map("_id") @db.ObjectId
   nome               String
