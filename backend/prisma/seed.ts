@@ -6,7 +6,7 @@ const prisma = new PrismaClient();
 async function main() {
   console.log("🔥 Iniciando o script de seeding completo...");
 
-  console.log("🗑️ Limpando dados antigos...");
+  console.log("🗑️  Limpando dados antigos...");
   await prisma.respostas_Submissao.deleteMany({});
   await prisma.opcoes_Multipla_Escolha.deleteMany({});
   await prisma.submissoes.deleteMany({});
@@ -24,13 +24,16 @@ async function main() {
   await prisma.instituicao.deleteMany({});
   console.log("🧹 Dados antigos limpos.");
 
+  console.log("🏗️  Criando dados base...");
+
   const instituicao = await prisma.instituicao.create({
     data: {
       nome: "Instituição Educacional Padrão",
       cidade: "Maceió",
+      metadados: { fundacao: 2025 },
     },
   });
-  console.log(`[OK] Coleção "instituicoes" criada.`);
+  console.log(`[OK] Instituição criada: ${instituicao.nome}`);
 
   const unidadeEscolar = await prisma.unidades_Escolares.create({
     data: {
@@ -39,20 +42,41 @@ async function main() {
       instituicaoId: instituicao.id,
     },
   });
-  console.log(`[OK] Coleção "unidades_escolares" criada.`);
+  console.log(`[OK] Unidade Escolar criada: ${unidadeEscolar.nome}`);
 
-  const conquista = await prisma.conquistas.create({
-    data: {
-      instituicaoId: instituicao.id,
-      codigo: "PRIMEIROS_PASSOS",
-      titulo: "Primeiros Passos",
-      descricao: "Completou a primeira tarefa.",
-    },
+  console.log("🏆 Criando Conquistas e Usuários...");
+
+  await prisma.conquistas.createMany({
+    data: [
+      {
+        instituicaoId: instituicao.id,
+        codigo: "PRIMEIRA_TAREFA",
+        titulo: "Primeiros Passos",
+        descricao: "Completou a primeira tarefa com sucesso.",
+      },
+      {
+        instituicaoId: instituicao.id,
+        codigo: "FORUM_PRO",
+        titulo: "Membro Ativo",
+        descricao: "Participou de um tópico no fórum.",
+      },
+    ],
   });
-  console.log(`[OK] Coleção "conquistas" criada.`);
+  console.log(`[OK] Catálogo de Conquistas criado.`);
 
   const senhaHash = await bcrypt.hash("senha123", 10);
-  const professor = await prisma.usuarios.create({
+
+  const admin = await prisma.usuarios.create({
+    data: {
+      nome: "Admin do Sistema",
+      email: "admin@sistema.com",
+      senha_hash: senhaHash,
+      papel: PapelUsuario.ADMINISTRADOR,
+      instituicaoId: instituicao.id,
+    },
+  });
+
+  const profAda = await prisma.usuarios.create({
     data: {
       nome: "Prof. Ada Lovelace",
       email: "ada.lovelace@escola.com",
@@ -62,7 +86,8 @@ async function main() {
       unidadeEscolarId: unidadeEscolar.id,
     },
   });
-  const aluno = await prisma.usuarios.create({
+
+  const alunoAlan = await prisma.usuarios.create({
     data: {
       nome: "Aluno Alan Turing",
       email: "alan.turing@escola.com",
@@ -72,133 +97,177 @@ async function main() {
       unidadeEscolarId: unidadeEscolar.id,
     },
   });
-  console.log(`[OK] Coleção "usuarios" criada.`);
 
-  await prisma.conquistas_Usuarios.create({
+  const alunaGrace = await prisma.usuarios.create({
     data: {
-      conquistaId: conquista.id,
-      usuarioId: aluno.id,
+      nome: "Aluna Grace Hopper",
+      email: "grace.hopper@escola.com",
+      senha_hash: senhaHash,
+      papel: PapelUsuario.ALUNO,
+      instituicaoId: instituicao.id,
+      unidadeEscolarId: unidadeEscolar.id,
     },
   });
-  console.log(`[OK] Coleção "conquistas_usuarios" criada.`);
+  console.log(
+    `[OK] Usuários criados: ${admin.nome}, ${profAda.nome}, ${alunoAlan.nome}, ${alunaGrace.nome}`
+  );
 
-  const turma = await prisma.turmas.create({
+  console.log("📚 Criando Turmas e Matrículas...");
+
+  const turmaLogica = await prisma.turmas.create({
     data: {
       nome: "Turma 101 - Lógica de Programação",
       serie: "1º Ano",
       instituicaoId: instituicao.id,
       unidadeEscolarId: unidadeEscolar.id,
-      professorId: professor.id,
+      professorId: profAda.id,
     },
   });
-  console.log(`[OK] Coleção "turmas" criada.`);
+  console.log(`[OK] Turma criada: ${turmaLogica.nome}`);
 
-  await prisma.matriculas.create({
-    data: {
-      alunoId: aluno.id,
-      turmaId: turma.id,
-    },
+  await prisma.matriculas.createMany({
+    data: [
+      { alunoId: alunoAlan.id, turmaId: turmaLogica.id },
+      { alunoId: alunaGrace.id, turmaId: turmaLogica.id },
+    ],
   });
-  console.log(`[OK] Coleção "matriculas" criada.`);
+  console.log(`[OK] Matrículas realizadas para a turma ${turmaLogica.nome}.`);
+
+  console.log("💬 Criando interações (Fórum, Arquivos)...");
 
   const topicoForum = await prisma.topico_Forum.create({
     data: {
       titulo: "Dúvida sobre a primeira aula",
       corpo: "Não entendi o conceito de variáveis, alguém pode ajudar?",
       instituicaoId: instituicao.id,
-      usuarioId: aluno.id,
+      usuarioId: alunoAlan.id,
     },
   });
-  console.log(`[OK] Coleção "topicos_forum" criada.`);
 
   await prisma.mensagens_Forum.create({
     data: {
       corpo:
-        "Claro, Alan! Pense em uma variável como uma caixa onde você pode guardar um valor.",
+        "Claro, Alan! Pense em uma variável como uma caixa onde você pode guardar um valor para usar depois.",
       instituicaoId: instituicao.id,
       topicoId: topicoForum.id,
-      usuarioId: professor.id,
+      usuarioId: profAda.id,
     },
   });
-  console.log(`[OK] Coleção "mensagens_forum" criada.`);
+  console.log(`[OK] Tópico do Fórum criado: "${topicoForum.titulo}"`);
 
   await prisma.arquivos.create({
     data: {
-      chave: "documento/apostila-aula-1.pdf",
-      nome: "Apostila da Aula 1",
+      chave: "documentos/apostila-aula-1.pdf",
+      nome: "Apostila da Aula 1 - Lógica.pdf",
       tipo_conteudo: "application/pdf",
-      tamanho: 1024,
+      tamanho: 1024 * 500,
       instituicaoId: instituicao.id,
-      usuarioId: professor.id,
+      usuarioId: profAda.id,
     },
   });
-  console.log(`[OK] Coleção "arquivos" criada.`);
+  console.log(`[OK] Arquivo de exemplo criado.`);
+
+  console.log("📝 Criando conteúdo acadêmico...");
 
   const tarefa = await prisma.tarefas.create({
     data: {
       titulo: "Introdução a Algoritmos",
-      descricao: "Resolver os problemas da lista 1.",
+      descricao:
+        "Resolver os problemas da lista 1 sobre variáveis e condicionais.",
       pontos: 100,
       publicado: true,
       instituicaoId: instituicao.id,
-      turmaId: turma.id,
-      professorId: professor.id,
+      turmaId: turmaLogica.id,
+      professorId: profAda.id,
     },
   });
-  console.log(`[OK] Coleção "tarefas" criada.`);
+  console.log(`[OK] Tarefa criada: "${tarefa.titulo}"`);
 
-  const questao = await prisma.questoes.create({
+  const questao1 = await prisma.questoes.create({
     data: {
       sequencia: 1,
       tipo: "MULTIPLA_ESCOLHA",
-      titulo: "Primeira Questão",
-      enunciado: "Qual o valor de 2+2?",
-      pontos: 20,
+      titulo: "Questão 1 - Soma",
+      enunciado: "Qual o resultado da operação 5 + 3?",
+      pontos: 50,
       payload: { dificuldade: "fácil" },
       tarefaId: tarefa.id,
       instituicaoId: instituicao.id,
     },
   });
-  console.log(`[OK] Coleção "questoes" criada.`);
 
-  await prisma.opcoes_Multipla_Escolha.create({
+  const questao2 = await prisma.questoes.create({
     data: {
-      texto: "4",
-      correta: true,
-      sequencia: 1,
-      questaoId: questao.id,
-    },
-  });
-  await prisma.opcoes_Multipla_Escolha.create({
-    data: {
-      texto: "5",
-      correta: false,
       sequencia: 2,
-      questaoId: questao.id,
+      tipo: "DISSERTATIVA",
+      titulo: "Questão 2 - Explicação",
+      enunciado:
+        "Com suas palavras, explique o que é uma estrutura condicional 'if/else'.",
+      pontos: 50,
+      payload: { min_caracteres: 50 },
+      tarefaId: tarefa.id,
+      instituicaoId: instituicao.id,
     },
   });
-  console.log(`[OK] Coleção "opcoes_multipla_escolha" criada.`);
+  console.log(`[OK] Questões criadas para a tarefa.`);
 
-  const submissao = await prisma.submissoes.create({
+  await prisma.opcoes_Multipla_Escolha.createMany({
+    data: [
+      { texto: "7", correta: false, sequencia: 1, questaoId: questao1.id },
+      { texto: "8", correta: true, sequencia: 2, questaoId: questao1.id },
+      { texto: "9", correta: false, sequencia: 3, questaoId: questao1.id },
+    ],
+  });
+  console.log(`[OK] Opções de múltipla escolha criadas.`);
+
+  console.log("📤 Criando Submissões e premiando usuários...");
+
+  const submissaoAlan = await prisma.submissoes.create({
     data: {
       status: "ENTREGUE",
       nota_total: 0,
       instituicaoId: instituicao.id,
       tarefaId: tarefa.id,
-      alunoId: aluno.id,
+      alunoId: alunoAlan.id,
     },
   });
-  console.log(`[OK] Coleção "submissoes" criada.`);
 
-  await prisma.respostas_Submissao.create({
-    data: {
-      resposta_texto: "A resposta é 4",
-      nota: 0,
-      questaoId: questao.id,
-      submissaoId: submissao.id,
-    },
+  await prisma.respostas_Submissao.createMany({
+    data: [
+      {
+        resposta_texto: "8",
+        nota: 0,
+        questaoId: questao1.id,
+        submissaoId: submissaoAlan.id,
+      },
+      {
+        resposta_texto:
+          "Uma estrutura if/else permite que o programa tome decisões e execute blocos de código diferentes baseado em uma condição ser verdadeira ou falsa.",
+        nota: 0,
+        questaoId: questao2.id,
+        submissaoId: submissaoAlan.id,
+      },
+    ],
   });
-  console.log(`[OK] Coleção "respostas_submissao" criada.`);
+  console.log(
+    `[OK] Submissão e respostas criadas para o aluno ${alunoAlan.nome}.`
+  );
+
+  const primeiraTarefaConquista = await prisma.conquistas.findUnique({
+    where: { codigo: "PRIMEIRA_TAREFA" },
+  });
+  if (primeiraTarefaConquista) {
+    await prisma.conquistas_Usuarios.create({
+      data: {
+        conquistaId: primeiraTarefaConquista.id,
+        usuarioId: alunoAlan.id,
+        metadados: { tarefaId: tarefa.id },
+      },
+    });
+    console.log(
+      `[OK] Conquista "Primeiros Passos" concedida a ${alunoAlan.nome}.`
+    );
+  }
 
   console.log("✅ Seeding completo finalizado com sucesso!");
 }
