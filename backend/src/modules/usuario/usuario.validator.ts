@@ -10,9 +10,11 @@ export const createUsuarioSchema = z.object({
     senha: z
       .string({ required_error: "A senha é obrigatória." })
       .min(8, "A senha deve ter no mínimo 8 caracteres."),
+
     papel: z.nativeEnum(PapelUsuario, {
       required_error: "O papel do usuário é obrigatório.",
     }),
+
     data_nascimento: z.coerce.date().optional(),
     cpf: z.string().optional(),
     email_responsavel: z
