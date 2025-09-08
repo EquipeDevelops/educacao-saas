@@ -7,12 +7,48 @@ import {
   paramsSchema,
 } from "./usuario.validator";
 
+import { authenticate } from "../../middlewares/authenticate";
+import { checkRole } from "../../middlewares/checkRole";
+
 const router = Router();
 
-router.post("/", validate(createUsuarioSchema), usuarioController.create);
-router.get("/", usuarioController.findAll);
-router.get("/:id", validate(paramsSchema), usuarioController.findById);
-router.put("/:id", validate(updateUsuarioSchema), usuarioController.update);
-router.delete("/:id", validate(paramsSchema), usuarioController.delete);
+router.post(
+  "/",
+  authenticate,
+  checkRole(["ADMINISTRADOR"]),
+  validate(createUsuarioSchema),
+  usuarioController.create
+);
+
+router.get(
+  "/",
+  authenticate,
+  checkRole(["ADMINISTRADOR"]),
+  usuarioController.findAll
+);
+
+router.get(
+  "/:id",
+  authenticate,
+  checkRole(["ADMINISTRADOR", "PROFESSOR"]),
+  validate(paramsSchema),
+  usuarioController.findById
+);
+
+router.put(
+  "/:id",
+  authenticate,
+  checkRole(["ADMINISTRADOR"]),
+  validate(updateUsuarioSchema),
+  usuarioController.update
+);
+
+router.delete(
+  "/:id",
+  authenticate,
+  checkRole(["ADMINISTRADOR"]),
+  validate(paramsSchema),
+  usuarioController.delete
+);
 
 export const usuarioRoutes = router;
