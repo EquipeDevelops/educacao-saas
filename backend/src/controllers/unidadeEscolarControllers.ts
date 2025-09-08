@@ -1,9 +1,8 @@
 import { Request, Response } from 'express';
-import { z } from 'zod';
-import { PrismaClient } from '@prisma/client';
-import { UnidadesEscolaresSchema } from '../validators/unidadesEscolares.validator';
+import { z } from 'zod'; 
+import prisma from '../utils/prisma'; 
+import { UnidadesEscolaresSchema } from '../validators/unidadesEscolares';
 
-const prisma = new PrismaClient();
 
 export const UnidadesEscolaresController = {
   async create(req: Request, res: Response) {
@@ -13,7 +12,7 @@ export const UnidadesEscolaresController = {
       return res.status(201).json(unidadeEscolar);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ errors: error.errors });
+        return res.status(400).json({ errors: error });
       }
       return res.status(500).json({ error: 'Erro ao criar unidade escolar.' });
     }
@@ -53,7 +52,7 @@ export const UnidadesEscolaresController = {
       return res.status(200).json(unidade);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ errors: error.errors });
+        return res.status(400).json({ errors: error });
       }
       return res.status(500).json({ error: 'Erro ao atualizar unidade escolar.' });
     }

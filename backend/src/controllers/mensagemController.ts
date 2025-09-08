@@ -1,9 +1,7 @@
 import { Request, Response } from 'express';
-import { z } from 'zod';
-import { PrismaClient } from '@prisma/client';
-import { MensagensForumSchema } from '../validators';
-
-const prisma = new PrismaClient();
+import { z } from 'zod'; 
+import prisma from '../utils/prisma'; 
+import { MensagensForumSchema } from '../validators/mensagemForumValidator';
 
 export const MensagensForumController = {
   async create(req: Request, res: Response) {
@@ -13,7 +11,7 @@ export const MensagensForumController = {
       return res.status(201).json(mensagem);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ errors: error.errors });
+        return res.status(400).json({ errors: error });
       }
       return res.status(500).json({ error: 'Erro ao criar mensagem de fórum.' });
     }
@@ -53,7 +51,7 @@ export const MensagensForumController = {
       return res.status(200).json(mensagem);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ errors: error.errors });
+        return res.status(400).json({ errors: error });
       }
       return res.status(500).json({ error: 'Erro ao atualizar mensagem de fórum.' });
     }

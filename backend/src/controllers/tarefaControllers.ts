@@ -1,9 +1,8 @@
 import { Request, Response } from 'express';
-import { z } from 'zod';
-import { PrismaClient } from '@prisma/client';
-import { TarefaSchema } from '../validators/instituicao.validator';
+import { z } from 'zod'; 
+import prisma from '../utils/prisma'; 
+import { TarefaSchema } from '../validators/tarefaValidator';
 
-const prisma = new PrismaClient();
 
 export const TarefaController = {
   async create(req: Request, res: Response) {
@@ -13,7 +12,7 @@ export const TarefaController = {
       return res.status(201).json(tarefa);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ errors: error.errors });
+        return res.status(400).json({ errors: error });
       }
       return res.status(500).json({ error: 'Erro ao criar tarefa.' });
     }
@@ -53,7 +52,7 @@ export const TarefaController = {
       return res.status(200).json(tarefa);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ errors: error.errors });
+        return res.status(400).json({ errors: error });
       }
       return res.status(500).json({ error: 'Erro ao atualizar tarefa.' });
     }
