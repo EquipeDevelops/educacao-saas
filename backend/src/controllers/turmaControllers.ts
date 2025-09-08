@@ -1,8 +1,7 @@
 import { Request, Response } from 'express';
-import { z } from 'zod';
-import { PrismaClient } from '@prisma/client';
-import { TurmaSchema } from '../validators/instituicao.validator';
-const prisma = new PrismaClient();
+import { z, ZodError } from 'zod'; 
+import prisma from '../utils/prisma'; 
+import { TurmaSchema } from '../validators/turmaValidator';
 
 export const TurmaController = {
   async create(req: Request, res: Response) {
@@ -11,8 +10,8 @@ export const TurmaController = {
       const turma = await prisma.turma.create({ data });
       return res.status(201).json(turma);
     } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ errors: error.errors });
+      if (error instanceof ZodError) {
+        return res.status(400).json({ errors: error});
       }
       return res.status(500).json({ error: 'Erro ao criar turma.' });
     }
@@ -51,8 +50,8 @@ export const TurmaController = {
       });
       return res.status(200).json(turma);
     } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ errors: error.errors });
+      if (error instanceof ZodError) { 
+        return res.status(400).json({ errors: error });
       }
       return res.status(500).json({ error: 'Erro ao atualizar turma.' });
     }

@@ -1,19 +1,18 @@
 import { Request, Response } from 'express';
-import { z } from 'zod';
-import { PrismaClient } from '@prisma/client';
-import { ArquivosSchema } from '../validators';
+import { z} from 'zod'; 
+import prisma from '../utils/prisma'; 
+import { ArquivoSchema } from '../validators/arquivoValidator';
 
-const prisma = new PrismaClient();
 
 export const ArquivosController = {
   async create(req: Request, res: Response) {
     try {
-      const data = ArquivosSchema.parse(req.body);
+      const data = ArquivoSchema.parse(req.body);
       const arquivo = await prisma.arquivos.create({ data });
       return res.status(201).json(arquivo);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ errors: error.errors });
+        return res.status(400).json({ errors: error });
       }
       return res.status(500).json({ error: 'Erro ao criar arquivo.' });
     }
@@ -45,7 +44,7 @@ export const ArquivosController = {
   async update(req: Request, res: Response) {
     try {
       const { id } = req.params;
-      const data = ArquivosSchema.parse(req.body);
+      const data = ArquivoSchema.parse(req.body);
       const arquivo = await prisma.arquivos.update({
         where: { id },
         data,
@@ -53,7 +52,7 @@ export const ArquivosController = {
       return res.status(200).json(arquivo);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ errors: error.errors });
+        return res.status(400).json({ errors: error });
       }
       return res.status(500).json({ error: 'Erro ao atualizar arquivo.' });
     }

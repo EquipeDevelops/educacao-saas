@@ -1,9 +1,7 @@
 import { Request, Response } from 'express';
-import { z } from 'zod';
-import { PrismaClient } from '@prisma/client';
-import { OpcoesMultiplaEscolhaSchema } from '../validators';
-
-const prisma = new PrismaClient();
+import { z, ZodError } from 'zod'; 
+import prisma from '../utils/prisma'; 
+import { OpcoesMultiplaEscolhaSchema } from '../validators/opcaoesEscolhasValidators';
 
 export const OpcoesMultiplaEscolhaController = {
   async create(req: Request, res: Response) {
@@ -13,7 +11,7 @@ export const OpcoesMultiplaEscolhaController = {
       return res.status(201).json(opcao);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ errors: error.errors });
+        return res.status(400).json({ errors: error });
       }
       return res.status(500).json({ error: 'Erro ao criar opção de múltipla escolha.' });
     }
@@ -53,7 +51,7 @@ export const OpcoesMultiplaEscolhaController = {
       return res.status(200).json(opcao);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ errors: error.errors });
+        return res.status(400).json({ errors: error });
       }
       return res.status(500).json({ error: 'Erro ao atualizar opção de múltipla escolha.' });
     }

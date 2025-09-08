@@ -1,9 +1,8 @@
 import { Request, Response } from 'express';
-import { z } from 'zod';
-import { PrismaClient } from '@prisma/client';
-import { SubmissaoSchema } from '../validators/instituicao.validator';
+import { z} from 'zod'; 
+import prisma from '../utils/prisma'; 
+import { SubmissaoSchema } from '../validators/submissaoValidators';
 
-const prisma = new PrismaClient();
 
 export const SubmissaoController = {
   async create(req: Request, res: Response) {
@@ -13,7 +12,7 @@ export const SubmissaoController = {
       return res.status(201).json(submissao);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ errors: error.errors });
+        return res.status(400).json({ errors: error});
       }
       return res.status(500).json({ error: 'Erro ao criar submissão.' });
     }
@@ -53,7 +52,7 @@ export const SubmissaoController = {
       return res.status(200).json(submissao);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ errors: error.errors });
+        return res.status(400).json({ errors: error });
       }
       return res.status(500).json({ error: 'Erro ao atualizar submissão.' });
     }

@@ -1,9 +1,7 @@
 import { Request, Response } from 'express';
-import { z } from 'zod';
-import { PrismaClient } from '@prisma/client';
+import { z} from 'zod'; 
+import prisma from '../utils/prisma'; 
 import { QuestoesSchema } from '../validators/questoesValidators';
-
-const prisma = new PrismaClient();
 
 export const QuestoesController = {
   async create(req: Request, res: Response) {
@@ -13,7 +11,7 @@ export const QuestoesController = {
       return res.status(201).json(questao);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ errors: error.errors });
+        return res.status(400).json({ errors: error });
       }
       return res.status(500).json({ error: 'Erro ao criar questão.' });
     }
@@ -53,7 +51,7 @@ export const QuestoesController = {
       return res.status(200).json(questao);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ errors: error.errors });
+        return res.status(400).json({ errors: error });
       }
       return res.status(500).json({ error: 'Erro ao atualizar questão.' });
     }

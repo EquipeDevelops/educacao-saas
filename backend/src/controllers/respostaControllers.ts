@@ -1,8 +1,7 @@
 import { Request, Response } from 'express';
-import { z } from 'zod';
-import { PrismaClient } from '@prisma/client';
-import { RespostasSubmissaoSchema } from '../validators/instituicao.validator';
-const prisma = new PrismaClient();
+import { z} from 'zod'; 
+import prisma from '../utils/prisma'; 
+import { RespostasSubmissaoSchema } from '../validators/respostaSubmissaoValidator';
 
 export const RespostasSubmissaoController = {
   async create(req: Request, res: Response) {
@@ -12,7 +11,7 @@ export const RespostasSubmissaoController = {
       return res.status(201).json(resposta);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ errors: error.errors });
+        return res.status(400).json({ errors: error });
       }
       return res.status(500).json({ error: 'Erro ao criar resposta de submissão.' });
     }
@@ -52,7 +51,7 @@ export const RespostasSubmissaoController = {
       return res.status(200).json(resposta);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ errors: error.errors });
+        return res.status(400).json({ errors: error});
       }
       return res.status(500).json({ error: 'Erro ao atualizar resposta de submissão.' });
     }
