@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -10,318 +7,409 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+
 enum PapelUsuario {
-  ADMIN
-  ALUNO
+  ADMINISTRADOR
   PROFESSOR
+  ALUNO
 }
 
-model Instituicao {
-  id                 String               @id @default(auto()) @map("_id") @db.ObjectId
-  nome               String
-  cidade             String
-  metadados          Json?
-  criado_em          DateTime             @default(now())
-  atualizado_em      DateTime             @updatedAt
+model Instituicoes {
+  id               String      @id @default(auto()) @map("_id") @db.ObjectId
+  nome             String
+  cidade           String
+  administrador_id String
+  criado_em        DateTime    @default(now()) @map("criado_em")
+  atualizado_em    DateTime    @updatedAt @map("atualizado_em")
+  ativo            Boolean     @default(true)
   
-  unidades_escolares Unidades_Escolares[]
-  conquistas         Conquistas[]
-  usuarios           Usuarios[]
-  turmas             Turmas[]
-  topicos_forum      Topico_Forum[]
-  arquivos           Arquivos[]
-  tarefas            Tarefas[]
-  mensagens_forum    Mensagens_Forum[]
-  questoes           Questoes[]
-  submissoes         Submissoes[]
+  
+  escolas          Escolas[]
+  turmas           Turmas[]
+  usuarios         Usuarios[]
+  materias         Materias[]
+  
 
   @@map("instituicoes")
+  TurmaMateria TurmaMateria[]
+  Tarefas Tarefas[]
+  Conquistas Conquistas[]
+  ForumTopico ForumTopico[]
 }
 
-model Unidades_Escolares {
-  id                 String       @id @default(auto()) @map("_id") @db.ObjectId
+model Escolas {
+  id               String      @id @default(auto()) @map("_id") @db.ObjectId
+  instituicao_id   String      @map("instituicao_id")
+  nome             String
+  endereco         String
+  criado_em        DateTime    @default(now()) @map("criado_em")
+  atualizado_em    DateTime    @updatedAt @map("atualizado_em")
   
-  instituicao        Instituicao  @relation(fields: [instituicaoId], references: [id])
-  instituicaoId      String       @db.ObjectId
   
-  nome               String
-  endereco           String?
-  criado_em          DateTime     @default(now())
-  atualizado_em      DateTime     @updatedAt
+  instituicoes     Instituicoes @relation(fields: [instituicao_id], references: [id])
+  turmas           Turmas[]
   
-  usuarios           Usuarios[]
-  turmas             Turmas[]
-
-  @@map("unidades_escolares")
-  @@index([instituicaoId])
-}
-
-model Conquistas {
-  id                  String               @id @default(auto()) @map("_id") @db.ObjectId
-  instituicao         Instituicao          @relation(fields: [instituicaoId], references: [id])
-  instituicaoId       String               @db.ObjectId
-  codigo              String               @unique
-  titulo              String
-  descricao           String?
-  criterios           Json?
-  criado_em           DateTime             @default(now())
-  atualizado_em       DateTime             @updatedAt
-
-  conquistas_usuarios Conquistas_Usuarios[]
-
-  @@map("conquistas")
-  @@index([instituicaoId])
-}
-
-model Usuarios {
-  id                  String               @id @default(auto()) @map("_id") @db.ObjectId
-  nome                String
-  email               String               @unique
-  senha_hash          String?
-  papel               PapelUsuario
-  data_nascimento     DateTime?            @db.Date
-  cpf_criptografado   Bytes?               @unique
-  email_responsavel   String?
-  metadados           Json?
-  desabilitado        Boolean              @default(false)
-  criado_em           DateTime             @default(now())
-  atualizado_em       DateTime             @updatedAt
   
-  instituicao         Instituicao?         @relation(fields: [instituicaoId], references: [id])
-  instituicaoId       String?              @db.ObjectId
-  
-  unidade_escolar     Unidades_Escolares?  @relation(fields: [unidadeEscolarId], references: [id])
-  unidadeEscolarId    String?              @db.ObjectId
-  
-  turmas_como_professor Turmas[]           @relation(name: "ProfessorTurmas")
-
-  conquistas_usuarios Conquistas_Usuarios[]
-  topicos_forum       Topico_Forum[]
-  arquivos            Arquivos[]
-  matriculas          Matriculas[] 
-  mensagens_forum     Mensagens_Forum[]
-  submissoes          Submissoes[]
-  tarefas             Tarefas[]
-
-  @@map("usuarios")
-  @@index([instituicaoId])
-  @@index([unidadeEscolarId])
+  @@map("escolas")
 }
 
 model Turmas {
-  id                  String               @id @default(auto()) @map("_id") @db.ObjectId
-  nome                String
-  serie               String
-  criado_em           DateTime             @default(now())
-  atualizado_em       DateTime             @updatedAt
+  id               String      @id @default(auto()) @map("_id") @db.ObjectId
+  instituicao_id   String      @map("instituicao_id")
+  escola_id        String      @map("escola_id")
+  nome             String
+  serie            String
+  ano              Int
+  professor_titular_id String @map("professor_titular_id")
+  criado_em        DateTime    @default(now()) @map("criado_em")
+  atualizado_em    DateTime    @updatedAt @map("atualizado_em")
 
-  instituicao         Instituicao          @relation(fields: [instituicaoId], references: [id])
-  instituicaoId       String               @db.ObjectId
   
-  unidade_escolar     Unidades_Escolares?  @relation(fields: [unidadeEscolarId], references: [id])
-  unidadeEscolarId    String?              @db.ObjectId
-
-  professor           Usuarios?            @relation(name: "ProfessorTurmas", fields: [professorId], references: [id])
-  professorId         String?              @db.ObjectId
-
-  matriculas          Matriculas[] 
-  tarefas             Tarefas[]
-
+  instituicoes     Instituicoes @relation(fields: [instituicao_id], references: [id])
+  escolas          Escolas     @relation(fields: [escola_id], references: [id])
+  
   @@map("turmas")
-  @@index([instituicaoId])
-  @@index([professorId])
+  Tarefas Tarefas[]
+  Matriculas Matriculas[]
+  Presenca Presenca[]
+  ForumTopico ForumTopico[]
 }
 
-model Conquistas_Usuarios {
-  id                  String               @id @default(auto()) @map("_id") @db.ObjectId
-  concedido_em        DateTime             @default(now())
-  metadados           Json?
-  
-  conquista           Conquistas           @relation(fields: [conquistaId], references: [id])
-  conquistaId         String               @db.ObjectId
-  
-  usuario             Usuarios             @relation(fields: [usuarioId], references: [id])
-  usuarioId           String               @db.ObjectId
+model Usuarios {
+  id               String      @id @default(auto()) @map("_id") @db.ObjectId
+  instituicao_id   String      @map("instituicao_id")
+  nome             String
+  email            String      @unique
+  senha            String
+  papel            PapelUsuario
+  data_nascimento  DateTime   @map("data_nascimento")
+  cpf              String
+  email_responsavel String    @map("email_responsavel")
+  avatar_url       String     @map("avatar_url")
+  ativo            Boolean     @default(true)
+  criado_em        DateTime    @default(now()) @map("criado_em")
+  atualizado_em    DateTime    @updatedAt @map("atualizado_em")
 
-  @@map("conquistas_usuarios")
-  @@index([conquistaId])
-  @@index([usuarioId])
+  
+  instituicoes     Instituicoes @relation(fields: [instituicao_id], references: [id])
+  
+  @@map("usuarios")
+  TurmaMateria TurmaMateria[]
+  Tarefas Tarefas[]
+  Matriculas Matriculas[]
+  Entregas Entregas[]
+  ConquistaDoUsuario ConquistaDoUsuario[]
+  XpEvent XpEvent[]
+  presencasComoAluno Presenca[] @relation("PresencaAluno")
+  presencasRegistradas Presenca[] @relation("PresencaRegistrador")
+  LogDeAuditoria LogDeAuditoria[]
+  ForumPost ForumPost[]
+  ForumTopico ForumTopico[]
+  Notificacao Notificacao[]
 }
 
-model Topico_Forum {
-  id                  String               @id @default(auto()) @map("_id") @db.ObjectId
-  titulo              String
-  corpo               String?
-  criado_em           DateTime             @default(now())
-  atualizado_em       DateTime             @updatedAt
+model Materias {
+  id               String      @id @default(auto()) @map("_id") @db.ObjectId
+  instituicao_id   String      @map("instituicao_id")
+  nome             String
+  codigo           Int
+  criado_em        DateTime    @default(now()) @map("criado_em")
+  atualizado_em    DateTime    @updatedAt @map("atualizado_em") 
   
-  instituicao         Instituicao          @relation(fields: [instituicaoId], references: [id])
-  instituicaoId       String               @db.ObjectId
   
-  criado_por          Usuarios             @relation(fields: [usuarioId], references: [id])
-  usuarioId           String               @db.ObjectId
-  mensagens           Mensagens_Forum[]
+  instituicoes     Instituicoes @relation(fields: [instituicao_id], references: [id])
 
-  @@map("topicos_forum")
-  @@index([instituicaoId])
-  @@index([usuarioId])
+
+  @@map("materias")
+  TurmaMateria TurmaMateria[]
 }
 
-model Arquivos {
-  id                  String               @id @default(auto()) @map("_id") @db.ObjectId
-  chave               String               @unique
-  nome                String
-  tipo_conteudo       String
-  tamanho             Int
-  metadados           Json?
-  criado_em           DateTime             @default(now())
 
-  instituicao         Instituicao          @relation(fields: [instituicaoId], references: [id])
-  instituicaoId       String               @db.ObjectId
+model TurmaMateria{
+  id               String      @id @default(auto()) @map("_id") @db.ObjectId
+  instituicao_id   String      @map("instituicao_id")
+  materia_id       String      @map("materia_id")
+  professor_id     String      @map("professor_id")
+
+  turno            String
+
+  instituicoes     Instituicoes @relation(fields: [instituicao_id], references: [id])
+  materias         Materias     @relation(fields: [materia_id], references: [id])
+  professores      Usuarios  @relation(fields: [professor_id], references: [id])
   
-  usuario             Usuarios             @relation(fields: [usuarioId], references: [id])
-  usuarioId           String               @db.ObjectId
-
-  @@index([instituicaoId])
-  @@index([usuarioId])
-
-  @@map("arquivos")
+  @@map("turma_materia")
+  Tarefas Tarefas[]
 }
-
-model Matriculas {
-  id                  String               @id @default(auto()) @map("_id") @db.ObjectId
-  data_matricula      DateTime             @default(now())
-  status              Boolean              @default(true)
-  
-  aluno               Usuarios             @relation(fields: [alunoId], references: [id])
-  alunoId             String               @db.ObjectId
-  
-  turma               Turmas               @relation(fields: [turmaId], references: [id])
-  turmaId             String               @db.ObjectId
-
-  @@map("matriculas")
-  @@index([alunoId])
-  @@index([turmaId])
-}
-
 model Tarefas {
-  id              String       @id @default(auto()) @map("_id") @db.ObjectId
-  titulo          String
-  descricao       String?
-  pontos          Int?
-  data_entrega    DateTime?
-  publicado       Boolean      @default(false)
-  criado_em       DateTime     @default(now())
-  atualizado_em   DateTime     @updatedAt
+  id               String      @id @default(auto()) @map("_id") @db.ObjectId
+  instituicao_id   String      @map("instituicao_id")
+  turma_id         String      @map("turma_id")
+  turma_materia_id String      @map("turma_materia_id")
+  professor_id     String      @map("professor_id")
+  tipo             String
+  titulo           String
+  descricao        String
+  data_abertura    DateTime   @map("data_abertura")
+  data_entrega     DateTime   @map("data_entrega")
+  pontos           Int
+  publicado        Boolean
+  visibilidade     String
+  criado_em        DateTime    @default(now()) @map("criado_em")
+  atualizado_em    DateTime    @updatedAt @map("atualizado_em")
 
-  instituicao     Instituicao  @relation(fields: [instituicaoId], references: [id])
-  instituicaoId   String       @db.ObjectId
-  turma           Turmas       @relation(fields: [turmaId], references: [id])
-  turmaId         String       @db.ObjectId
-  professor       Usuarios     @relation(fields: [professorId], references: [id])
-  professorId     String       @db.ObjectId
-  questoes        Questoes[]
-  submissoes      Submissoes[]
-
+  
+  instituicoes     Instituicoes @relation(fields: [instituicao_id], references: [id])
+  turmas           Turmas      @relation(fields: [turma_id], references: [id])
+  turma_materia    TurmaMateria @relation(fields: [turma_materia_id], references: [id])
+  professores      Usuarios    @relation(fields: [professor_id], references: [id])
+  
   @@map("tarefas")
-  @@index([instituicaoId])
-  @@index([turmaId])
-  @@index([professorId])
+  Questoes Questoes[]
+  Entregas Entregas[]
 }
 
-model Mensagens_Forum {
-  id              String       @id @default(auto()) @map("_id") @db.ObjectId
-  corpo           String
-  criado_em       DateTime     @default(now())
-
-  instituicao     Instituicao  @relation(fields: [instituicaoId], references: [id])
-  instituicaoId   String       @db.ObjectId
-  topico          Topico_Forum @relation(fields: [topicoId], references: [id])
-  topicoId        String       @db.ObjectId
-  autor           Usuarios     @relation(fields: [usuarioId], references: [id])
-  usuarioId       String       @db.ObjectId
-
-  @@map("mensagens_forum")
-  @@index([topicoId])
-  @@index([usuarioId])
-}
 
 model Questoes {
-  id              String       @id @default(auto()) @map("_id") @db.ObjectId
-  sequencia       Int
-  tipo            String
-  titulo          String
-  enunciado       String
-  payload         Json
-  pontos          Int
-  criado_em       DateTime     @default(now())
-  atualizado_em   DateTime     @updatedAt
+  id               String      @id @default(auto()) @map("_id") @db.ObjectId
+  tarefa_id        String      @map("tarefa_id")
+  ordem            Int
+  tipo             String
+  enunciado        String
+  meta             Json
+  peso             Float
+  criado_em        DateTime    @default(now()) @map("criado_em")
 
-  tarefa          Tarefas      @relation(fields: [tarefaId], references: [id])
-  tarefaId        String       @db.ObjectId
-  instituicao     Instituicao  @relation(fields: [instituicaoId], references: [id])
-  instituicaoId   String       @db.ObjectId
-  opcoes_multipla_escolha Opcoes_Multipla_Escolha[]
-  respostas_submissao Respostas_Submissao[]
+  tarefas          Tarefas   @relation(fields: [tarefa_id], references: [id])
 
   @@map("questoes")
-  @@index([tarefaId])
-  @@index([instituicaoId])
+  OpcoesQuestao OpcoesQuestao[]
+  Respostas Respostas[]
 }
 
-model Submissoes {
-  id              String       @id @default(auto()) @map("_id") @db.ObjectId
-  enviado_em      DateTime     @default(now())
+
+
+model OpcoesQuestao {
+  id           String      @id @default(auto()) @map("_id") @db.ObjectId
+  questao_id   String      @map("questao_id")
+  texto        String
+  ordem        Int
+  correta      Boolean
+
+  questoes     Questoes    @relation(fields: [questao_id], references: [id])
+  
+  @@map("opcoes_questao")
+}
+
+
+model Matriculas {
+  id              String      @id @default(auto()) @map("_id") @db.ObjectId
+  turma_id        String      @map("turma_id")
+  aluno_id        String      @map("aluno_id")
+  data_matricula  DateTime   @map("data_matricula")
   status          String
-  nota_total      Int
-  feedback        String?
-  metadados       Json?
-  criado_em       DateTime     @default(now())
-  atualizado_em   DateTime     @updatedAt
+  criado_em       DateTime    @default(now()) @map("criado_em")
+  atualizado_em   DateTime    @updatedAt @map("atualizado_em")
+  
 
-  instituicao     Instituicao  @relation(fields: [instituicaoId], references: [id])
-  instituicaoId   String       @db.ObjectId
-  tarefa          Tarefas      @relation(fields: [tarefaId], references: [id])
-  tarefaId        String       @db.ObjectId
-  aluno           Usuarios     @relation(fields: [alunoId], references: [id])
-  alunoId         String       @db.ObjectId
-  respostas       Respostas_Submissao[]
-
-  @@map("submissoes")
-  @@index([instituicaoId])
-  @@index([tarefaId])
-  @@index([alunoId])
+  turmas          Turmas      @relation(fields: [turma_id], references: [id])
+  alunos          Usuarios    @relation(fields: [aluno_id], references: [id])
+  
+  @@map("matriculas")
 }
 
-model Opcoes_Multipla_Escolha {
-  id              String       @id @default(auto()) @map("_id") @db.ObjectId
-  texto           String
-  correta         Boolean      @default(false)
-  sequencia       Int
-  criado_em       DateTime     @default(now())
 
-  questao         Questoes     @relation(fields: [questaoId], references: [id])
-  questaoId       String       @db.ObjectId
 
-  @@map("opcoes_multipla_escolha")
-  @@index([questaoId])
+
+model Conquistas {
+  id              String      @id @default(auto()) @map("_id") @db.ObjectId
+  instituicao_id  String      @map("instituicao_id")
+  nome            String
+  descricao       String
+  criterios       Json
+  recompensa      Json
+  criado_em       DateTime    @default(now()) @map("criado_em")
+  atualizado_em   DateTime    @updatedAt @map("atualizado_em")
+
+  instituicoes    Instituicoes @relation(fields: [instituicao_id], references: [id])
+  
+  @@map("conquistas")
+  ConquistaDoUsuario ConquistaDoUsuario[]
 }
 
-model Respostas_Submissao {
-  id              String       @id @default(auto()) @map("_id") @db.ObjectId
-  resposta_texto  String
-  nota            Int
-  avaliado_em     DateTime?    @db.Date
-  feedback        String?
-  criado_em       DateTime     @default(now())
-  atualizado_em   DateTime     @updatedAt
 
-  questao         Questoes     @relation(fields: [questaoId], references: [id])
-  questaoId       String       @db.ObjectId
-  submissao       Submissoes   @relation(fields: [submissaoId], references: [id])
-  submissaoId     String       @db.ObjectId
 
-  @@map("respostas_submissao")
-  @@index([questaoId])
-  @@index([submissaoId])
+model Entregas {
+  id                    String      @id @default(auto()) @map("_id") @db.ObjectId
+  tarefa_id             String      @map("tarefa_id")
+  aluno_id              String      @map("aluno_id")
+  enviado_em            DateTime   @map("enviado_em")
+  status                String
+  nota                  Float
+  feedback              String
+  comentario_professor  String     @map("comentario_professor")
+  criado_em             DateTime    @default(now()) @map("criado_em")
+  atualizado_em         DateTime    @updatedAt @map("atualizado_em")
+  
+  
+  tarefas               Tarefas     @relation(fields: [tarefa_id], references: [id])
+  alunos                Usuarios    @relation(fields: [aluno_id], references: [id])
+  
+  @@map("entregas")
+  Respostas Respostas[]
 }
+
+model Respostas {
+  id                   String      @id @default(auto()) @map("_id") @db.ObjectId
+  entrega_id           String      @map("entrega_id")
+  questao_id           String      @map("questao_id")
+  texto_resposta       String    @map("texto_resposta")
+  nota                  Int
+  criado_em            DateTime    @default(now()) @map("criado_em")
+  atualizado_em        DateTime    @updatedAt @map("atualizado_em")
+  
+ 
+  entrega              Entregas    @relation(fields: [entrega_id], references: [id])
+  questao              Questoes    @relation(fields: [questao_id], references: [id])
+
+  
+  @@map("respostas")
+}
+
+model Anexo {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  attachable_type String
+  attachable_id   String
+  arquivo_url     String
+  nome_original   String
+  tamanho         Int
+  mime            String
+  criado_em       DateTime @default(now())
+
+  @@map("anexos")
+}
+
+model Mensagem {
+  id         String   @id @default(auto()) @map("_id")  @db.ObjectId
+  de         String
+  para       String
+  assunto    String
+  conteudo   String
+  lido       Boolean  @default(false)
+  criado_em  DateTime @default(now())
+
+  @@map("mensagens")
+}
+
+model ConquistaDoUsuario {
+  id           String     @id @default(auto()) @map("_id") @db.ObjectId
+  usuario_id   String
+  conquista_id String
+  concedido_em DateTime   @default(now())
+
+  usuario      Usuarios    @relation(fields: [usuario_id], references: [id])
+  conquista    Conquistas  @relation(fields: [conquista_id], references: [id])
+
+  @@map("conquistas_do_usuario")
+}
+
+model XpEvent {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  usuario_id  String
+  quantidade  Int
+  origem      String
+  referencia  Json
+  criado_em   DateTime @default(now())
+
+  usuario     Usuarios  @relation(fields: [usuario_id], references: [id])
+
+  @@map("xp_events")
+}
+
+model Presenca {
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  turma_id       String
+  aluno_id       String
+  data           DateTime
+  status         String
+  registrado_por String
+  criado_em      DateTime @default(now())
+  atualizado_em  DateTime @updatedAt
+
+  turma          Turmas    @relation(fields: [turma_id], references: [id])
+  aluno          Usuarios    @relation("PresencaAluno", fields: [aluno_id], references: [id])
+  registrador    Usuarios    @relation("PresencaRegistrador", fields: [registrado_por], references: [id])
+
+  @@map("presencas")
+}
+
+model LogDeAuditoria {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  ator_id       String
+  acao          String
+  alvo          String
+  alvo_id       String
+  payload       Json
+  registrado_em DateTime @default(now())
+
+  ator          Usuarios  @relation(fields: [ator_id], references: [id])
+
+  @@map("logs_de_auditoria")
+}
+
+model ForumPost {
+  id                  String   @id @default(auto()) @map("_id") @db.ObjectId
+  topico_id           String
+  autor_id            String
+  conteudo            String
+  respondendo_post_id String?
+  criado_em           DateTime @default(now())
+
+  topico              ForumTopico @relation(fields: [topico_id], references: [id])
+  autor               Usuarios     @relation(fields: [autor_id], references: [id])
+  resposta_a          ForumPost?  @relation("RespostaPost", fields: [respondendo_post_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  respostas           ForumPost[] @relation("RespostaPost")
+
+  @@map("forum_posts")
+}
+
+model ForumTopico {
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  instituicao_id String
+  turma_id       String
+  titulo         String
+  criado_por     String
+  conteudo       String
+  criado_em      DateTime @default(now())
+
+  instituicao    Instituicoes @relation(fields: [instituicao_id], references: [id])
+  turma          Turmas       @relation(fields: [turma_id], references: [id])
+  criador        Usuarios     @relation(fields: [criado_por], references: [id])
+  posts          ForumPost[]
+
+  @@map("forum_topicos")
+}
+
+model Notificacao {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  usuario_id  String
+  tipo        String
+  payload     Json
+  lido        Boolean  @default(false)
+  criado_em   DateTime @default(now())
+
+  usuario     Usuarios  @relation(fields: [usuario_id], references: [id])
+
+  @@map("notificacoes")
+}
+
+
+
+
+
+
+
+
+
+
+
+
