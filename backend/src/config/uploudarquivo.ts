@@ -1,17 +1,56 @@
-import { Request, Response } from 'express';
-import { processImage } from '../config/fileService';
 
-export const handleImageUpload = async (req: Request, res: Response) => {
+import { Router, Request, Response } from 'express';
+import multer from 'multer';
+import { storageService } from './fileService';
+import { prisma } from './prisma'; 
+
+
+declare global {
+  namespace Express {
+    interface Request {
+      file?: Express.Multer.File;
+    }
+  }
+}
+
+
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10MB
+  },
+});
+
+const router = Router();
+
+
+router.post('/upload', upload.single('file'), async (req: Request, res: Response) => {
   try {
-    const file = req.file;
-
-    if (!file) {
-      return res.status(400).json({ error: 'Nenhuma imagem foi enviada.' });
+    if (!req.file) {
+      return res.status(400).json({ message: 'Nenhum arquivo enviado.' });
     }
 
-    const result = await processImage(file.path, file.originalname);
-    return res.status(200).json({ message: 'Imagem processada com sucesso.', result });
-  } catch (error: any) {
-    return res.status(500).json({ error: error.message });
+    
+    const storedName = await storageService.uploadFile(req.file);
+
+  
+    const newFile = await prisma.file.create({
+      data: {
+        originalName: req.file.originalname,
+        storedName: storedName,
+        path: `uploads/${storedName}`, 
+      },
+    });
+
+    res.status(200).json({
+      message: 'Arquivo enviado e salvo no BD com sucesso!',
+      fileId: newFile.id,
+      fileName: newFile.storedName,
+    });
+  } catch (error) {
+    console.error('Erro ao fazer upload do arquivo:', error);
+    res.status(500).json({ message: 'Erro interno do servidor.' });
   }
-};
+});
+
+export default router;
