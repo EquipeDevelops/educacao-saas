@@ -1,52 +1,80 @@
-import { Request, Response } from "express";
+import { Response } from "express";
 import { conquistaUsuarioService } from "./conquistaUsuario.service";
-import { AwardConquistaInput } from "./conquistaUsuario.validator";
+import { AuthenticatedRequest } from "../../middlewares/auth"; // <-- IMPORTA O TIPO
+import { FindAllConquistasUsuarioInput } from "./conquistaUsuario.validator";
 
 export const conquistaUsuarioController = {
-  award: async (req: Request<{}, {}, AwardConquistaInput>, res: Response) => {
+  grant: async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const premiacao = await conquistaUsuarioService.award(req.body);
-      return res.status(201).json(premiacao);
+      const { instituicaoId } = req.user; // <-- USA O DADO REAL E SEGURO
+      const conquistaAtribuida = await conquistaUsuarioService.grant(
+        req.body,
+        instituicaoId!
+      );
+      return res.status(201).json(conquistaAtribuida);
     } catch (error: any) {
-      if (error.message.includes("já possui"))
+      if (error.message.includes("já possui esta conquista")) {
         return res.status(409).json({ message: error.message });
+      }
       return res.status(400).json({ message: error.message });
     }
   },
 
-  findAll: async (req: Request, res: Response) => {
+  findAll: async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const { usuarioId, conquistaId } = req.query;
-      if (usuarioId) {
-        const conquistas = await conquistaUsuarioService.findAllByUsuario(
-          usuarioId as string
-        );
-        return res.status(200).json(conquistas);
+      const { instituicaoId, papel, perfilId } = req.user;
+      let filters = req.query as FindAllConquistasUsuarioInput;
+
+      // SEGURANÇA E LGPD: Se o usuário for um aluno, força o filtro para apenas suas próprias conquistas.
+      if (papel === "ALUNO") {
+        filters.alunoPerfilId = perfilId!;
       }
-      if (conquistaId) {
-        const usuarios = await conquistaUsuarioService.findAllByConquista(
-          conquistaId as string
-        );
-        return res.status(200).json(usuarios);
-      }
-      return res
-        .status(400)
-        .json({ message: "Forneça um usuarioId ou conquistaId para a busca." });
-    } catch (error) {
+
+      const conquistas = await conquistaUsuarioService.findAll(
+        instituicaoId!,
+        filters
+      );
+      return res.status(200).json(conquistas);
+    } catch (error: any) {
       return res
         .status(500)
-        .json({ message: "Erro ao buscar registros de conquistas." });
+        .json({ message: "Erro ao buscar conquistas de usuários." });
     }
   },
 
-  revoke: async (req: Request<{ id: string }>, res: Response) => {
+  findById: async (req: AuthenticatedRequest, res: Response) => {
     try {
-      await conquistaUsuarioService.revoke(req.params.id);
+      const { id } = req.params;
+      const { instituicaoId } = req.user;
+      const conquista = await conquistaUsuarioService.findById(
+        id,
+        instituicaoId!
+      );
+      if (!conquista)
+        return res
+          .status(404)
+          .json({ message: "Registro de conquista não encontrado." });
+      return res.status(200).json(conquista);
+    } catch (error: any) {
+      return res
+        .status(500)
+        .json({ message: "Erro ao buscar registro de conquista." });
+    }
+  },
+
+  revoke: async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const { id } = req.params;
+      const { instituicaoId } = req.user;
+      const result = await conquistaUsuarioService.revoke(id, instituicaoId!);
+      if (result.count === 0) {
+        return res.status(404).json({
+          message: "Registro de conquista não encontrado para revogar.",
+        });
+      }
       return res.status(204).send();
-    } catch (error) {
-      return res.status(404).json({
-        message: "Registro de conquista não encontrado para revogação.",
-      });
+    } catch (error: any) {
+      return res.status(500).json({ message: "Erro ao revogar conquista." });
     }
   },
 };

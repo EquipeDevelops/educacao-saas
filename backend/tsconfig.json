@@ -2,7 +2,12 @@
   "compilerOptions": {
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
-
+    "baseUrl": "./src",
+    "paths": {
+      "@/*": ["*"],
+      "@modules/*": ["modules/*"],
+      "@middlewares/*": ["middlewares/*"]
+    },
     "target": "es2020",
     "sourceMap": true,
     "outDir": "./dist",

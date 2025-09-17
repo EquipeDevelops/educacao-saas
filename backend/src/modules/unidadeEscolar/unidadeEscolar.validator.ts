@@ -1,35 +1,28 @@
 import { z } from "zod";
 
-export const createUnidadeEscolarSchema = z.object({
-  body: z.object({
-    nome: z.string({ required_error: "O nome é obrigatório." }).min(3),
-    endereco: z.string().optional(),
-    instituicaoId: z.string({
-      required_error: "O ID da instituição é obrigatório.",
-    }),
-  }),
-});
-
-export const updateUnidadeEscolarSchema = z.object({
-  body: z.object({
-    nome: z.string().min(3).optional(),
-    endereco: z.string().optional(),
-  }),
-  params: z.object({
-    id: z.string({ required_error: "O ID da unidade escolar é obrigatório." }),
-  }),
-});
-
 export const paramsSchema = z.object({
-  params: z.object({
-    id: z.string({ required_error: "O ID da unidade escolar é obrigatório." }),
+  id: z.string({ required_error: "O ID da unidade é obrigatório." }),
+});
+
+export const createUnidadeSchema = z.object({
+  body: z.object({
+    nome: z.string({ required_error: "O nome é obrigatório." }),
+    cidade: z.string({ required_error: "A cidade é obrigatória." }),
+    estado: z.string({ required_error: "O estado é obrigatório." }),
+    cep: z.string({ required_error: "O CEP é obrigatório." }),
+    logradouro: z.string().optional(),
+    bairro: z.string().optional(),
   }),
 });
 
-export type CreateUnidadeEscolarInput = z.infer<
-  typeof createUnidadeEscolarSchema
->["body"];
-export type UpdateUnidadeEscolarInput = z.infer<
-  typeof updateUnidadeEscolarSchema
->["body"];
-export type UnidadeEscolarParams = z.infer<typeof paramsSchema>["params"];
+export const updateUnidadeSchema = z.object({
+  body: z.object({
+    nome: z.string().optional(),
+    cidade: z.string().optional(),
+    estado: z.string().optional(),
+    cep: z.string().optional(),
+    logradouro: z.string().optional(),
+    bairro: z.string().optional(),
+  }),
+  params: paramsSchema,
+});

@@ -1,85 +1,85 @@
-import { Request, Response } from "express";
+import { Response } from "express";
 import { unidadeEscolarService } from "./unidadeEscolar.service";
-import {
-  CreateUnidadeEscolarInput,
-  UpdateUnidadeEscolarInput,
-  UnidadeEscolarParams,
-} from "./unidadeEscolar.validator";
+import { AuthenticatedRequest } from "../../middlewares/auth";
 
 export const unidadeEscolarController = {
-  create: async (
-    req: Request<{}, {}, CreateUnidadeEscolarInput>,
-    res: Response
-  ) => {
+  create: async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const novaUnidade = await unidadeEscolarService.create(req.body);
-      return res.status(201).json(novaUnidade);
+      const { instituicaoId } = req.user;
+      const unidade = await unidadeEscolarService.create(
+        req.body,
+        instituicaoId!
+      );
+      return res.status(201).json(unidade);
     } catch (error: any) {
-      if (error.message === "Instituição não encontrada.") {
-        return res.status(400).json({ message: error.message });
-      }
       return res
         .status(500)
         .json({ message: "Erro ao criar unidade escolar." });
     }
   },
-
-  findAll: async (req: Request, res: Response) => {
+  findAll: async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const { instituicaoId } = req.query;
-
-      const unidades = await unidadeEscolarService.findAll(
-        instituicaoId as string | undefined
-      );
+      const { instituicaoId } = req.user;
+      const unidades = await unidadeEscolarService.findAll(instituicaoId!);
       return res.status(200).json(unidades);
-    } catch (error) {
+    } catch (error: any) {
       return res
         .status(500)
         .json({ message: "Erro ao buscar unidades escolares." });
     }
   },
-
-  findById: async (req: Request<UnidadeEscolarParams>, res: Response) => {
+  findById: async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const unidade = await unidadeEscolarService.findById(req.params.id);
-      if (!unidade) {
+      const { id } = req.params;
+      const { instituicaoId } = req.user;
+      const unidade = await unidadeEscolarService.findById(id, instituicaoId!);
+      if (!unidade)
         return res
           .status(404)
-          .json({ message: "Unidade escolar não encontrada." });
-      }
+          .json({ message: "Unidade Escolar não encontrada." });
       return res.status(200).json(unidade);
-    } catch (error) {
+    } catch (error: any) {
       return res
         .status(500)
         .json({ message: "Erro ao buscar unidade escolar." });
     }
   },
-
-  update: async (
-    req: Request<UnidadeEscolarParams, {}, UpdateUnidadeEscolarInput>,
-    res: Response
-  ) => {
+  update: async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const unidadeAtualizada = await unidadeEscolarService.update(
-        req.params.id,
-        req.body
+      const { id } = req.params;
+      const { instituicaoId } = req.user;
+      const result = await unidadeEscolarService.update(
+        id,
+        req.body,
+        instituicaoId!
       );
-      return res.status(200).json(unidadeAtualizada);
-    } catch (error) {
+      if (result.count === 0)
+        return res
+          .status(404)
+          .json({ message: "Unidade Escolar não encontrada para atualizar." });
       return res
-        .status(404)
-        .json({ message: "Unidade escolar não encontrada para atualização." });
+        .status(200)
+        .json({ message: "Unidade Escolar atualizada com sucesso." });
+    } catch (error: any) {
+      return res
+        .status(500)
+        .json({ message: "Erro ao atualizar unidade escolar." });
     }
   },
-
-  delete: async (req: Request<UnidadeEscolarParams>, res: Response) => {
+  remove: async (req: AuthenticatedRequest, res: Response) => {
     try {
-      await unidadeEscolarService.delete(req.params.id);
+      const { id } = req.params;
+      const { instituicaoId } = req.user;
+      const result = await unidadeEscolarService.remove(id, instituicaoId!);
+      if (result.count === 0)
+        return res
+          .status(404)
+          .json({ message: "Unidade Escolar não encontrada para deletar." });
       return res.status(204).send();
-    } catch (error) {
+    } catch (error: any) {
       return res
-        .status(404)
-        .json({ message: "Unidade escolar não encontrada para exclusão." });
+        .status(500)
+        .json({ message: "Erro ao deletar unidade escolar." });
     }
   },
 };

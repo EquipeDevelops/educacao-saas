@@ -1,77 +1,118 @@
-import prisma from "../../utils/prisma";
+import { Prisma, PrismaClient, StatusMatricula } from "@prisma/client";
 import {
   CreateMatriculaInput,
-  UpdateMatriculaInput,
+  FindAllMatriculasInput,
 } from "./matricula.validator";
 
+const prisma = new PrismaClient();
+
+const fullInclude = {
+  aluno: {
+    include: {
+      usuario: { select: { id: true, nome: true, email: true } },
+    },
+  },
+  turma: { select: { id: true, nome: true, serie: true } },
+};
+
+export async function create(
+  data: CreateMatriculaInput,
+  instituicaoId: string
+) {
+  const [aluno, turma] = await Promise.all([
+    prisma.usuarios_aluno.findFirst({
+      where: { id: data.alunoId, usuario: { instituicaoId } },
+    }),
+    prisma.turmas.findFirst({ where: { id: data.turmaId, instituicaoId } }),
+  ]);
+
+  if (!aluno || !turma) {
+    throw new Error("Aluno ou turma não encontrado na sua instituição.");
+  }
+
+  const matriculaExistente = await prisma.matriculas.findFirst({
+    where: {
+      alunoId: data.alunoId,
+      ano_letivo: data.ano_letivo,
+    },
+  });
+
+  if (matriculaExistente) {
+    throw new Error(
+      "Este aluno já possui uma matrícula ativa para este ano letivo."
+    );
+  }
+
+  return prisma.matriculas.create({
+    data: {
+      ...data,
+      status: StatusMatricula.ATIVA,
+    },
+    include: fullInclude,
+  });
+}
+
+export async function findAll(
+  instituicaoId: string,
+  filters: FindAllMatriculasInput
+) {
+  const where: Prisma.MatriculasWhereInput = {
+    turma: { instituicaoId },
+  };
+
+  if (filters.turmaId) where.turmaId = filters.turmaId;
+  if (filters.alunoId) where.alunoId = filters.alunoId;
+  if (filters.ano_letivo) where.ano_letivo = Number(filters.ano_letivo);
+  if (filters.status) where.status = filters.status;
+
+  return prisma.matriculas.findMany({
+    where,
+    include: fullInclude,
+  });
+}
+
+export async function findById(id: string, instituicaoId: string) {
+  return prisma.matriculas.findFirst({
+    where: {
+      id,
+      turma: { instituicaoId },
+    },
+    include: fullInclude,
+  });
+}
+
+export async function updateStatus(
+  id: string,
+  status: StatusMatricula,
+  instituicaoId: string
+) {
+  const matricula = await findById(id, instituicaoId);
+  if (!matricula) {
+    const error = new Error("Matrícula não encontrada.");
+    (error as any).code = "P2025";
+    throw error;
+  }
+  return prisma.matriculas.update({
+    where: { id },
+    data: { status },
+    include: fullInclude,
+  });
+}
+
+export async function remove(id: string, instituicaoId: string) {
+  const matricula = await findById(id, instituicaoId);
+  if (!matricula) {
+    const error = new Error("Matrícula não encontrada.");
+    (error as any).code = "P2025";
+    throw error;
+  }
+  return prisma.matriculas.delete({ where: { id } });
+}
+
 export const matriculaService = {
-  create: async (data: CreateMatriculaInput) => {
-    const [aluno, turma] = await Promise.all([
-      prisma.usuarios.findUnique({ where: { id: data.alunoId } }),
-      prisma.turmas.findUnique({ where: { id: data.turmaId } }),
-    ]);
-
-    if (!aluno) throw new Error("Aluno não encontrado.");
-    if (!turma) throw new Error("Turma não encontrada.");
-
-    if (aluno.papel !== "ALUNO")
-      throw new Error("O usuário informado não é um aluno.");
-
-    if (aluno.instituicaoId !== turma.instituicaoId) {
-      throw new Error("O aluno e a turma não pertencem à mesma instituição.");
-    }
-
-    const matriculaExistente = await prisma.matriculas.findFirst({
-      where: {
-        alunoId: data.alunoId,
-        turmaId: data.turmaId,
-      },
-    });
-
-    if (matriculaExistente) {
-      throw new Error("Este aluno já está matriculado nesta turma.");
-    }
-
-    return await prisma.matriculas.create({ data });
-  },
-
-  findAll: async (filters: { turmaId?: string; alunoId?: string }) => {
-    return await prisma.matriculas.findMany({
-      where: filters,
-      include: {
-        aluno: { select: { id: true, nome: true, email: true } },
-        turma: { select: { id: true, nome: true, serie: true } },
-      },
-    });
-  },
-
-  findById: async (id: string) => {
-    return await prisma.matriculas.findUnique({
-      where: { id },
-      include: {
-        aluno: { select: { id: true, nome: true } },
-        turma: {
-          select: {
-            id: true,
-            nome: true,
-            serie: true,
-            instituicao: { select: { id: true, nome: true } },
-          },
-        },
-      },
-    });
-  },
-
-  update: async (id: string, data: UpdateMatriculaInput) => {
-    return await prisma.matriculas.update({
-      where: { id },
-      data,
-    });
-  },
-
-  delete: async (id: string) => {
-    return await prisma.matriculas.delete({
-      where: { id },
-    });
-  },
+  create,
+  findAll,
+  findById,
+  updateStatus,
+  remove,
 };

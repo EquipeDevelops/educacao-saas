@@ -1,51 +1,32 @@
-import prisma from "../../utils/prisma";
-import {
-  CreateUnidadeEscolarInput,
-  UpdateUnidadeEscolarInput,
-} from "./unidadeEscolar.validator";
+import { Prisma, PrismaClient } from "@prisma/client";
+
+const prisma = new PrismaClient();
 
 export const unidadeEscolarService = {
-  create: async (data: CreateUnidadeEscolarInput) => {
-    const instituicao = await prisma.instituicao.findUnique({
-      where: { id: data.instituicaoId },
-    });
+  create: (
+    data: Prisma.Unidades_EscolaresCreateWithoutInstituicaoInput,
+    instituicaoId: string
+  ) => prisma.unidades_Escolares.create({ data: { ...data, instituicaoId } }),
 
-    if (!instituicao) {
-      throw new Error("Instituição não encontrada.");
-    }
+  findAll: (instituicaoId: string) =>
+    prisma.unidades_Escolares.findMany({
+      where: { instituicaoId },
+      orderBy: { nome: "asc" },
+    }),
 
-    return await prisma.unidades_Escolares.create({ data });
-  },
+  findById: (id: string, instituicaoId: string) =>
+    prisma.unidades_Escolares.findFirst({ where: { id, instituicaoId } }),
 
-  findAll: async (instituicaoId?: string) => {
-    return await prisma.unidades_Escolares.findMany({
-      where: {
-        instituicaoId: instituicaoId,
-      },
-    });
-  },
-
-  findById: async (id: string) => {
-    return await prisma.unidades_Escolares.findUnique({
-      where: { id },
-      include: {
-        instituicao: {
-          select: { id: true, nome: true },
-        },
-      },
-    });
-  },
-
-  update: async (id: string, data: UpdateUnidadeEscolarInput) => {
-    return await prisma.unidades_Escolares.update({
-      where: { id },
+  update: (
+    id: string,
+    data: Prisma.Unidades_EscolaresUpdateInput,
+    instituicaoId: string
+  ) =>
+    prisma.unidades_Escolares.updateMany({
+      where: { id, instituicaoId },
       data,
-    });
-  },
+    }),
 
-  delete: async (id: string) => {
-    return await prisma.unidades_Escolares.delete({
-      where: { id },
-    });
-  },
+  remove: (id: string, instituicaoId: string) =>
+    prisma.unidades_Escolares.deleteMany({ where: { id, instituicaoId } }),
 };

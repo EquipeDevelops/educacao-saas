@@ -1,75 +1,128 @@
-import prisma from "../../utils/prisma";
-import { CreateTarefaInput, UpdateTarefaInput } from "./tarefa.validator";
+import { Prisma, PrismaClient } from "@prisma/client";
+import { CreateTarefaInput, FindAllTarefasInput } from "./tarefa.validator";
 
-export const tarefaService = {
-  create: async (data: CreateTarefaInput) => {
-    const [turma, professor] = await Promise.all([
-      prisma.turmas.findUnique({ where: { id: data.turmaId } }),
-      prisma.usuarios.findUnique({ where: { id: data.professorId } }),
-    ]);
+const prisma = new PrismaClient();
 
-    if (!turma) throw new Error("Turma não encontrada.");
-    if (!professor) throw new Error("Professor não encontrado.");
-    if (professor.papel !== "PROFESSOR")
-      throw new Error("O usuário informado não é um professor.");
-
-    if (
-      turma.instituicaoId !== data.instituicaoId ||
-      professor.instituicaoId !== data.instituicaoId
-    ) {
-      throw new Error(
-        "A turma e o professor devem pertencer à instituição informada."
-      );
-    }
-
-    if (turma.professorId && turma.professorId !== data.professorId) {
-      throw new Error(
-        "Este professor não é o responsável pela turma informada."
-      );
-    }
-
-    return await prisma.tarefas.create({ data });
+const fullInclude = {
+  componenteCurricular: {
+    include: {
+      turma: { select: { nome: true, serie: true } },
+      materia: { select: { nome: true } },
+    },
   },
+};
 
-  findAll: async (filters: {
-    instituicaoId?: string;
-    turmaId?: string;
-    professorId?: string;
-  }) => {
-    return await prisma.tarefas.findMany({
-      where: filters,
-      orderBy: { criado_em: "desc" },
-      include: {
-        turma: { select: { id: true, nome: true } },
-        professor: { select: { id: true, nome: true } },
-      },
-    });
-  },
-
-  findById: async (id: string) => {
-    return await prisma.tarefas.findUnique({
-      where: { id },
-      include: {
-        turma: { select: { id: true, nome: true, serie: true } },
-        professor: { select: { id: true, nome: true } },
-        questoes: true,
-        _count: {
-          select: { submissoes: true },
+async function verifyOwnership(
+  tarefaId: string,
+  professorId: string,
+  instituicaoId: string
+) {
+  const tarefa = await prisma.tarefas.findFirst({
+    where: {
+      id: tarefaId,
+      instituicaoId,
+    },
+    select: {
+      componenteCurricular: {
+        select: {
+          professorId: true,
         },
       },
-    });
-  },
+    },
+  });
 
-  update: async (id: string, data: UpdateTarefaInput) => {
-    return await prisma.tarefas.update({
-      where: { id },
-      data,
-    });
-  },
+  if (!tarefa || tarefa.componenteCurricular.professorId !== professorId) {
+    const error = new Error(
+      "Você não tem permissão para modificar esta tarefa."
+    );
+    (error as any).code = "FORBIDDEN";
+    throw error;
+  }
+}
 
-  delete: async (id: string) => {
-    return await prisma.tarefas.delete({
-      where: { id },
-    });
-  },
+export async function create(
+  data: CreateTarefaInput,
+  professorId: string,
+  instituicaoId: string
+) {
+  const componente = await prisma.componenteCurricular.findFirst({
+    where: { id: data.componenteCurricularId, professorId },
+  });
+
+  if (!componente) {
+    const error = new Error(
+      "Você não tem permissão para criar tarefas para este componente curricular."
+    );
+    (error as any).code = "FORBIDDEN";
+    throw error;
+  }
+
+  return prisma.tarefas.create({
+    data: {
+      ...data,
+      instituicaoId,
+    },
+  });
+}
+
+export async function findAll(
+  instituicaoId: string,
+  filters: FindAllTarefasInput
+) {
+  const where: Prisma.TarefasWhereInput = { instituicaoId };
+
+  if (filters.componenteCurricularId)
+    where.componenteCurricularId = filters.componenteCurricularId;
+  if (filters.publicado !== undefined)
+    where.publicado = filters.publicado === "true";
+
+  return prisma.tarefas.findMany({ where, include: fullInclude });
+}
+
+export async function findById(id: string, instituicaoId: string) {
+  return prisma.tarefas.findFirst({
+    where: { id, instituicaoId },
+    include: {
+      ...fullInclude,
+      questoes: { orderBy: { sequencia: "asc" } },
+    },
+  });
+}
+
+export async function update(
+  id: string,
+  data: Prisma.TarefasUpdateInput,
+  professorId: string,
+  instituicaoId: string
+) {
+  await verifyOwnership(id, professorId, instituicaoId);
+  return prisma.tarefas.update({ where: { id }, data });
+}
+
+export async function publish(
+  id: string,
+  publicado: boolean,
+  professorId: string,
+  instituicaoId: string
+) {
+  await verifyOwnership(id, professorId, instituicaoId);
+  return prisma.tarefas.update({ where: { id }, data: { publicado } });
+}
+
+export async function remove(
+  id: string,
+  professorId: string,
+  instituicaoId: string
+) {
+  await verifyOwnership(id, professorId, instituicaoId);
+  return prisma.tarefas.delete({ where: { id } });
+}
+
+export const tarefaService = {
+  create,
+  findAll,
+  findById,
+  update,
+  publish,
+  remove,
 };

@@ -1,75 +1,83 @@
-import { Request, Response } from "express";
+import { Response } from "express";
 import { questaoService } from "./questao.service";
-import {
-  CreateQuestaoInput,
-  UpdateQuestaoInput,
-  QuestaoParams,
-} from "./questao.validator";
+import { CreateQuestaoInput, UpdateQuestaoInput } from "./questao.validator";
+import { AuthenticatedRequest } from "../../middlewares/auth"; // <-- IMPORTA O TIPO
 
 export const questaoController = {
-  create: async (req: Request<{}, {}, CreateQuestaoInput>, res: Response) => {
+  create: async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const novaQuestao = await questaoService.create(req.body);
-      return res.status(201).json(novaQuestao);
+      const { instituicaoId, perfilId: professorId } = req.user;
+      const questao = await questaoService.create(
+        req.body as CreateQuestaoInput,
+        professorId!,
+        instituicaoId!
+      );
+      return res.status(201).json(questao);
     } catch (error: any) {
-      return res.status(400).json({ message: error.message });
+      if (error.code === "FORBIDDEN")
+        return res.status(403).json({ message: error.message });
+      return res.status(500).json({ message: "Erro ao criar questão." });
     }
   },
 
-  findAll: async (req: Request, res: Response) => {
+  findAllByTarefa: async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const { tarefaId } = req.query;
-
-      if (!tarefaId) {
-        return res.status(400).json({
-          message: "O ID da tarefa é obrigatório para listar as questões.",
-        });
-      }
-
-      const questoes = await questaoService.findAllByTarefa(tarefaId as string);
+      const { instituicaoId } = req.user;
+      const questoes = await questaoService.findAllByTarefa(
+        req.query as any,
+        instituicaoId!
+      );
       return res.status(200).json(questoes);
-    } catch (error) {
-      return res.status(500).json({ message: "Erro ao buscar questões." });
+    } catch (error: any) {
+      return res.status(404).json({ message: error.message });
     }
   },
 
-  findById: async (req: Request<QuestaoParams>, res: Response) => {
+  findById: async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const questao = await questaoService.findById(req.params.id);
-      if (!questao) {
+      const { id } = req.params;
+      const { instituicaoId } = req.user;
+      const questao = await questaoService.findById(id, instituicaoId!);
+      if (!questao)
         return res.status(404).json({ message: "Questão não encontrada." });
-      }
       return res.status(200).json(questao);
-    } catch (error) {
+    } catch (error: any) {
       return res.status(500).json({ message: "Erro ao buscar questão." });
     }
   },
 
-  update: async (
-    req: Request<QuestaoParams, {}, UpdateQuestaoInput>,
-    res: Response
-  ) => {
+  update: async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const questaoAtualizada = await questaoService.update(
-        req.params.id,
-        req.body
+      const { id } = req.params;
+      const { instituicaoId, perfilId: professorId } = req.user;
+      const questao = await questaoService.update(
+        id,
+        req.body as UpdateQuestaoInput["body"],
+        professorId!,
+        instituicaoId!
       );
-      return res.status(200).json(questaoAtualizada);
-    } catch (error) {
-      return res
-        .status(404)
-        .json({ message: "Questão não encontrada para atualização." });
+      return res.status(200).json(questao);
+    } catch (error: any) {
+      if (error.code === "FORBIDDEN")
+        return res.status(403).json({ message: error.message });
+      if (error.code === "P2025")
+        return res.status(404).json({ message: "Questão não encontrada." });
+      return res.status(500).json({ message: "Erro ao atualizar questão." });
     }
   },
 
-  delete: async (req: Request<QuestaoParams>, res: Response) => {
+  remove: async (req: AuthenticatedRequest, res: Response) => {
     try {
-      await questaoService.delete(req.params.id);
+      const { id } = req.params;
+      const { instituicaoId, perfilId: professorId } = req.user;
+      await questaoService.remove(id, professorId!, instituicaoId!);
       return res.status(204).send();
-    } catch (error) {
-      return res
-        .status(404)
-        .json({ message: "Questão não encontrada para exclusão." });
+    } catch (error: any) {
+      if (error.code === "FORBIDDEN")
+        return res.status(403).json({ message: error.message });
+      if (error.code === "P2025")
+        return res.status(404).json({ message: "Questão não encontrada." });
+      return res.status(500).json({ message: "Erro ao deletar questão." });
     }
   },
 };

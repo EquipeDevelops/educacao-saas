@@ -1,63 +1,79 @@
-import { Request, Response } from "express";
+import { Response } from "express";
 import { submissaoService } from "./submissao.service";
-import {
-  CreateSubmissaoInput,
-  GradeSubmissaoInput,
-} from "./submissao.validator";
+import { AuthenticatedRequest } from "../../middlewares/auth"; // <-- IMPORTA O TIPO
+import { FindAllSubmissoesInput } from "./submissao.validator";
 
 export const submissaoController = {
-  create: async (req: Request<{}, {}, CreateSubmissaoInput>, res: Response) => {
+  create: async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const novaSubmissao = await submissaoService.create(req.body);
-      return res.status(201).json(novaSubmissao);
+      const { instituicaoId, perfilId: alunoId } = req.user;
+      const submissao = await submissaoService.create(
+        req.body,
+        alunoId!,
+        instituicaoId!
+      );
+      return res.status(201).json(submissao);
     } catch (error: any) {
-      if (error.message.includes("Já existe uma submissão")) {
+      if (error.message.includes("Já existe uma submissão"))
         return res.status(409).json({ message: error.message });
-      }
+      if (error.message.includes("não está matriculado"))
+        return res.status(403).json({ message: error.message });
       return res.status(400).json({ message: error.message });
     }
   },
 
-  grade: async (
-    req: Request<{ id: string }, {}, GradeSubmissaoInput>,
-    res: Response
-  ) => {
+  findAll: async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const submissaoAvaliada = await submissaoService.grade(
-        req.params.id,
-        req.body
-      );
-      return res.status(200).json(submissaoAvaliada);
-    } catch (error) {
-      return res
-        .status(404)
-        .json({ message: "Submissão não encontrada para avaliação." });
-    }
-  },
+      const { instituicaoId, papel, perfilId } = req.user;
+      let filters = req.query as FindAllSubmissoesInput;
 
-  findAll: async (req: Request, res: Response) => {
-    try {
-      const { tarefaId, alunoId } = req.query;
-      const filters = {
-        tarefaId: tarefaId as string | undefined,
-        alunoId: alunoId as string | undefined,
-      };
-      const submissoes = await submissaoService.findAll(filters);
+      // SEGURANÇA: Se o usuário for um aluno, força o filtro para apenas suas próprias submissões.
+      if (papel === "ALUNO") {
+        filters.alunoId = perfilId!;
+      }
+
+      const submissoes = await submissaoService.findAll(
+        instituicaoId!,
+        filters
+      );
       return res.status(200).json(submissoes);
-    } catch (error) {
+    } catch (error: any) {
       return res.status(500).json({ message: "Erro ao buscar submissões." });
     }
   },
 
-  findById: async (req: Request<{ id: string }>, res: Response) => {
+  findById: async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const submissao = await submissaoService.findById(req.params.id);
-      if (!submissao) {
-        return res.status(404).json({ message: "Submissão não encontrada." });
-      }
+      const { id } = req.params;
+      // O serviço 'findById' precisa do objeto 'user' inteiro para checar se é o aluno dono OU o professor da tarefa
+      const submissao = await submissaoService.findById(id, req.user);
+      if (!submissao)
+        return res.status(404).json({
+          message: "Submissão não encontrada ou acesso não permitido.",
+        });
       return res.status(200).json(submissao);
-    } catch (error) {
+    } catch (error: any) {
       return res.status(500).json({ message: "Erro ao buscar submissão." });
+    }
+  },
+
+  grade: async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const { id } = req.params;
+      const { instituicaoId, perfilId: professorId } = req.user;
+      const submissao = await submissaoService.grade(
+        id,
+        req.body,
+        professorId!,
+        instituicaoId!
+      );
+      return res.status(200).json(submissao);
+    } catch (error: any) {
+      if (error.message.includes("não tem permissão"))
+        return res.status(403).json({ message: error.message });
+      return res
+        .status(404)
+        .json({ message: "Submissão não encontrada para avaliação." });
     }
   },
 };

@@ -1,72 +1,103 @@
-import prisma from "../../utils/prisma";
+import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { PapelUsuario } from "@prisma/client";
-import { RegisterInput, LoginInput } from "./auth.validator";
+import crypto from "crypto";
+import { LoginInput } from "./auth.validator";
+// Lembre-se de criar um serviço de email (ex: usando Nodemailer)
+// import { sendEmail } from '../../utils/mailer';
 
-const sanitizeUser = (user: any) => {
-  const { senha_hash, ...sanitizedUser } = user;
-  return sanitizedUser;
-};
+const prisma = new PrismaClient();
 
-export const authService = {
-  register: async (data: RegisterInput) => {
-    const { nome, email, senha, instituicaoId } = data;
+export async function login(data: LoginInput) {
+  const { email, senha } = data;
 
-    const instituicao = await prisma.instituicao.findUnique({
-      where: { id: instituicaoId },
-    });
-    if (!instituicao) {
-      throw new Error("Instituição não encontrada.");
-    }
+  const usuario = await prisma.usuarios.findUnique({ where: { email } });
+  if (!usuario || !usuario.senha_hash) {
+    throw new Error("Credenciais inválidas.");
+  }
 
-    const emailExistente = await prisma.usuarios.findUnique({
-      where: { email },
-    });
-    if (emailExistente) {
-      throw new Error("Este email já está em uso.");
-    }
+  const senhaCorreta = await bcrypt.compare(senha, usuario.senha_hash);
+  if (!senhaCorreta) {
+    throw new Error("Credenciais inválidas.");
+  }
 
-    const senha_hash = await bcrypt.hash(senha, 10);
+  // Se a senha estiver correta, gera o token
+  const token = jwt.sign({ id: usuario.id }, process.env.JWT_SECRET!, {
+    expiresIn: process.env.JWT_EXPIRES_IN,
+  });
 
-    const novoUsuario = await prisma.usuarios.create({
-      data: {
-        nome,
-        email,
-        senha_hash,
-        instituicaoId,
-        papel: PapelUsuario.ALUNO,
-      },
-    });
+  const { senha_hash, ...usuarioSemSenha } = usuario;
+  return { usuario: usuarioSemSenha, token };
+}
 
-    return sanitizeUser(novoUsuario);
-  },
+export async function forgotPassword(email: string) {
+  const usuario = await prisma.usuarios.findUnique({ where: { email } });
 
-  login: async (data: LoginInput) => {
-    const { email, senha } = data;
+  // SEGURANÇA: Se o email não existir, não retornamos um erro.
+  // Isso previne que um atacante descubra quais emails estão cadastrados no sistema.
+  if (!usuario) {
+    return;
+  }
 
-    const usuario = await prisma.usuarios.findUnique({ where: { email } });
-    if (!usuario) {
-      throw new Error("Credenciais inválidas.");
-    }
+  const resetToken = crypto.randomBytes(32).toString("hex");
+  const passwordResetToken = crypto
+    .createHash("sha256")
+    .update(resetToken)
+    .digest("hex");
+  const passwordResetExpires = new Date(Date.now() + 10 * 60 * 1000); // Expira em 10 minutos
 
-    const senhaValida = await bcrypt.compare(senha, usuario.senha_hash!);
-    if (!senhaValida) {
-      throw new Error("Credenciais inválidas.");
-    }
+  await prisma.usuarios.update({
+    where: { email },
+    data: { passwordResetToken, passwordResetExpires },
+  });
 
-    const token = jwt.sign(
-      {
-        id: usuario.id,
-        papel: usuario.papel,
-      },
-      process.env.JWT_SECRET!,
-      { expiresIn: "8h" }
+  try {
+    // LÓGICA DE ENVIO DE EMAIL (exemplo)
+    const resetURL = `http://localhost:3000/reset-password/${resetToken}`; // URL do seu frontend
+    const message = `Você solicitou a redefinição de senha. Por favor, clique neste link para prosseguir: ${resetURL}`;
+
+    // await sendEmail({
+    //     to: usuario.email,
+    //     subject: 'Redefinição de Senha (Válido por 10 minutos)',
+    //     text: message,
+    // });
+    console.log(
+      `Email de redefinição enviado para ${usuario.email} com o token ${resetToken}`
     );
+  } catch (error) {
+    // Limpa os campos de redefinição se o envio de email falhar
+    await prisma.usuarios.update({
+      where: { email },
+      data: { passwordResetToken: null, passwordResetExpires: null },
+    });
+    throw new Error(
+      "Houve um erro ao enviar o email de redefinição. Tente novamente mais tarde."
+    );
+  }
+}
 
-    return {
-      usuario: sanitizeUser(usuario),
-      token,
-    };
-  },
-};
+export async function resetPassword(token: string, senha: string) {
+  const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+
+  const usuario = await prisma.usuarios.findFirst({
+    where: {
+      passwordResetToken: hashedToken,
+      passwordResetExpires: { gte: new Date() }, // Token não expirado
+    },
+  });
+
+  if (!usuario) {
+    throw new Error("Token inválido ou expirado.");
+  }
+
+  const senhaHash = await bcrypt.hash(senha, 10);
+
+  await prisma.usuarios.update({
+    where: { id: usuario.id },
+    data: {
+      senha_hash: senhaHash,
+      passwordResetToken: null,
+      passwordResetExpires: null,
+    },
+  });
+}

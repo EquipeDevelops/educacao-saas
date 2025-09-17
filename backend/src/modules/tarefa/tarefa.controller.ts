@@ -1,74 +1,115 @@
-import { Request, Response } from "express";
+import { Response } from "express";
 import { tarefaService } from "./tarefa.service";
+import { AuthenticatedRequest } from "../../middlewares/auth";
 import {
-  CreateTarefaInput,
+  FindAllTarefasInput,
+  PublishTarefaInput,
   UpdateTarefaInput,
-  TarefaParams,
 } from "./tarefa.validator";
 
 export const tarefaController = {
-  create: async (req: Request<{}, {}, CreateTarefaInput>, res: Response) => {
+  create: async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const novaTarefa = await tarefaService.create(req.body);
-      return res.status(201).json(novaTarefa);
+      const { instituicaoId, perfilId: professorId } = req.user;
+      const tarefa = await tarefaService.create(
+        req.body,
+        professorId!,
+        instituicaoId!
+      );
+      return res.status(201).json(tarefa);
     } catch (error: any) {
-      return res.status(400).json({ message: error.message });
+      if (error.code === "FORBIDDEN")
+        return res.status(403).json({ message: error.message });
+      return res.status(500).json({ message: "Erro ao criar tarefa." });
     }
   },
 
-  findAll: async (req: Request, res: Response) => {
+  findAll: async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const { instituicaoId, turmaId, professorId } = req.query;
-      const filters = {
-        instituicaoId: instituicaoId as string | undefined,
-        turmaId: turmaId as string | undefined,
-        professorId: professorId as string | undefined,
-      };
+      const { instituicaoId, papel } = req.user;
+      let filters = req.query as FindAllTarefasInput;
 
-      const tarefas = await tarefaService.findAll(filters);
+      if (papel === "ALUNO") {
+        filters.publicado = "true";
+      }
+
+      const tarefas = await tarefaService.findAll(instituicaoId!, filters);
       return res.status(200).json(tarefas);
-    } catch (error) {
+    } catch (error: any) {
       return res.status(500).json({ message: "Erro ao buscar tarefas." });
     }
   },
 
-  findById: async (req: Request<TarefaParams>, res: Response) => {
+  findById: async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const tarefa = await tarefaService.findById(req.params.id);
+      const { id } = req.params;
+      const { instituicaoId } = req.user;
+      const tarefa = await tarefaService.findById(id, instituicaoId!);
       if (!tarefa) {
         return res.status(404).json({ message: "Tarefa não encontrada." });
       }
       return res.status(200).json(tarefa);
-    } catch (error) {
+    } catch (error: any) {
       return res.status(500).json({ message: "Erro ao buscar tarefa." });
     }
   },
 
-  update: async (
-    req: Request<TarefaParams, {}, UpdateTarefaInput>,
-    res: Response
-  ) => {
+  update: async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const tarefaAtualizada = await tarefaService.update(
-        req.params.id,
-        req.body
+      const { id } = req.params;
+      const { instituicaoId, perfilId: professorId } = req.user;
+      const tarefa = await tarefaService.update(
+        id,
+        req.body as UpdateTarefaInput["body"],
+        professorId!,
+        instituicaoId!
       );
-      return res.status(200).json(tarefaAtualizada);
-    } catch (error) {
-      return res
-        .status(404)
-        .json({ message: "Tarefa não encontrada para atualização." });
+      return res.status(200).json(tarefa);
+    } catch (error: any) {
+      // <-- CORREÇÃO APLICADA AQUI
+      if (error.code === "FORBIDDEN")
+        return res.status(403).json({ message: error.message });
+      if (error.code === "P2025")
+        return res.status(404).json({ message: "Tarefa não encontrada." });
+      return res.status(500).json({ message: "Erro ao atualizar tarefa." });
     }
   },
 
-  delete: async (req: Request<TarefaParams>, res: Response) => {
+  publish: async (req: AuthenticatedRequest, res: Response) => {
     try {
-      await tarefaService.delete(req.params.id);
+      const { id } = req.params;
+      const { publicado } = req.body as PublishTarefaInput["body"];
+      const { instituicaoId, perfilId: professorId } = req.user;
+      const tarefa = await tarefaService.publish(
+        id,
+        publicado,
+        professorId!,
+        instituicaoId!
+      );
+      return res.status(200).json(tarefa);
+    } catch (error: any) {
+      // <-- CORREÇÃO APLICADA AQUI
+      if (error.code === "FORBIDDEN")
+        return res.status(403).json({ message: error.message });
+      if (error.code === "P2025")
+        return res.status(404).json({ message: "Tarefa não encontrada." });
+      return res.status(500).json({ message: "Erro ao publicar tarefa." });
+    }
+  },
+
+  remove: async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const { id } = req.params;
+      const { instituicaoId, perfilId: professorId } = req.user;
+      await tarefaService.remove(id, professorId!, instituicaoId!);
       return res.status(204).send();
-    } catch (error) {
-      return res
-        .status(404)
-        .json({ message: "Tarefa não encontrada para exclusão." });
+    } catch (error: any) {
+      // <-- CORREÇÃO APLICADA AQUI
+      if (error.code === "FORBIDDEN")
+        return res.status(403).json({ message: error.message });
+      if (error.code === "P2025")
+        return res.status(404).json({ message: "Tarefa não encontrada." });
+      return res.status(500).json({ message: "Erro ao deletar tarefa." });
     }
   },
 };

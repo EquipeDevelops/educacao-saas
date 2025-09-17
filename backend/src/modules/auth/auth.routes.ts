@@ -1,11 +1,25 @@
 import { Router } from "express";
-import { validate } from "../../middlewares/validate";
 import { authController } from "./auth.controller";
-import { registerSchema, loginSchema } from "./auth.validator";
+import { validate } from "../../middlewares/validate";
+import {
+  loginSchema,
+  forgotPasswordSchema,
+  resetPasswordSchema,
+} from "./auth.validator";
 
 const router = Router();
 
-router.post("/register", validate(registerSchema), authController.register);
+// ARQUITETURA: Estas rotas são públicas e NÃO usam o middleware 'protect'.
 router.post("/login", validate(loginSchema), authController.login);
+router.post(
+  "/forgot-password",
+  validate(forgotPasswordSchema),
+  authController.forgotPassword
+);
+router.patch(
+  "/reset-password/:token",
+  validate(resetPasswordSchema),
+  authController.resetPassword
+);
 
 export const authRoutes = router;

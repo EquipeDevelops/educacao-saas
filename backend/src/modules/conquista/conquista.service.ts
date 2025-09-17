@@ -1,44 +1,62 @@
-import prisma from "../../utils/prisma";
-import {
-  CreateConquistaInput,
-  UpdateConquistaInput,
-} from "./conquista.validator";
+import { Prisma, PrismaClient } from "@prisma/client";
+import { CreateConquistaInput } from "./conquista.validator";
 
-export const conquistaService = {
-  create: async (data: CreateConquistaInput) => {
-    const instituicao = await prisma.instituicao.findUnique({
-      where: { id: data.instituicaoId },
-    });
-    if (!instituicao) {
-      throw new Error("Instituição não encontrada.");
-    }
+const prisma = new PrismaClient();
 
-    const conquistaExistente = await prisma.conquistas.findUnique({
-      where: { codigo: data.codigo },
-    });
-    if (conquistaExistente) {
-      throw new Error("Já existe uma conquista com este código.");
-    }
+export async function create(
+  data: CreateConquistaInput,
+  instituicaoId: string
+) {
+  // SEGURANÇA: A conquista é criada com o ID da instituição do usuário logado.
+  return prisma.conquistas.create({
+    data: {
+      ...data,
+      instituicaoId,
+    },
+  });
+}
 
-    return await prisma.conquistas.create({ data });
-  },
+export async function findAll(instituicaoId: string) {
+  // SEGURANÇA: Retorna apenas as conquistas da instituição do usuário.
+  return prisma.conquistas.findMany({
+    where: { instituicaoId },
+    orderBy: { titulo: "asc" },
+  });
+}
 
-  findAllByInstituicao: async (instituicaoId: string) => {
-    return await prisma.conquistas.findMany({
-      where: { instituicaoId },
-      orderBy: { titulo: "asc" },
-    });
-  },
+export async function findById(id: string, instituicaoId: string) {
+  // SEGURANÇA: Garante que o usuário só pode acessar conquistas da sua própria instituição.
+  return prisma.conquistas.findFirst({
+    where: {
+      id,
+      instituicaoId,
+    },
+  });
+}
 
-  findById: async (id: string) => {
-    return await prisma.conquistas.findUnique({ where: { id } });
-  },
+export async function update(
+  id: string,
+  data: Prisma.ConquistasUpdateInput,
+  instituicaoId: string
+) {
+  // SEGURANÇA: A verificação composta impede a atualização de dados de outra instituição.
+  return prisma.conquistas.updateMany({
+    where: {
+      id,
+      instituicaoId,
+    },
+    data,
+  });
+}
 
-  update: async (id: string, data: UpdateConquistaInput) => {
-    return await prisma.conquistas.update({ where: { id }, data });
-  },
+export async function remove(id: string, instituicaoId: string) {
+  // SEGURANÇA: A verificação composta impede a exclusão de dados de outra instituição.
+  return prisma.conquistas.deleteMany({
+    where: {
+      id,
+      instituicaoId,
+    },
+  });
+}
 
-  delete: async (id: string) => {
-    return await prisma.conquistas.delete({ where: { id } });
-  },
-};
+export const conquistaService = { create, findAll, findById, update, remove };

@@ -1,22 +1,61 @@
 import { Router } from "express";
 import { tarefaController } from "./tarefa.controller";
 import { validate } from "../../middlewares/validate";
+import { protect, authorize } from "../../middlewares/auth"; // <-- IMPORTAÇÃO
 import {
   createTarefaSchema,
   updateTarefaSchema,
   paramsSchema,
+  findAllTarefasSchema,
+  publishTarefaSchema,
 } from "./tarefa.validator";
 
 const router = Router();
 
-router.post("/", validate(createTarefaSchema), tarefaController.create);
+// SEGURANÇA: Apenas PROFESSORES podem criar, editar, publicar e deletar tarefas.
+router.post(
+  "/",
+  protect,
+  authorize("PROFESSOR"),
+  validate(createTarefaSchema),
+  tarefaController.create
+);
+router.put(
+  "/:id",
+  protect,
+  authorize("PROFESSOR"),
+  validate(updateTarefaSchema),
+  tarefaController.update
+);
+router.delete(
+  "/:id",
+  protect,
+  authorize("PROFESSOR"),
+  validate({ params: paramsSchema }),
+  tarefaController.remove
+);
+router.patch(
+  "/:id/publish",
+  protect,
+  authorize("PROFESSOR"),
+  validate(publishTarefaSchema),
+  tarefaController.publish
+);
 
-router.get("/", tarefaController.findAll);
-
-router.get("/:id", validate(paramsSchema), tarefaController.findById);
-
-router.patch("/:id", validate(updateTarefaSchema), tarefaController.update);
-
-router.delete("/:id", validate(paramsSchema), tarefaController.delete);
+// Todos os usuários autenticados (PROFESSOR, ALUNO, ADMIN) podem visualizar as tarefas.
+router.get(
+  "/",
+  protect,
+  authorize("ADMINISTRADOR", "PROFESSOR", "ALUNO"),
+  validate(findAllTarefasSchema),
+  tarefaController.findAll
+);
+router.get(
+  "/:id",
+  protect,
+  authorize("ADMINISTRADOR", "PROFESSOR", "ALUNO"),
+  validate({ params: paramsSchema }),
+  tarefaController.findById
+);
 
 export const tarefaRoutes = router;

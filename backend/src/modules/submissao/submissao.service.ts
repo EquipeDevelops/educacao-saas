@@ -1,71 +1,125 @@
-import prisma from "../../utils/prisma";
+import { Prisma, PrismaClient, StatusSubmissao } from "@prisma/client";
 import {
   CreateSubmissaoInput,
   GradeSubmissaoInput,
+  FindAllSubmissoesInput,
 } from "./submissao.validator";
 
-export const submissaoService = {
-  create: async (data: CreateSubmissaoInput) => {
-    const [aluno, tarefa] = await Promise.all([
-      prisma.usuarios.findUnique({ where: { id: data.alunoId } }),
-      prisma.tarefas.findUnique({
-        where: { id: data.tarefaId },
-        include: { turma: true },
-      }),
-    ]);
+const prisma = new PrismaClient();
 
-    if (!aluno || aluno.papel !== "ALUNO") throw new Error("Aluno inválido.");
-    if (!tarefa) throw new Error("Tarefa não encontrada.");
-
-    const matricula = await prisma.matriculas.findFirst({
-      where: { alunoId: data.alunoId, turmaId: tarefa.turmaId, status: true },
-    });
-    if (!matricula)
-      throw new Error("Aluno não está matriculado na turma desta tarefa.");
-
-    const submissaoExistente = await prisma.submissoes.findFirst({
-      where: data,
-    });
-    if (submissaoExistente)
-      throw new Error(
-        "Já existe uma submissão para esta tarefa por este aluno."
-      );
-
-    return await prisma.submissoes.create({
-      data: {
-        ...data,
-        instituicaoId: tarefa.instituicaoId,
-        status: "ENTREGUE",
-        nota_total: 0,
-      },
-    });
-  },
-
-  grade: async (id: string, data: GradeSubmissaoInput) => {
-    return await prisma.submissoes.update({ where: { id }, data });
-  },
-
-  findAll: async (filters: { tarefaId?: string; alunoId?: string }) => {
-    return await prisma.submissoes.findMany({
-      where: filters,
-      include: {
-        aluno: { select: { id: true, nome: true } },
-      },
-    });
-  },
-
-  findById: async (id: string) => {
-    return await prisma.submissoes.findUnique({
-      where: { id },
-      include: {
-        aluno: { select: { id: true, nome: true } },
-        tarefa: { select: { id: true, titulo: true } },
-        respostas: {
-          include: {
-            questao: { select: { id: true, titulo: true, sequencia: true } },
-          },
-        },
-      },
-    });
-  },
+const fullInclude = {
+  aluno: { include: { usuario: { select: { id: true, nome: true } } } },
+  tarefa: { select: { id: true, titulo: true, pontos: true } },
+  respostas: true,
 };
+
+export async function create(
+  data: CreateSubmissaoInput,
+  alunoId: string,
+  instituicaoId: string
+) {
+  const { tarefaId } = data;
+
+  const tarefa = await prisma.tarefas.findFirst({
+    where: { id: tarefaId, instituicaoId, publicado: true },
+    select: { componenteCurricular: { select: { turmaId: true } } },
+  });
+  if (!tarefa) throw new Error("Tarefa não encontrada ou não está disponível.");
+
+  const matricula = await prisma.matriculas.findFirst({
+    where: {
+      alunoId,
+      turmaId: tarefa.componenteCurricular.turmaId,
+      status: "ATIVA",
+    },
+  });
+  if (!matricula)
+    throw new Error("Você não está matriculado na turma desta tarefa.");
+
+  const submissaoExistente = await prisma.submissoes.findFirst({
+    where: { tarefaId, alunoId },
+  });
+  if (submissaoExistente)
+    throw new Error("Já existe uma submissão para esta tarefa.");
+
+  return prisma.submissoes.create({
+    data: {
+      tarefaId,
+      alunoId,
+      instituicaoId,
+      status: StatusSubmissao.EM_ANDAMENTO,
+    },
+  });
+}
+
+export async function findAll(
+  instituicaoId: string,
+  filters: FindAllSubmissoesInput
+) {
+  const where: Prisma.SubmissoesWhereInput = { instituicaoId };
+  if (filters.tarefaId) where.tarefaId = filters.tarefaId;
+  if (filters.alunoId) where.alunoId = filters.alunoId;
+
+  return prisma.submissoes.findMany({
+    where,
+    include: {
+      aluno: { include: { usuario: { select: { nome: true } } } },
+      tarefa: { select: { titulo: true } },
+    },
+  });
+}
+
+export async function findById(
+  id: string,
+  user: { instituicaoId: string; perfilId: string; papel: string }
+) {
+  const submissao = await prisma.submissoes.findFirst({
+    where: { id, instituicaoId: user.instituicaoId },
+    include: fullInclude,
+  });
+
+  if (!submissao) return null;
+
+  const isOwner = submissao.alunoId === user.perfilId;
+  const professorDaTarefa = await prisma.tarefas.findFirst({
+    where: {
+      id: submissao.tarefaId,
+      componenteCurricular: { professorId: user.perfilId },
+    },
+  });
+  const isProfessorDaTarefa = !!professorDaTarefa;
+
+  if (user.papel === "ALUNO" && !isOwner) return null;
+  if (user.papel === "PROFESSOR" && !isProfessorDaTarefa) return null;
+
+  return submissao;
+}
+
+export async function grade(
+  id: string,
+  data: GradeSubmissaoInput,
+  professorId: string,
+  instituicaoId: string
+) {
+  const submissao = await prisma.submissoes.findFirst({
+    where: { id, instituicaoId },
+  });
+  if (!submissao) throw new Error("Submissão não encontrada.");
+
+  const tarefa = await prisma.tarefas.findFirst({
+    where: { id: submissao.tarefaId, componenteCurricular: { professorId } },
+  });
+  if (!tarefa)
+    throw new Error("Você não tem permissão para avaliar esta submissão.");
+
+  return prisma.submissoes.update({
+    where: { id },
+    data: {
+      ...data,
+      status: StatusSubmissao.AVALIADA,
+    },
+    include: fullInclude,
+  });
+}
+
+export const submissaoService = { create, findAll, findById, grade };

@@ -1,20 +1,48 @@
 import { Router } from "express";
 import { opcaoController } from "./opcaoMultiplaEscolha.controller";
 import { validate } from "../../middlewares/validate";
+import { protect, authorize } from "../../middlewares/auth"; // <-- IMPORTAÇÃO
 import {
-  createOpcaoSchema,
+  setOpcoesSchema,
+  questaoParamsSchema,
   updateOpcaoSchema,
   paramsSchema,
 } from "./opcaoMultiplaEscolha.validator";
 
 const router = Router();
 
-router.post("/", validate(createOpcaoSchema), opcaoController.create);
+// SEGURANÇA: Apenas PROFESSORES podem definir (criar/sobrescrever) as opções de uma questão.
+router.post(
+  "/questao/:questaoId",
+  protect,
+  authorize("PROFESSOR"),
+  validate(setOpcoesSchema),
+  opcaoController.setOpcoes
+);
 
-router.get("/", opcaoController.findAllByQuestao);
+// Para consistência, adicionamos rotas para gerenciar uma única opção, também restritas a PROFESSORES.
+router.put(
+  "/:id",
+  protect,
+  authorize("PROFESSOR"),
+  validate(updateOpcaoSchema),
+  opcaoController.update
+);
+router.delete(
+  "/:id",
+  protect,
+  authorize("PROFESSOR"),
+  validate({ params: paramsSchema }),
+  opcaoController.remove
+);
 
-router.patch("/:id", validate(updateOpcaoSchema), opcaoController.update);
-
-router.delete("/:id", validate(paramsSchema), opcaoController.delete);
+// PROFESSORES e ALUNOS podem listar as opções de uma questão.
+router.get(
+  "/questao/:questaoId",
+  protect,
+  authorize("PROFESSOR", "ALUNO"),
+  validate({ params: questaoParamsSchema }),
+  opcaoController.findAllByQuestao
+);
 
 export const opcaoRoutes = router;

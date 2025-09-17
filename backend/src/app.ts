@@ -1,5 +1,7 @@
+import "express-async-errors";
 import express, { Application, Request, Response } from "express";
 import mainRouter from "./routes";
+import { errorHandler } from "./middlewares/error";
 
 const app: Application = express();
 
@@ -10,5 +12,7 @@ app.get("/", (req: Request, res: Response) => {
 });
 
 app.use("/api", mainRouter);
+
+app.use(errorHandler);
 
 export default app;

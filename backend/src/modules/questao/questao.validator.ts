@@ -1,45 +1,52 @@
 import { z } from "zod";
+import { TipoQuestao } from "@prisma/client";
+
+export const paramsSchema = z.object({
+  id: z.string({ required_error: "O ID da questão é obrigatório." }),
+});
 
 export const createQuestaoSchema = z.object({
   body: z.object({
+    tarefaId: z.string({ required_error: "O ID da tarefa é obrigatório." }),
     sequencia: z
       .number({ required_error: "A sequência é obrigatória." })
       .int()
-      .min(1),
-    tipo: z.string({ required_error: "O tipo da questão é obrigatório." }),
-    titulo: z.string({ required_error: "O título é obrigatório." }),
-    enunciado: z.string({ required_error: "O enunciado é obrigatório." }),
-    payload: z.record(z.any(), {
-      required_error: "O payload da questão é obrigatório.",
+      .positive(),
+    tipo: z.nativeEnum(TipoQuestao, {
+      required_error: "O tipo da questão é obrigatório.",
     }),
+    titulo: z.string({ required_error: "O título é obrigatório." }).min(3),
+    enunciado: z.string({ required_error: "O enunciado é obrigatório." }),
     pontos: z
       .number({ required_error: "A pontuação é obrigatória." })
       .int()
       .min(0),
-    tarefaId: z.string({ required_error: "O ID da tarefa é obrigatório." }),
+    payload: z.record(z.any()).optional(), // Para dados extras, como opções de associação
   }),
 });
 
 export const updateQuestaoSchema = z.object({
   body: z.object({
-    sequencia: z.number().int().min(1).optional(),
-    tipo: z.string().optional(),
-    titulo: z.string().optional(),
+    sequencia: z.number().int().positive().optional(),
+    tipo: z.nativeEnum(TipoQuestao).optional(),
+    titulo: z.string().min(3).optional(),
     enunciado: z.string().optional(),
-    payload: z.record(z.any()).optional(),
     pontos: z.number().int().min(0).optional(),
+    payload: z.record(z.any()).optional(),
   }),
-  params: z.object({
-    id: z.string({ required_error: "O ID da questão é obrigatório." }),
-  }),
+  params: paramsSchema,
 });
 
-export const paramsSchema = z.object({
-  params: z.object({
-    id: z.string({ required_error: "O ID da questão é obrigatório." }),
+export const findAllQuestoesSchema = z.object({
+  query: z.object({
+    tarefaId: z.string({
+      required_error: "O filtro por tarefaId é obrigatório.",
+    }),
   }),
 });
 
 export type CreateQuestaoInput = z.infer<typeof createQuestaoSchema>["body"];
-export type UpdateQuestaoInput = z.infer<typeof updateQuestaoSchema>["body"];
-export type QuestaoParams = z.infer<typeof paramsSchema>["params"];
+export type UpdateQuestaoInput = z.infer<typeof updateQuestaoSchema>;
+export type FindAllQuestoesInput = z.infer<
+  typeof findAllQuestoesSchema
+>["query"];

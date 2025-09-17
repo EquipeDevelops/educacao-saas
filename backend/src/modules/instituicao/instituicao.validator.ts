@@ -1,39 +1,28 @@
 import { z } from "zod";
 
+export const paramsSchema = z.object({
+  id: z.string({ required_error: "O ID da instituição é obrigatório." }),
+});
+
 export const createInstituicaoSchema = z.object({
   body: z.object({
-    nome: z
-      .string({ required_error: "O nome é obrigatório." })
-      .min(3, "O nome deve ter no mínimo 3 caracteres."),
+    nome: z.string({ required_error: "O nome é obrigatório." }),
     cidade: z.string({ required_error: "A cidade é obrigatória." }),
-    metadados: z.record(z.any()).optional(),
+    estado: z.string({ required_error: "O estado é obrigatório." }),
+    cep: z.string({ required_error: "O CEP é obrigatório." }),
+    logradouro: z.string().optional(),
+    bairro: z.string().optional(),
   }),
 });
 
 export const updateInstituicaoSchema = z.object({
   body: z.object({
-    nome: z
-      .string()
-      .min(3, "O nome deve ter no mínimo 3 caracteres.")
-      .optional(),
+    nome: z.string().optional(),
     cidade: z.string().optional(),
-    metadados: z.record(z.any()).optional(),
+    estado: z.string().optional(),
+    cep: z.string().optional(),
+    logradouro: z.string().optional(),
+    bairro: z.string().optional(),
   }),
-  params: z.object({
-    id: z.string({ required_error: "O ID da instituição é obrigatório." }),
-  }),
+  params: paramsSchema,
 });
-
-export const paramsSchema = z.object({
-  params: z.object({
-    id: z.string({ required_error: "O ID da instituição é obrigatório." }),
-  }),
-});
-
-export type CreateInstituicaoInput = z.infer<
-  typeof createInstituicaoSchema
->["body"];
-export type UpdateInstituicaoInput = z.infer<
-  typeof updateInstituicaoSchema
->["body"];
-export type InstituicaoParams = z.infer<typeof paramsSchema>["params"];
