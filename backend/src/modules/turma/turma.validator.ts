@@ -1,35 +1,30 @@
 import { z } from "zod";
+import { Turno } from "@prisma/client";
+
+export const paramsSchema = z.object({
+  id: z.string({ required_error: "O ID da turma é obrigatório." }),
+});
 
 export const createTurmaSchema = z.object({
   body: z.object({
-    nome: z.string({ required_error: "O nome da turma é obrigatório." }),
-    serie: z.string({ required_error: "A série da turma é obrigatória." }),
-    instituicaoId: z.string({
-      required_error: "O ID da instituição é obrigatório.",
-    }),
+    nome: z
+      .string({ required_error: "O nome da turma é obrigatório." })
+      .min(1, "O nome não pode ser vazio."),
+    serie: z.string({ required_error: "A série é obrigatória." }),
+    turno: z.nativeEnum(Turno, { required_error: "O turno é obrigatório." }),
     unidadeEscolarId: z.string().optional(),
-    professorId: z.string().optional(),
   }),
 });
 
 export const updateTurmaSchema = z.object({
   body: z.object({
-    nome: z.string().optional(),
+    nome: z.string().min(1, "O nome não pode ser vazio.").optional(),
     serie: z.string().optional(),
-    unidadeEscolarId: z.string().optional(),
-    professorId: z.string().optional(),
+    turno: z.nativeEnum(Turno).optional(),
+    unidadeEscolarId: z.string().optional().nullable(),
   }),
-  params: z.object({
-    id: z.string({ required_error: "O ID da turma é obrigatório." }),
-  }),
-});
-
-export const paramsSchema = z.object({
-  params: z.object({
-    id: z.string({ required_error: "O ID da turma é obrigatório." }),
-  }),
+  params: paramsSchema,
 });
 
 export type CreateTurmaInput = z.infer<typeof createTurmaSchema>["body"];
-export type UpdateTurmaInput = z.infer<typeof updateTurmaSchema>["body"];
-export type TurmaParams = z.infer<typeof paramsSchema>["params"];
+export type UpdateTurmaInput = z.infer<typeof updateTurmaSchema>;

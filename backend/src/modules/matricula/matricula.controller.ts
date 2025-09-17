@@ -1,76 +1,99 @@
-import { Request, Response } from "express";
+import { Response } from "express";
 import { matriculaService } from "./matricula.service";
 import {
   CreateMatriculaInput,
+  FindAllMatriculasInput,
   UpdateMatriculaInput,
-  MatriculaParams,
 } from "./matricula.validator";
+import { AuthenticatedRequest } from "../../middlewares/auth"; // <-- 1. IMPORTA O TIPO
 
 export const matriculaController = {
-  create: async (req: Request<{}, {}, CreateMatriculaInput>, res: Response) => {
+  create: async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const novaMatricula = await matriculaService.create(req.body);
-      return res.status(201).json(novaMatricula);
+      const { instituicaoId } = req.user; // <-- 2. USA O DADO REAL E SEGURO
+      const matricula = await matriculaService.create(
+        req.body as CreateMatriculaInput,
+        instituicaoId!
+      );
+      return res.status(201).json(matricula);
     } catch (error: any) {
-      if (error.message.includes("já está matriculado")) {
+      if (error.message.includes("já possui uma matrícula")) {
         return res.status(409).json({ message: error.message });
       }
       return res.status(400).json({ message: error.message });
     }
   },
 
-  findAll: async (req: Request, res: Response) => {
+  findAll: async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const { turmaId, alunoId } = req.query;
-      const filters = {
-        turmaId: turmaId as string | undefined,
-        alunoId: alunoId as string | undefined,
-      };
+      const { instituicaoId, papel, perfilId } = req.user;
+      let filters = req.query as FindAllMatriculasInput;
 
-      const matriculas = await matriculaService.findAll(filters);
+      // SEGURANÇA: Se o usuário for um aluno, força o filtro para apenas suas próprias matrículas.
+      if (papel === "ALUNO") {
+        filters = { ...filters, alunoId: perfilId! };
+      }
+
+      const matriculas = await matriculaService.findAll(
+        instituicaoId!,
+        filters
+      );
       return res.status(200).json(matriculas);
-    } catch (error) {
-      return res.status(500).json({ message: "Erro ao buscar matrículas." });
+    } catch (error: any) {
+      return res
+        .status(500)
+        .json({ message: "Erro ao buscar matrículas.", error: error.message });
     }
   },
 
-  findById: async (req: Request<MatriculaParams>, res: Response) => {
+  findById: async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const matricula = await matriculaService.findById(req.params.id);
+      const { id } = req.params;
+      const { instituicaoId } = req.user;
+      const matricula = await matriculaService.findById(id, instituicaoId!);
       if (!matricula) {
         return res.status(404).json({ message: "Matrícula não encontrada." });
       }
       return res.status(200).json(matricula);
-    } catch (error) {
+    } catch (error: any) {
       return res.status(500).json({ message: "Erro ao buscar matrícula." });
     }
   },
 
-  update: async (
-    req: Request<MatriculaParams, {}, UpdateMatriculaInput>,
-    res: Response
-  ) => {
+  updateStatus: async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const matriculaAtualizada = await matriculaService.update(
-        req.params.id,
-        req.body
+      const { id } = req.params;
+      const { status } = req.body as UpdateMatriculaInput["body"];
+      const { instituicaoId } = req.user;
+      const matricula = await matriculaService.updateStatus(
+        id,
+        status,
+        instituicaoId!
       );
-      return res.status(200).json(matriculaAtualizada);
-    } catch (error) {
-      return res
-        .status(404)
-        .json({ message: "Matrícula não encontrada para atualização." });
+      return res.status(200).json(matricula);
+    } catch (error: any) {
+      if ((error as any).code === "P2025") {
+        return res
+          .status(404)
+          .json({ message: "Matrícula não encontrada para atualização." });
+      }
+      return res.status(500).json({ message: "Erro ao atualizar matrícula." });
     }
   },
 
-  delete: async (req: Request<MatriculaParams>, res: Response) => {
+  remove: async (req: AuthenticatedRequest, res: Response) => {
     try {
-      await matriculaService.delete(req.params.id);
+      const { id } = req.params;
+      const { instituicaoId } = req.user;
+      await matriculaService.remove(id, instituicaoId!);
       return res.status(204).send();
-    } catch (error) {
-      return res
-        .status(404)
-        .json({ message: "Matrícula não encontrada para exclusão." });
+    } catch (error: any) {
+      if ((error as any).code === "P2025") {
+        return res
+          .status(404)
+          .json({ message: "Matrícula não encontrada para exclusão." });
+      }
+      return res.status(500).json({ message: "Erro ao deletar matrícula." });
     }
   },
 };

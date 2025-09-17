@@ -1,56 +1,72 @@
 import { z } from "zod";
 import { PapelUsuario } from "@prisma/client";
 
-export const createUsuarioSchema = z.object({
-  body: z.object({
-    nome: z.string({ required_error: "O nome é obrigatório." }).min(3),
-    email: z
-      .string({ required_error: "O email é obrigatório." })
-      .email("Formato de email inválido."),
-    senha: z
-      .string({ required_error: "A senha é obrigatória." })
-      .min(8, "A senha deve ter no mínimo 8 caracteres."),
-
-    papel: z.nativeEnum(PapelUsuario, {
-      required_error: "O papel do usuário é obrigatório.",
-    }),
-
-    data_nascimento: z.coerce.date().optional(),
-    cpf: z.string().optional(),
-    email_responsavel: z
-      .string()
-      .email("Formato de email inválido para o responsável.")
-      .optional(),
-    instituicaoId: z.string().optional(),
-    unidadeEscolarId: z.string().optional(),
-    metadados: z.record(z.any()).optional(),
-  }),
-});
-
-export const updateUsuarioSchema = z.object({
-  body: z.object({
-    nome: z.string().min(3).optional(),
-    data_nascimento: z.coerce.date().optional(),
-    email_responsavel: z
-      .string()
-      .email("Formato de email inválido para o responsável.")
-      .optional(),
-    instituicaoId: z.string().optional(),
-    unidadeEscolarId: z.string().optional(),
-    desabilitado: z.boolean().optional(),
-    metadados: z.record(z.any()).optional(),
-  }),
-  params: z.object({
-    id: z.string({ required_error: "O ID do usuário é obrigatório." }),
-  }),
-});
-
 export const paramsSchema = z.object({
-  params: z.object({
-    id: z.string({ required_error: "O ID do usuário é obrigatório." }),
-  }),
+  id: z.string().nonempty("O ID é obrigatório"),
 });
 
-export type CreateUsuarioInput = z.infer<typeof createUsuarioSchema>["body"];
-export type UpdateUsuarioInput = z.infer<typeof updateUsuarioSchema>["body"];
-export type UsuarioParams = z.infer<typeof paramsSchema>["params"];
+const alunoProfileSchema = z.object({
+  numero_matricula: z.string({
+    required_error: "O número de matrícula é obrigatório.",
+  }),
+  email_responsavel: z
+    .string()
+    .email("Email do responsável inválido.")
+    .optional(),
+});
+
+const professorProfileSchema = z.object({
+  titulacao: z.string().optional(),
+  area_especializacao: z.string().optional(),
+});
+
+export const createUserSchema = z.object({
+  body: z
+    .object({
+      nome: z
+        .string({ required_error: "O nome é obrigatório." })
+        .min(3, "O nome deve ter no mínimo 3 caracteres."),
+      email: z
+        .string({ required_error: "O email é obrigatório." })
+        .email("Formato de email inválido."),
+      senha: z
+        .string({ required_error: "A senha é obrigatória." })
+        .min(6, "A senha deve ter no mínimo 6 caracteres."),
+      papel: z.nativeEnum(PapelUsuario, {
+        required_error: "O papel do usuário é obrigatório.",
+      }),
+
+      perfil_aluno: alunoProfileSchema.optional(),
+      perfil_professor: professorProfileSchema.optional(),
+    })
+    .refine(
+      (data) => {
+        if (data.papel === PapelUsuario.ALUNO) {
+          return !!data.perfil_aluno;
+        }
+        if (data.papel === PapelUsuario.PROFESSOR) {
+          return !!data.perfil_professor;
+        }
+        return true;
+      },
+      {
+        message:
+          "O perfil correspondente ao papel do usuário não foi fornecido.",
+        path: ["perfil_aluno", "perfil_professor"],
+      }
+    ),
+});
+
+export const updateUserSchema = z.object({
+  body: z.object({
+    nome: z
+      .string()
+      .min(3, "O nome deve ter no mínimo 3 caracteres.")
+      .optional(),
+    status: z.boolean().optional(),
+  }),
+  params: paramsSchema,
+});
+
+export type CreateUserInput = z.infer<typeof createUserSchema>["body"];
+export type UpdateUserInput = z.infer<typeof updateUserSchema>;

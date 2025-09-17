@@ -1,61 +1,80 @@
-import { Request, Response } from "express";
+import { Response } from "express";
 import { opcaoService } from "./opcaoMultiplaEscolha.service";
 import {
-  CreateOpcaoInput,
+  SetOpcoesInput,
   UpdateOpcaoInput,
-  OpcaoParams,
 } from "./opcaoMultiplaEscolha.validator";
+import { AuthenticatedRequest } from "../../middlewares/auth";
 
 export const opcaoController = {
-  create: async (req: Request<{}, {}, CreateOpcaoInput>, res: Response) => {
+  setOpcoes: async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const novaOpcao = await opcaoService.create(req.body);
-      return res.status(201).json(novaOpcao);
-    } catch (error: any) {
-      return res.status(400).json({ message: error.message });
-    }
-  },
-
-  findAllByQuestao: async (req: Request, res: Response) => {
-    try {
-      const { questaoId } = req.query;
-      if (!questaoId) {
-        return res.status(400).json({
-          message: "O ID da questão é obrigatório para listar as opções.",
-        });
-      }
-      const opcoes = await opcaoService.findAllByQuestao(questaoId as string);
-      return res.status(200).json(opcoes);
-    } catch (error) {
-      return res.status(500).json({ message: "Erro ao buscar opções." });
-    }
-  },
-
-  update: async (
-    req: Request<OpcaoParams, {}, UpdateOpcaoInput>,
-    res: Response
-  ) => {
-    try {
-      const opcaoAtualizada = await opcaoService.update(
-        req.params.id,
-        req.body
+      const { instituicaoId, perfilId: professorId } = req.user;
+      const result = await opcaoService.setOpcoes(
+        req as unknown as SetOpcoesInput,
+        professorId!,
+        instituicaoId!
       );
-      return res.status(200).json(opcaoAtualizada);
-    } catch (error) {
       return res
-        .status(404)
-        .json({ message: "Opção não encontrada para atualização." });
+        .status(201)
+        .json({ message: `${result.count} opções foram salvas com sucesso.` });
+    } catch (error: any) {
+      if (error.code === "FORBIDDEN")
+        return res.status(403).json({ message: error.message });
+      return res.status(500).json({ message: "Erro ao salvar opções." });
     }
   },
 
-  delete: async (req: Request<OpcaoParams>, res: Response) => {
+  findAllByQuestao: async (req: AuthenticatedRequest, res: Response) => {
     try {
-      await opcaoService.delete(req.params.id);
+      const { questaoId } = req.params;
+      const { instituicaoId, papel } = req.user;
+
+      const isAluno = papel === "ALUNO";
+      const opcoes = await opcaoService.findAllByQuestao(
+        questaoId,
+        instituicaoId!,
+        isAluno
+      );
+
+      return res.status(200).json(opcoes);
+    } catch (error: any) {
+      return res.status(404).json({ message: error.message });
+    }
+  },
+
+  update: async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const { id } = req.params;
+      const { instituicaoId, perfilId: professorId } = req.user;
+      const opcao = await opcaoService.update(
+        id,
+        req.body as UpdateOpcaoInput["body"],
+        professorId!,
+        instituicaoId!
+      );
+      return res.status(200).json(opcao);
+    } catch (error: any) {
+      if (error.code === "FORBIDDEN")
+        return res.status(403).json({ message: error.message });
+      if (error.code === "P2025")
+        return res.status(404).json({ message: "Opção não encontrada." });
+      return res.status(500).json({ message: "Erro ao atualizar opção." });
+    }
+  },
+
+  remove: async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const { id } = req.params;
+      const { instituicaoId, perfilId: professorId } = req.user;
+      await opcaoService.remove(id, professorId!, instituicaoId!);
       return res.status(204).send();
-    } catch (error) {
-      return res
-        .status(404)
-        .json({ message: "Opção não encontrada para exclusão." });
+    } catch (error: any) {
+      if (error.code === "FORBIDDEN")
+        return res.status(403).json({ message: error.message });
+      if (error.code === "P2025")
+        return res.status(404).json({ message: "Opção não encontrada." });
+      return res.status(500).json({ message: "Erro ao deletar opção." });
     }
   },
 };

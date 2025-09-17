@@ -1,77 +1,97 @@
-import prisma from "../../utils/prisma";
+import { Prisma, PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
-import { CreateUsuarioInput, UpdateUsuarioInput } from "./usuario.validator";
+import { CreateUserInput } from "./usuario.validator";
 
-const sanitizeUser = (user: any) => {
-  const { senha_hash, cpf_criptografado, ...sanitizedUser } = user;
-  return sanitizedUser;
-};
+const prisma = new PrismaClient();
 
-export const usuarioService = {
-  create: async (data: CreateUsuarioInput) => {
-    const { senha, cpf, ...restData } = data;
+export async function createUser(input: CreateUserInput) {
+  const { nome, email, senha, papel, perfil_aluno, perfil_professor } = input;
 
-    const senha_hash = await bcrypt.hash(senha, 10);
+  const senhaHash = await bcrypt.hash(senha, 10);
 
-    const cpf_criptografado = cpf ? Buffer.from(cpf) : undefined;
-
-    const user = await prisma.usuarios.create({
+  return prisma.$transaction(async (tx) => {
+    const novoUsuario = await tx.usuarios.create({
       data: {
-        ...restData,
-        senha_hash,
-        cpf_criptografado,
+        nome,
+        email,
+        senha_hash: senhaHash,
+        papel,
+        status: true,
       },
     });
 
-    return sanitizeUser(user);
-  },
+    if (papel === "ALUNO" && perfil_aluno) {
+      await tx.usuarios_aluno.create({
+        data: {
+          usuarioId: novoUsuario.id,
+          numero_matricula: perfil_aluno.numero_matricula,
+          email_responsavel: perfil_aluno.email_responsavel,
+        },
+      });
+    } else if (papel === "PROFESSOR" && perfil_professor) {
+      await tx.usuarios_professor.create({
+        data: {
+          usuarioId: novoUsuario.id,
+          titulacao: perfil_professor.titulacao,
+          area_especializacao: perfil_professor.area_especializacao,
+        },
+      });
+    }
 
-  findAll: async () => {
-    const users = await prisma.usuarios.findMany({
-      select: {
-        id: true,
-        nome: true,
-        email: true,
-        papel: true,
-        data_nascimento: true,
-        email_responsavel: true,
-        desabilitado: true,
-        criado_em: true,
-        atualizado_em: true,
-        instituicaoId: true,
-        unidadeEscolarId: true,
+    const usuarioCompleto = await tx.usuarios.findUnique({
+      where: { id: novoUsuario.id },
+      include: {
+        perfil_aluno: true,
+        perfil_professor: true,
       },
     });
-    return users;
-  },
 
-  findById: async (id: string) => {
-    const user = await prisma.usuarios.findUnique({
-      where: { id },
-    });
+    const { senha_hash, ...usuarioSemSenha } = usuarioCompleto!;
+    return usuarioSemSenha;
+  });
+}
 
-    if (!user) return null;
-    return sanitizeUser(user);
-  },
+export async function findUserById(id: string) {
+  const usuario = await prisma.usuarios.findUnique({
+    where: { id },
+    include: {
+      perfil_aluno: true,
+      perfil_professor: true,
+    },
+  });
 
-  findByEmail: async (email: string) => {
-    return await prisma.usuarios.findUnique({
-      where: { email },
-    });
-  },
+  if (!usuario) return null;
 
-  update: async (id: string, data: UpdateUsuarioInput) => {
-    const user = await prisma.usuarios.update({
-      where: { id },
-      data,
-    });
-    return sanitizeUser(user);
-  },
+  const { senha_hash, ...usuarioSemSenha } = usuario;
+  return usuarioSemSenha;
+}
 
-  delete: async (id: string) => {
-    await prisma.usuarios.delete({
-      where: { id },
-    });
-    return;
-  },
-};
+export async function findAllUsers() {
+  const usuarios = await prisma.usuarios.findMany({
+    select: {
+      id: true,
+      nome: true,
+      email: true,
+      papel: true,
+      status: true,
+      criado_em: true,
+    },
+  });
+  return usuarios;
+}
+
+export async function updateUser(id: string, data: Prisma.UsuariosUpdateInput) {
+  const usuarioAtualizado = await prisma.usuarios.update({
+    where: { id },
+    data,
+  });
+  const { senha_hash, ...usuarioSemSenha } = usuarioAtualizado;
+  return usuarioSemSenha;
+}
+
+export async function deleteUser(id: string) {
+  await prisma.usuarios.delete({
+    where: { id },
+  });
+  return { message: "Usuário deletado com sucesso." };
+}

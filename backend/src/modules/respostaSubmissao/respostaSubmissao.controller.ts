@@ -1,32 +1,40 @@
-import { Request, Response } from "express";
+import { Response } from "express";
 import { respostaService } from "./respostaSubmissao.service";
-import { CreateRespostasInput } from "./respostaSubmissao.validator";
+import { AuthenticatedRequest } from "../../middlewares/auth"; // <-- IMPORTA O TIPO
 
 export const respostaController = {
-  createMany: async (
-    req: Request<
-      { submissaoId: string },
-      {},
-      { respostas: CreateRespostasInput }
-    >,
-    res: Response
-  ) => {
+  saveAnswers: async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const { submissaoId } = req.params;
-      const { respostas } = req.body;
-
-      const result = await respostaService.createMany(submissaoId, respostas);
-      return res.status(201).json({
-        message: `${result.count} respostas foram salvas com sucesso.`,
-      });
+      const { instituicaoId, perfilId: alunoId } = req.user;
+      await respostaService.saveAnswers(req as any, alunoId!, instituicaoId!);
+      return res
+        .status(200)
+        .json({ message: "Respostas salvas e tarefa enviada com sucesso." });
     } catch (error: any) {
-      if (error.message.includes("não pertence à tarefa")) {
-        return res.status(400).json({ message: error.message });
-      }
-      if (error.message.includes("Submissão não encontrada")) {
-        return res.status(404).json({ message: error.message });
-      }
+      if (error.code === "FORBIDDEN")
+        return res.status(403).json({ message: error.message });
+      // 423 Locked: O recurso que está sendo acessado está travado.
+      if (error.code === "LOCKED")
+        return res.status(423).json({ message: error.message });
       return res.status(500).json({ message: "Erro ao salvar respostas." });
+    }
+  },
+
+  gradeAnswer: async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const { instituicaoId, perfilId: professorId } = req.user;
+      const respostaAvaliada = await respostaService.gradeAnswer(
+        req as any,
+        professorId!,
+        instituicaoId!
+      );
+      return res.status(200).json(respostaAvaliada);
+    } catch (error: any) {
+      if (error.code === "FORBIDDEN")
+        return res.status(403).json({ message: error.message });
+      return res
+        .status(404)
+        .json({ message: "Resposta não encontrada para avaliação." });
     }
   },
 };

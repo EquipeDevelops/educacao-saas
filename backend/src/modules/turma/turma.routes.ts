@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { turmaController } from "./turma.controller";
 import { validate } from "../../middlewares/validate";
+import { protect, authorize } from "../../middlewares/auth"; // <-- IMPORTAÇÃO DA SEGURANÇA
 import {
   createTurmaSchema,
   updateTurmaSchema,
@@ -9,14 +10,47 @@ import {
 
 const router = Router();
 
-router.post("/", validate(createTurmaSchema), turmaController.create);
+// SEGURANÇA: Todas as rotas agora exigem que o usuário esteja autenticado (protect).
 
-router.get("/", turmaController.findAll);
+// Apenas ADMINISTRADOR pode criar, atualizar e deletar turmas.
+router.post(
+  "/",
+  protect,
+  authorize("ADMINISTRADOR"),
+  validate(createTurmaSchema),
+  turmaController.create
+);
 
-router.get("/:id", validate(paramsSchema), turmaController.findById);
+router.put(
+  "/:id",
+  protect,
+  authorize("ADMINISTRADOR"),
+  validate(updateTurmaSchema),
+  turmaController.update
+);
 
-router.put("/:id", validate(updateTurmaSchema), turmaController.update);
+router.delete(
+  "/:id",
+  protect,
+  authorize("ADMINISTRADOR"),
+  validate({ params: paramsSchema }),
+  turmaController.remove
+);
 
-router.delete("/:id", validate(paramsSchema), turmaController.delete);
+// ADMINISTRADOR e PROFESSOR podem visualizar as turmas.
+router.get(
+  "/",
+  protect,
+  authorize("ADMINISTRADOR", "PROFESSOR"),
+  turmaController.findAll
+);
+
+router.get(
+  "/:id",
+  protect,
+  authorize("ADMINISTRADOR", "PROFESSOR"),
+  validate({ params: paramsSchema }),
+  turmaController.findById
+);
 
 export const turmaRoutes = router;

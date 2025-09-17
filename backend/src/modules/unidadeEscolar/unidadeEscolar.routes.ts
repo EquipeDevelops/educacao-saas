@@ -1,30 +1,49 @@
 import { Router } from "express";
 import { unidadeEscolarController } from "./unidadeEscolar.controller";
 import { validate } from "../../middlewares/validate";
+import { protect, authorize } from "../../middlewares/auth"; // <-- IMPORTAÇÃO
 import {
-  createUnidadeEscolarSchema,
-  updateUnidadeEscolarSchema,
+  createUnidadeSchema,
+  updateUnidadeSchema,
   paramsSchema,
 } from "./unidadeEscolar.validator";
 
 const router = Router();
 
+// SEGURANÇA: Apenas o ADMIN da instituição pode gerenciar suas unidades.
 router.post(
   "/",
-  validate(createUnidadeEscolarSchema),
+  protect,
+  authorize("ADMINISTRADOR"),
+  validate(createUnidadeSchema),
   unidadeEscolarController.create
 );
-
-router.get("/", unidadeEscolarController.findAll);
-
-router.get("/:id", validate(paramsSchema), unidadeEscolarController.findById);
-
+router.get(
+  "/",
+  protect,
+  authorize("ADMINISTRADOR"),
+  unidadeEscolarController.findAll
+);
+router.get(
+  "/:id",
+  protect,
+  authorize("ADMINISTRADOR"),
+  validate({ params: paramsSchema }),
+  unidadeEscolarController.findById
+);
 router.put(
   "/:id",
-  validate(updateUnidadeEscolarSchema),
+  protect,
+  authorize("ADMINISTRADOR"),
+  validate(updateUnidadeSchema),
   unidadeEscolarController.update
 );
-
-router.delete("/:id", validate(paramsSchema), unidadeEscolarController.delete);
+router.delete(
+  "/:id",
+  protect,
+  authorize("ADMINISTRADOR"),
+  validate({ params: paramsSchema }),
+  unidadeEscolarController.remove
+);
 
 export const unidadeEscolarRoutes = router;

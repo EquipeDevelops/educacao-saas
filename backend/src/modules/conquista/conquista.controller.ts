@@ -1,75 +1,79 @@
-import { Request, Response } from "express";
+import { Response } from "express";
 import { conquistaService } from "./conquista.service";
-import {
-  CreateConquistaInput,
-  UpdateConquistaInput,
-  ConquistaParams,
-} from "./conquista.validator";
+import { AuthenticatedRequest } from "../../middlewares/auth"; // <-- IMPORTA O TIPO
 
 export const conquistaController = {
-  create: async (req: Request<{}, {}, CreateConquistaInput>, res: Response) => {
+  create: async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const novaConquista = await conquistaService.create(req.body);
-      return res.status(201).json(novaConquista);
+      const { instituicaoId } = req.user; // <-- USA O DADO REAL E SEGURO
+      const conquista = await conquistaService.create(req.body, instituicaoId!);
+      return res.status(201).json(conquista);
     } catch (error: any) {
-      if (error.message.includes("Já existe"))
-        return res.status(409).json({ message: error.message });
-      return res.status(400).json({ message: error.message });
+      if (error.code === "P2002") {
+        return res
+          .status(409)
+          .json({ message: "Já existe uma conquista com este código." });
+      }
+      return res.status(500).json({ message: "Erro ao criar conquista." });
     }
   },
 
-  findAll: async (req: Request, res: Response) => {
+  findAll: async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const { instituicaoId } = req.query;
-      if (!instituicaoId)
-        return res
-          .status(400)
-          .json({ message: "O ID da instituição é obrigatório." });
-      const conquistas = await conquistaService.findAllByInstituicao(
-        instituicaoId as string
-      );
+      const { instituicaoId } = req.user;
+      const conquistas = await conquistaService.findAll(instituicaoId!);
       return res.status(200).json(conquistas);
-    } catch (error) {
+    } catch (error: any) {
       return res.status(500).json({ message: "Erro ao buscar conquistas." });
     }
   },
 
-  findById: async (req: Request<ConquistaParams>, res: Response) => {
+  findById: async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const conquista = await conquistaService.findById(req.params.id);
+      const { id } = req.params;
+      const { instituicaoId } = req.user;
+      const conquista = await conquistaService.findById(id, instituicaoId!);
       if (!conquista)
         return res.status(404).json({ message: "Conquista não encontrada." });
       return res.status(200).json(conquista);
-    } catch (error) {
+    } catch (error: any) {
       return res.status(500).json({ message: "Erro ao buscar conquista." });
     }
   },
 
-  update: async (
-    req: Request<ConquistaParams, {}, UpdateConquistaInput>,
-    res: Response
-  ) => {
+  update: async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const conquistaAtualizada = await conquistaService.update(
-        req.params.id,
-        req.body
+      const { id } = req.params;
+      const { instituicaoId } = req.user;
+      const result = await conquistaService.update(
+        id,
+        req.body,
+        instituicaoId!
       );
-      return res.status(200).json(conquistaAtualizada);
-    } catch (error) {
+      if (result.count === 0)
+        return res
+          .status(404)
+          .json({ message: "Conquista não encontrada para atualizar." });
       return res
-        .status(404)
-        .json({ message: "Conquista não encontrada para atualização." });
+        .status(200)
+        .json({ message: "Conquista atualizada com sucesso." });
+    } catch (error: any) {
+      return res.status(500).json({ message: "Erro ao atualizar conquista." });
     }
   },
 
-  delete: async (req: Request<ConquistaParams>, res: Response) => {
+  remove: async (req: AuthenticatedRequest, res: Response) => {
     try {
-      await conquistaService.delete(req.params.id);
+      const { id } = req.params;
+      const { instituicaoId } = req.user;
+      const result = await conquistaService.remove(id, instituicaoId!);
+      if (result.count === 0)
+        return res
+          .status(404)
+          .json({ message: "Conquista não encontrada para deletar." });
       return res.status(204).send();
-    } catch (error) {
-      return res
-        .status(404)
-        .json({ message: "Conquista não encontrada para exclusão." });
+    } catch (error: any) {
+      return res.status(500).json({ message: "Erro ao deletar conquista." });
     }
   },
 };

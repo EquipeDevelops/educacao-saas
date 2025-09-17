@@ -1,36 +1,13 @@
-import { PrismaClient } from "@prisma/client";
-import {
-  CreateInstituicaoInput,
-  UpdateInstituicaoInput,
-} from "./instituicao.validator";
+import { Prisma, PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
 export const instituicaoService = {
-  create: async (data: CreateInstituicaoInput) => {
-    return await prisma.instituicao.create({ data });
-  },
-
-  findAll: async () => {
-    return await prisma.instituicao.findMany();
-  },
-
-  findById: async (id: string) => {
-    return await prisma.instituicao.findUnique({
-      where: { id },
-    });
-  },
-
-  update: async (id: string, data: UpdateInstituicaoInput) => {
-    return await prisma.instituicao.update({
-      where: { id },
-      data,
-    });
-  },
-
-  delete: async (id: string) => {
-    return await prisma.instituicao.delete({
-      where: { id },
-    });
-  },
+  create: (data: Prisma.InstituicaoCreateInput) =>
+    prisma.instituicao.create({ data }),
+  findAll: () => prisma.instituicao.findMany({ orderBy: { nome: "asc" } }),
+  findById: (id: string) => prisma.instituicao.findUnique({ where: { id } }),
+  update: (id: string, data: Prisma.InstituicaoUpdateInput) =>
+    prisma.instituicao.update({ where: { id }, data }),
+  remove: (id: string) => prisma.instituicao.delete({ where: { id } }),
 };

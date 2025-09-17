@@ -1,29 +1,38 @@
 import { Request, Response } from "express";
-import { authService } from "./auth.service";
-import { RegisterInput, LoginInput } from "./auth.validator";
+import * as authService from "./auth.service";
+import { ResetPasswordInput } from "./auth.validator";
 
 export const authController = {
-  register: async (req: Request<{}, {}, RegisterInput>, res: Response) => {
+  login: async (req: Request, res: Response) => {
     try {
-      const novoUsuario = await authService.register(req.body);
-      return res.status(201).json(novoUsuario);
+      const { usuario, token } = await authService.login(req.body);
+      return res.status(200).json({ token, usuario });
     } catch (error: any) {
-      if (error.message.includes("email já está em uso")) {
-        return res.status(409).json({ message: error.message });
-      }
-      if (error.message.includes("Instituição não encontrada")) {
-        return res.status(400).json({ message: error.message });
-      }
-      return res.status(500).json({ message: "Erro ao registrar usuário." });
+      return res.status(401).json({ message: error.message }); // 401 Unauthorized
     }
   },
 
-  login: async (req: Request<{}, {}, LoginInput>, res: Response) => {
+  forgotPassword: async (req: Request, res: Response) => {
     try {
-      const result = await authService.login(req.body);
-      return res.status(200).json(result);
+      await authService.forgotPassword(req.body.email);
+      // SEGURANÇA: Sempre retorne uma mensagem de sucesso genérica.
+      return res.status(200).json({
+        message:
+          "Se um usuário com este email existir, um link de redefinição de senha foi enviado.",
+      });
     } catch (error: any) {
-      return res.status(401).json({ message: error.message });
+      return res.status(500).json({ message: error.message });
+    }
+  },
+
+  resetPassword: async (req: Request, res: Response) => {
+    try {
+      const { token } = req.params;
+      const { senha } = req.body as ResetPasswordInput["body"];
+      await authService.resetPassword(token, senha);
+      return res.status(200).json({ message: "Senha redefinida com sucesso." });
+    } catch (error: any) {
+      return res.status(400).json({ message: error.message });
     }
   },
 };

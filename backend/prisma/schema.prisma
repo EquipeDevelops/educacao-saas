@@ -42,6 +42,7 @@ model Instituicao {
   @@map("instituicoes")
   Conversa Conversa[]
   HorarioAula HorarioAula[]
+  ComentarioTarefa ComentarioTarefa[]
 }
 
 model Unidades_Escolares {
@@ -87,6 +88,8 @@ model Usuarios {
   email               String   @unique
   senha_hash          String?
   papel               PapelUsuario
+  passwordResetToken  String?
+  passwordResetExpires DateTime?
   data_nascimento     DateTime? @db.Date
   cpf_criptografado   Bytes?   @unique
   // O campo 'email_responsavel' foi movido para Usuarios_aluno
@@ -119,6 +122,7 @@ model Usuarios {
   @@map("usuarios")
   @@index([instituicaoId])
   @@index([unidadeEscolarId])
+  ComentarioTarefa ComentarioTarefa[]
 }
 
 model Usuarios_aluno {
@@ -423,6 +427,7 @@ model Tarefas {
   @@map("tarefas")
   @@index([instituicaoId])
   @@index([componenteCurricularId])
+  ComentarioTarefa ComentarioTarefa[]
 }
 
 enum TipoQuestao {
@@ -520,6 +525,7 @@ model Respostas_Submissao {
   submissao     Submissoes @relation(fields: [submissaoId], references: [id])
   submissaoId   String     @db.ObjectId
 
+  @@unique([questaoId, submissaoId]) // Garante uma resposta por questão por submissão
   @@map("respostas_submissao")
   @@index([questaoId])
   @@index([submissaoId])
@@ -622,4 +628,32 @@ model HorarioAula {
   @@index([instituicaoId])
   @@index([turmaId])
   @@index([componenteCurricularId])
+}
+
+
+model ComentarioTarefa {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  conteudo  String
+  criado_em DateTime @default(now())
+  atualizado_em DateTime @updatedAt
+
+  // Relações principais
+  tarefa      Tarefas  @relation(fields: [tarefaId], references: [id], onDelete: Cascade)
+  tarefaId    String   @db.ObjectId
+
+  autor       Usuarios @relation(fields: [autorId], references: [id])
+  autorId     String   @db.ObjectId
+  
+  instituicao   Instituicao @relation(fields: [instituicaoId], references: [id])
+  instituicaoId String      @db.ObjectId
+
+  // Lógica para respostas aninhadas (threaded comments)
+  comentarioPai   ComentarioTarefa?  @relation("RespostasComentario", fields: [comentarioPaiId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  comentarioPaiId String?            @db.ObjectId
+  
+  respostas       ComentarioTarefa[] @relation("RespostasComentario")
+
+  @@map("comentarios_tarefa")
+  @@index([tarefaId])
+  @@index([autorId])
 }

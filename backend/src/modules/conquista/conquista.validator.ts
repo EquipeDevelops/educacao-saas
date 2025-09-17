@@ -1,19 +1,19 @@
 import { z } from "zod";
 
+export const paramsSchema = z.object({
+  id: z.string({ required_error: "O ID da conquista é obrigatório." }),
+});
+
 export const createConquistaSchema = z.object({
   body: z.object({
-    instituicaoId: z.string({
-      required_error: "O ID da instituição é obrigatório.",
-    }),
     codigo: z
-      .string({ required_error: "O código único da conquista é obrigatório." })
+      .string({ required_error: "O código da conquista é obrigatório." })
       .trim()
-      .toUpperCase(),
-    titulo: z
-      .string({ required_error: "O título da conquista é obrigatório." })
-      .min(3),
+      .toUpperCase()
+      .min(3, "O código deve ter no mínimo 3 caracteres."),
+    titulo: z.string({ required_error: "O título é obrigatório." }).min(3),
     descricao: z.string().optional(),
-    criterios: z.record(z.any()).optional(),
+    criterios: z.record(z.any()).optional(), // JSON para critérios de obtenção
   }),
 });
 
@@ -23,21 +23,10 @@ export const updateConquistaSchema = z.object({
     descricao: z.string().optional(),
     criterios: z.record(z.any()).optional(),
   }),
-  params: z.object({
-    id: z.string({ required_error: "O ID da conquista é obrigatório." }),
-  }),
-});
-
-export const paramsSchema = z.object({
-  params: z.object({
-    id: z.string({ required_error: "O ID da conquista é obrigatório." }),
-  }),
+  params: paramsSchema,
 });
 
 export type CreateConquistaInput = z.infer<
   typeof createConquistaSchema
 >["body"];
-export type UpdateConquistaInput = z.infer<
-  typeof updateConquistaSchema
->["body"];
-export type ConquistaParams = z.infer<typeof paramsSchema>["params"];
+export type UpdateConquistaInput = z.infer<typeof updateConquistaSchema>;

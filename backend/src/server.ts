@@ -1,9 +1,7 @@
-// src/server.ts
 import app from "./app";
 import { connectDB } from "./config/db";
 import dotenv from "dotenv";
 
-// Carrega as variáveis de ambiente do arquivo .env
 dotenv.config();
 
 const port = process.env.PORT || 3000;

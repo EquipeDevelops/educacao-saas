@@ -15,11 +15,8 @@ const prisma = new PrismaClient();
 async function main() {
   console.log("🔥 Iniciando o script de seeding completo...");
 
-  // ---------------------------------------------------------------------------------
-  // FASE DE LIMPEZA
-  // A ordem é crucial para respeitar as restrições de chave estrangeira.
-  // ---------------------------------------------------------------------------------
   console.log("🗑️  Limpando dados antigos...");
+  await prisma.comentarioTarefa.deleteMany({});
   await prisma.horarioAula.deleteMany({});
   await prisma.mensagem.deleteMany({});
   await prisma.participante.deleteMany({});
@@ -47,12 +44,8 @@ async function main() {
   await prisma.instituicao.deleteMany({});
   console.log("🧹 Dados antigos limpos.");
 
-  // ---------------------------------------------------------------------------------
-  // FASE DE CRIAÇÃO
-  // ---------------------------------------------------------------------------------
   console.log("🏗️  Criando dados base...");
 
-  // 1. Instituição e Unidade
   const instituicao = await prisma.instituicao.create({
     data: {
       nome: "Academia Digital Prisma",
@@ -75,7 +68,6 @@ async function main() {
   });
   console.log(`[OK] Unidade Escolar criada: ${unidadeEscolar.nome}`);
 
-  // 2. Catálogo de Conquistas
   await prisma.conquistas.createMany({
     data: [
       {
@@ -94,11 +86,9 @@ async function main() {
   });
   console.log(`[OK] Catálogo de Conquistas criado.`);
 
-  // 3. Usuários e Perfis
   console.log("👤 Criando Usuários e Perfis...");
   const senhaHash = await bcrypt.hash("senha123", 10);
 
-  // SUPER ADMIN (sem instituição)
   const superAdmin = await prisma.usuarios.create({
     data: {
       nome: "Super Admin",
@@ -106,11 +96,10 @@ async function main() {
       senha_hash: senhaHash,
       papel: PapelUsuario.ADMINISTRADOR,
       status: true,
-      instituicaoId: undefined, // Explicitamente nulo
+      instituicaoId: undefined,
     },
   });
 
-  // ADMIN DA ESCOLA
   const admin = await prisma.usuarios.create({
     data: {
       nome: "Admin da Academia",
@@ -122,7 +111,6 @@ async function main() {
     },
   });
 
-  // PROFESSORA
   const profAda = await prisma.usuarios.create({
     data: {
       nome: "Prof. Ada Lovelace",
@@ -142,7 +130,6 @@ async function main() {
     },
   });
 
-  // ALUNO 1
   const alunoAlan = await prisma.usuarios.create({
     data: {
       nome: "Aluno Alan Turing",
@@ -161,7 +148,6 @@ async function main() {
     },
   });
 
-  // ALUNA 2
   const alunaGrace = await prisma.usuarios.create({
     data: {
       nome: "Aluna Grace Hopper",
@@ -181,7 +167,6 @@ async function main() {
   });
   console.log(`[OK] Usuários e perfis criados.`);
 
-  // 4. Estrutura Acadêmica (Matérias, Turmas, Componentes, Matrículas)
   console.log("📚 Criando Estrutura Acadêmica...");
   const materiaLP = await prisma.materias.create({
     data: {
@@ -227,7 +212,6 @@ async function main() {
   });
   console.log(`[OK] Estrutura acadêmica e matrículas criadas.`);
 
-  // 5. Horário de Aulas
   console.log("🗓️  Montando Horário de Aulas...");
   await prisma.horarioAula.createMany({
     data: [
@@ -253,7 +237,6 @@ async function main() {
   });
   console.log(`[OK] Horário da turma ${turmaT101.nome} definido.`);
 
-  // 6. Conteúdo e Tarefas
   console.log("📝 Criando Tarefas e Questões...");
   const tarefa = await prisma.tarefas.create({
     data: {
@@ -261,7 +244,7 @@ async function main() {
       descricao: "Lista de exercícios sobre declaração e uso de variáveis.",
       pontos: 100,
       publicado: true,
-      data_entrega: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // Daqui a 7 dias
+      data_entrega: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
       tipo: TipoTarefa.QUESTIONARIO,
       instituicaoId: instituicao.id,
       componenteCurricularId: componenteLP.id,
@@ -298,7 +281,6 @@ async function main() {
   });
   console.log(`[OK] Tarefa "${tarefa.titulo}" e suas questões foram criadas.`);
 
-  // 7. Interação do Aluno (Submissão e Conquista)
   console.log("📤 Criando Submissão de Tarefa...");
   const submissaoAlan = await prisma.submissoes.create({
     data: {
@@ -313,7 +295,7 @@ async function main() {
     data: {
       questaoId: questao1.id,
       submissaoId: submissaoAlan.id,
-      opcaoEscolhidaId: opcaoCorreta.id, // Alan escolheu a opção correta
+      opcaoEscolhidaId: opcaoCorreta.id,
     },
   });
 
@@ -332,7 +314,6 @@ async function main() {
     );
   }
 
-  // 8. Interação de Chat
   console.log("💬 Simulando uma Conversa no Chat...");
   const conversa = await prisma.conversa.create({
     data: {
@@ -364,6 +345,38 @@ async function main() {
   console.log(
     `[OK] Conversa criada entre ${profAda.nome} e ${alunoAlan.nome}.`
   );
+  console.log("💬 Simulando Comentários na Tarefa...");
+  const comentarioAlan = await prisma.comentarioTarefa.create({
+    data: {
+      conteudo:
+        "Professora, não entendi muito bem a parte sobre a declaração de variáveis. Poderia dar outro exemplo?",
+      tarefaId: tarefa.id,
+      autorId: alunoAlan.id,
+      instituicaoId: instituicao.id,
+    },
+  });
+
+  await prisma.comentarioTarefa.create({
+    data: {
+      conteudo:
+        "Claro, Alan! Pense em uma variável como uma 'caixa' com uma etiqueta (o nome da variável) onde você guarda um valor para usar depois.",
+      tarefaId: tarefa.id,
+      autorId: profAda.id,
+      instituicaoId: instituicao.id,
+      comentarioPaiId: comentarioAlan.id,
+    },
+  });
+
+  await prisma.comentarioTarefa.create({
+    data: {
+      conteudo:
+        "Ótima pergunta, Alan! A explicação da professora ajudou muito!",
+      tarefaId: tarefa.id,
+      autorId: alunaGrace.id,
+      instituicaoId: instituicao.id,
+    },
+  });
+  console.log("[OK] Comentários e respostas na tarefa criados.");
 
   console.log("✅ Seeding completo finalizado com sucesso!");
 }
