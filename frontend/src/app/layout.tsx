@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
 import { Roboto, Roboto_Serif } from 'next/font/google';
 import { ThemeProvider } from '@mui/material/styles';
-import { theme } from '../themes/theme';
-import './globals.css';
+import {theme} from '../themes/theme';
+import '../styles/globals.css';
 
 const roboto = Roboto({
   variable: '--font-roboto',
