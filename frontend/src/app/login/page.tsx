@@ -1,36 +1,29 @@
-"use client"; // ESSENCIAL: Indica que este é um Client Component
+"use client";
 
 import { useState, FormEvent } from "react";
-import { useAuth } from "@/contexts/AuthContext"; // Ajuste o caminho se necessário
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function LoginPage() {
-  // Pega a função signIn do nosso contexto de autenticação
   const { signIn } = useAuth();
 
-  // Estados para controlar os campos do formulário, erros e carregamento
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Função para lidar com o envio do formulário
   async function handleSubmit(event: FormEvent) {
-    event.preventDefault(); // Impede o recarregamento da página
+    event.preventDefault();
     setIsLoading(true);
     setError(null);
 
     try {
-      // Chama a função signIn do nosso AuthContext
       await signIn({ email, senha });
-      // O redirecionamento para o '/dashboard' já é feito dentro da função signIn
     } catch (err) {
-      // Se o signIn falhar, ele lança um erro que capturamos aqui
       setError("Falha no login. Verifique seu email e senha.");
       setIsLoading(false);
     }
   }
 
-  // Estilos inline básicos para o exemplo. Idealmente, use CSS Modules ou Tailwind.
   const styles = {
     container: {
       display: "flex",

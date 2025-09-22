@@ -7,7 +7,7 @@ import {
   useEffect,
   ReactNode,
 } from "react";
-import { useRouter } from "next/navigation"; // <-- CORREÇÃO APLICADA AQUI
+import { useRouter } from "next/navigation";
 import { api } from "../services/api";
 
 // --- Tipagem ---
@@ -21,6 +21,7 @@ type User = {
 type AuthContextData = {
   user: User | null;
   isAuthenticated: boolean;
+  loading: boolean; // <-- NOVO ESTADO
   signIn: (credentials: SignInCredentials) => Promise<void>;
   signOut: () => void;
 };
@@ -36,10 +37,12 @@ const AuthContext = createContext({} as AuthContextData);
 // --- Componente Provedor ---
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true); // <-- INICIA COMO TRUE
   const router = useRouter();
 
   const isAuthenticated = !!user;
 
+  // Efeito para carregar dados do usuário do localStorage ao iniciar a aplicação
   useEffect(() => {
     const token = localStorage.getItem("plataforma.token");
     const userData = localStorage.getItem("plataforma.user");
@@ -48,6 +51,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(JSON.parse(userData));
       api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
     }
+    setLoading(false); // <-- TERMINA O CARREGAMENTO APÓS VERIFICAR
   }, []);
 
   async function signIn({ email, senha }: SignInCredentials) {
@@ -83,7 +87,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated, signIn, signOut }}>
+    // Adiciona 'loading' ao valor do provedor
+    <AuthContext.Provider
+      value={{ user, isAuthenticated, loading, signIn, signOut }}
+    >
       {children}
     </AuthContext.Provider>
   );

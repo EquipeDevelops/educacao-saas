@@ -1,15 +1,13 @@
 import { Response } from "express";
-import { AuthenticatedRequest } from "../../middlewares/auth"; // <-- 1. IMPORTA O TIPO CUSTOMIZADO
+import { AuthenticatedRequest } from "../../middlewares/auth";
 import { componenteService } from "./componenteCurricular.service";
 import {
   CreateComponenteInput,
   FindAllComponentesInput,
-  UpdateComponenteInput,
 } from "./componenteCurricular.validator";
 
 export const componenteController = {
   create: async (req: AuthenticatedRequest, res: Response) => {
-    // <-- 2. USA O TIPO CUSTOMIZADO
     try {
       const { instituicaoId } = req.user;
       const componente = await componenteService.create(
@@ -18,7 +16,9 @@ export const componenteController = {
       );
       return res.status(201).json(componente);
     } catch (error: any) {
+      console.error("ERRO DETALHADO NO CONTROLLER (create):", error); // <-- DEBUG
       if (error.code === "P2002") {
+        // Possivelmente trocar isso para colocar em validator.
         return res.status(409).json({
           message:
             "Esta matéria já foi atribuída a esta turma neste ano letivo.",
@@ -37,6 +37,7 @@ export const componenteController = {
       );
       return res.status(200).json(componentes);
     } catch (error: any) {
+      console.error("ERRO DETALHADO NO CONTROLLER (findAll):", error); // <-- DEBUG
       return res.status(500).json({
         message: "Erro ao buscar componentes curriculares.",
         error: error.message,
@@ -56,6 +57,7 @@ export const componenteController = {
       }
       return res.status(200).json(componente);
     } catch (error: any) {
+      console.error("ERRO DETALHADO NO CONTROLLER (findById):", error); // <-- DEBUG
       return res.status(500).json({
         message: "Erro ao buscar componente curricular.",
         error: error.message,
@@ -74,6 +76,7 @@ export const componenteController = {
       );
       return res.status(200).json(componenteAtualizado);
     } catch (error: any) {
+      console.error("ERRO DETALHADO NO CONTROLLER (update):", error); // <-- DEBUG
       if ((error as any).code === "P2025") {
         return res.status(404).json({
           message: "Componente curricular não encontrado para atualização.",
@@ -93,6 +96,7 @@ export const componenteController = {
       await componenteService.remove(id, instituicaoId!);
       return res.status(204).send();
     } catch (error: any) {
+      console.error("ERRO DETALHADO NO CONTROLLER (remove):", error); // <-- DEBUG
       if ((error as any).code === "P2025") {
         return res.status(404).json({
           message: "Componente curricular não encontrado para exclusão.",
