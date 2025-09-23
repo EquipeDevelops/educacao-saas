@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { tarefaController } from "./tarefa.controller";
 import { validate } from "../../middlewares/validate";
-import { protect, authorize } from "../../middlewares/auth"; // <-- IMPORTAÇÃO
+import { protect, authorize } from "../../middlewares/auth";
 import {
   createTarefaSchema,
   updateTarefaSchema,
@@ -12,16 +12,8 @@ import {
 
 const router = Router();
 
-// SEGURANÇA: Apenas PROFESSORES podem criar, editar, publicar e deletar tarefas.
-router.post(
-  "/",
-  protect,
-  authorize("PROFESSOR"),
-  // validate(createTarefaSchema), // << COMENTE ESTA LINHA PARA O TESTE
-  tarefaController.create
-);
+router.post("/", protect, authorize("PROFESSOR"), tarefaController.create);
 
-// ... (o resto do arquivo permanece igual)
 router.put(
   "/:id",
   protect,
@@ -44,7 +36,6 @@ router.patch(
   tarefaController.publish
 );
 
-// Todos os usuários autenticados (PROFESSOR, ALUNO, ADMIN) podem visualizar as tarefas.
 router.get(
   "/",
   protect,
@@ -57,7 +48,6 @@ router.get(
   "/:id",
   protect,
   authorize("ADMINISTRADOR", "PROFESSOR", "ALUNO"),
-  // validate({ params: paramsSchema }), // << COMENTE ESTA LINHA
   tarefaController.findById
 );
 

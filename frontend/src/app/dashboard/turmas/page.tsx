@@ -15,7 +15,6 @@ export default function TurmasPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Estados para o formulário
   const [nome, setNome] = useState("");
   const [serie, setSerie] = useState("");
   const [turno, setTurno] = useState("MATUTINO");
@@ -23,7 +22,7 @@ export default function TurmasPage() {
   async function fetchTurmas() {
     try {
       setIsLoading(true);
-      const response = await api.get("/turmas"); // A API já filtra pela escola do gestor
+      const response = await api.get("/turmas");
       setTurmas(response.data);
     } catch (err) {
       setError("Falha ao carregar as turmas.");
@@ -42,7 +41,6 @@ export default function TurmasPage() {
 
     try {
       await api.post("/turmas", { nome, serie, turno });
-      // Limpa o form e recarrega a lista
       setNome("");
       setSerie("");
       setTurno("MATUTINO");
