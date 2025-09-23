@@ -11,7 +11,7 @@ export const componenteController = {
     try {
       const componente = await componenteService.create(
         req.body as CreateComponenteInput,
-        req.user // Passa o usuário logado inteiro para o serviço
+        req.user
       );
       return res.status(201).json(componente);
     } catch (error: any) {
@@ -41,12 +41,6 @@ export const componenteController = {
   },
 
   findById: async (req: AuthenticatedRequest, res: Response) => {
-    // *** LOG DE DEPURAÇÃO ADICIONADO AQUI ***
-    console.log(
-      `--- [CONTROLLER] Recebida requisição para findById com params:`,
-      req.params
-    );
-
     try {
       const { id } = req.params;
       const componente = await componenteService.findById(id, req.user);
@@ -57,7 +51,6 @@ export const componenteController = {
       }
       return res.status(200).json(componente);
     } catch (error: any) {
-      // Adicionando log do erro capturado
       console.error(
         "--- [ERRO NO CONTROLLER] Erro capturado em findById:",
         error

@@ -10,12 +10,14 @@ import {
 export const tarefaController = {
   create: async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const { perfilId: professorId } = req.user;
-      const tarefa = await tarefaService.create(req.body, professorId!);
+      // A lógica de permissão agora está toda no serviço.
+      // O controller apenas passa os dados necessários.
+      const tarefa = await tarefaService.create(req.body, req.user);
       return res.status(201).json(tarefa);
     } catch (error: any) {
-      if (error.code === "FORBIDDEN")
+      if ((error as any).code === "FORBIDDEN") {
         return res.status(403).json({ message: error.message });
+      }
       return res.status(500).json({ message: "Erro ao criar tarefa." });
     }
   },
@@ -48,17 +50,16 @@ export const tarefaController = {
   update: async (req: AuthenticatedRequest, res: Response) => {
     try {
       const { id } = req.params;
-      const { perfilId: professorId } = req.user;
       const tarefa = await tarefaService.update(
         id,
         req.body as UpdateTarefaInput["body"],
-        professorId!
+        req.user
       );
       return res.status(200).json(tarefa);
     } catch (error: any) {
-      if (error.code === "FORBIDDEN")
+      if ((error as any).code === "FORBIDDEN")
         return res.status(403).json({ message: error.message });
-      if (error.code === "P2025")
+      if ((error as any).code === "P2025")
         return res.status(404).json({ message: "Tarefa não encontrada." });
       return res.status(500).json({ message: "Erro ao atualizar tarefa." });
     }
@@ -68,13 +69,12 @@ export const tarefaController = {
     try {
       const { id } = req.params;
       const { publicado } = req.body as PublishTarefaInput["body"];
-      const { perfilId: professorId } = req.user;
-      const tarefa = await tarefaService.publish(id, publicado, professorId!);
+      const tarefa = await tarefaService.publish(id, publicado, req.user);
       return res.status(200).json(tarefa);
     } catch (error: any) {
-      if (error.code === "FORBIDDEN")
+      if ((error as any).code === "FORBIDDEN")
         return res.status(403).json({ message: error.message });
-      if (error.code === "P2025")
+      if ((error as any).code === "P2025")
         return res.status(404).json({ message: "Tarefa não encontrada." });
       return res.status(500).json({ message: "Erro ao publicar tarefa." });
     }
@@ -83,13 +83,12 @@ export const tarefaController = {
   remove: async (req: AuthenticatedRequest, res: Response) => {
     try {
       const { id } = req.params;
-      const { perfilId: professorId } = req.user;
-      await tarefaService.remove(id, professorId!);
+      await tarefaService.remove(id, req.user);
       return res.status(204).send();
     } catch (error: any) {
-      if (error.code === "FORBIDDEN")
+      if ((error as any).code === "FORBIDDEN")
         return res.status(403).json({ message: error.message });
-      if (error.code === "P2025")
+      if ((error as any).code === "P2025")
         return res.status(404).json({ message: "Tarefa não encontrada." });
       return res.status(500).json({ message: "Erro ao deletar tarefa." });
     }

@@ -52,11 +52,12 @@ router.get(
   validate(findAllTarefasSchema),
   tarefaController.findAll
 );
+
 router.get(
   "/:id",
   protect,
   authorize("ADMINISTRADOR", "PROFESSOR", "ALUNO"),
-  validate({ params: paramsSchema }),
+  // validate({ params: paramsSchema }), // << COMENTE ESTA LINHA
   tarefaController.findById
 );
 

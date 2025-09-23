@@ -3,6 +3,7 @@
 import { useState, useEffect, FormEvent } from "react";
 import { useParams } from "next/navigation";
 import { api } from "@/services/api";
+import Link from "next/link";
 
 type Tarefa = {
   id: string;
@@ -65,12 +66,18 @@ export default function ComponentePage() {
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     setError(null);
+
+    if (!titulo || !dataEntrega) {
+      setError("O título e a data de entrega são obrigatórios.");
+      return;
+    }
+
     try {
       await api.post("/tarefas", {
         titulo,
         descricao,
         data_entrega: new Date(dataEntrega).toISOString(),
-        componenteCurricularId,
+        componenteCurricularId: componenteId,
       });
       setTitulo("");
       setDescricao("");
@@ -81,17 +88,23 @@ export default function ComponentePage() {
     }
   }
 
+  async function handlePublishToggle(tarefa: Tarefa) {
+    try {
+      setError(null);
+      await api.patch(`/tarefas/${tarefa.id}/publish`, {
+        publicado: !tarefa.publicado,
+      });
+      await fetchTarefas();
+    } catch (err: any) {
+      setError(
+        err.response?.data?.message || "Erro ao atualizar status da tarefa."
+      );
+    }
+  }
+
   const styles = {
     container: { padding: "2rem", fontFamily: "sans-serif" },
-    form: {
-      display: "flex",
-      flexDirection: "column",
-      gap: "1rem",
-      maxWidth: "500px",
-      padding: "1.5rem",
-      border: "1px solid #ccc",
-      borderRadius: "8px",
-    },
+    form: {},
     input: { padding: "0.5rem", borderRadius: "4px", border: "1px solid #ccc" },
     button: {
       padding: "0.75rem",
@@ -109,10 +122,26 @@ export default function ComponentePage() {
     },
     td: { borderBottom: "1px solid #ccc", padding: "0.5rem" },
     error: { color: "red", marginTop: "1rem" },
+    publishButton: {
+      padding: "0.4rem 0.8rem",
+      color: "white",
+      border: "none",
+      borderRadius: "4px",
+      cursor: "pointer",
+      backgroundColor: "#28a745",
+    },
+    unpublishButton: {
+      padding: "0.4rem 0.8rem",
+      color: "white",
+      border: "none",
+      borderRadius: "4px",
+      cursor: "pointer",
+      backgroundColor: "#ffc107",
+    },
   };
 
   if (isLoading) return <p style={styles.container}>Carregando...</p>;
-  if (error)
+  if (error && !componente)
     return <p style={{ color: "red", ...styles.container }}>{error}</p>;
   if (!componente)
     return <p style={styles.container}>Disciplina não encontrada.</p>;
@@ -127,7 +156,17 @@ export default function ComponentePage() {
 
       <section style={{ marginTop: "2rem", marginBottom: "2rem" }}>
         <h2>Criar Nova Tarefa</h2>
-        <form onSubmit={handleSubmit} style={styles.form as any}>
+        <form
+          onSubmit={handleSubmit}
+          style={
+            {
+              ...styles.form,
+              gap: "1rem",
+              display: "flex",
+              flexDirection: "column",
+            } as any
+          }
+        >
           <input
             value={titulo}
             onChange={(e) => setTitulo(e.target.value)}
@@ -165,17 +204,37 @@ export default function ComponentePage() {
               <th style={styles.th}>Título</th>
               <th style={styles.th}>Data de Entrega</th>
               <th style={styles.th}>Status</th>
+              <th style={styles.th}>Ações</th>
             </tr>
           </thead>
           <tbody>
             {tarefas.map((tarefa) => (
               <tr key={tarefa.id}>
-                <td style={styles.td}>{tarefa.titulo}</td>
+                <td style={styles.td}>
+                  <Link
+                    href={`/dashboard/tarefas/${tarefa.id}`}
+                    style={{ color: "blue", textDecoration: "underline" }}
+                  >
+                    {tarefa.titulo}
+                  </Link>
+                </td>
                 <td style={styles.td}>
                   {new Date(tarefa.data_entrega).toLocaleString("pt-BR")}
                 </td>
                 <td style={styles.td}>
                   {tarefa.publicado ? "Publicada" : "Rascunho"}
+                </td>
+                <td style={styles.td}>
+                  <button
+                    onClick={() => handlePublishToggle(tarefa)}
+                    style={
+                      tarefa.publicado
+                        ? styles.unpublishButton
+                        : styles.publishButton
+                    }
+                  >
+                    {tarefa.publicado ? "Despublicar" : "Publicar"}
+                  </button>
                 </td>
               </tr>
             ))}

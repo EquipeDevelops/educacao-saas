@@ -8,12 +8,20 @@ export const errorHandler = (
   res: Response,
   next: NextFunction
 ) => {
-  console.error(err);
+  // --- ADICIONADO PARA DEPURAÇÃO ---
+  console.error("\n--- [GLOBAL ERROR HANDLER] UM ERRO FOI CAPTURADO! ---");
+  console.error(
+    `[ERROR HANDLER] Rota do Erro: ${req.method} ${req.originalUrl}`
+  );
+  console.error("[ERROR HANDLER] Nome do Erro:", err.name);
+  console.error("[ERROR HANDLER] Mensagem do Erro:", err.message);
+  console.error("[ERROR HANDLER] Stack Trace:", err.stack);
+  console.error("-------------------------------------------------");
+  // --------------------------------------------------------
 
   if (err instanceof ZodError) {
     return res.status(400).json({
       message: "Dados inválidos na requisição.",
-
       errors: err.issues.map((e) => ({
         path: e.path.join("."),
         message: e.message,

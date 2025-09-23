@@ -79,10 +79,6 @@ export async function findAll(
 }
 
 export async function findById(id: string, user: AuthenticatedRequest["user"]) {
-  console.log("\n--- [DEBUG] Iniciando findById no Serviço de Componente ---");
-  console.log(`[DEBUG] Buscando componente com ID: ${id}`);
-  console.log("[DEBUG] Dados do usuário da requisição (req.user):", user);
-
   const componente = await prisma.componenteCurricular.findUnique({
     where: { id },
     include: fullInclude,
