@@ -3,10 +3,8 @@
 import { useState, useEffect, FormEvent } from "react";
 import { api } from "@/services/api";
 
-// Tipagens para os dados da API
 type Turma = { id: string; nome: string; serie: string };
 type Materia = { id: string; nome: string };
-// Tipagem atualizada para refletir o retorno da nova API
 type Professor = { id: string; usuario: { nome: string } };
 type Componente = {
   id: string;
@@ -17,46 +15,40 @@ type Componente = {
 };
 
 export default function ComponentesPage() {
-  // Estados do componente principal
   const [componentes, setComponentes] = useState<Componente[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Estados para popular os formulários
   const [turmas, setTurmas] = useState<Turma[]>([]);
   const [materias, setMaterias] = useState<Materia[]>([]);
   const [professores, setProfessores] = useState<Professor[]>([]);
 
-  // Estados do formulário de criação
   const [turmaId, setTurmaId] = useState("");
   const [materiaId, setMateriaId] = useState("");
   const [professorId, setProfessorId] = useState("");
   const [anoLetivo, setAnoLetivo] = useState(new Date().getFullYear());
 
-  // Função para buscar todos os dados necessários para a página
   async function fetchData() {
     try {
       setIsLoading(true);
       setError(null);
-      // Otimização: Dispara todas as requisições em paralelo
       const [resComponentes, resTurmas, resMaterias, resProfessores] =
         await Promise.all([
           api.get("/componentes-curriculares"),
           api.get("/turmas"),
           api.get("/materias"),
-          api.get("/professores"), // <-- CORREÇÃO APLICADA AQUI
+          api.get("/professores"),
         ]);
 
       setComponentes(resComponentes.data);
       setTurmas(resTurmas.data);
       setMaterias(resMaterias.data);
-      setProfessores(resProfessores.data); // <-- CORREÇÃO APLICADA AQUI
+      setProfessores(resProfessores.data);
 
-      // Inicia os selects com o primeiro valor, se disponível
       if (resTurmas.data.length > 0) setTurmaId(resTurmas.data[0].id);
       if (resMaterias.data.length > 0) setMateriaId(resMaterias.data[0].id);
       if (resProfessores.data.length > 0)
-        setProfessorId(resProfessores.data[0].id); // <-- CORREÇÃO APLICADA AQUI
+        setProfessorId(resProfessores.data[0].id);
     } catch (err) {
       setError(
         "Falha ao carregar os dados. Verifique a API ou tente novamente."
@@ -71,7 +63,6 @@ export default function ComponentesPage() {
     fetchData();
   }, []);
 
-  // Função para lidar com o envio do formulário de criação
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     setError(null);
@@ -88,16 +79,14 @@ export default function ComponentesPage() {
         professorId,
         ano_letivo: Number(anoLetivo),
       });
-      // Recarrega todos os dados para exibir a nova entrada
       await fetchData();
     } catch (err: any) {
       setError(
-        err.response?.data?.message || "Erro ao criar o componente curricular."
+        err.response?.data?.message || "Erro ao criar o vínculo (componente)."
       );
     }
   }
 
-  // Estilos
   const styles = {
     container: { padding: "2rem", fontFamily: "sans-serif" },
     form: {
@@ -109,11 +98,23 @@ export default function ComponentesPage() {
       border: "1px solid #ccc",
       borderRadius: "8px",
     },
-    input: { padding: "0.5rem", borderRadius: "4px", border: "1px solid #ccc" },
+    input: {
+      padding: "0.5rem",
+      borderRadius: "4px",
+      border: "1px solid #ccc",
+      width: "100%",
+    },
     select: {
       padding: "0.5rem",
       borderRadius: "4px",
       border: "1px solid #ccc",
+      width: "100%",
+    },
+    label: {
+      display: "flex",
+      flexDirection: "column",
+      gap: "0.5rem",
+      width: "100%",
     },
     button: {
       padding: "0.75rem",
@@ -134,22 +135,18 @@ export default function ComponentesPage() {
   };
 
   if (isLoading) return <div style={styles.container}>Carregando dados...</div>;
-  if (error && componentes.length === 0)
-    return (
-      <div style={styles.container}>
-        <p style={styles.error as any}>{error}</p>
-      </div>
-    );
 
   return (
     <div style={styles.container as any}>
-      <h1>Gerenciamento de Componentes Curriculares</h1>
-      <p>Vincule uma matéria e um professor a uma turma específica.</p>
+      <h1>Vincular Matérias a Turmas (Componentes Curriculares)</h1>
+      <p>
+        Aqui você define qual professor leciona qual matéria para cada turma.
+      </p>
 
       <section style={{ marginTop: "2rem", marginBottom: "2rem" }}>
-        <h2>Criar Novo Componente</h2>
+        <h2>Novo Vínculo</h2>
         <form onSubmit={handleSubmit} style={styles.form as any}>
-          <label>
+          <label style={styles.label}>
             Turma:
             <select
               value={turmaId}
@@ -163,7 +160,7 @@ export default function ComponentesPage() {
               ))}
             </select>
           </label>
-          <label>
+          <label style={styles.label}>
             Matéria:
             <select
               value={materiaId}
@@ -177,7 +174,7 @@ export default function ComponentesPage() {
               ))}
             </select>
           </label>
-          <label>
+          <label style={styles.label}>
             Professor:
             <select
               value={professorId}
@@ -191,7 +188,7 @@ export default function ComponentesPage() {
               ))}
             </select>
           </label>
-          <label>
+          <label style={styles.label}>
             Ano Letivo:
             <input
               type="number"
@@ -202,7 +199,7 @@ export default function ComponentesPage() {
           </label>
 
           <button type="submit" style={styles.button}>
-            Criar Componente
+            Vincular
           </button>
           {error && <p style={styles.error as any}>{error}</p>}
         </form>
@@ -211,7 +208,7 @@ export default function ComponentesPage() {
       <hr />
 
       <section style={{ marginTop: "2rem" }}>
-        <h2>Componentes Existentes</h2>
+        <h2>Vínculos Existentes</h2>
         <table style={styles.table}>
           <thead>
             <tr>

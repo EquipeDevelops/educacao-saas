@@ -8,7 +8,9 @@ import { AuthenticatedRequest } from "../../middlewares/auth";
 const prisma = new PrismaClient();
 
 const fullInclude = {
-  turma: { select: { id: true, nome: true, serie: true } },
+  turma: {
+    select: { id: true, nome: true, serie: true, unidadeEscolarId: true },
+  },
   materia: { select: { id: true, nome: true } },
   professor: {
     include: {
@@ -54,11 +56,19 @@ export async function findAll(
   if (user.unidadeEscolarId) {
     where.turma = { unidadeEscolarId: user.unidadeEscolarId };
   } else {
-    return [];
+    if (user.papel !== "ADMINISTRADOR") {
+      return [];
+    }
+  }
+
+  if (user.papel === "PROFESSOR") {
+    where.professorId = user.perfilId!;
   }
 
   if (filters.turmaId) where.turmaId = filters.turmaId;
-  if (filters.professorId) where.professorId = filters.professorId;
+  if (user.papel !== "PROFESSOR" && filters.professorId) {
+    where.professorId = filters.professorId;
+  }
   if (filters.ano_letivo) where.ano_letivo = Number(filters.ano_letivo);
 
   return prisma.componenteCurricular.findMany({
@@ -69,13 +79,75 @@ export async function findAll(
 }
 
 export async function findById(id: string, user: AuthenticatedRequest["user"]) {
-  return prisma.componenteCurricular.findFirst({
-    where: {
-      id,
-      turma: { unidadeEscolarId: user.unidadeEscolarId },
-    },
+  console.log("\n--- [DEBUG] Iniciando findById no Serviço de Componente ---");
+  console.log(`[DEBUG] Buscando componente com ID: ${id}`);
+  console.log("[DEBUG] Dados do usuário da requisição (req.user):", user);
+
+  const componente = await prisma.componenteCurricular.findUnique({
+    where: { id },
     include: fullInclude,
   });
+
+  if (!componente) {
+    console.log(
+      "[DEBUG] Componente não encontrado no banco de dados. Retornando null."
+    );
+    return null;
+  }
+  console.log("[DEBUG] Componente encontrado:", componente);
+
+  console.log(`[DEBUG] Verificando permissão para o papel: ${user.papel}`);
+  switch (user.papel) {
+    case "GESTOR":
+      console.log(
+        `[DEBUG] Comparando Unidade do Componente (${componente.turma.unidadeEscolarId}) com Unidade do Gestor (${user.unidadeEscolarId})`
+      );
+      if (componente.turma.unidadeEscolarId !== user.unidadeEscolarId) {
+        console.log(
+          "[DEBUG] PERMISSÃO NEGADA: Gestor não pertence à unidade escolar do componente."
+        );
+        return null;
+      }
+      break;
+    case "PROFESSOR":
+      console.log(
+        `[DEBUG] Comparando Professor do Componente (${componente.professorId}) com Perfil do Usuário (${user.perfilId})`
+      );
+      if (componente.professorId !== user.perfilId) {
+        console.log(
+          "[DEBUG] PERMISSÃO NEGADA: Usuário não é o professor deste componente."
+        );
+        return null;
+      }
+      break;
+    case "ALUNO":
+      console.log(
+        `[DEBUG] Verificando se o aluno (perfil ${user.perfilId}) está matriculado na turma ${componente.turmaId}`
+      );
+      const matricula = await prisma.matriculas.findFirst({
+        where: {
+          alunoId: user.perfilId!,
+          turmaId: componente.turmaId,
+          status: "ATIVA",
+        },
+      });
+      if (!matricula) {
+        console.log(
+          "[DEBUG] PERMISSÃO NEGADA: Aluno não encontrado na turma do componente."
+        );
+        return null;
+      }
+      console.log("[DEBUG] Aluno encontrado na turma. Permissão concedida.");
+      break;
+    default:
+      console.log(
+        "[DEBUG] Papel não tem permissão de acesso. Retornando null."
+      );
+      return null;
+  }
+
+  console.log("[DEBUG] PERMISSÃO CONCEDIDA. Retornando dados do componente.");
+  return componente;
 }
 
 export async function update(

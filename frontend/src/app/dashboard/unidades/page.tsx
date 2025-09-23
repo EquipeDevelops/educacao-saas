@@ -10,7 +10,6 @@ type Unidade = {
   estado: string;
 };
 
-// Estado inicial para o formulário, para facilitar a limpeza
 const initialState = {
   unidadeNome: "",
   cidade: "",
@@ -67,8 +66,8 @@ export default function UnidadesPage() {
 
     try {
       await api.post("/unidades-escolares", payload);
-      setFormState(initialState); // Limpa o formulário
-      await fetchUnidades(); // Recarrega a lista
+      setFormState(initialState);
+      await fetchUnidades();
     } catch (err: any) {
       setError(
         err.response?.data?.message || "Erro ao criar a unidade escolar."
@@ -87,7 +86,13 @@ export default function UnidadesPage() {
       border: "1px solid #ccc",
       borderRadius: "8px",
     },
-    input: { padding: "0.5rem", borderRadius: "4px", border: "1px solid #ccc" },
+    input: {
+      padding: "0.5rem",
+      borderRadius: "4px",
+      border: "1px solid #ccc",
+      marginBottom: "0.5rem",
+      width: "100%",
+    },
     button: {
       padding: "0.75rem",
       borderRadius: "4px",

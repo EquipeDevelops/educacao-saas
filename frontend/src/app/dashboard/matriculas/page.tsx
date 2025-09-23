@@ -3,7 +3,6 @@
 import { useState, useEffect, FormEvent } from "react";
 import { api } from "@/services/api";
 
-// Tipagens
 type Aluno = { id: string; usuario: { nome: string } };
 type Turma = { id: string; nome: string; serie: string };
 type Matricula = {
@@ -21,7 +20,6 @@ export default function MatriculasPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Estados do formulário
   const [alunoId, setAlunoId] = useState("");
   const [turmaId, setTurmaId] = useState("");
   const [anoLetivo, setAnoLetivo] = useState(new Date().getFullYear());
@@ -32,7 +30,7 @@ export default function MatriculasPage() {
       setError(null);
       const [resMatriculas, resAlunos, resTurmas] = await Promise.all([
         api.get("/matriculas"),
-        api.get("/alunos"), // Novo endpoint de perfis de alunos
+        api.get("/alunos"),
         api.get("/turmas"),
       ]);
 
@@ -69,7 +67,7 @@ export default function MatriculasPage() {
         turmaId,
         ano_letivo: Number(anoLetivo),
       });
-      await fetchData(); // Recarrega tudo
+      await fetchData();
     } catch (err: any) {
       setError(err.response?.data?.message || "Erro ao criar matrícula.");
     }
@@ -86,11 +84,23 @@ export default function MatriculasPage() {
       border: "1px solid #ccc",
       borderRadius: "8px",
     },
-    input: { padding: "0.5rem", borderRadius: "4px", border: "1px solid #ccc" },
+    input: {
+      padding: "0.5rem",
+      borderRadius: "4px",
+      border: "1px solid #ccc",
+      width: "100%",
+    },
     select: {
       padding: "0.5rem",
       borderRadius: "4px",
       border: "1px solid #ccc",
+      width: "100%",
+    },
+    label: {
+      display: "flex",
+      flexDirection: "column",
+      gap: "0.5rem",
+      width: "100%",
     },
     button: {
       padding: "0.75rem",
@@ -119,35 +129,43 @@ export default function MatriculasPage() {
       <section style={{ marginTop: "2rem", marginBottom: "2rem" }}>
         <h2>Nova Matrícula</h2>
         <form onSubmit={handleSubmit} style={styles.form as any}>
-          <label>
+          <label style={styles.label}>
             Aluno:
             <select
               value={alunoId}
               onChange={(e) => setAlunoId(e.target.value)}
               style={styles.select}
             >
-              {alunos.map((aluno) => (
-                <option key={aluno.id} value={aluno.id}>
-                  {aluno.usuario.nome}
-                </option>
-              ))}
+              {alunos.length > 0 ? (
+                alunos.map((aluno) => (
+                  <option key={aluno.id} value={aluno.id}>
+                    {aluno.usuario.nome}
+                  </option>
+                ))
+              ) : (
+                <option disabled>Nenhum aluno cadastrado</option>
+              )}
             </select>
           </label>
-          <label>
+          <label style={styles.label}>
             Turma:
             <select
               value={turmaId}
               onChange={(e) => setTurmaId(e.target.value)}
               style={styles.select}
             >
-              {turmas.map((turma) => (
-                <option key={turma.id} value={turma.id}>
-                  {turma.serie} - {turma.nome}
-                </option>
-              ))}
+              {turmas.length > 0 ? (
+                turmas.map((turma) => (
+                  <option key={turma.id} value={turma.id}>
+                    {turma.serie} - {turma.nome}
+                  </option>
+                ))
+              ) : (
+                <option disabled>Nenhuma turma cadastrada</option>
+              )}
             </select>
           </label>
-          <label>
+          <label style={styles.label}>
             Ano Letivo:
             <input
               type="number"
@@ -166,7 +184,7 @@ export default function MatriculasPage() {
       <hr />
 
       <section style={{ marginTop: "2rem" }}>
-        <h2>Matrículas Ativas</h2>
+        <h2>Matrículas Realizadas</h2>
         <table style={styles.table}>
           <thead>
             <tr>

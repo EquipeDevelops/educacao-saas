@@ -3,7 +3,6 @@
 import { useState, useEffect, FormEvent } from "react";
 import { api } from "@/services/api";
 
-// Tipagem para o objeto de Matéria
 type Materia = {
   id: string;
   nome: string;
@@ -11,21 +10,18 @@ type Materia = {
 };
 
 export default function MateriasPage() {
-  // Estados do componente
   const [materias, setMaterias] = useState<Materia[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Estados para o formulário
   const [nome, setNome] = useState("");
   const [codigo, setCodigo] = useState("");
 
-  // Função para buscar as matérias na API
   async function fetchMaterias() {
-    // Adicione um try-catch para lidar com possíveis erros de rede ou do servidor
     try {
       setIsLoading(true);
-      const response = await api.get("/materias"); // Endpoint a ser criado no backend
+      setError(null);
+      const response = await api.get("/materias");
       setMaterias(response.data);
     } catch (err) {
       setError(
@@ -36,12 +32,10 @@ export default function MateriasPage() {
     }
   }
 
-  // Hook para carregar os dados iniciais
   useEffect(() => {
     fetchMaterias();
   }, []);
 
-  // Função para lidar com o envio do formulário de criação
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     setError(null);
@@ -53,7 +47,6 @@ export default function MateriasPage() {
 
     try {
       await api.post("/materias", { nome, codigo });
-      // Limpa o formulário e recarrega a lista após o sucesso
       setNome("");
       setCodigo("");
       await fetchMaterias();
@@ -62,7 +55,6 @@ export default function MateriasPage() {
     }
   }
 
-  // Estilos (mantendo a consistência com as outras páginas)
   const styles = {
     container: { padding: "2rem", fontFamily: "sans-serif" },
     form: {

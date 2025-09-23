@@ -10,12 +10,8 @@ import {
 export const tarefaController = {
   create: async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const { unidadeEscolarId, perfilId: professorId } = req.user;
-      const tarefa = await tarefaService.create(
-        req.body,
-        professorId!,
-        unidadeEscolarId!
-      );
+      const { perfilId: professorId } = req.user;
+      const tarefa = await tarefaService.create(req.body, professorId!);
       return res.status(201).json(tarefa);
     } catch (error: any) {
       if (error.code === "FORBIDDEN")
@@ -52,12 +48,11 @@ export const tarefaController = {
   update: async (req: AuthenticatedRequest, res: Response) => {
     try {
       const { id } = req.params;
-      const { unidadeEscolarId, perfilId: professorId } = req.user;
+      const { perfilId: professorId } = req.user;
       const tarefa = await tarefaService.update(
         id,
         req.body as UpdateTarefaInput["body"],
-        professorId!,
-        unidadeEscolarId!
+        professorId!
       );
       return res.status(200).json(tarefa);
     } catch (error: any) {
@@ -73,13 +68,8 @@ export const tarefaController = {
     try {
       const { id } = req.params;
       const { publicado } = req.body as PublishTarefaInput["body"];
-      const { unidadeEscolarId, perfilId: professorId } = req.user;
-      const tarefa = await tarefaService.publish(
-        id,
-        publicado,
-        professorId!,
-        unidadeEscolarId!
-      );
+      const { perfilId: professorId } = req.user;
+      const tarefa = await tarefaService.publish(id, publicado, professorId!);
       return res.status(200).json(tarefa);
     } catch (error: any) {
       if (error.code === "FORBIDDEN")
@@ -93,8 +83,8 @@ export const tarefaController = {
   remove: async (req: AuthenticatedRequest, res: Response) => {
     try {
       const { id } = req.params;
-      const { unidadeEscolarId, perfilId: professorId } = req.user;
-      await tarefaService.remove(id, professorId!, unidadeEscolarId!);
+      const { perfilId: professorId } = req.user;
+      await tarefaService.remove(id, professorId!);
       return res.status(204).send();
     } catch (error: any) {
       if (error.code === "FORBIDDEN")

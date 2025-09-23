@@ -41,16 +41,27 @@ export const componenteController = {
   },
 
   findById: async (req: AuthenticatedRequest, res: Response) => {
+    // *** LOG DE DEPURAÇÃO ADICIONADO AQUI ***
+    console.log(
+      `--- [CONTROLLER] Recebida requisição para findById com params:`,
+      req.params
+    );
+
     try {
       const { id } = req.params;
       const componente = await componenteService.findById(id, req.user);
       if (!componente) {
-        return res
-          .status(404)
-          .json({ message: "Componente curricular não encontrado." });
+        return res.status(404).json({
+          message: "Componente curricular não encontrado ou sem permissão.",
+        });
       }
       return res.status(200).json(componente);
     } catch (error: any) {
+      // Adicionando log do erro capturado
+      console.error(
+        "--- [ERRO NO CONTROLLER] Erro capturado em findById:",
+        error
+      );
       return res.status(500).json({
         message: "Erro ao buscar componente curricular.",
         error: error.message,

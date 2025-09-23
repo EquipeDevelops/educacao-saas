@@ -4,35 +4,37 @@ import { PrismaClient, PapelUsuario } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-// ARQUITETURA: Definimos uma interface customizada que estende a Request do Express.
-// Isso nos permite adicionar a propriedade 'user' à requisição de forma tipada.
 export interface AuthenticatedRequest extends Request {
   user: {
     id: string;
-    instituicaoId: string | null; // Pode ser nulo para o Super Admin
+    instituicaoId: string | null;
+    unidadeEscolarId: string | null;
     papel: PapelUsuario;
-    perfilId: string | null; // ID do perfil de aluno ou professor
+    perfilId: string | null;
   };
 }
 
-/**
- * Middleware de AUTENTICAÇÃO (`protect`).
- * Verifica a validade do token JWT e anexa os dados do usuário à requisição.
- */
 export const protect = async (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
+  console.log("\n--- [AUTH MIDDLEWARE] Iniciando middleware 'protect' ---");
+  console.log(
+    "[AUTH MIDDLEWARE] Verificando JWT_SECRET:",
+    process.env.JWT_SECRET
+  );
+
   let token;
 
-  // 1. Pega o token do header Authorization
   if (
     req.headers.authorization &&
     req.headers.authorization.startsWith("Bearer")
   ) {
     token = req.headers.authorization.split(" ")[1];
   }
+
+  console.log("[AUTH MIDDLEWARE] Token encontrado:", !!token);
 
   if (!token) {
     return res
@@ -41,12 +43,10 @@ export const protect = async (
   }
 
   try {
-    // 2. Verifica se o token é válido e não expirou
     const decoded = jwt.verify(token, process.env.JWT_SECRET!) as {
       id: string;
     };
 
-    // 3. Busca o usuário no banco de dados
     const usuario = await prisma.usuarios.findUnique({
       where: { id: decoded.id },
       include: {
@@ -61,28 +61,28 @@ export const protect = async (
         .json({ message: "O usuário dono deste token não existe mais." });
     }
 
-    // 4. Anexa o objeto 'user' à requisição para ser usado nos próximos middlewares e controllers
     (req as AuthenticatedRequest).user = {
       id: usuario.id,
       instituicaoId: usuario.instituicaoId,
+      unidadeEscolarId: usuario.unidadeEscolarId,
       papel: usuario.papel,
-      // OTIMIZAÇÃO: Já buscamos e anexamos o ID do perfil para não precisar de outra query no futuro
       perfilId:
         usuario.perfil_aluno?.id || usuario.perfil_professor?.id || null,
     };
 
-    next(); // Passa para o próximo middleware
+    console.log(
+      "[AUTH MIDDLEWARE] Usuário autenticado com sucesso:",
+      (req as AuthenticatedRequest).user.id
+    );
+    next();
   } catch (error) {
+    console.error("--- [ERRO NO AUTH MIDDLEWARE] ---");
+    console.error(error);
+    console.error("---------------------------------");
     return res.status(401).json({ message: "Token inválido ou expirado." });
   }
 };
 
-/**
- * Middleware de AUTORIZAÇÃO (`authorize`).
- * Recebe uma lista de papéis e verifica se o usuário autenticado tem permissão.
- * Deve ser usado SEMPRE DEPOIS do middleware `protect`.
- * @param roles - Papéis permitidos (ex: 'ADMINISTRADOR', 'PROFESSOR')
- */
 export const authorize = (...roles: PapelUsuario[]) => {
   return (req: Request, res: Response, next: NextFunction) => {
     const user = (req as AuthenticatedRequest).user;
