@@ -39,12 +39,7 @@ router.get(
   validate(findAllComponentesSchema),
   componenteController.findAll
 );
-router.get(
-  "/:id",
-  protect,
-  authorize("GESTOR", "PROFESSOR", "ALUNO"),
-  validate({ params: paramsSchema }),
-  componenteController.findById
-);
+
+router.get("/:id", protect, componenteController.findById);
 
 export const componenteRoutes = router;

@@ -1,19 +1,13 @@
 "use client";
 
 import { useAuth } from "@/contexts/AuthContext";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 export default function DashboardPage() {
-  const { user, signOut } = useAuth();
-  const router = useRouter();
+  const { user, signOut, loading } = useAuth();
 
-  if (!user) {
+  if (loading || !user) {
     return <div>Carregando...</div>;
-  }
-
-  function handleLogout() {
-    signOut();
   }
 
   const styles = {
@@ -34,38 +28,35 @@ export default function DashboardPage() {
     main: { marginTop: "2rem" },
     nav: { marginTop: "2rem", display: "flex", gap: "1rem", flexWrap: "wrap" },
     link: { textDecoration: "underline", color: "blue", cursor: "pointer" },
+    welcomeMessage: { fontSize: "1.2rem" },
+    roleInfo: { fontStyle: "italic", color: "#555" },
   };
 
   return (
     <div style={styles.container}>
       <header style={styles.header}>
-        <h1>Dashboard</h1>
-        <button onClick={handleLogout} style={styles.logoutButton}>
+        <h1>Dashboard Principal</h1>
+        <button onClick={signOut} style={styles.logoutButton}>
           Sair
         </button>
       </header>
       <hr />
       <main style={styles.main}>
-        <h2>Bem-vindo, {user.nome}!</h2>
-        <p>
-          <strong>Papel:</strong> {user.papel}
-        </p>
+        <h2 style={styles.welcomeMessage}>Bem-vindo(a), {user.nome}!</h2>
+        <p style={styles.roleInfo}>Seu papel é: {user.papel}</p>
 
-        {/* --- MENU DO ADMIN DA INSTITUIÇÃO --- */}
         {user.papel === "ADMINISTRADOR" && (
           <nav style={styles.nav as any}>
             <Link href="/dashboard/unidades" style={styles.link}>
               Gerenciar Unidades (Colégios)
             </Link>
-            {/* Nenhum outro link deve aparecer aqui para o Admin */}
           </nav>
         )}
 
-        {/* --- MENU DO GESTOR DO COLÉGIO --- */}
         {user.papel === "GESTOR" && (
           <nav style={styles.nav as any}>
             <Link href="/dashboard/usuarios" style={styles.link}>
-              Gerenciar Usuários (Professores/Alunos)
+              Gerenciar Usuários
             </Link>
             <Link href="/dashboard/turmas" style={styles.link}>
               Gerenciar Turmas
@@ -74,11 +65,28 @@ export default function DashboardPage() {
               Gerenciar Matérias
             </Link>
             <Link href="/dashboard/componentes" style={styles.link}>
-              Gerenciar Componentes
+              Vincular Matérias (Componentes)
             </Link>
             <Link href="/dashboard/matriculas" style={styles.link}>
               Gerenciar Matrículas
             </Link>
+            <Link href="/dashboard/horarios" style={styles.link}>
+              Gerenciar Horários
+            </Link>
+          </nav>
+        )}
+
+        {user.papel === "PROFESSOR" && (
+          <nav style={styles.nav as any}>
+            <Link href="/dashboard/minhas-disciplinas" style={styles.link}>
+              Minhas Disciplinas e Tarefas
+            </Link>
+          </nav>
+        )}
+
+        {user.papel === "ALUNO" && (
+          <nav style={styles.nav as any}>
+            <p>Links do Aluno (Boletim, Tarefas, etc.) irão aqui.</p>
           </nav>
         )}
       </main>

@@ -9,6 +9,7 @@ type Tarefa = {
   titulo: string;
   descricao: string | null;
   publicado: boolean;
+  data_entrega: string;
 };
 
 type Componente = {
@@ -63,6 +64,7 @@ export default function ComponentePage() {
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
+    setError(null);
     try {
       await api.post("/tarefas", {
         titulo,
@@ -74,17 +76,49 @@ export default function ComponentePage() {
       setDescricao("");
       setDataEntrega("");
       await fetchTarefas();
-    } catch (err) {
-      setError("Erro ao criar a tarefa.");
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Erro ao criar a tarefa.");
     }
   }
 
-  if (isLoading) return <p>Carregando...</p>;
-  if (error) return <p style={{ color: "red" }}>{error}</p>;
-  if (!componente) return <p>Disciplina não encontrada.</p>;
+  const styles = {
+    container: { padding: "2rem", fontFamily: "sans-serif" },
+    form: {
+      display: "flex",
+      flexDirection: "column",
+      gap: "1rem",
+      maxWidth: "500px",
+      padding: "1.5rem",
+      border: "1px solid #ccc",
+      borderRadius: "8px",
+    },
+    input: { padding: "0.5rem", borderRadius: "4px", border: "1px solid #ccc" },
+    button: {
+      padding: "0.75rem",
+      borderRadius: "4px",
+      border: "none",
+      backgroundColor: "#0070f3",
+      color: "white",
+      cursor: "pointer",
+    },
+    table: { width: "100%", marginTop: "2rem", borderCollapse: "collapse" },
+    th: {
+      borderBottom: "2px solid #ccc",
+      padding: "0.5rem",
+      textAlign: "left",
+    },
+    td: { borderBottom: "1px solid #ccc", padding: "0.5rem" },
+    error: { color: "red", marginTop: "1rem" },
+  };
+
+  if (isLoading) return <p style={styles.container}>Carregando...</p>;
+  if (error)
+    return <p style={{ color: "red", ...styles.container }}>{error}</p>;
+  if (!componente)
+    return <p style={styles.container}>Disciplina não encontrada.</p>;
 
   return (
-    <div style={{ padding: "2rem", fontFamily: "sans-serif" }}>
+    <div style={styles.container}>
       <h1>{componente.materia.nome}</h1>
       <p>
         <strong>Turma:</strong> {componente.turma.serie} -{" "}
@@ -93,51 +127,60 @@ export default function ComponentePage() {
 
       <section style={{ marginTop: "2rem", marginBottom: "2rem" }}>
         <h2>Criar Nova Tarefa</h2>
-        <form
-          onSubmit={handleSubmit}
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: "1rem",
-            maxWidth: "500px",
-          }}
-        >
+        <form onSubmit={handleSubmit} style={styles.form as any}>
           <input
             value={titulo}
             onChange={(e) => setTitulo(e.target.value)}
             placeholder="Título da Tarefa"
             required
+            style={styles.input}
           />
           <textarea
             value={descricao}
             onChange={(e) => setDescricao(e.target.value)}
             placeholder="Descrição (opcional)"
+            style={styles.input}
           />
           <input
             type="datetime-local"
             value={dataEntrega}
             onChange={(e) => setDataEntrega(e.target.value)}
             required
+            style={styles.input}
           />
-          <button type="submit">Criar Tarefa</button>
+          <button type="submit" style={styles.button}>
+            Criar Tarefa
+          </button>
         </form>
+        {error && <p style={styles.error as any}>{error}</p>}
       </section>
 
       <hr />
 
       <section style={{ marginTop: "2rem" }}>
         <h2>Tarefas Criadas</h2>
-        <ul style={{ listStyle: "none", padding: 0 }}>
-          {tarefas.map((tarefa) => (
-            <li
-              key={tarefa.id}
-              style={{ padding: "0.5rem", borderBottom: "1px solid #ccc" }}
-            >
-              <strong>{tarefa.titulo}</strong> -{" "}
-              {tarefa.publicado ? "Publicada" : "Rascunho"}
-            </li>
-          ))}
-        </ul>
+        <table style={styles.table}>
+          <thead>
+            <tr>
+              <th style={styles.th}>Título</th>
+              <th style={styles.th}>Data de Entrega</th>
+              <th style={styles.th}>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {tarefas.map((tarefa) => (
+              <tr key={tarefa.id}>
+                <td style={styles.td}>{tarefa.titulo}</td>
+                <td style={styles.td}>
+                  {new Date(tarefa.data_entrega).toLocaleString("pt-BR")}
+                </td>
+                <td style={styles.td}>
+                  {tarefa.publicado ? "Publicada" : "Rascunho"}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </section>
     </div>
   );
