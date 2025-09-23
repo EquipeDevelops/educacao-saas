@@ -1,7 +1,8 @@
+// Caminho: backend/src/modules/registroFalta/registroFalta.routes.ts
 import { Router } from "express";
 import { registroFaltaController } from "./registroFalta.controller";
 import { validate } from "../../middlewares/validate";
-import { protect, authorize } from "../../middlewares/auth"; // <-- IMPORTAÇÃO
+import { protect, authorize } from "../../middlewares/auth";
 import {
   createFaltaSchema,
   updateFaltaSchema,
@@ -34,18 +35,18 @@ router.delete(
   registroFaltaController.remove
 );
 
-// Todos os papéis relevantes podem visualizar os registros de falta.
+// GESTORES, PROFESSORES e ALUNOS podem visualizar os registros de falta de seu colégio.
 router.get(
   "/",
   protect,
-  authorize("ADMINISTRADOR", "PROFESSOR", "ALUNO"),
+  authorize("GESTOR", "PROFESSOR", "ALUNO"),
   validate(findAllFaltasSchema),
   registroFaltaController.findAll
 );
 router.get(
   "/:id",
   protect,
-  authorize("ADMINISTRADOR", "PROFESSOR", "ALUNO"),
+  authorize("GESTOR", "PROFESSOR", "ALUNO"),
   validate({ params: paramsSchema }),
   registroFaltaController.findById
 );

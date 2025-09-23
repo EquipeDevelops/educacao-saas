@@ -3,71 +3,43 @@ import { CreateMateriaInput } from "./materia.validator";
 
 const prisma = new PrismaClient();
 
-const create = (data: CreateMateriaInput, instituicaoId: string) => {
-  // SEGURANÇA: A matéria é criada com o ID da instituição do usuário logado.
+const create = (data: CreateMateriaInput, unidadeEscolarId: string) => {
   return prisma.materias.create({
     data: {
       ...data,
-      instituicaoId,
+      unidadeEscolarId,
     },
   });
 };
 
-const findAll = (instituicaoId: string) => {
-  // LGPD & OTIMIZAÇÃO: Selecionamos apenas os campos necessários.
-  // SEGURANÇA: Filtra apenas as matérias da instituição do usuário.
+const findAll = (unidadeEscolarId: string) => {
   return prisma.materias.findMany({
-    where: { instituicaoId },
-    select: {
-      id: true,
-      nome: true,
-      codigo: true,
-    },
-    orderBy: {
-      nome: "asc",
-    },
+    where: { unidadeEscolarId },
+    orderBy: { nome: "asc" },
   });
 };
 
-const findById = (id: string, instituicaoId: string) => {
-  // SEGURANÇA: Garante que o usuário só pode acessar matérias da sua própria instituição.
+const findById = (id: string, unidadeEscolarId: string) => {
   return prisma.materias.findFirst({
-    where: {
-      id,
-      instituicaoId,
-    },
+    where: { id, unidadeEscolarId },
   });
 };
 
 const update = (
   id: string,
   data: Prisma.MateriasUpdateInput,
-  instituicaoId: string
+  unidadeEscolarId: string
 ) => {
-  // SEGURANÇA: A verificação composta impede a atualização de dados de outra instituição.
   return prisma.materias.updateMany({
-    where: {
-      id,
-      instituicaoId,
-    },
+    where: { id, unidadeEscolarId },
     data,
   });
 };
 
-const remove = (id: string, instituicaoId: string) => {
-  // SEGURANÇA: A verificação composta impede a exclusão de dados de outra instituição.
+const remove = (id: string, unidadeEscolarId: string) => {
   return prisma.materias.deleteMany({
-    where: {
-      id,
-      instituicaoId,
-    },
+    where: { id, unidadeEscolarId },
   });
 };
 
-export const materiaService = {
-  create,
-  findAll,
-  findById,
-  update,
-  remove,
-};
+export const materiaService = { create, findAll, findById, update, remove };

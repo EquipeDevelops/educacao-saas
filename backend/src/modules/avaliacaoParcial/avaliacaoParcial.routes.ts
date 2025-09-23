@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { avaliacaoController } from "./avaliacaoParcial.controller";
 import { validate } from "../../middlewares/validate";
-import { protect, authorize } from "../../middlewares/auth"; // <-- IMPORTAÇÃO
+import { protect, authorize } from "../../middlewares/auth";
 import {
   createAvaliacaoSchema,
   updateAvaliacaoSchema,
@@ -11,7 +11,6 @@ import {
 
 const router = Router();
 
-// SEGURANÇA: Apenas PROFESSORES podem criar, editar e apagar notas do boletim.
 router.post(
   "/",
   protect,
@@ -34,18 +33,17 @@ router.delete(
   avaliacaoController.remove
 );
 
-// Todos os papéis relevantes podem visualizar as avaliações.
 router.get(
   "/",
   protect,
-  authorize("ADMINISTRADOR", "PROFESSOR", "ALUNO"),
+  authorize("GESTOR", "PROFESSOR", "ALUNO"),
   validate(findAllAvaliacoesSchema),
   avaliacaoController.findAll
 );
 router.get(
   "/:id",
   protect,
-  authorize("ADMINISTRADOR", "PROFESSOR", "ALUNO"),
+  authorize("GESTOR", "PROFESSOR", "ALUNO"),
   validate({ params: paramsSchema }),
   avaliacaoController.findById
 );

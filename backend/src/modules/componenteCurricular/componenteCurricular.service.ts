@@ -3,6 +3,7 @@ import {
   CreateComponenteInput,
   FindAllComponentesInput,
 } from "./componenteCurricular.validator";
+import { AuthenticatedRequest } from "../../middlewares/auth";
 
 const prisma = new PrismaClient();
 
@@ -18,11 +19,15 @@ const fullInclude = {
 
 export async function create(
   data: CreateComponenteInput,
-  instituicaoId: string
+  user: AuthenticatedRequest["user"]
 ) {
+  const { instituicaoId, unidadeEscolarId } = user;
+
   const [turma, materia, professor] = await Promise.all([
-    prisma.turmas.findFirst({ where: { id: data.turmaId, instituicaoId } }),
-    prisma.materias.findFirst({ where: { id: data.materiaId, instituicaoId } }),
+    prisma.turmas.findFirst({ where: { id: data.turmaId, unidadeEscolarId } }),
+    prisma.materias.findFirst({
+      where: { id: data.materiaId, unidadeEscolarId },
+    }),
     prisma.usuarios_professor.findFirst({
       where: { id: data.professorId, usuario: { instituicaoId } },
     }),
@@ -30,7 +35,7 @@ export async function create(
 
   if (!turma || !materia || !professor) {
     throw new Error(
-      "Turma, matéria ou professor não encontrado ou não pertence à sua instituição."
+      "Turma, matéria ou professor inválido ou não pertence ao escopo permitido."
     );
   }
 
@@ -41,12 +46,16 @@ export async function create(
 }
 
 export async function findAll(
-  instituicaoId: string,
+  user: AuthenticatedRequest["user"],
   filters: FindAllComponentesInput
 ) {
-  const where: Prisma.ComponenteCurricularWhereInput = {
-    turma: { instituicaoId },
-  };
+  const where: Prisma.ComponenteCurricularWhereInput = {};
+
+  if (user.unidadeEscolarId) {
+    where.turma = { unidadeEscolarId: user.unidadeEscolarId };
+  } else {
+    return [];
+  }
 
   if (filters.turmaId) where.turmaId = filters.turmaId;
   if (filters.professorId) where.professorId = filters.professorId;
@@ -55,14 +64,15 @@ export async function findAll(
   return prisma.componenteCurricular.findMany({
     where,
     include: fullInclude,
+    orderBy: { ano_letivo: "desc" },
   });
 }
 
-export async function findById(id: string, instituicaoId: string) {
+export async function findById(id: string, user: AuthenticatedRequest["user"]) {
   return prisma.componenteCurricular.findFirst({
     where: {
       id,
-      turma: { instituicaoId },
+      turma: { unidadeEscolarId: user.unidadeEscolarId },
     },
     include: fullInclude,
   });
@@ -71,13 +81,13 @@ export async function findById(id: string, instituicaoId: string) {
 export async function update(
   id: string,
   data: Prisma.ComponenteCurricularUpdateInput,
-  instituicaoId: string
+  user: AuthenticatedRequest["user"]
 ) {
-  const componenteExistente = await findById(id, instituicaoId);
+  const componenteExistente = await findById(id, user);
   if (!componenteExistente) {
-    const error = new Error("Componente curricular não encontrado.");
-    (error as any).code = "P2025";
-    throw error;
+    throw new Error(
+      "Componente curricular não encontrado ou sem permissão para editar."
+    );
   }
 
   return prisma.componenteCurricular.update({
@@ -87,12 +97,12 @@ export async function update(
   });
 }
 
-export async function remove(id: string, instituicaoId: string) {
-  const componenteExistente = await findById(id, instituicaoId);
+export async function remove(id: string, user: AuthenticatedRequest["user"]) {
+  const componenteExistente = await findById(id, user);
   if (!componenteExistente) {
-    const error = new Error("Componente curricular não encontrado.");
-    (error as any).code = "P2025";
-    throw error;
+    throw new Error(
+      "Componente curricular não encontrado ou sem permissão para deletar."
+    );
   }
   return prisma.componenteCurricular.delete({ where: { id } });
 }

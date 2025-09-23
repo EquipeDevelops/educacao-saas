@@ -19,24 +19,24 @@ async function verifyConsistencyAndOwnership(
   matriculaId: string,
   componenteCurricularId: string,
   professorId: string,
-  instituicaoId: string
+  unidadeEscolarId: string
 ) {
   const [componente, matricula] = await Promise.all([
     prisma.componenteCurricular.findFirst({
       where: {
         id: componenteCurricularId,
         professorId,
-        turma: { instituicaoId },
+        turma: { unidadeEscolarId },
       },
     }),
     prisma.matriculas.findFirst({
-      where: { id: matriculaId, turma: { instituicaoId } },
+      where: { id: matriculaId, turma: { unidadeEscolarId } },
     }),
   ]);
 
   if (!componente || !matricula) {
     throw new Error(
-      "Matrícula ou Componente Curricular não encontrado ou não pertence à sua instituição."
+      "Matrícula ou Componente Curricular não encontrado na sua unidade escolar."
     );
   }
 
@@ -49,25 +49,32 @@ async function verifyConsistencyAndOwnership(
 
 export async function create(
   data: CreateAvaliacaoInput,
-  professorId: string,
-  instituicaoId: string
+  user: AuthenticatedRequest["user"]
 ) {
+  const { perfilId: professorId, unidadeEscolarId } = user;
   await verifyConsistencyAndOwnership(
     data.matriculaId,
     data.componenteCurricularId,
-    professorId,
-    instituicaoId
+    professorId!,
+    unidadeEscolarId!
   );
   return prisma.avaliacaoParcial.create({ data, include: fullInclude });
 }
 
 export async function findAll(
-  instituicaoId: string,
+  user: AuthenticatedRequest["user"],
   filters: FindAllAvaliacoesInput
 ) {
   const where: Prisma.AvaliacaoParcialWhereInput = {
-    componenteCurricular: { turma: { instituicaoId } },
+    matricula: { turma: { unidadeEscolarId: user.unidadeEscolarId } },
   };
+
+  if (user.papel === "ALUNO") {
+    const matricula = await prisma.matriculas.findFirst({
+      where: { aluno: { usuarioId: user.id }, status: "ATIVA" },
+    });
+    filters.matriculaId = matricula?.id || "nenhuma-matricula-encontrada";
+  }
 
   if (filters.matriculaId) where.matriculaId = filters.matriculaId;
   if (filters.componenteCurricularId)
@@ -76,9 +83,12 @@ export async function findAll(
   return prisma.avaliacaoParcial.findMany({ where, include: fullInclude });
 }
 
-export async function findById(id: string, instituicaoId: string) {
+export async function findById(id: string, user: AuthenticatedRequest["user"]) {
   return prisma.avaliacaoParcial.findFirst({
-    where: { id, componenteCurricular: { turma: { instituicaoId } } },
+    where: {
+      id,
+      matricula: { turma: { unidadeEscolarId: user.unidadeEscolarId } },
+    },
     include: fullInclude,
   });
 }
@@ -86,10 +96,10 @@ export async function findById(id: string, instituicaoId: string) {
 export async function update(
   id: string,
   data: Prisma.AvaliacaoParcialUpdateInput,
-  professorId: string,
-  instituicaoId: string
+  user: AuthenticatedRequest["user"]
 ) {
-  const avaliacao = await findById(id, instituicaoId);
+  const { perfilId: professorId, unidadeEscolarId } = user;
+  const avaliacao = await findById(id, user);
   if (!avaliacao) {
     const error = new Error("Avaliação não encontrada.");
     (error as any).code = "P2025";
@@ -98,8 +108,8 @@ export async function update(
   await verifyConsistencyAndOwnership(
     avaliacao.matriculaId,
     avaliacao.componenteCurricularId,
-    professorId,
-    instituicaoId
+    professorId!,
+    unidadeEscolarId!
   );
   return prisma.avaliacaoParcial.update({
     where: { id },
@@ -108,12 +118,9 @@ export async function update(
   });
 }
 
-export async function remove(
-  id: string,
-  professorId: string,
-  instituicaoId: string
-) {
-  const avaliacao = await findById(id, instituicaoId);
+export async function remove(id: string, user: AuthenticatedRequest["user"]) {
+  const { perfilId: professorId, unidadeEscolarId } = user;
+  const avaliacao = await findById(id, user);
   if (!avaliacao) {
     const error = new Error("Avaliação não encontrada.");
     (error as any).code = "P2025";
@@ -122,10 +129,9 @@ export async function remove(
   await verifyConsistencyAndOwnership(
     avaliacao.matriculaId,
     avaliacao.componenteCurricularId,
-    professorId,
-    instituicaoId
+    professorId!,
+    unidadeEscolarId!
   );
   return prisma.avaliacaoParcial.delete({ where: { id } });
 }
-
 export const avaliacaoService = { create, findAll, findById, update, remove };

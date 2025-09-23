@@ -1,20 +1,13 @@
+// Caminho: backend/src/modules/registroFalta/registroFalta.controller.ts
 import { Response } from "express";
 import { registroFaltaService } from "./registroFalta.service";
 import { AuthenticatedRequest } from "../../middlewares/auth";
 import { FindAllFaltasInput } from "./registroFalta.validator";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
 
 export const registroFaltaController = {
   create: async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const { instituicaoId, perfilId: professorId } = req.user;
-      const falta = await registroFaltaService.create(
-        req.body,
-        professorId!,
-        instituicaoId!
-      );
+      const falta = await registroFaltaService.create(req.body, req.user);
       return res.status(201).json(falta);
     } catch (error: any) {
       if (error.message.includes("Já existe um registro"))
@@ -25,24 +18,9 @@ export const registroFaltaController = {
 
   findAll: async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const { instituicaoId, papel, perfilId } = req.user;
-      let filters = req.query as FindAllFaltasInput;
-
-      if (papel === "ALUNO") {
-        const anoLetivoAtual = new Date().getFullYear();
-        const matricula = await prisma.matriculas.findFirst({
-          where: {
-            alunoId: perfilId!,
-            ano_letivo: anoLetivoAtual,
-            status: "ATIVA",
-          },
-        });
-        filters.matriculaId = matricula?.id || "nenhuma-matricula-encontrada";
-      }
-
       const faltas = await registroFaltaService.findAll(
-        instituicaoId!,
-        filters
+        req.user,
+        req.query as FindAllFaltasInput
       );
       return res.status(200).json(faltas);
     } catch (error: any) {
@@ -52,9 +30,10 @@ export const registroFaltaController = {
 
   findById: async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const { id } = req.params;
-      const { instituicaoId } = req.user;
-      const falta = await registroFaltaService.findById(id, instituicaoId!);
+      const falta = await registroFaltaService.findById(
+        req.params.id,
+        req.user
+      );
       if (!falta)
         return res
           .status(404)
@@ -69,13 +48,10 @@ export const registroFaltaController = {
 
   update: async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const { id } = req.params;
-      const { instituicaoId, perfilId: professorId } = req.user;
       const falta = await registroFaltaService.update(
-        id,
+        req.params.id,
         req.body,
-        professorId!,
-        instituicaoId!
+        req.user
       );
       return res.status(200).json(falta);
     } catch (error: any) {
@@ -87,9 +63,7 @@ export const registroFaltaController = {
 
   remove: async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const { id } = req.params;
-      const { instituicaoId, perfilId: professorId } = req.user;
-      await registroFaltaService.remove(id, professorId!, instituicaoId!);
+      await registroFaltaService.remove(req.params.id, req.user);
       return res.status(204).send();
     } catch (error: any) {
       if ((error as any).code === "P2025")

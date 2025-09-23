@@ -15,48 +15,61 @@ const fullInclude = {
 
 export async function create(
   data: CreateSubmissaoInput,
-  alunoId: string,
-  instituicaoId: string
+  user: AuthenticatedRequest["user"]
 ) {
   const { tarefaId } = data;
+  const { perfilId: alunoId, unidadeEscolarId } = user;
 
   const tarefa = await prisma.tarefas.findFirst({
-    where: { id: tarefaId, instituicaoId, publicado: true },
+    where: { id: tarefaId, unidadeEscolarId, publicado: true },
     select: { componenteCurricular: { select: { turmaId: true } } },
   });
-  if (!tarefa) throw new Error("Tarefa não encontrada ou não está disponível.");
+  if (!tarefa) {
+    throw new Error(
+      "Tarefa não encontrada ou não está disponível em sua unidade escolar."
+    );
+  }
 
   const matricula = await prisma.matriculas.findFirst({
     where: {
-      alunoId,
+      alunoId: alunoId!,
       turmaId: tarefa.componenteCurricular.turmaId,
       status: "ATIVA",
     },
   });
-  if (!matricula)
+  if (!matricula) {
     throw new Error("Você não está matriculado na turma desta tarefa.");
+  }
 
   const submissaoExistente = await prisma.submissoes.findFirst({
-    where: { tarefaId, alunoId },
+    where: { tarefaId, alunoId: alunoId! },
   });
-  if (submissaoExistente)
+  if (submissaoExistente) {
     throw new Error("Já existe uma submissão para esta tarefa.");
+  }
 
   return prisma.submissoes.create({
     data: {
       tarefaId,
-      alunoId,
-      instituicaoId,
+      alunoId: alunoId!,
+      unidadeEscolarId: unidadeEscolarId!,
       status: StatusSubmissao.EM_ANDAMENTO,
     },
   });
 }
 
 export async function findAll(
-  instituicaoId: string,
+  user: AuthenticatedRequest["user"],
   filters: FindAllSubmissoesInput
 ) {
-  const where: Prisma.SubmissoesWhereInput = { instituicaoId };
+  const where: Prisma.SubmissoesWhereInput = {
+    unidadeEscolarId: user.unidadeEscolarId,
+  };
+
+  if (user.papel === "ALUNO") {
+    filters.alunoId = user.perfilId!;
+  }
+
   if (filters.tarefaId) where.tarefaId = filters.tarefaId;
   if (filters.alunoId) where.alunoId = filters.alunoId;
 
@@ -69,12 +82,9 @@ export async function findAll(
   });
 }
 
-export async function findById(
-  id: string,
-  user: { instituicaoId: string; perfilId: string; papel: string }
-) {
+export async function findById(id: string, user: AuthenticatedRequest["user"]) {
   const submissao = await prisma.submissoes.findFirst({
-    where: { id, instituicaoId: user.instituicaoId },
+    where: { id, unidadeEscolarId: user.unidadeEscolarId },
     include: fullInclude,
   });
 
@@ -88,29 +98,36 @@ export async function findById(
     },
   });
   const isProfessorDaTarefa = !!professorDaTarefa;
+  const isGestorDaEscola =
+    user.papel === "GESTOR" &&
+    user.unidadeEscolarId === submissao.unidadeEscolarId;
 
   if (user.papel === "ALUNO" && !isOwner) return null;
   if (user.papel === "PROFESSOR" && !isProfessorDaTarefa) return null;
+  if (user.papel === "ADMINISTRADOR") return null;
+  if (isGestorDaEscola || isOwner || isProfessorDaTarefa) return submissao;
 
-  return submissao;
+  return null;
 }
 
 export async function grade(
   id: string,
   data: GradeSubmissaoInput,
-  professorId: string,
-  instituicaoId: string
+  user: AuthenticatedRequest["user"]
 ) {
+  const { perfilId: professorId, unidadeEscolarId } = user;
+
   const submissao = await prisma.submissoes.findFirst({
-    where: { id, instituicaoId },
+    where: { id, unidadeEscolarId },
   });
   if (!submissao) throw new Error("Submissão não encontrada.");
 
   const tarefa = await prisma.tarefas.findFirst({
     where: { id: submissao.tarefaId, componenteCurricular: { professorId } },
   });
-  if (!tarefa)
+  if (!tarefa) {
     throw new Error("Você não tem permissão para avaliar esta submissão.");
+  }
 
   return prisma.submissoes.update({
     where: { id },

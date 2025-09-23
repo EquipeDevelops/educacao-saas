@@ -1,11 +1,11 @@
 import { Response } from "express";
 import { conquistaService } from "./conquista.service";
-import { AuthenticatedRequest } from "../../middlewares/auth"; // <-- IMPORTA O TIPO
+import { AuthenticatedRequest } from "../../middlewares/auth";
 
 export const conquistaController = {
   create: async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const { instituicaoId } = req.user; // <-- USA O DADO REAL E SEGURO
+      const { instituicaoId } = req.user;
       const conquista = await conquistaService.create(req.body, instituicaoId!);
       return res.status(201).json(conquista);
     } catch (error: any) {

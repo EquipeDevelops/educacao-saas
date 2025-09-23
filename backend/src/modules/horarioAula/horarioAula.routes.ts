@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { horarioController } from "./horarioAula.controller";
 import { validate } from "../../middlewares/validate";
-import { protect, authorize } from "../../middlewares/auth"; // <-- IMPORTAÇÃO
+import { protect, authorize } from "../../middlewares/auth";
 import {
   createHorarioSchema,
   updateHorarioSchema,
@@ -11,41 +11,39 @@ import {
 
 const router = Router();
 
-// SEGURANÇA: Apenas ADMINS podem criar, editar e apagar horários.
 router.post(
   "/",
   protect,
-  authorize("ADMINISTRADOR"),
+  authorize("GESTOR"),
   validate(createHorarioSchema),
   horarioController.create
 );
 router.put(
   "/:id",
   protect,
-  authorize("ADMINISTRADOR"),
+  authorize("GESTOR"),
   validate(updateHorarioSchema),
   horarioController.update
 );
 router.delete(
   "/:id",
   protect,
-  authorize("ADMINISTRADOR"),
+  authorize("GESTOR"),
   validate({ params: paramsSchema }),
   horarioController.remove
 );
 
-// Todos os usuários autenticados podem visualizar os horários.
 router.get(
   "/",
   protect,
-  authorize("ADMINISTRADOR", "PROFESSOR", "ALUNO"),
+  authorize("GESTOR", "PROFESSOR", "ALUNO"),
   validate(findAllHorariosSchema),
   horarioController.findAll
 );
 router.get(
   "/:id",
   protect,
-  authorize("ADMINISTRADOR", "PROFESSOR", "ALUNO"),
+  authorize("GESTOR", "PROFESSOR", "ALUNO"),
   validate({ params: paramsSchema }),
   horarioController.findById
 );

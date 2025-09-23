@@ -1,55 +1,55 @@
+// Caminho: backend/src/modules/questao/questao.service.ts
 import { Prisma, PrismaClient } from "@prisma/client";
 import { CreateQuestaoInput, FindAllQuestoesInput } from "./questao.validator";
+import { AuthenticatedRequest } from "../../middlewares/auth";
 
 const prisma = new PrismaClient();
-
 const fullInclude = {
   opcoes_multipla_escolha: { orderBy: { sequencia: "asc" } },
 };
 
+// A verificação de posse agora exige a unidade escolar
 async function verifyTarefaOwnership(
   tarefaId: string,
   professorId: string,
-  instituicaoId: string
+  unidadeEscolarId: string
 ) {
   const tarefa = await prisma.tarefas.findFirst({
     where: {
       id: tarefaId,
-      instituicaoId,
+      unidadeEscolarId,
+      componenteCurricular: { professorId },
     },
-    select: { componenteCurricular: { select: { professorId: true } } },
   });
 
-  if (!tarefa || tarefa.componenteCurricular.professorId !== professorId) {
+  if (!tarefa) {
     const error = new Error(
       "Você não tem permissão para gerenciar questões nesta tarefa."
     );
     (error as any).code = "FORBIDDEN";
     throw error;
   }
+  return tarefa; // Retorna a tarefa para reutilização
 }
 
 export async function create(
   data: CreateQuestaoInput,
-  professorId: string,
-  instituicaoId: string
+  user: AuthenticatedRequest["user"]
 ) {
-  await verifyTarefaOwnership(data.tarefaId, professorId, instituicaoId);
+  const { unidadeEscolarId, perfilId: professorId } = user;
+  await verifyTarefaOwnership(data.tarefaId, professorId!, unidadeEscolarId!);
 
   return prisma.questoes.create({
-    data: {
-      ...data,
-      instituicaoId,
-    },
+    data: { ...data, unidadeEscolarId: unidadeEscolarId! },
   });
 }
 
 export async function findAllByTarefa(
   filters: FindAllQuestoesInput,
-  instituicaoId: string
+  user: AuthenticatedRequest["user"]
 ) {
   const tarefa = await prisma.tarefas.findFirst({
-    where: { id: filters.tarefaId, instituicaoId },
+    where: { id: filters.tarefaId, unidadeEscolarId: user.unidadeEscolarId },
   });
   if (!tarefa) throw new Error("Tarefa não encontrada.");
 
@@ -60,9 +60,9 @@ export async function findAllByTarefa(
   });
 }
 
-export async function findById(id: string, instituicaoId: string) {
+export async function findById(id: string, user: AuthenticatedRequest["user"]) {
   return prisma.questoes.findFirst({
-    where: { id, instituicaoId },
+    where: { id, unidadeEscolarId: user.unidadeEscolarId },
     include: fullInclude,
   });
 }
@@ -70,35 +70,36 @@ export async function findById(id: string, instituicaoId: string) {
 export async function update(
   id: string,
   data: Prisma.QuestoesUpdateInput,
-  professorId: string,
-  instituicaoId: string
+  user: AuthenticatedRequest["user"]
 ) {
-  const questao = await findById(id, instituicaoId);
+  const { unidadeEscolarId, perfilId: professorId } = user;
+  const questao = await findById(id, user);
   if (!questao) {
     const error = new Error("Questão não encontrada.");
     (error as any).code = "P2025";
     throw error;
   }
-
-  await verifyTarefaOwnership(questao.tarefaId, professorId, instituicaoId);
-
+  await verifyTarefaOwnership(
+    questao.tarefaId,
+    professorId!,
+    unidadeEscolarId!
+  );
   return prisma.questoes.update({ where: { id }, data, include: fullInclude });
 }
 
-export async function remove(
-  id: string,
-  professorId: string,
-  instituicaoId: string
-) {
-  const questao = await findById(id, instituicaoId);
+export async function remove(id: string, user: AuthenticatedRequest["user"]) {
+  const { unidadeEscolarId, perfilId: professorId } = user;
+  const questao = await findById(id, user);
   if (!questao) {
     const error = new Error("Questão não encontrada.");
     (error as any).code = "P2025";
     throw error;
   }
-
-  await verifyTarefaOwnership(questao.tarefaId, professorId, instituicaoId);
-
+  await verifyTarefaOwnership(
+    questao.tarefaId,
+    professorId!,
+    unidadeEscolarId!
+  );
   return prisma.questoes.delete({ where: { id } });
 }
 

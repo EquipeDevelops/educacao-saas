@@ -1,83 +1,123 @@
-import { Request, Response } from "express";
+import { Response } from "express";
 import * as UsuarioService from "./usuario.service";
 import { CreateUserInput, UpdateUserInput } from "./usuario.validator";
+import { AuthenticatedRequest } from "../../middlewares/auth";
+import { Prisma, PrismaClient } from "@prisma/client";
+
+const prisma = new PrismaClient();
 
 export const usuarioController = {
-  create: async (req: Request<{}, {}, CreateUserInput>, res: Response) => {
+  create: async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const novoUsuario = await UsuarioService.createUser(req.body);
+      const { user: gestor } = req;
+      const dataToCreate = req.body as CreateUserInput;
+
+      if (
+        dataToCreate.papel === "ADMINISTRADOR" ||
+        dataToCreate.papel === "GESTOR"
+      ) {
+        return res
+          .status(403)
+          .json({ message: "Gestores só podem criar Professores e Alunos." });
+      }
+
+      const payload = {
+        ...dataToCreate,
+        instituicaoId: gestor.instituicaoId!,
+        unidadeEscolarId: gestor.unidadeEscolarId!,
+      };
+
+      const novoUsuario = await prisma.$transaction(async (tx) => {
+        return await UsuarioService.createUser(payload, tx);
+      });
+
       return res.status(201).json(novoUsuario);
     } catch (error: any) {
-      if (error.code === "P2002" && error.meta?.target?.includes("email")) {
+      if (error.code === "P2002")
         return res.status(409).json({ message: "Este email já está em uso." });
-      }
-      return res.status(500).json({
-        message: "Erro interno ao criar usuário.",
-        error: error.message,
-      });
+      return res
+        .status(500)
+        .json({ message: error.message || "Erro interno ao criar usuário." });
     }
   },
 
-  findAll: async (_req: Request, res: Response) => {
+  findAll: async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const usuarios = await UsuarioService.findAllUsers();
+      const { user } = req;
+      const where: Prisma.UsuariosWhereInput = {
+        instituicaoId: user.instituicaoId,
+      };
+
+      if (user.papel === "GESTOR") {
+        where.unidadeEscolarId = user.unidadeEscolarId;
+      }
+
+      const usuarios = await UsuarioService.findAllUsers(where);
       return res.status(200).json(usuarios);
     } catch (error: any) {
-      return res
-        .status(500)
-        .json({ message: "Erro ao buscar usuários.", error: error.message });
+      return res.status(500).json({ message: "Erro ao buscar usuários." });
     }
   },
 
-  findById: async (req: Request<{ id: string }>, res: Response) => {
+  findById: async (req: AuthenticatedRequest, res: Response) => {
     try {
       const { id } = req.params;
-      const usuario = await UsuarioService.findUserById(id);
-      if (!usuario) {
+      const { user } = req;
+      const where: Prisma.UsuariosWhereInput = {
+        instituicaoId: user.instituicaoId,
+      };
+      if (user.papel === "GESTOR")
+        where.unidadeEscolarId = user.unidadeEscolarId;
+
+      const usuario = await UsuarioService.findUserById(id, where);
+      if (!usuario)
         return res.status(404).json({ message: "Usuário não encontrado." });
-      }
+
       return res.status(200).json(usuario);
     } catch (error: any) {
-      return res
-        .status(500)
-        .json({ message: "Erro ao buscar usuário.", error: error.message });
+      return res.status(500).json({ message: "Erro ao buscar usuário." });
     }
   },
 
-  update: async (
-    req: Request<UpdateUserInput["params"], {}, UpdateUserInput["body"]>,
-    res: Response
-  ) => {
+  update: async (req: AuthenticatedRequest, res: Response) => {
     try {
       const { id } = req.params;
-      const usuarioAtualizado = await UsuarioService.updateUser(id, req.body);
+      const { user } = req;
+      const where: Prisma.UsuariosWhereInput = {
+        instituicaoId: user.instituicaoId,
+      };
+      if (user.papel === "GESTOR")
+        where.unidadeEscolarId = user.unidadeEscolarId;
+
+      const usuarioAtualizado = await UsuarioService.updateUser(
+        id,
+        req.body,
+        where
+      );
       return res.status(200).json(usuarioAtualizado);
     } catch (error: any) {
-      if (error.code === "P2025") {
-        return res
-          .status(404)
-          .json({ message: "Usuário não encontrado para atualização." });
-      }
       return res
         .status(500)
-        .json({ message: "Erro ao atualizar usuário.", error: error.message });
+        .json({ message: error.message || "Erro ao atualizar usuário." });
     }
   },
 
-  remove: async (req: Request<{ id: string }>, res: Response) => {
+  remove: async (req: AuthenticatedRequest, res: Response) => {
     try {
       const { id } = req.params;
-      await UsuarioService.deleteUser(id);
+      const { user } = req;
+      const where: Prisma.UsuariosWhereInput = {
+        instituicaoId: user.instituicaoId,
+      };
+      if (user.papel === "GESTOR")
+        where.unidadeEscolarId = user.unidadeEscolarId;
+
+      await UsuarioService.deleteUser(id, where);
       return res.status(204).send();
     } catch (error: any) {
-      if (error.code === "P2025") {
-        return res
-          .status(404)
-          .json({ message: "Usuário não encontrado para exclusão." });
-      }
       return res
         .status(500)
-        .json({ message: "Erro ao deletar usuário.", error: error.message });
+        .json({ message: error.message || "Erro ao deletar usuário." });
     }
   },
 };

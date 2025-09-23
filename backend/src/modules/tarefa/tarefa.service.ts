@@ -1,5 +1,6 @@
 import { Prisma, PrismaClient } from "@prisma/client";
 import { CreateTarefaInput, FindAllTarefasInput } from "./tarefa.validator";
+import { AuthenticatedRequest } from "../../middlewares/auth";
 
 const prisma = new PrismaClient();
 
@@ -12,26 +13,21 @@ const fullInclude = {
   },
 };
 
+// A verificação de posse agora também checa a unidade escolar
 async function verifyOwnership(
   tarefaId: string,
   professorId: string,
-  instituicaoId: string
+  unidadeEscolarId: string
 ) {
   const tarefa = await prisma.tarefas.findFirst({
     where: {
       id: tarefaId,
-      instituicaoId,
-    },
-    select: {
-      componenteCurricular: {
-        select: {
-          professorId: true,
-        },
-      },
+      unidadeEscolarId,
+      componenteCurricular: { professorId },
     },
   });
 
-  if (!tarefa || tarefa.componenteCurricular.professorId !== professorId) {
+  if (!tarefa) {
     const error = new Error(
       "Você não tem permissão para modificar esta tarefa."
     );
@@ -43,10 +39,15 @@ async function verifyOwnership(
 export async function create(
   data: CreateTarefaInput,
   professorId: string,
-  instituicaoId: string
+  unidadeEscolarId: string
 ) {
+  // Garante que o professor só pode criar tarefas em componentes que ele leciona
   const componente = await prisma.componenteCurricular.findFirst({
-    where: { id: data.componenteCurricularId, professorId },
+    where: {
+      id: data.componenteCurricularId,
+      professorId,
+      turma: { unidadeEscolarId }, // Garante que o componente é do colégio certo
+    },
   });
 
   if (!componente) {
@@ -60,28 +61,35 @@ export async function create(
   return prisma.tarefas.create({
     data: {
       ...data,
-      instituicaoId,
+      unidadeEscolarId, // Vincula a tarefa ao colégio
     },
+    include: fullInclude,
   });
 }
 
 export async function findAll(
-  instituicaoId: string,
+  user: AuthenticatedRequest["user"],
   filters: FindAllTarefasInput
 ) {
-  const where: Prisma.TarefasWhereInput = { instituicaoId };
+  const where: Prisma.TarefasWhereInput = {
+    unidadeEscolarId: user.unidadeEscolarId,
+  };
 
-  if (filters.componenteCurricularId)
+  if (filters.componenteCurricularId) {
     where.componenteCurricularId = filters.componenteCurricularId;
-  if (filters.publicado !== undefined)
-    where.publicado = filters.publicado === "true";
+  }
+
+  // Alunos só podem ver tarefas publicadas
+  if (user.papel === "ALUNO") {
+    where.publicado = true;
+  }
 
   return prisma.tarefas.findMany({ where, include: fullInclude });
 }
 
-export async function findById(id: string, instituicaoId: string) {
+export async function findById(id: string, user: AuthenticatedRequest["user"]) {
   return prisma.tarefas.findFirst({
-    where: { id, instituicaoId },
+    where: { id, unidadeEscolarId: user.unidadeEscolarId },
     include: {
       ...fullInclude,
       questoes: { orderBy: { sequencia: "asc" } },
@@ -93,9 +101,9 @@ export async function update(
   id: string,
   data: Prisma.TarefasUpdateInput,
   professorId: string,
-  instituicaoId: string
+  unidadeEscolarId: string
 ) {
-  await verifyOwnership(id, professorId, instituicaoId);
+  await verifyOwnership(id, professorId, unidadeEscolarId);
   return prisma.tarefas.update({ where: { id }, data });
 }
 
@@ -103,18 +111,18 @@ export async function publish(
   id: string,
   publicado: boolean,
   professorId: string,
-  instituicaoId: string
+  unidadeEscolarId: string
 ) {
-  await verifyOwnership(id, professorId, instituicaoId);
+  await verifyOwnership(id, professorId, unidadeEscolarId);
   return prisma.tarefas.update({ where: { id }, data: { publicado } });
 }
 
 export async function remove(
   id: string,
   professorId: string,
-  instituicaoId: string
+  unidadeEscolarId: string
 ) {
-  await verifyOwnership(id, professorId, instituicaoId);
+  await verifyOwnership(id, professorId, unidadeEscolarId);
   return prisma.tarefas.delete({ where: { id } });
 }
 

@@ -3,9 +3,9 @@ import {
   GrantConquistaInput,
   FindAllConquistasUsuarioInput,
 } from "./conquistaUsuario.validator";
+import { AuthenticatedRequest } from "../../middlewares/auth";
 
 const prisma = new PrismaClient();
-
 const fullInclude = {
   conquista: true,
   aluno_perfil: {
@@ -15,22 +15,28 @@ const fullInclude = {
   },
 };
 
-export async function grant(data: GrantConquistaInput, instituicaoId: string) {
+export async function grant(
+  data: GrantConquistaInput,
+  user: AuthenticatedRequest["user"]
+) {
   const { alunoPerfilId, conquistaId } = data;
+  const { unidadeEscolarId } = user;
 
-  // SEGURANÇA: Valida se o aluno e a conquista pertencem à mesma instituição.
-  const [aluno, conquista] = await Promise.all([
+  const [aluno, conquistaDisponivel] = await Promise.all([
     prisma.usuarios_aluno.findFirst({
-      where: { id: alunoPerfilId, usuario: { instituicaoId } },
+      where: { id: alunoPerfilId, usuario: { unidadeEscolarId } },
     }),
-    prisma.conquistas.findFirst({ where: { id: conquistaId, instituicaoId } }),
+    prisma.conquistasPorUnidade.findFirst({
+      where: { conquistaId, unidadeEscolarId: unidadeEscolarId! },
+    }),
   ]);
 
-  if (!aluno || !conquista) {
-    throw new Error("Aluno ou Conquista não encontrado na sua instituição.");
+  if (!aluno || !conquistaDisponivel) {
+    throw new Error(
+      "Aluno não encontrado ou conquista não está ativa para este colégio."
+    );
   }
 
-  // REGRA DE NEGÓCIO: Previne que um aluno receba a mesma conquista duas vezes.
   const conquistaExistente = await prisma.conquistas_Usuarios.findFirst({
     where: { alunoPerfilId, conquistaId },
   });
@@ -45,13 +51,16 @@ export async function grant(data: GrantConquistaInput, instituicaoId: string) {
 }
 
 export async function findAll(
-  instituicaoId: string,
+  user: AuthenticatedRequest["user"],
   filters: FindAllConquistasUsuarioInput
 ) {
   const where: Prisma.Conquistas_UsuariosWhereInput = {
-    // SEGURANÇA: Filtro base garantindo o escopo da instituição.
-    aluno_perfil: { usuario: { instituicaoId } },
+    aluno_perfil: { usuario: { unidadeEscolarId: user.unidadeEscolarId } },
   };
+
+  if (user.papel === "ALUNO") {
+    filters.alunoPerfilId = user.perfilId!;
+  }
 
   if (filters.alunoPerfilId) where.alunoPerfilId = filters.alunoPerfilId;
   if (filters.conquistaId) where.conquistaId = filters.conquistaId;
@@ -63,20 +72,25 @@ export async function findAll(
   });
 }
 
-export async function findById(id: string, instituicaoId: string) {
+export async function findById(id: string, user: AuthenticatedRequest["user"]) {
   return prisma.conquistas_Usuarios.findFirst({
-    where: { id, aluno_perfil: { usuario: { instituicaoId } } },
+    where: {
+      id,
+      aluno_perfil: { usuario: { unidadeEscolarId: user.unidadeEscolarId } },
+    },
     include: fullInclude,
   });
 }
 
-export async function revoke(id: string, instituicaoId: string) {
-  // SEGURANÇA: Garante que a revogação só pode ser feita em um registro da instituição correta.
-  return prisma.conquistas_Usuarios.deleteMany({
-    where: {
-      id,
-      aluno_perfil: { usuario: { instituicaoId } },
-    },
+export async function revoke(id: string, user: AuthenticatedRequest["user"]) {
+  const conquistaUsuario = await findById(id, user);
+  if (!conquistaUsuario) {
+    throw new Error(
+      "Registro de conquista não encontrado ou sem permissão para revogar."
+    );
+  }
+  return prisma.conquistas_Usuarios.delete({
+    where: { id },
   });
 }
 

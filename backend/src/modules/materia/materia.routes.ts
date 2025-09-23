@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { materiaController } from "./materia.controller";
 import { validate } from "../../middlewares/validate";
-import { protect, authorize } from "../../middlewares/auth"; // <-- IMPORTAÇÃO DA SEGURANÇA
+import { protect, authorize } from "../../middlewares/auth";
 import {
   createMateriaSchema,
   updateMateriaSchema,
@@ -10,37 +10,38 @@ import {
 
 const router = Router();
 
-// Apenas ADMINISTRADOR pode criar, atualizar e deletar matérias.
 router.post(
   "/",
   protect,
-  authorize("ADMINISTRADOR"),
+  authorize("GESTOR"),
   validate(createMateriaSchema),
   materiaController.create
 );
-
 router.put(
   "/:id",
   protect,
-  authorize("ADMINISTRADOR"),
+  authorize("GESTOR"),
   validate(updateMateriaSchema),
   materiaController.update
 );
-
 router.delete(
   "/:id",
   protect,
-  authorize("ADMINISTRADOR"),
+  authorize("GESTOR"),
   validate({ params: paramsSchema }),
   materiaController.remove
 );
 
-// Todos os usuários autenticados (ADMINISTRADOR, PROFESSOR, ALUNO) podem visualizar as matérias.
-router.get("/", protect, materiaController.findAll);
-
+router.get(
+  "/",
+  protect,
+  authorize("GESTOR", "PROFESSOR", "ALUNO"),
+  materiaController.findAll
+);
 router.get(
   "/:id",
   protect,
+  authorize("GESTOR", "PROFESSOR", "ALUNO"),
   validate({ params: paramsSchema }),
   materiaController.findById
 );

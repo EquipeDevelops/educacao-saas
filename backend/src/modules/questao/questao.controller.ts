@@ -1,16 +1,19 @@
+// Caminho: backend/src/modules/questao/questao.controller.ts
 import { Response } from "express";
 import { questaoService } from "./questao.service";
-import { CreateQuestaoInput, UpdateQuestaoInput } from "./questao.validator";
-import { AuthenticatedRequest } from "../../middlewares/auth"; // <-- IMPORTA O TIPO
+import {
+  CreateQuestaoInput,
+  FindAllQuestoesInput,
+  UpdateQuestaoInput,
+} from "./questao.validator";
+import { AuthenticatedRequest } from "../../middlewares/auth";
 
 export const questaoController = {
   create: async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const { instituicaoId, perfilId: professorId } = req.user;
       const questao = await questaoService.create(
         req.body as CreateQuestaoInput,
-        professorId!,
-        instituicaoId!
+        req.user
       );
       return res.status(201).json(questao);
     } catch (error: any) {
@@ -19,25 +22,20 @@ export const questaoController = {
       return res.status(500).json({ message: "Erro ao criar questão." });
     }
   },
-
   findAllByTarefa: async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const { instituicaoId } = req.user;
       const questoes = await questaoService.findAllByTarefa(
-        req.query as any,
-        instituicaoId!
+        req.query as FindAllQuestoesInput,
+        req.user
       );
       return res.status(200).json(questoes);
     } catch (error: any) {
       return res.status(404).json({ message: error.message });
     }
   },
-
   findById: async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const { id } = req.params;
-      const { instituicaoId } = req.user;
-      const questao = await questaoService.findById(id, instituicaoId!);
+      const questao = await questaoService.findById(req.params.id, req.user);
       if (!questao)
         return res.status(404).json({ message: "Questão não encontrada." });
       return res.status(200).json(questao);
@@ -45,16 +43,12 @@ export const questaoController = {
       return res.status(500).json({ message: "Erro ao buscar questão." });
     }
   },
-
   update: async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const { id } = req.params;
-      const { instituicaoId, perfilId: professorId } = req.user;
       const questao = await questaoService.update(
-        id,
+        req.params.id,
         req.body as UpdateQuestaoInput["body"],
-        professorId!,
-        instituicaoId!
+        req.user
       );
       return res.status(200).json(questao);
     } catch (error: any) {
@@ -65,12 +59,9 @@ export const questaoController = {
       return res.status(500).json({ message: "Erro ao atualizar questão." });
     }
   },
-
   remove: async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const { id } = req.params;
-      const { instituicaoId, perfilId: professorId } = req.user;
-      await questaoService.remove(id, professorId!, instituicaoId!);
+      await questaoService.remove(req.params.id, req.user);
       return res.status(204).send();
     } catch (error: any) {
       if (error.code === "FORBIDDEN")

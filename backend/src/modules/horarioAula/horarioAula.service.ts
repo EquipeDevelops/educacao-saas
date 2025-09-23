@@ -3,11 +3,12 @@ import {
   CreateHorarioInput,
   FindAllHorariosInput,
 } from "./horarioAula.validator";
+import { AuthenticatedRequest } from "../../middlewares/auth";
 
 const prisma = new PrismaClient();
 
 const fullInclude = {
-  turma: { select: { id: true, nome: true } },
+  turma: { select: { id: true, nome: true, serie: true } },
   componenteCurricular: {
     include: {
       materia: { select: { nome: true } },
@@ -16,40 +17,44 @@ const fullInclude = {
   },
 };
 
-// SEGURANÇA E REGRA DE NEGÓCIO: Valida se o componente pertence à turma informada.
 async function verifyConsistency(
   turmaId: string,
   componenteCurricularId: string,
-  instituicaoId: string
+  unidadeEscolarId: string
 ) {
   const componente = await prisma.componenteCurricular.findFirst({
     where: {
       id: componenteCurricularId,
-      turma: { instituicaoId }, // Garante que o componente é da instituição
+      turma: { unidadeEscolarId },
     },
   });
 
-  if (!componente)
-    throw new Error("Componente curricular não encontrado na sua instituição.");
-  if (componente.turmaId !== turmaId)
+  if (!componente) {
+    throw new Error(
+      "Componente curricular não encontrado na sua unidade escolar."
+    );
+  }
+  if (componente.turmaId !== turmaId) {
     throw new Error(
       "Este componente curricular não pertence à turma informada."
     );
+  }
 }
 
-export async function create(data: CreateHorarioInput, instituicaoId: string) {
+export async function create(
+  data: CreateHorarioInput,
+  unidadeEscolarId: string
+) {
   await verifyConsistency(
     data.turmaId,
     data.componenteCurricularId,
-    instituicaoId
+    unidadeEscolarId
   );
 
-  // REGRA DE NEGÓCIO: Previne conflitos de horário para a mesma turma.
   const conflito = await prisma.horarioAula.findFirst({
     where: {
       turmaId: data.turmaId,
       dia_semana: data.dia_semana,
-      // Verifica se o novo horário começa ou termina durante um horário existente
       OR: [
         {
           hora_inicio: { lt: data.hora_fim },
@@ -59,29 +64,40 @@ export async function create(data: CreateHorarioInput, instituicaoId: string) {
     },
   });
 
-  if (conflito)
+  if (conflito) {
     throw new Error(
       "Conflito de horário detectado para esta turma neste dia e hora."
     );
+  }
 
   return prisma.horarioAula.create({
-    data: {
-      ...data,
-      instituicaoId,
-    },
+    data: { ...data, unidadeEscolarId },
     include: fullInclude,
   });
 }
 
 export async function findAll(
-  instituicaoId: string,
+  user: AuthenticatedRequest["user"],
   filters: FindAllHorariosInput
 ) {
-  const where: Prisma.HorarioAulaWhereInput = { instituicaoId };
+  const where: Prisma.HorarioAulaWhereInput = {
+    unidadeEscolarId: user.unidadeEscolarId,
+  };
 
   if (filters.turmaId) where.turmaId = filters.turmaId;
   if (filters.professorId)
     where.componenteCurricular = { professorId: filters.professorId };
+
+  if (user.papel === "PROFESSOR") {
+    where.componenteCurricular = { professorId: user.perfilId! };
+  }
+  if (user.papel === "ALUNO") {
+    const matricula = await prisma.matriculas.findFirst({
+      where: { aluno: { usuarioId: user.id }, status: "ATIVA" },
+      select: { turmaId: true },
+    });
+    where.turmaId = matricula?.turmaId || "nenhuma-turma-encontrada";
+  }
 
   return prisma.horarioAula.findMany({
     where,
@@ -90,9 +106,9 @@ export async function findAll(
   });
 }
 
-export async function findById(id: string, instituicaoId: string) {
+export async function findById(id: string, unidadeEscolarId: string) {
   return prisma.horarioAula.findFirst({
-    where: { id, instituicaoId },
+    where: { id, unidadeEscolarId },
     include: fullInclude,
   });
 }
@@ -100,9 +116,9 @@ export async function findById(id: string, instituicaoId: string) {
 export async function update(
   id: string,
   data: Prisma.HorarioAulaUpdateInput,
-  instituicaoId: string
+  unidadeEscolarId: string
 ) {
-  const horario = await findById(id, instituicaoId);
+  const horario = await findById(id, unidadeEscolarId);
   if (!horario) throw new Error("Horário não encontrado.");
 
   const turmaId = horario.turmaId;
@@ -110,7 +126,7 @@ export async function update(
     ? String(data.componenteCurricularId)
     : horario.componenteCurricularId;
 
-  await verifyConsistency(turmaId, componenteId, instituicaoId);
+  await verifyConsistency(turmaId, componenteId, unidadeEscolarId);
 
   return prisma.horarioAula.update({
     where: { id },
@@ -119,10 +135,9 @@ export async function update(
   });
 }
 
-export async function remove(id: string, instituicaoId: string) {
-  // A verificação de posse é implícita, pois o delete só funcionará se o ID e instituicaoId baterem.
+export async function remove(id: string, unidadeEscolarId: string) {
   const result = await prisma.horarioAula.deleteMany({
-    where: { id, instituicaoId },
+    where: { id, unidadeEscolarId },
   });
   if (result.count === 0) throw new Error("Horário não encontrado.");
 }

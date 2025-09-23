@@ -6,12 +6,7 @@ import { FindAllSubmissoesInput } from "./submissao.validator";
 export const submissaoController = {
   create: async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const { instituicaoId, perfilId: alunoId } = req.user;
-      const submissao = await submissaoService.create(
-        req.body,
-        alunoId!,
-        instituicaoId!
-      );
+      const submissao = await submissaoService.create(req.body, req.user);
       return res.status(201).json(submissao);
     } catch (error: any) {
       if (error.message.includes("Já existe uma submissão"))
@@ -24,24 +19,15 @@ export const submissaoController = {
 
   findAll: async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const { instituicaoId, papel, perfilId } = req.user;
-      let filters = req.query as FindAllSubmissoesInput;
-
-      // SEGURANÇA: Se o usuário for um aluno, força o filtro para apenas suas próprias submissões.
-      if (papel === "ALUNO") {
-        filters.alunoId = perfilId!;
-      }
-
       const submissoes = await submissaoService.findAll(
-        instituicaoId!,
-        filters
+        req.user,
+        req.query as FindAllSubmissoesInput
       );
       return res.status(200).json(submissoes);
     } catch (error: any) {
       return res.status(500).json({ message: "Erro ao buscar submissões." });
     }
   },
-
   findById: async (req: AuthenticatedRequest, res: Response) => {
     try {
       const { id } = req.params;
@@ -60,13 +46,7 @@ export const submissaoController = {
   grade: async (req: AuthenticatedRequest, res: Response) => {
     try {
       const { id } = req.params;
-      const { instituicaoId, perfilId: professorId } = req.user;
-      const submissao = await submissaoService.grade(
-        id,
-        req.body,
-        professorId!,
-        instituicaoId!
-      );
+      const submissao = await submissaoService.grade(id, req.body, req.user);
       return res.status(200).json(submissao);
     } catch (error: any) {
       if (error.message.includes("não tem permissão"))

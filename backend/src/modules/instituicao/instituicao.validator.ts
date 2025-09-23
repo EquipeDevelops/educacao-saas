@@ -1,18 +1,29 @@
 import { z } from "zod";
 
-export const paramsSchema = z.object({
-  id: z.string({ required_error: "O ID da instituição é obrigatório." }),
+const adminSchema = z.object({
+  nome: z.string({ required_error: "O nome do administrador é obrigatório." }),
+  email: z
+    .string({ required_error: "O email do administrador é obrigatório." })
+    .email(),
+  senha: z
+    .string({ required_error: "A senha do administrador é obrigatória." })
+    .min(6),
 });
 
 export const createInstituicaoSchema = z.object({
   body: z.object({
-    nome: z.string({ required_error: "O nome é obrigatório." }),
+    nome: z.string({ required_error: "O nome da instituição é obrigatório." }),
     cidade: z.string({ required_error: "A cidade é obrigatória." }),
     estado: z.string({ required_error: "O estado é obrigatório." }),
     cep: z.string({ required_error: "O CEP é obrigatório." }),
     logradouro: z.string().optional(),
     bairro: z.string().optional(),
+    admin: adminSchema, // Aninha os dados do admin na validação
   }),
+});
+
+export const paramsSchema = z.object({
+  id: z.string({ required_error: "O ID da instituição é obrigatório." }),
 });
 
 export const updateInstituicaoSchema = z.object({
@@ -26,3 +37,7 @@ export const updateInstituicaoSchema = z.object({
   }),
   params: paramsSchema,
 });
+
+export type CreateInstituicaoInput = z.infer<
+  typeof createInstituicaoSchema
+>["body"];

@@ -1,20 +1,17 @@
 import { Response } from "express";
-import { AuthenticatedRequest } from "../../middlewares/auth"; // <-- 1. IMPORTA O TIPO CUSTOMIZADO
+import { AuthenticatedRequest } from "../../middlewares/auth";
 import { componenteService } from "./componenteCurricular.service";
 import {
   CreateComponenteInput,
   FindAllComponentesInput,
-  UpdateComponenteInput,
 } from "./componenteCurricular.validator";
 
 export const componenteController = {
   create: async (req: AuthenticatedRequest, res: Response) => {
-    // <-- 2. USA O TIPO CUSTOMIZADO
     try {
-      const { instituicaoId } = req.user;
       const componente = await componenteService.create(
         req.body as CreateComponenteInput,
-        instituicaoId!
+        req.user // Passa o usuário logado inteiro para o serviço
       );
       return res.status(201).json(componente);
     } catch (error: any) {
@@ -30,9 +27,8 @@ export const componenteController = {
 
   findAll: async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const { instituicaoId } = req.user;
       const componentes = await componenteService.findAll(
-        instituicaoId!,
+        req.user,
         req.query as FindAllComponentesInput
       );
       return res.status(200).json(componentes);
@@ -47,8 +43,7 @@ export const componenteController = {
   findById: async (req: AuthenticatedRequest, res: Response) => {
     try {
       const { id } = req.params;
-      const { instituicaoId } = req.user;
-      const componente = await componenteService.findById(id, instituicaoId!);
+      const componente = await componenteService.findById(id, req.user);
       if (!componente) {
         return res
           .status(404)
@@ -66,42 +61,24 @@ export const componenteController = {
   update: async (req: AuthenticatedRequest, res: Response) => {
     try {
       const { id } = req.params;
-      const { instituicaoId } = req.user;
       const componenteAtualizado = await componenteService.update(
         id,
         req.body,
-        instituicaoId!
+        req.user
       );
       return res.status(200).json(componenteAtualizado);
     } catch (error: any) {
-      if ((error as any).code === "P2025") {
-        return res.status(404).json({
-          message: "Componente curricular não encontrado para atualização.",
-        });
-      }
-      return res.status(500).json({
-        message: "Erro ao atualizar componente curricular.",
-        error: error.message,
-      });
+      return res.status(403).json({ message: error.message });
     }
   },
 
   remove: async (req: AuthenticatedRequest, res: Response) => {
     try {
       const { id } = req.params;
-      const { instituicaoId } = req.user;
-      await componenteService.remove(id, instituicaoId!);
+      await componenteService.remove(id, req.user);
       return res.status(204).send();
     } catch (error: any) {
-      if ((error as any).code === "P2025") {
-        return res.status(404).json({
-          message: "Componente curricular não encontrado para exclusão.",
-        });
-      }
-      return res.status(500).json({
-        message: "Erro ao deletar componente curricular.",
-        error: error.message,
-      });
+      return res.status(403).json({ message: error.message });
     }
   },
 };

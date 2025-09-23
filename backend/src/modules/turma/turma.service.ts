@@ -3,18 +3,19 @@ import { CreateTurmaInput } from "./turma.validator";
 
 const prisma = new PrismaClient();
 
-const create = (data: CreateTurmaInput, instituicaoId: string) => {
+// Agora as funções recebem 'unidadeEscolarId' para garantir o escopo correto
+const create = (data: CreateTurmaInput, unidadeEscolarId: string) => {
   return prisma.turmas.create({
     data: {
       ...data,
-      instituicaoId,
+      unidadeEscolarId, // Vincula a turma à escola do gestor
     },
   });
 };
 
-const findAll = (instituicaoId: string) => {
+const findAll = (unidadeEscolarId: string) => {
   return prisma.turmas.findMany({
-    where: { instituicaoId },
+    where: { unidadeEscolarId },
     select: {
       id: true,
       nome: true,
@@ -27,12 +28,11 @@ const findAll = (instituicaoId: string) => {
   });
 };
 
-const findById = (id: string, instituicaoId: string) => {
+const findById = (id: string, unidadeEscolarId: string) => {
   return prisma.turmas.findFirst({
-    // Usando findFirst para um where mais complexo
     where: {
       id,
-      instituicaoId,
+      unidadeEscolarId,
     },
   });
 };
@@ -40,24 +40,22 @@ const findById = (id: string, instituicaoId: string) => {
 const update = (
   id: string,
   data: Prisma.TurmasUpdateInput,
-  instituicaoId: string
+  unidadeEscolarId: string
 ) => {
   return prisma.turmas.updateMany({
-    // Usando updateMany para um where mais complexo
     where: {
       id,
-      instituicaoId,
+      unidadeEscolarId,
     },
     data,
   });
 };
 
-const remove = (id: string, instituicaoId: string) => {
+const remove = (id: string, unidadeEscolarId: string) => {
   return prisma.turmas.deleteMany({
-    // Usando deleteMany para um where mais complexo
     where: {
       id,
-      instituicaoId,
+      unidadeEscolarId,
     },
   });
 };

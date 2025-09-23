@@ -12,7 +12,8 @@ export const createTurmaSchema = z.object({
       .min(1, "O nome não pode ser vazio."),
     serie: z.string({ required_error: "A série é obrigatória." }),
     turno: z.nativeEnum(Turno, { required_error: "O turno é obrigatório." }),
-    unidadeEscolarId: z.string().optional(),
+    // O campo 'unidadeEscolarId' foi REMOVIDO daqui.
+    // Ele será obtido do token do gestor logado para maior segurança.
   }),
 });
 
@@ -21,7 +22,6 @@ export const updateTurmaSchema = z.object({
     nome: z.string().min(1, "O nome não pode ser vazio.").optional(),
     serie: z.string().optional(),
     turno: z.nativeEnum(Turno).optional(),
-    unidadeEscolarId: z.string().optional().nullable(),
   }),
   params: paramsSchema,
 });

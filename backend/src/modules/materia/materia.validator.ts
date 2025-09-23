@@ -8,17 +8,14 @@ export const createMateriaSchema = z.object({
   body: z.object({
     nome: z
       .string({ required_error: "O nome da matéria é obrigatório." })
-      .min(2, "O nome deve ter no mínimo 2 caracteres."),
-    codigo: z.string().optional(), // Código interno da matéria, ex: "MAT101"
+      .min(3, "O nome deve ter no mínimo 3 caracteres."),
+    codigo: z.string().optional(),
   }),
 });
 
 export const updateMateriaSchema = z.object({
   body: z.object({
-    nome: z
-      .string()
-      .min(2, "O nome deve ter no mínimo 2 caracteres.")
-      .optional(),
+    nome: z.string().min(3).optional(),
     codigo: z.string().optional(),
   }),
   params: paramsSchema,
