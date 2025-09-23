@@ -34,14 +34,14 @@ router.patch(
 router.get(
   "/",
   protect,
-  authorize("ADMINISTRADOR", "PROFESSOR", "ALUNO"),
+  authorize("GESTOR", "PROFESSOR", "ALUNO"),
   validate(findAllSubmissoesSchema),
   submissaoController.findAll
 );
 router.get(
   "/:id",
   protect,
-  authorize("ADMINISTRADOR", "PROFESSOR", "ALUNO"),
+  authorize("GESTOR", "PROFESSOR", "ALUNO"),
   validate({ params: paramsSchema }),
   submissaoController.findById
 );

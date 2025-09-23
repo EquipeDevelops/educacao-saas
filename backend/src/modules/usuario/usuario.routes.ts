@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { usuarioController } from "./usuario.controller";
 import { validate } from "../../middlewares/validate";
-import { protect, authorize } from "../../middlewares/auth"; // <-- 1. IMPORTAÇÃO
+import { protect, authorize } from "../../middlewares/auth";
 import {
   createUserSchema,
   updateUserSchema,
@@ -10,23 +10,25 @@ import {
 
 const router = Router();
 
-// ARQUITETURA E SEGURANÇA: Aplicando os middlewares em todas as rotas.
-// O fluxo agora é: Checa autenticação (protect) -> Checa permissão (authorize) -> Checa dados (validate) -> Executa controller.
-
 router.post(
   "/",
-  protect, // Garante que o usuário está logado
-  authorize("ADMINISTRADOR"), // Garante que o usuário é um admin
+  protect,
+  authorize("GESTOR"),
   validate(createUserSchema),
   usuarioController.create
 );
 
-router.get("/", protect, authorize("ADMINISTRADOR"), usuarioController.findAll);
+router.get(
+  "/",
+  protect,
+  authorize("ADMINISTRADOR", "GESTOR"),
+  usuarioController.findAll
+);
 
 router.get(
   "/:id",
   protect,
-  authorize("ADMINISTRADOR"),
+  authorize("ADMINISTRADOR", "GESTOR"),
   validate({ params: paramsSchema }),
   usuarioController.findById
 );
@@ -34,7 +36,7 @@ router.get(
 router.put(
   "/:id",
   protect,
-  authorize("ADMINISTRADOR"),
+  authorize("GESTOR"),
   validate(updateUserSchema),
   usuarioController.update
 );
@@ -42,7 +44,7 @@ router.put(
 router.delete(
   "/:id",
   protect,
-  authorize("ADMINISTRADOR"),
+  authorize("GESTOR"),
   validate({ params: paramsSchema }),
   usuarioController.remove
 );

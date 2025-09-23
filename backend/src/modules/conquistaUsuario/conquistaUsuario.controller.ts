@@ -1,15 +1,14 @@
 import { Response } from "express";
 import { conquistaUsuarioService } from "./conquistaUsuario.service";
-import { AuthenticatedRequest } from "../../middlewares/auth"; // <-- IMPORTA O TIPO
+import { AuthenticatedRequest } from "../../middlewares/auth";
 import { FindAllConquistasUsuarioInput } from "./conquistaUsuario.validator";
 
 export const conquistaUsuarioController = {
   grant: async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const { instituicaoId } = req.user; // <-- USA O DADO REAL E SEGURO
       const conquistaAtribuida = await conquistaUsuarioService.grant(
         req.body,
-        instituicaoId!
+        req.user
       );
       return res.status(201).json(conquistaAtribuida);
     } catch (error: any) {
@@ -22,17 +21,9 @@ export const conquistaUsuarioController = {
 
   findAll: async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const { instituicaoId, papel, perfilId } = req.user;
-      let filters = req.query as FindAllConquistasUsuarioInput;
-
-      // SEGURANÇA E LGPD: Se o usuário for um aluno, força o filtro para apenas suas próprias conquistas.
-      if (papel === "ALUNO") {
-        filters.alunoPerfilId = perfilId!;
-      }
-
       const conquistas = await conquistaUsuarioService.findAll(
-        instituicaoId!,
-        filters
+        req.user,
+        req.query as FindAllConquistasUsuarioInput
       );
       return res.status(200).json(conquistas);
     } catch (error: any) {
@@ -44,11 +35,9 @@ export const conquistaUsuarioController = {
 
   findById: async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const { id } = req.params;
-      const { instituicaoId } = req.user;
       const conquista = await conquistaUsuarioService.findById(
-        id,
-        instituicaoId!
+        req.params.id,
+        req.user
       );
       if (!conquista)
         return res
@@ -64,17 +53,10 @@ export const conquistaUsuarioController = {
 
   revoke: async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const { id } = req.params;
-      const { instituicaoId } = req.user;
-      const result = await conquistaUsuarioService.revoke(id, instituicaoId!);
-      if (result.count === 0) {
-        return res.status(404).json({
-          message: "Registro de conquista não encontrado para revogar.",
-        });
-      }
+      await conquistaUsuarioService.revoke(req.params.id, req.user);
       return res.status(204).send();
     } catch (error: any) {
-      return res.status(500).json({ message: "Erro ao revogar conquista." });
+      return res.status(403).json({ message: error.message });
     }
   },
 };

@@ -1,8 +1,10 @@
+// Caminho: backend/src/modules/registroFalta/registroFalta.service.ts
 import { Prisma, PrismaClient } from "@prisma/client";
 import {
   CreateFaltaInput,
   FindAllFaltasInput,
 } from "./registroFalta.validator";
+import { AuthenticatedRequest } from "../../middlewares/auth";
 
 const prisma = new PrismaClient();
 
@@ -10,22 +12,26 @@ const fullInclude = {
   matricula: {
     include: {
       aluno: { include: { usuario: { select: { id: true, nome: true } } } },
+      turma: { select: { nome: true, serie: true } },
     },
   },
 };
 
+// A verificação de posse agora usa o unidadeEscolarId para garantir o escopo correto
 async function verifyOwnership(
   matriculaId: string,
   professorId: string,
-  instituicaoId: string
+  unidadeEscolarId: string
 ) {
   const matricula = await prisma.matriculas.findFirst({
-    where: { id: matriculaId, turma: { instituicaoId } },
+    where: { id: matriculaId, turma: { unidadeEscolarId } },
     select: { turmaId: true },
   });
 
   if (!matricula) {
-    throw new Error("Matrícula do aluno não encontrada na sua instituição.");
+    throw new Error(
+      "Matrícula do aluno não encontrada na sua unidade escolar."
+    );
   }
 
   const professorNaTurma = await prisma.componenteCurricular.findFirst({
@@ -44,10 +50,10 @@ async function verifyOwnership(
 
 export async function create(
   data: CreateFaltaInput,
-  professorId: string,
-  instituicaoId: string
+  user: AuthenticatedRequest["user"]
 ) {
-  await verifyOwnership(data.matriculaId, professorId, instituicaoId);
+  const { perfilId: professorId, unidadeEscolarId } = user;
+  await verifyOwnership(data.matriculaId, professorId!, unidadeEscolarId!);
 
   const dataFalta = new Date(data.data).toISOString().split("T")[0];
   const faltaExistente = await prisma.registroFalta.findFirst({
@@ -70,12 +76,19 @@ export async function create(
 }
 
 export async function findAll(
-  instituicaoId: string,
+  user: AuthenticatedRequest["user"],
   filters: FindAllFaltasInput
 ) {
   const where: Prisma.RegistroFaltaWhereInput = {
-    matricula: { turma: { instituicaoId } },
+    matricula: { turma: { unidadeEscolarId: user.unidadeEscolarId } },
   };
+
+  if (user.papel === "ALUNO") {
+    const matricula = await prisma.matriculas.findFirst({
+      where: { aluno: { usuarioId: user.id }, status: "ATIVA" },
+    });
+    filters.matriculaId = matricula?.id || "nenhuma-matricula-encontrada";
+  }
 
   if (filters.matriculaId) where.matriculaId = filters.matriculaId;
   if (filters.turmaId)
@@ -89,9 +102,12 @@ export async function findAll(
   return prisma.registroFalta.findMany({ where, include: fullInclude });
 }
 
-export async function findById(id: string, instituicaoId: string) {
+export async function findById(id: string, user: AuthenticatedRequest["user"]) {
   return prisma.registroFalta.findFirst({
-    where: { id, matricula: { turma: { instituicaoId } } },
+    where: {
+      id,
+      matricula: { turma: { unidadeEscolarId: user.unidadeEscolarId } },
+    },
     include: fullInclude,
   });
 }
@@ -99,16 +115,16 @@ export async function findById(id: string, instituicaoId: string) {
 export async function update(
   id: string,
   data: Prisma.RegistroFaltaUpdateInput,
-  professorId: string,
-  instituicaoId: string
+  user: AuthenticatedRequest["user"]
 ) {
-  const falta = await findById(id, instituicaoId);
+  const { perfilId: professorId, unidadeEscolarId } = user;
+  const falta = await findById(id, user);
   if (!falta) {
     const error = new Error("Registro de falta não encontrado.");
     (error as any).code = "P2025";
     throw error;
   }
-  await verifyOwnership(falta.matriculaId, professorId, instituicaoId);
+  await verifyOwnership(falta.matriculaId, professorId!, unidadeEscolarId!);
   return prisma.registroFalta.update({
     where: { id },
     data,
@@ -116,18 +132,15 @@ export async function update(
   });
 }
 
-export async function remove(
-  id: string,
-  professorId: string,
-  instituicaoId: string
-) {
-  const falta = await findById(id, instituicaoId);
+export async function remove(id: string, user: AuthenticatedRequest["user"]) {
+  const { perfilId: professorId, unidadeEscolarId } = user;
+  const falta = await findById(id, user);
   if (!falta) {
     const error = new Error("Registro de falta não encontrado.");
     (error as any).code = "P2025";
     throw error;
   }
-  await verifyOwnership(falta.matriculaId, professorId, instituicaoId);
+  await verifyOwnership(falta.matriculaId, professorId!, unidadeEscolarId!);
   return prisma.registroFalta.delete({ where: { id } });
 }
 

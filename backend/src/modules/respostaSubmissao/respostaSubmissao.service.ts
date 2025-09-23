@@ -9,17 +9,16 @@ const prisma = new PrismaClient();
 async function verifySubmissionOwnership(
   submissaoId: string,
   alunoId: string,
-  instituicaoId: string
+  unidadeEscolarId: string
 ) {
   const submissao = await prisma.submissoes.findFirst({
-    where: { id: submissaoId, alunoId, instituicaoId },
+    where: { id: submissaoId, alunoId, unidadeEscolarId },
   });
   if (!submissao) {
     const error = new Error("Submissão não encontrada ou não pertence a você.");
     (error as any).code = "FORBIDDEN";
     throw error;
   }
-  // SEGURANÇA E REGRA DE NEGÓCIO: Impede que o aluno altere respostas após a entrega.
   if (submissao.status !== "EM_ANDAMENTO") {
     const error = new Error(
       "Esta submissão já foi enviada e não pode ser alterada."
@@ -32,7 +31,7 @@ async function verifySubmissionOwnership(
 async function verifyAnswerOwnership(
   respostaId: string,
   professorId: string,
-  instituicaoId: string
+  unidadeEscolarId: string
 ) {
   const resposta = await prisma.respostas_Submissao.findFirst({
     where: { id: respostaId },
@@ -41,7 +40,7 @@ async function verifyAnswerOwnership(
         select: {
           tarefa: {
             select: {
-              instituicaoId,
+              unidadeEscolarId: true,
               componenteCurricular: { select: { professorId: true } },
             },
           },
@@ -52,7 +51,7 @@ async function verifyAnswerOwnership(
 
   if (
     !resposta ||
-    resposta.submissao.tarefa.instituicaoId !== instituicaoId ||
+    resposta.submissao.tarefa.unidadeEscolarId !== unidadeEscolarId ||
     resposta.submissao.tarefa.componenteCurricular.professorId !== professorId
   ) {
     const error = new Error(
@@ -65,15 +64,14 @@ async function verifyAnswerOwnership(
 
 export async function saveAnswers(
   data: SaveRespostasInput,
-  alunoId: string,
-  instituicaoId: string
+  user: AuthenticatedRequest["user"]
 ) {
   const { submissaoId } = data.params;
   const { respostas } = data.body;
+  const { perfilId: alunoId, unidadeEscolarId } = user;
 
-  await verifySubmissionOwnership(submissaoId, alunoId, instituicaoId);
+  await verifySubmissionOwnership(submissaoId, alunoId!, unidadeEscolarId!);
 
-  // OTIMIZAÇÃO E INTEGRIDADE: Todas as respostas são salvas em uma única transação.
   return prisma.$transaction(async (tx) => {
     const upsertPromises = respostas.map((resposta) =>
       tx.respostas_Submissao.upsert({
@@ -89,7 +87,6 @@ export async function saveAnswers(
     );
     await Promise.all(upsertPromises);
 
-    // REGRA DE NEGÓCIO: Após salvar, podemos considerar a tarefa como "enviada".
     await tx.submissoes.update({
       where: { id: submissaoId },
       data: { status: "ENVIADA", enviado_em: new Date() },
@@ -99,18 +96,17 @@ export async function saveAnswers(
 
 export async function gradeAnswer(
   data: GradeRespostaInput,
-  professorId: string,
-  instituicaoId: string
+  user: AuthenticatedRequest["user"]
 ) {
   const { id } = data.params;
   const { nota, feedback } = data.body;
+  const { perfilId: professorId, unidadeEscolarId } = user;
 
-  await verifyAnswerOwnership(id, professorId, instituicaoId);
+  await verifyAnswerOwnership(id, professorId!, unidadeEscolarId!);
 
   return prisma.respostas_Submissao.update({
     where: { id },
     data: { nota, feedback, avaliado_em: new Date() },
   });
 }
-
 export const respostaService = { saveAnswers, gradeAnswer };

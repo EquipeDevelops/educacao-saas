@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { matriculaController } from "./matricula.controller";
 import { validate } from "../../middlewares/validate";
-import { protect, authorize } from "../../middlewares/auth"; // <-- IMPORTAÇÃO
+import { protect, authorize } from "../../middlewares/auth";
 import {
   createMatriculaSchema,
   updateMatriculaSchema,
@@ -11,41 +11,41 @@ import {
 
 const router = Router();
 
-// SEGURANÇA: Apenas ADMINS podem criar, deletar e alterar o status de matrículas.
+// SEGURANÇA: Apenas GESTORES podem criar, deletar e alterar o status de matrículas.
 router.post(
   "/",
   protect,
-  authorize("ADMINISTRADOR"),
+  authorize("GESTOR"), // <-- Alterado para GESTOR
   validate(createMatriculaSchema),
   matriculaController.create
 );
 router.delete(
   "/:id",
   protect,
-  authorize("ADMINISTRADOR"),
+  authorize("GESTOR"), // <-- Alterado para GESTOR
   validate({ params: paramsSchema }),
   matriculaController.remove
 );
 router.patch(
   "/:id/status",
   protect,
-  authorize("ADMINISTRADOR"),
+  authorize("GESTOR"), // <-- Alterado para GESTOR
   validate(updateMatriculaSchema),
   matriculaController.updateStatus
 );
 
-// ADMINS, PROFESSORES e ALUNOS podem visualizar matrículas (o serviço controlará o escopo do que cada um pode ver).
+// GESTORES, PROFESSORES e ALUNOS podem visualizar matrículas (o serviço controlará o escopo).
 router.get(
   "/",
   protect,
-  authorize("ADMINISTRADOR", "PROFESSOR", "ALUNO"),
+  authorize("GESTOR", "PROFESSOR", "ALUNO"), // <-- ADMIN removido
   validate(findAllMatriculasSchema),
   matriculaController.findAll
 );
 router.get(
   "/:id",
   protect,
-  authorize("ADMINISTRADOR", "PROFESSOR", "ALUNO"),
+  authorize("GESTOR", "PROFESSOR", "ALUNO"), // <-- ADMIN removido
   validate({ params: paramsSchema }),
   matriculaController.findById
 );

@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { componenteController } from "./componenteCurricular.controller";
 import { validate } from "../../middlewares/validate";
-import { protect, authorize } from "../../middlewares/auth"; // <-- IMPORTAÇÃO
+import { protect, authorize } from "../../middlewares/auth";
 import {
   createComponenteSchema,
   updateComponenteSchema,
@@ -11,41 +11,38 @@ import {
 
 const router = Router();
 
-// SEGURANÇA: Apenas ADMINS podem criar, editar e apagar
 router.post(
   "/",
   protect,
-  authorize("ADMINISTRADOR"),
+  authorize("GESTOR"),
   validate(createComponenteSchema),
   componenteController.create
 );
 router.put(
   "/:id",
   protect,
-  authorize("ADMINISTRADOR"),
+  authorize("GESTOR"),
   validate(updateComponenteSchema),
   componenteController.update
 );
 router.delete(
   "/:id",
   protect,
-  authorize("ADMINISTRADOR"),
+  authorize("GESTOR"),
   validate({ params: paramsSchema }),
   componenteController.remove
 );
-
-// SEGURANÇA: Todos os usuários autenticados podem visualizar
 router.get(
   "/",
   protect,
-  authorize("ADMINISTRADOR", "PROFESSOR", "ALUNO"),
+  authorize("GESTOR", "PROFESSOR", "ALUNO"),
   validate(findAllComponentesSchema),
   componenteController.findAll
 );
 router.get(
   "/:id",
   protect,
-  authorize("ADMINISTRADOR", "PROFESSOR", "ALUNO"),
+  authorize("GESTOR", "PROFESSOR", "ALUNO"),
   validate({ params: paramsSchema }),
   componenteController.findById
 );

@@ -5,15 +5,14 @@ import {
   FindAllMatriculasInput,
   UpdateMatriculaInput,
 } from "./matricula.validator";
-import { AuthenticatedRequest } from "../../middlewares/auth"; // <-- 1. IMPORTA O TIPO
+import { AuthenticatedRequest } from "../../middlewares/auth";
 
 export const matriculaController = {
   create: async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const { instituicaoId } = req.user; // <-- 2. USA O DADO REAL E SEGURO
       const matricula = await matriculaService.create(
         req.body as CreateMatriculaInput,
-        instituicaoId!
+        req.user // Passa o usuário inteiro para o serviço
       );
       return res.status(201).json(matricula);
     } catch (error: any) {
@@ -26,17 +25,9 @@ export const matriculaController = {
 
   findAll: async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const { instituicaoId, papel, perfilId } = req.user;
-      let filters = req.query as FindAllMatriculasInput;
-
-      // SEGURANÇA: Se o usuário for um aluno, força o filtro para apenas suas próprias matrículas.
-      if (papel === "ALUNO") {
-        filters = { ...filters, alunoId: perfilId! };
-      }
-
       const matriculas = await matriculaService.findAll(
-        instituicaoId!,
-        filters
+        req.user,
+        req.query as FindAllMatriculasInput
       );
       return res.status(200).json(matriculas);
     } catch (error: any) {
@@ -49,8 +40,7 @@ export const matriculaController = {
   findById: async (req: AuthenticatedRequest, res: Response) => {
     try {
       const { id } = req.params;
-      const { instituicaoId } = req.user;
-      const matricula = await matriculaService.findById(id, instituicaoId!);
+      const matricula = await matriculaService.findById(id, req.user);
       if (!matricula) {
         return res.status(404).json({ message: "Matrícula não encontrada." });
       }
@@ -64,11 +54,10 @@ export const matriculaController = {
     try {
       const { id } = req.params;
       const { status } = req.body as UpdateMatriculaInput["body"];
-      const { instituicaoId } = req.user;
       const matricula = await matriculaService.updateStatus(
         id,
         status,
-        instituicaoId!
+        req.user
       );
       return res.status(200).json(matricula);
     } catch (error: any) {
@@ -84,8 +73,7 @@ export const matriculaController = {
   remove: async (req: AuthenticatedRequest, res: Response) => {
     try {
       const { id } = req.params;
-      const { instituicaoId } = req.user;
-      await matriculaService.remove(id, instituicaoId!);
+      await matriculaService.remove(id, req.user);
       return res.status(204).send();
     } catch (error: any) {
       if ((error as any).code === "P2025") {

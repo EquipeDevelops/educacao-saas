@@ -8,9 +8,12 @@ import { instituicaoRoutes } from "../modules/instituicao/instituicao.routes";
 import { unidadeEscolarRoutes } from "../modules/unidadeEscolar/unidadeEscolar.routes";
 import { usuarioRoutes } from "../modules/usuario/usuario.routes";
 import { turmaRoutes } from "../modules/turma/turma.routes";
-
+import { materiaRoutes } from "../modules/materia/materia.routes";
+import { professorRoutes } from "../modules/professor/professor.routes";
+import { alunoRoutes } from "../modules/aluno/aluno.routes";
 import { componenteRoutes } from "../modules/componenteCurricular/componenteCurricular.routes";
 import { horarioRoutes } from "../modules/horarioAula/horarioAula.routes";
+import { conquistasPorUnidadeRoutes } from "../modules/conquistasPorUnidade/conquistasPorUnidade.routes";
 
 // Importação das rotas de fluxo do Aluno/Professor
 import { matriculaRoutes } from "../modules/matricula/matricula.routes";
@@ -38,7 +41,9 @@ mainRouter.use("/instituicoes", instituicaoRoutes);
 mainRouter.use("/unidades-escolares", unidadeEscolarRoutes);
 mainRouter.use("/usuarios", usuarioRoutes);
 mainRouter.use("/turmas", turmaRoutes);
-
+mainRouter.use("/materias", materiaRoutes);
+mainRouter.use("/professores", professorRoutes);
+mainRouter.use("/alunos", alunoRoutes);
 mainRouter.use("/componentes-curriculares", componenteRoutes);
 mainRouter.use("/horarios", horarioRoutes);
 
@@ -54,6 +59,7 @@ mainRouter.use("/faltas", registroFaltaRoutes);
 
 // --- ROTAS DE ENGAJAMENTO E COMUNICAÇÃO ---
 mainRouter.use("/conquistas", conquistaRoutes);
+mainRouter.use("/conquistas-por-unidade", conquistasPorUnidadeRoutes);
 mainRouter.use("/conquistas-usuarios", conquistaUsuarioRoutes);
 mainRouter.use("/comentarios-tarefa", comentarioRoutes);
 mainRouter.use("/conversas", conversaRoutes);

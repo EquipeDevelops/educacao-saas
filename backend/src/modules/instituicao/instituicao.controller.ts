@@ -1,19 +1,30 @@
 import { Request, Response } from "express";
 import { instituicaoService } from "./instituicao.service";
-import { AuthenticatedRequest } from "../../middlewares/auth"; // <-- IMPORTA O TIPO
+import { AuthenticatedRequest } from "../../middlewares/auth";
 
 export const instituicaoController = {
-  // A tipagem é atualizada para consistência, mas req.user não é usado na lógica.
   create: async (req: AuthenticatedRequest, res: Response) => {
     try {
-      // SEGURANÇA: Uma verificação adicional poderia ser feita aqui para garantir que req.user.instituicaoId é nulo,
-      // confirmando que é um Super Admin.
-      const instituicao = await instituicaoService.create(req.body);
+      if (req.user.instituicaoId) {
+        return res.status(403).json({
+          message:
+            "Apenas o Super Administrador pode criar novas instituições.",
+        });
+      }
+
+      const instituicao = await instituicaoService.createWithAdmin(req.body);
       return res.status(201).json(instituicao);
     } catch (error: any) {
+      if (error.code === "P2002") {
+        return res.status(409).json({
+          message:
+            "Já existe uma instituição ou email de administrador com este nome/email.",
+        });
+      }
       return res.status(500).json({ message: "Erro ao criar instituição." });
     }
   },
+
   findAll: async (req: AuthenticatedRequest, res: Response) => {
     try {
       const instituicoes = await instituicaoService.findAll();
@@ -22,8 +33,8 @@ export const instituicaoController = {
       return res.status(500).json({ message: "Erro ao buscar instituições." });
     }
   },
-  // ... Handlers para findById, update e remove seguem o mesmo padrão simples ...
-  findById: async (req: Request, res: Response) => {
+
+  findById: async (req: AuthenticatedRequest, res: Response) => {
     try {
       const instituicao = await instituicaoService.findById(req.params.id);
       if (!instituicao)

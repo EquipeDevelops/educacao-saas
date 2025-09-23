@@ -4,7 +4,6 @@ import { useState, useEffect, FormEvent } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { api } from "@/services/api";
 
-// Tipagem para o objeto de Turma que vem da API
 type Turma = {
   id: string;
   nome: string;
@@ -15,17 +14,14 @@ type Turma = {
 export default function TurmasPage() {
   const { user } = useAuth();
 
-  // Estados do componente
   const [turmas, setTurmas] = useState<Turma[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Estados para o formulário de criação
   const [nome, setNome] = useState("");
   const [serie, setSerie] = useState("");
-  const [turno, setTurno] = useState("MATUTINO"); // Valor padrão
+  const [turno, setTurno] = useState("MATUTINO");
 
-  // Função para buscar as turmas na API
   async function fetchTurmas() {
     try {
       setIsLoading(true);
@@ -38,19 +34,16 @@ export default function TurmasPage() {
     }
   }
 
-  // useEffect para buscar os dados quando o componente for montado
   useEffect(() => {
     fetchTurmas();
   }, []);
 
-  // Função para lidar com o envio do formulário de criação
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     setError(null);
 
     try {
       await api.post("/turmas", { nome, serie, turno });
-      // Limpa o formulário e recarrega a lista após o sucesso
       setNome("");
       setSerie("");
       setTurno("MATUTINO");
@@ -64,7 +57,6 @@ export default function TurmasPage() {
     <div style={{ padding: "2rem", fontFamily: "sans-serif" }}>
       <h1>Gerenciamento de Turmas</h1>
 
-      {/* Formulário de Criação */}
       <section style={{ marginTop: "2rem", marginBottom: "2rem" }}>
         <h2>Criar Nova Turma</h2>
         <form
@@ -100,7 +92,6 @@ export default function TurmasPage() {
 
       <hr />
 
-      {/* Lista de Turmas Existentes */}
       <section style={{ marginTop: "2rem" }}>
         <h2>Turmas Existentes</h2>
         {isLoading && <p>Carregando...</p>}
