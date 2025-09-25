@@ -80,7 +80,7 @@ export async function findAll(
 ) {
   const where: Prisma.TarefasWhereInput = {};
 
-  if (user.papel === "ALUNO" || user.papel === "GESTOR") {
+  if (user.papel === "GESTOR") {
     where.unidadeEscolarId = user.unidadeEscolarId;
   }
 
@@ -89,7 +89,22 @@ export async function findAll(
   }
 
   if (user.papel === "ALUNO") {
+    const matricula = await prisma.matriculas.findFirst({
+      where: {
+        aluno: { usuarioId: user.id },
+        status: "ATIVA",
+      },
+      select: { turmaId: true },
+    });
+
+    if (!matricula) {
+      return [];
+    }
+
     where.publicado = true;
+    where.componenteCurricular = {
+      turmaId: matricula.turmaId,
+    };
   }
 
   if (user.papel === "PROFESSOR") {

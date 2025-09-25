@@ -1,7 +1,8 @@
 import { Router } from "express";
 import { submissaoController } from "./submissao.controller";
 import { validate } from "../../middlewares/validate";
-import { protect, authorize } from "../../middlewares/auth"; // <-- IMPORTAÇÃO
+import { protect, authorize } from "../../middlewares/auth";
+import { z } from "zod";
 import {
   createSubmissaoSchema,
   gradeSubmissaoSchema,
@@ -11,7 +12,6 @@ import {
 
 const router = Router();
 
-// SEGURANÇA: Apenas ALUNOS podem criar (iniciar) uma submissão para uma tarefa.
 router.post(
   "/",
   protect,
@@ -20,7 +20,6 @@ router.post(
   submissaoController.create
 );
 
-// SEGURANÇA: Apenas PROFESSORES podem avaliar uma submissão.
 router.patch(
   "/:id/grade",
   protect,
@@ -29,8 +28,6 @@ router.patch(
   submissaoController.grade
 );
 
-// Todos os usuários relevantes (ADMIN, PROFESSOR, ALUNO) podem visualizar.
-// O serviço irá filtrar os resultados com base no papel do usuário.
 router.get(
   "/",
   protect,
@@ -38,11 +35,12 @@ router.get(
   validate(findAllSubmissoesSchema),
   submissaoController.findAll
 );
+
 router.get(
   "/:id",
   protect,
   authorize("GESTOR", "PROFESSOR", "ALUNO"),
-  validate({ params: paramsSchema }),
+  validate(z.object({ params: paramsSchema })),
   submissaoController.findById
 );
 

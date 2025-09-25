@@ -2,6 +2,7 @@
 
 import { useState, useEffect, FormEvent } from "react";
 import { api } from "@/services/api";
+import styles from "./usuarios.module.css";
 
 type PapelUsuario = "PROFESSOR" | "ALUNO";
 
@@ -82,72 +83,28 @@ export default function UsuariosPage() {
     }
   }
 
-  const styles = {
-    container: { padding: "2rem", fontFamily: "sans-serif" },
-    form: {
-      display: "flex",
-      flexDirection: "column",
-      gap: "1rem",
-      maxWidth: "500px",
-      padding: "1.5rem",
-      border: "1px solid #ccc",
-      borderRadius: "8px",
-    },
-    input: {
-      padding: "0.5rem",
-      borderRadius: "4px",
-      border: "1px solid #ccc",
-      width: "100%",
-    },
-    select: {
-      padding: "0.5rem",
-      borderRadius: "4px",
-      border: "1px solid #ccc",
-      width: "100%",
-    },
-    button: {
-      padding: "0.75rem",
-      borderRadius: "4px",
-      border: "none",
-      backgroundColor: "#28a745",
-      color: "white",
-      cursor: "pointer",
-      marginTop: "1rem",
-    },
-    table: { width: "100%", marginTop: "2rem", borderCollapse: "collapse" },
-    th: {
-      borderBottom: "2px solid #ccc",
-      padding: "0.5rem",
-      textAlign: "left",
-    },
-    td: { borderBottom: "1px solid #ccc", padding: "0.5rem" },
-    error: { color: "red", marginTop: "1rem" },
-    label: {
-      display: "flex",
-      flexDirection: "column",
-      gap: "0.5rem",
-      width: "100%",
-    },
-  };
-
   return (
-    <div style={styles.container as any}>
-      <h1>Gerenciamento de Usuários (Professores e Alunos)</h1>
+    <div className="main-container">
+      <header className={styles.header}>
+        <h1>Gerenciamento de Usuários</h1>
+        <p>
+          Cadastre e visualize os professores e alunos da sua unidade escolar.
+        </p>
+      </header>
 
-      <section style={{ marginTop: "2rem", marginBottom: "2rem" }}>
+      <section className={styles.formSection}>
         <h2>Cadastrar Novo Usuário</h2>
-        <form onSubmit={handleSubmit} style={styles.form as any}>
-          <label style={styles.label}>
+        <form onSubmit={handleSubmit} className={styles.form}>
+          <label className={`${styles.label} ${styles.fullWidth}`}>
             Nome Completo:
             <input
               name="nome"
               value={formState.nome}
               onChange={handleInputChange}
               required
-              style={styles.input}
             />
           </label>
-          <label style={styles.label}>
+          <label className={styles.label}>
             Email:
             <input
               type="email"
@@ -155,10 +112,9 @@ export default function UsuariosPage() {
               value={formState.email}
               onChange={handleInputChange}
               required
-              style={styles.input}
             />
           </label>
-          <label style={styles.label}>
+          <label className={styles.label}>
             Senha Provisória:
             <input
               type="password"
@@ -166,16 +122,14 @@ export default function UsuariosPage() {
               value={formState.senha}
               onChange={handleInputChange}
               required
-              style={styles.input}
             />
           </label>
-          <label style={styles.label}>
+          <label className={`${styles.label} ${styles.fullWidth}`}>
             Papel:
             <select
               name="papel"
               value={formState.papel}
               onChange={handleInputChange}
-              style={styles.select}
             >
               <option value="PROFESSOR">Professor</option>
               <option value="ALUNO">Aluno</option>
@@ -183,65 +137,72 @@ export default function UsuariosPage() {
           </label>
 
           {formState.papel === "ALUNO" && (
-            <label style={styles.label}>
+            <label className={`${styles.label} ${styles.fullWidth}`}>
               Número de Matrícula:
               <input
                 name="numero_matricula"
                 value={formState.numero_matricula}
                 onChange={handleInputChange}
                 required
-                style={styles.input}
               />
             </label>
           )}
 
           {formState.papel === "PROFESSOR" && (
-            <label style={styles.label}>
+            <label className={`${styles.label} ${styles.fullWidth}`}>
               Titulação (Ex: Graduado, Mestre, Doutor):
               <input
                 name="titulacao"
                 value={formState.titulacao}
                 onChange={handleInputChange}
                 placeholder="Opcional"
-                style={styles.input}
               />
             </label>
           )}
 
-          <button type="submit" style={styles.button}>
+          <button type="submit" className={`${styles.button} btn`}>
             Cadastrar Usuário
           </button>
-          {error && <p style={styles.error as any}>{error}</p>}
+          {error && <p className={styles.error}>{error}</p>}
         </form>
       </section>
 
-      <hr />
-
-      <section style={{ marginTop: "2rem" }}>
-        <h2>Usuários Cadastrados no Colégio</h2>
-        {isLoading && <p>Carregando...</p>}
-        <table style={styles.table}>
-          <thead>
-            <tr>
-              <th style={styles.th}>Nome</th>
-              <th style={styles.th}>Email</th>
-              <th style={styles.th}>Papel</th>
-              <th style={styles.th}>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {usuarios.map((usuario) => (
-              <tr key={usuario.id}>
-                <td style={styles.td}>{usuario.nome}</td>
-                <td style={styles.td}>{usuario.email}</td>
-                <td style={styles.td}>{usuario.papel}</td>
-                <td style={styles.td}>
-                  {usuario.status ? "Ativo" : "Inativo"}
-                </td>
+      <section className={styles.tableContainer}>
+        <h2>Usuários Cadastrados</h2>
+        {isLoading ? (
+          <p>Carregando...</p>
+        ) : (
+          <table className={styles.table}>
+            <thead>
+              <tr>
+                <th className={styles.th}>Nome</th>
+                <th className={styles.th}>Email</th>
+                <th className={styles.th}>Papel</th>
+                <th className={styles.th}>Status</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {usuarios.map((usuario) => (
+                <tr key={usuario.id}>
+                  <td className={styles.td}>{usuario.nome}</td>
+                  <td className={styles.td}>{usuario.email}</td>
+                  <td className={styles.td}>{usuario.papel}</td>
+                  <td className={styles.td}>
+                    <span
+                      className={
+                        usuario.status
+                          ? styles.statusActive
+                          : styles.statusInactive
+                      }
+                    >
+                      {usuario.status ? "Ativo" : "Inativo"}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </section>
     </div>
   );

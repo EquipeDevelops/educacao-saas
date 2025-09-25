@@ -2,6 +2,7 @@ import { Router } from "express";
 import { tarefaController } from "./tarefa.controller";
 import { validate } from "../../middlewares/validate";
 import { protect, authorize } from "../../middlewares/auth";
+import { z } from "zod";
 import {
   createTarefaSchema,
   updateTarefaSchema,
@@ -13,7 +14,13 @@ import {
 
 const router = Router();
 
-router.post("/", protect, authorize("PROFESSOR"), tarefaController.create);
+router.post(
+  "/",
+  protect,
+  authorize("PROFESSOR"),
+  validate(createTarefaSchema),
+  tarefaController.create
+);
 
 router.put(
   "/:id",
@@ -40,7 +47,7 @@ router.patch(
 router.get(
   "/",
   protect,
-  authorize("ADMINISTRADOR", "PROFESSOR", "ALUNO"),
+  authorize("ADMINISTRADOR", "GESTOR", "PROFESSOR", "ALUNO"),
   validate(findAllTarefasSchema),
   tarefaController.findAll
 );
@@ -48,7 +55,8 @@ router.get(
 router.get(
   "/:id",
   protect,
-  authorize("ADMINISTRADOR", "PROFESSOR", "ALUNO"),
+  authorize("ADMINISTRADOR", "GESTOR", "PROFESSOR", "ALUNO"),
+  validate(z.object({ params: paramsSchema })),
   tarefaController.findById
 );
 

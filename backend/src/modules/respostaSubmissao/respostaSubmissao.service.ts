@@ -1,10 +1,13 @@
 import { PrismaClient } from "@prisma/client";
 import {
-  SaveRespostasInput,
   GradeRespostaInput,
+  SaveRespostasInput,
 } from "./respostaSubmissao.validator";
+import { AuthenticatedRequest } from "../../middlewares/auth";
 
 const prisma = new PrismaClient();
+
+type RespostaPayload = SaveRespostasInput["body"]["respostas"][number];
 
 async function verifySubmissionOwnership(
   submissaoId: string,
@@ -63,11 +66,10 @@ async function verifyAnswerOwnership(
 }
 
 export async function saveAnswers(
-  data: SaveRespostasInput,
+  submissaoId: string,
+  respostas: RespostaPayload[],
   user: AuthenticatedRequest["user"]
 ) {
-  const { submissaoId } = data.params;
-  const { respostas } = data.body;
   const { perfilId: alunoId, unidadeEscolarId } = user;
 
   await verifySubmissionOwnership(submissaoId, alunoId!, unidadeEscolarId!);
@@ -76,13 +78,18 @@ export async function saveAnswers(
     const upsertPromises = respostas.map((resposta) =>
       tx.respostas_Submissao.upsert({
         where: {
-          submissaoId_questaoId: { submissaoId, questaoId: resposta.questaoId },
+          questaoId_submissaoId: { submissaoId, questaoId: resposta.questaoId },
         },
         update: {
           resposta_texto: resposta.resposta_texto,
           opcaoEscolhidaId: resposta.opcaoEscolhidaId,
         },
-        create: { submissaoId, ...resposta },
+        create: {
+          submissaoId,
+          questaoId: resposta.questaoId,
+          resposta_texto: resposta.resposta_texto,
+          opcaoEscolhidaId: resposta.opcaoEscolhidaId,
+        },
       })
     );
     await Promise.all(upsertPromises);
@@ -95,18 +102,18 @@ export async function saveAnswers(
 }
 
 export async function gradeAnswer(
-  data: GradeRespostaInput,
+  id: string,
+  data: GradeRespostaInput["body"],
   user: AuthenticatedRequest["user"]
 ) {
-  const { id } = data.params;
-  const { nota, feedback } = data.body;
   const { perfilId: professorId, unidadeEscolarId } = user;
 
   await verifyAnswerOwnership(id, professorId!, unidadeEscolarId!);
 
   return prisma.respostas_Submissao.update({
     where: { id },
-    data: { nota, feedback, avaliado_em: new Date() },
+    data: { ...data, avaliado_em: new Date() },
   });
 }
+
 export const respostaService = { saveAnswers, gradeAnswer };

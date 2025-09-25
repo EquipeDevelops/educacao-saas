@@ -4,6 +4,7 @@ import {
   GradeSubmissaoInput,
   FindAllSubmissoesInput,
 } from "./submissao.validator";
+import { AuthenticatedRequest } from "../../middlewares/auth";
 
 const prisma = new PrismaClient();
 
@@ -13,6 +14,87 @@ const fullInclude = {
   respostas: true,
 };
 
+async function verificarConquistasDeTarefasConcluidas(
+  alunoId: string,
+  unidadeEscolarId: string
+) {
+  try {
+    console.log(`[CONQUISTA] Verificando conquistas para o aluno: ${alunoId}`);
+
+    const totalTarefasConcluidas = await prisma.submissoes.count({
+      where: {
+        alunoId: alunoId,
+        status: StatusSubmissao.AVALIADA,
+      },
+    });
+
+    console.log(
+      `[CONQUISTA] Total de tarefas concluídas: ${totalTarefasConcluidas}`
+    );
+
+    const conquistasDisponiveis = await prisma.conquistasPorUnidade.findMany({
+      where: {
+        unidadeEscolarId: unidadeEscolarId,
+        conquista: {
+          criterios: {
+            path: ["tipo"],
+            equals: "TAREFAS_CONCLUIDAS",
+          },
+        },
+      },
+      include: {
+        conquista: true,
+      },
+    });
+
+    if (conquistasDisponiveis.length === 0) {
+      console.log(
+        "[CONQUISTA] Nenhuma conquista por tarefa concluída ativa para esta unidade."
+      );
+      return;
+    }
+
+    const conquistasDoAluno = await prisma.conquistas_Usuarios.findMany({
+      where: {
+        alunoPerfilId: alunoId,
+      },
+      select: {
+        conquistaId: true,
+      },
+    });
+    const conquistasDoAlunoIds = new Set(
+      conquistasDoAluno.map((c) => c.conquistaId)
+    );
+
+    for (const conquistaPorUnidade of conquistasDisponiveis) {
+      const conquista = conquistaPorUnidade.conquista;
+      const criterios = conquista.criterios as any;
+
+      if (
+        criterios &&
+        criterios.tipo === "TAREFAS_CONCLUIDAS" &&
+        totalTarefasConcluidas >= criterios.quantidade &&
+        !conquistasDoAlunoIds.has(conquista.id)
+      ) {
+        console.log(
+          `[CONQUISTA] Concedendo "${conquista.titulo}" para o aluno ${alunoId}`
+        );
+        await prisma.conquistas_Usuarios.create({
+          data: {
+            alunoPerfilId: alunoId,
+            conquistaId: conquista.id,
+          },
+        });
+      }
+    }
+  } catch (error) {
+    console.error(
+      "[ERRO CONQUISTA] Falha ao verificar conquistas automáticas:",
+      error
+    );
+  }
+}
+
 export async function create(
   data: CreateSubmissaoInput,
   user: AuthenticatedRequest["user"]
@@ -21,7 +103,11 @@ export async function create(
   const { perfilId: alunoId, unidadeEscolarId } = user;
 
   const tarefa = await prisma.tarefas.findFirst({
-    where: { id: tarefaId, unidadeEscolarId, publicado: true },
+    where: {
+      id: tarefaId,
+      unidadeEscolarId: unidadeEscolarId!,
+      publicado: true,
+    },
     select: { componenteCurricular: { select: { turmaId: true } } },
   });
   if (!tarefa) {
@@ -84,7 +170,7 @@ export async function findAll(
 
 export async function findById(id: string, user: AuthenticatedRequest["user"]) {
   const submissao = await prisma.submissoes.findFirst({
-    where: { id, unidadeEscolarId: user.unidadeEscolarId },
+    where: { id, unidadeEscolarId: user.unidadeEscolarId! },
     include: fullInclude,
   });
 
@@ -94,7 +180,7 @@ export async function findById(id: string, user: AuthenticatedRequest["user"]) {
   const professorDaTarefa = await prisma.tarefas.findFirst({
     where: {
       id: submissao.tarefaId,
-      componenteCurricular: { professorId: user.perfilId },
+      componenteCurricular: { professorId: user.perfilId! },
     },
   });
   const isProfessorDaTarefa = !!professorDaTarefa;
@@ -118,18 +204,21 @@ export async function grade(
   const { perfilId: professorId, unidadeEscolarId } = user;
 
   const submissao = await prisma.submissoes.findFirst({
-    where: { id, unidadeEscolarId },
+    where: { id, unidadeEscolarId: unidadeEscolarId! },
   });
   if (!submissao) throw new Error("Submissão não encontrada.");
 
   const tarefa = await prisma.tarefas.findFirst({
-    where: { id: submissao.tarefaId, componenteCurricular: { professorId } },
+    where: {
+      id: submissao.tarefaId,
+      componenteCurricular: { professorId: professorId! },
+    },
   });
   if (!tarefa) {
     throw new Error("Você não tem permissão para avaliar esta submissão.");
   }
 
-  return prisma.submissoes.update({
+  const submissaoAtualizada = await prisma.submissoes.update({
     where: { id },
     data: {
       ...data,
@@ -137,6 +226,15 @@ export async function grade(
     },
     include: fullInclude,
   });
+
+  if (submissaoAtualizada) {
+    await verificarConquistasDeTarefasConcluidas(
+      submissao.alunoId,
+      submissao.unidadeEscolarId
+    );
+  }
+
+  return submissaoAtualizada;
 }
 
 export const submissaoService = { create, findAll, findById, grade };

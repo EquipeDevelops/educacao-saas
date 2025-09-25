@@ -1,11 +1,16 @@
 import { Response } from "express";
 import { respostaService } from "./respostaSubmissao.service";
 import { AuthenticatedRequest } from "../../middlewares/auth";
+import { GradeRespostaInput } from "./respostaSubmissao.validator";
 
 export const respostaController = {
   saveAnswers: async (req: AuthenticatedRequest, res: Response) => {
     try {
-      await respostaService.saveAnswers(req as any, req.user);
+      await respostaService.saveAnswers(
+        req.params.submissaoId,
+        req.body.respostas,
+        req.user
+      );
       return res
         .status(200)
         .json({ message: "Respostas salvas e tarefa enviada com sucesso." });
@@ -20,8 +25,12 @@ export const respostaController = {
 
   gradeAnswer: async (req: AuthenticatedRequest, res: Response) => {
     try {
+      const { id } = req.params;
+      const { nota, feedback } = req.body as GradeRespostaInput["body"];
+
       const respostaAvaliada = await respostaService.gradeAnswer(
-        req as any,
+        id,
+        { nota, feedback },
         req.user
       );
       return res.status(200).json(respostaAvaliada);

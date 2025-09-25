@@ -4,6 +4,13 @@ export const paramsSchema = z.object({
   id: z.string({ required_error: "O ID da conquista é obrigatório." }),
 });
 
+const criteriosSchema = z.object({
+  tipo: z.string({ required_error: "O tipo de critério é obrigatório." }),
+  quantidade: z
+    .number({ required_error: "A quantidade para o critério é obrigatória." })
+    .positive(),
+});
+
 export const createConquistaSchema = z.object({
   body: z.object({
     codigo: z
@@ -13,7 +20,7 @@ export const createConquistaSchema = z.object({
       .min(3, "O código deve ter no mínimo 3 caracteres."),
     titulo: z.string({ required_error: "O título é obrigatório." }).min(3),
     descricao: z.string().optional(),
-    criterios: z.record(z.any()).optional(), // JSON para critérios de obtenção
+    criterios: criteriosSchema.optional(),
   }),
 });
 
@@ -21,7 +28,7 @@ export const updateConquistaSchema = z.object({
   body: z.object({
     titulo: z.string().min(3).optional(),
     descricao: z.string().optional(),
-    criterios: z.record(z.any()).optional(),
+    criterios: criteriosSchema.optional(),
   }),
   params: paramsSchema,
 });
