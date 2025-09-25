@@ -9,11 +9,12 @@ import { AuthenticatedRequest } from "../../middlewares/auth";
 export const opcaoController = {
   setOpcoes: async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const { instituicaoId, perfilId: professorId } = req.user;
+      const { unidadeEscolarId, perfilId: professorId } = req.user;
+
       const result = await opcaoService.setOpcoes(
         req as unknown as SetOpcoesInput,
         professorId!,
-        instituicaoId!
+        unidadeEscolarId!
       );
       return res
         .status(201)
@@ -28,12 +29,12 @@ export const opcaoController = {
   findAllByQuestao: async (req: AuthenticatedRequest, res: Response) => {
     try {
       const { questaoId } = req.params;
-      const { instituicaoId, papel } = req.user;
+      const { unidadeEscolarId, papel } = req.user;
 
       const isAluno = papel === "ALUNO";
       const opcoes = await opcaoService.findAllByQuestao(
         questaoId,
-        instituicaoId!,
+        unidadeEscolarId!,
         isAluno
       );
 
@@ -46,12 +47,12 @@ export const opcaoController = {
   update: async (req: AuthenticatedRequest, res: Response) => {
     try {
       const { id } = req.params;
-      const { instituicaoId, perfilId: professorId } = req.user;
+      const { unidadeEscolarId, perfilId: professorId } = req.user;
       const opcao = await opcaoService.update(
         id,
         req.body as UpdateOpcaoInput["body"],
         professorId!,
-        instituicaoId!
+        unidadeEscolarId!
       );
       return res.status(200).json(opcao);
     } catch (error: any) {
@@ -66,8 +67,8 @@ export const opcaoController = {
   remove: async (req: AuthenticatedRequest, res: Response) => {
     try {
       const { id } = req.params;
-      const { instituicaoId, perfilId: professorId } = req.user;
-      await opcaoService.remove(id, professorId!, instituicaoId!);
+      const { unidadeEscolarId, perfilId: professorId } = req.user;
+      await opcaoService.remove(id, professorId!, unidadeEscolarId!);
       return res.status(204).send();
     } catch (error: any) {
       if (error.code === "FORBIDDEN")

@@ -3,13 +3,22 @@ import { SetOpcoesInput } from "./opcaoMultiplaEscolha.validator";
 
 const prisma = new PrismaClient();
 
+type OpcaoPayload = {
+  texto: string;
+  correta: boolean;
+  sequencia: number;
+};
+
 async function verifyQuestaoOwnership(
   questaoId: string,
   professorId: string,
-  instituicaoId: string
+  unidadeEscolarId: string
 ) {
   const questao = await prisma.questoes.findFirst({
-    where: { id: questaoId, instituicaoId },
+    where: {
+      id: questaoId,
+      unidadeEscolarId,
+    },
     select: {
       tarefa: {
         select: { componenteCurricular: { select: { professorId: true } } },
@@ -35,12 +44,12 @@ async function verifyQuestaoOwnership(
 export async function setOpcoes(
   data: SetOpcoesInput,
   professorId: string,
-  instituicaoId: string
+  unidadeEscolarId: string
 ) {
   const { questaoId } = data.params;
   const { opcoes } = data.body;
 
-  await verifyQuestaoOwnership(questaoId, professorId, instituicaoId);
+  await verifyQuestaoOwnership(questaoId, professorId, unidadeEscolarId);
 
   return prisma.$transaction(async (tx) => {
     await tx.opcoes_Multipla_Escolha.deleteMany({
@@ -63,11 +72,11 @@ export async function setOpcoes(
  */
 export async function findAllByQuestao(
   questaoId: string,
-  instituicaoId: string,
+  unidadeEscolarId: string,
   isAluno: boolean = false
 ) {
   const questao = await prisma.questoes.findFirst({
-    where: { id: questaoId, instituicaoId },
+    where: { id: questaoId, unidadeEscolarId },
   });
   if (!questao) throw new Error("Questão não encontrada.");
 
@@ -89,7 +98,7 @@ export async function update(
   id: string,
   data: Prisma.Opcoes_Multipla_EscolhaUpdateInput,
   professorId: string,
-  instituicaoId: string
+  unidadeEscolarId: string
 ) {
   const opcao = await prisma.opcoes_Multipla_Escolha.findUnique({
     where: { id },
@@ -99,14 +108,14 @@ export async function update(
     (error as any).code = "P2025";
     throw error;
   }
-  await verifyQuestaoOwnership(opcao.questaoId, professorId, instituicaoId);
+  await verifyQuestaoOwnership(opcao.questaoId, professorId, unidadeEscolarId);
   return prisma.opcoes_Multipla_Escolha.update({ where: { id }, data });
 }
 
 export async function remove(
   id: string,
   professorId: string,
-  instituicaoId: string
+  unidadeEscolarId: string
 ) {
   const opcao = await prisma.opcoes_Multipla_Escolha.findUnique({
     where: { id },
@@ -116,7 +125,7 @@ export async function remove(
     (error as any).code = "P2025";
     throw error;
   }
-  await verifyQuestaoOwnership(opcao.questaoId, professorId, instituicaoId);
+  await verifyQuestaoOwnership(opcao.questaoId, professorId, unidadeEscolarId);
   return prisma.opcoes_Multipla_Escolha.delete({ where: { id } });
 }
 

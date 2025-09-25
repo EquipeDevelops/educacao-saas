@@ -10,6 +10,7 @@ const fullInclude = {
   matricula: {
     include: {
       aluno: { include: { usuario: { select: { id: true, nome: true } } } },
+      turma: { select: { nome: true, serie: true } },
     },
   },
   componenteCurricular: { include: { materia: { select: { nome: true } } } },

@@ -81,6 +81,15 @@ export default function DashboardPage() {
             <Link href="/dashboard/minhas-disciplinas" style={styles.link}>
               Minhas Disciplinas e Tarefas
             </Link>
+            <Link href="/dashboard/notas" style={styles.link}>
+              Lançar Notas Parciais
+            </Link>
+            <Link href="/dashboard/faltas" style={styles.link}>
+              Registrar Faltas
+            </Link>
+            <Link href="/dashboard/horarios" style={styles.link}>
+              Ver Horários de Aula
+            </Link>
           </nav>
         )}
 

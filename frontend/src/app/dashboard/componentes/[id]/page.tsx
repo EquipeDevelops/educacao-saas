@@ -113,21 +113,9 @@ export default function ComponentePage() {
 
     try {
       setError(null);
-      console.log(`[FRONTEND LOG] Tentando DELETE /tarefas/${tarefa.id}`);
       await api.delete(`/tarefas/${tarefa.id}`);
-      console.log(`[FRONTEND LOG] Exclusão da Tarefa BEM-SUCEDIDA.`);
       await fetchTarefas();
     } catch (err: any) {
-      console.error(
-        "[FRONTEND ERROR LOG] Falha na exclusão da Tarefa. Detalhes do Erro:",
-        err
-      );
-      console.error("[FRONTEND ERROR LOG] STATUS HTTP:", err.response?.status);
-      console.error(
-        "[FRONTEND ERROR LOG] RESPOSTA DA API (DATA):",
-        err.response?.data
-      );
-
       const apiMessage =
         err.response?.data?.message ||
         err.response?.data?.error?.message ||
@@ -183,6 +171,21 @@ export default function ComponentePage() {
       cursor: "pointer",
       backgroundColor: "#dc3545",
       marginLeft: "0.5rem",
+    },
+    actionLink: {
+      padding: "0.4rem 0.8rem",
+      backgroundColor: "#0070f3",
+      color: "white",
+      textDecoration: "none",
+      borderRadius: "4px",
+      cursor: "pointer",
+      display: "inline-block",
+      marginRight: "0.5rem",
+    },
+    actionGroup: {
+      display: "flex",
+      gap: "0.5rem",
+      alignItems: "center",
     },
   };
 
@@ -250,7 +253,8 @@ export default function ComponentePage() {
               <th style={styles.th}>Título</th>
               <th style={styles.th}>Data de Entrega</th>
               <th style={styles.th}>Status</th>
-              <th style={styles.th}>Ações</th>
+              <th style={styles.th}>Ações de Conteúdo</th>
+              <th style={styles.th}>Ações de Gestão</th>
             </tr>
           </thead>
           <tbody>
@@ -271,22 +275,32 @@ export default function ComponentePage() {
                   {tarefa.publicado ? "Publicada" : "Rascunho"}
                 </td>
                 <td style={styles.td}>
-                  <button
-                    onClick={() => handlePublishToggle(tarefa)}
-                    style={
-                      tarefa.publicado
-                        ? styles.unpublishButton
-                        : styles.publishButton
-                    }
+                  <Link
+                    href={`/dashboard/tarefas/${tarefa.id}/submissoes`}
+                    style={{ ...styles.actionLink, backgroundColor: "#0070f3" }}
                   >
-                    {tarefa.publicado ? "Despublicar" : "Publicar"}
-                  </button>
-                  <button
-                    onClick={() => handleDeleteTarefa(tarefa)}
-                    style={styles.deleteButton}
-                  >
-                    Excluir
-                  </button>
+                    Ver Submissões
+                  </Link>
+                </td>
+                <td style={styles.td}>
+                  <div style={styles.actionGroup}>
+                    <button
+                      onClick={() => handlePublishToggle(tarefa)}
+                      style={
+                        tarefa.publicado
+                          ? styles.unpublishButton
+                          : styles.publishButton
+                      }
+                    >
+                      {tarefa.publicado ? "Despublicar" : "Publicar"}
+                    </button>
+                    <button
+                      onClick={() => handleDeleteTarefa(tarefa)}
+                      style={styles.deleteButton}
+                    >
+                      Excluir
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
