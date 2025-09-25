@@ -102,6 +102,43 @@ export default function ComponentePage() {
     }
   }
 
+  async function handleDeleteTarefa(tarefa: Tarefa) {
+    if (
+      !window.confirm(
+        `[AVISO] Tem certeza que deseja EXCLUIR a tarefa: ${tarefa.titulo}? Esta ação é irreversível!`
+      )
+    ) {
+      return;
+    }
+
+    try {
+      setError(null);
+      console.log(`[FRONTEND LOG] Tentando DELETE /tarefas/${tarefa.id}`);
+      await api.delete(`/tarefas/${tarefa.id}`);
+      console.log(`[FRONTEND LOG] Exclusão da Tarefa BEM-SUCEDIDA.`);
+      await fetchTarefas();
+    } catch (err: any) {
+      console.error(
+        "[FRONTEND ERROR LOG] Falha na exclusão da Tarefa. Detalhes do Erro:",
+        err
+      );
+      console.error("[FRONTEND ERROR LOG] STATUS HTTP:", err.response?.status);
+      console.error(
+        "[FRONTEND ERROR LOG] RESPOSTA DA API (DATA):",
+        err.response?.data
+      );
+
+      const apiMessage =
+        err.response?.data?.message ||
+        err.response?.data?.error?.message ||
+        "Erro desconhecido ao deletar tarefa.";
+
+      setError(
+        `Falha ao Excluir (HTTP ${err.response?.status || 500}): ${apiMessage}`
+      );
+    }
+  }
+
   const styles = {
     container: { padding: "2rem", fontFamily: "sans-serif" },
     form: {},
@@ -137,6 +174,15 @@ export default function ComponentePage() {
       borderRadius: "4px",
       cursor: "pointer",
       backgroundColor: "#ffc107",
+    },
+    deleteButton: {
+      padding: "0.4rem 0.8rem",
+      color: "white",
+      border: "none",
+      borderRadius: "4px",
+      cursor: "pointer",
+      backgroundColor: "#dc3545",
+      marginLeft: "0.5rem",
     },
   };
 
@@ -234,6 +280,12 @@ export default function ComponentePage() {
                     }
                   >
                     {tarefa.publicado ? "Despublicar" : "Publicar"}
+                  </button>
+                  <button
+                    onClick={() => handleDeleteTarefa(tarefa)}
+                    style={styles.deleteButton}
+                  >
+                    Excluir
                   </button>
                 </td>
               </tr>

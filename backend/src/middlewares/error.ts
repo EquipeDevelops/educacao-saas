@@ -1,3 +1,5 @@
+// Caminho: backend/src/middlewares/error.ts
+
 import { NextFunction, Request, Response } from "express";
 import { ZodError } from "zod";
 import { Prisma } from "@prisma/client";
@@ -29,35 +31,60 @@ export const errorHandler = (
     });
   }
 
+  // Variável para determinar se vamos retornar o stack trace
+  const isProduction = process.env.NODE_ENV === "production";
+  let responseMessage = isProduction
+    ? "Ocorreu um erro interno inesperado no servidor."
+    : "Erro interno do servidor: Exceção não mapeada.";
+  let statusCode = 500;
+  let responseDetails: any = isProduction
+    ? undefined
+    : {
+        name: err.name,
+        message: err.message,
+        stack: err.stack,
+      };
+
   if (err instanceof Prisma.PrismaClientKnownRequestError) {
+    responseDetails = isProduction
+      ? undefined
+      : {
+          ...responseDetails,
+          code: err.code,
+          meta: err.meta,
+        };
+
     switch (err.code) {
       case "P2002":
-        return res.status(409).json({
-          message: `Conflito: o campo '${(err.meta?.target as string[])?.join(
-            ", "
-          )}' já existe.`,
-        });
+        statusCode = 409;
+        responseMessage = `Conflito: o campo '${(
+          err.meta?.target as string[]
+        )?.join(", ")}' já existe.`;
+        responseDetails = undefined;
+        break;
       case "P2025":
-        return res.status(404).json({
-          message: "O recurso solicitado não foi encontrado.",
-        });
+        statusCode = 404;
+        responseMessage = "O recurso solicitado não foi encontrado.";
+        responseDetails = undefined;
+        break;
+      case "P2003": // Foreign key constraint violation (Impossível excluir com dependências)
+        statusCode = 409;
+        responseMessage =
+          "Impossível excluir. Existem itens (Questões, Submissões, etc.) associados a este recurso.";
+        responseDetails = undefined;
+        break;
       default:
+        // Erro genérico do Prisma (ex: falha de conexão)
+        statusCode = 500;
+        responseMessage = isProduction
+          ? "Ocorreu um erro interno inesperado no servidor (Erro no DB)."
+          : "Erro interno do servidor: " + err.message; // Retorna a mensagem do Prisma em dev
         break;
     }
   }
 
-  const isProduction = process.env.NODE_ENV === "production";
-
-  return res.status(500).json({
-    message: isProduction
-      ? "Ocorreu um erro interno inesperado no servidor."
-      : "Erro interno do servidor.",
-    error: isProduction
-      ? undefined
-      : {
-          name: err.name,
-          message: err.message,
-          stack: err.stack,
-        },
+  return res.status(statusCode).json({
+    message: responseMessage,
+    error: responseDetails,
   });
 };

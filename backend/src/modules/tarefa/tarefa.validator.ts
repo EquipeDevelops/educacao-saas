@@ -2,7 +2,11 @@ import { z } from "zod";
 import { TipoTarefa } from "@prisma/client";
 
 export const paramsSchema = z.object({
-  id: z.string({ required_error: "O ID da tarefa é obrigatório." }),
+  id: z
+    .string({ required_error: "O ID da tarefa é obrigatório." })
+    .min(24, "ID deve ter 24 caracteres")
+    .max(24, "ID deve ter 24 caracteres")
+    .regex(/^[0-9a-fA-F]{24}$/, "Formato de ObjectId inválido"),
 });
 
 export const createTarefaSchema = z.object({
@@ -53,6 +57,9 @@ export const findAllTarefasSchema = z.object({
   }),
 });
 
+export const deleteTarefaSchema = z.object({
+  params: paramsSchema,
+});
 export type CreateTarefaInput = z.infer<typeof createTarefaSchema>["body"];
 export type UpdateTarefaInput = z.infer<typeof updateTarefaSchema>;
 export type PublishTarefaInput = z.infer<typeof publishTarefaSchema>;

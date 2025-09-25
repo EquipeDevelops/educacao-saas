@@ -306,7 +306,7 @@ enum TipoQuestao {
 }
 
 model Questoes {
-  id                      String                    @id @default(auto()) @map("_id") @db.ObjectId
+  id                     String                    @id @default(auto()) @map("_id") @db.ObjectId
   sequencia               Int
   tipo                    TipoQuestao
   titulo                  String
@@ -315,7 +315,7 @@ model Questoes {
   pontos                  Int
   criado_em               DateTime                  @default(now())
   atualizado_em           DateTime                  @updatedAt
-  tarefa                  Tarefas                   @relation(fields: [tarefaId], references: [id])
+  tarefa Tarefas @relation(fields: [tarefaId], references: [id], onDelete: Cascade)
   tarefaId                String                    @db.ObjectId
   unidadeEscolar          Unidades_Escolares        @relation(fields: [unidadeEscolarId], references: [id])
   unidadeEscolarId        String                    @db.ObjectId
@@ -345,7 +345,7 @@ model Submissoes {
   atualizado_em    DateTime            @updatedAt
   unidadeEscolar   Unidades_Escolares  @relation(fields: [unidadeEscolarId], references: [id])
   unidadeEscolarId String              @db.ObjectId
-  tarefa           Tarefas             @relation(fields: [tarefaId], references: [id])
+  tarefa           Tarefas             @relation(fields: [tarefaId], references: [id], onDelete: Cascade)
   tarefaId         String              @db.ObjectId
   aluno            Usuarios_aluno      @relation(fields: [alunoId], references: [id])
   alunoId          String              @db.ObjectId
@@ -355,16 +355,16 @@ model Submissoes {
 }
 
 model Opcoes_Multipla_Escolha {
-  id        String                @id @default(auto()) @map("_id") @db.ObjectId
-  texto     String
-  correta   Boolean               @default(false)
-  sequencia Int
-  criado_em DateTime              @default(now())
-  questao   Questoes              @relation(fields: [questaoId], references: [id])
-  questaoId String                @db.ObjectId
-  respostas Respostas_Submissao[]
-  @@map("opcoes_multipla_escolha")
-  @@index([questaoId])
+  id        String                @id @default(auto()) @map("_id") @db.ObjectId
+  texto     String
+  correta   Boolean               @default(false)
+  sequencia Int
+  criado_em DateTime              @default(now())
+  questao   Questoes              @relation(fields: [questaoId], references: [id], onDelete: Cascade) // <<< CORREÇÃO AQUI
+  questaoId String                @db.ObjectId
+  respostas Respostas_Submissao[]
+  @@map("opcoes_multipla_escolha")
+  @@index([questaoId])
 }
 
 model Respostas_Submissao {
@@ -377,7 +377,7 @@ model Respostas_Submissao {
   atualizado_em     DateTime                 @updatedAt
   opcaoEscolhida   Opcoes_Multipla_Escolha? @relation(fields: [opcaoEscolhidaId], references: [id])
   opcaoEscolhidaId String?                  @db.ObjectId
-  questao           Questoes                 @relation(fields: [questaoId], references: [id])
+  questao           Questoes                 @relation(fields: [questaoId], references: [id], onDelete: Cascade)
   questaoId         String                   @db.ObjectId
   submissao         Submissoes               @relation(fields: [submissaoId], references: [id])
   submissaoId       String                   @db.ObjectId
@@ -455,22 +455,27 @@ model HorarioAula {
 }
 
 model ComentarioTarefa {
-  id               String             @id @default(auto()) @map("_id") @db.ObjectId
-  conteudo         String
-  criado_em        DateTime           @default(now())
-  atualizado_em    DateTime           @updatedAt
-  tarefa           Tarefas            @relation(fields: [tarefaId], references: [id], onDelete: Cascade)
-  tarefaId         String             @db.ObjectId
-  autor            Usuarios           @relation(fields: [autorId], references: [id])
-  autorId          String             @db.ObjectId
-  unidadeEscolar   Unidades_Escolares @relation(fields: [unidadeEscolarId], references: [id])
-  unidadeEscolarId String             @db.ObjectId
-  comentarioPai    ComentarioTarefa?  @relation("RespostasComentario", fields: [comentarioPaiId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  comentarioPaiId  String?            @db.ObjectId
-  respostas        ComentarioTarefa[] @relation("RespostasComentario")
-  @@map("comentarios_tarefa")
-  @@index([tarefaId])
-  @@index([autorId])
+  id               String             @id @default(auto()) @map("_id") @db.ObjectId
+  conteudo         String
+  criado_em        DateTime           @default(now())
+  atualizado_em    DateTime           @updatedAt
+  
+  // Relação com Tarefas (deve ser Cascade para que a Tarefa se apague)
+  tarefa           Tarefas            @relation(fields: [tarefaId], references: [id], onDelete: Cascade)
+  tarefaId         String             @db.ObjectId
+  autor            Usuarios           @relation(fields: [autorId], references: [id])
+  autorId          String             @db.ObjectId
+  unidadeEscolar   Unidades_Escolares @relation(fields: [unidadeEscolarId], references: [id])
+  unidadeEscolarId String             @db.ObjectId
+  
+  // CORREÇÃO: Revertido para NoAction, conforme exigido pelo Prisma para auto-referências
+  comentarioPai    ComentarioTarefa?  @relation("RespostasComentario", fields: [comentarioPaiId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  comentarioPaiId  String?            @db.ObjectId
+  respostas        ComentarioTarefa[] @relation("RespostasComentario")
+  
+  @@map("comentarios_tarefa")
+  @@index([tarefaId])
+  @@index([autorId])
 }
 
 // Modelos legados do Fórum (manter por enquanto)

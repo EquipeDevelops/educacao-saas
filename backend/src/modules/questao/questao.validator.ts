@@ -45,6 +45,14 @@ export const findAllQuestoesSchema = z.object({
   }),
 });
 
+export const deleteQuestaoSchema = z.object({
+  params: paramsSchema,
+});
+
+export const findQuestaoByIdSchema = z.object({
+  params: paramsSchema,
+});
+
 export type CreateQuestaoInput = z.infer<typeof createQuestaoSchema>["body"];
 export type UpdateQuestaoInput = z.infer<typeof updateQuestaoSchema>;
 export type FindAllQuestoesInput = z.infer<

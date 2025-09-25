@@ -8,6 +8,7 @@ import {
   paramsSchema,
   findAllTarefasSchema,
   publishTarefaSchema,
+  deleteTarefaSchema,
 } from "./tarefa.validator";
 
 const router = Router();
@@ -25,7 +26,7 @@ router.delete(
   "/:id",
   protect,
   authorize("PROFESSOR"),
-  validate({ params: paramsSchema }),
+  validate(deleteTarefaSchema),
   tarefaController.remove
 );
 router.patch(

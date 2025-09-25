@@ -14,14 +14,20 @@ const fullInclude = {
 };
 
 async function verifyOwnership(tarefaId: string, professorId: string) {
-  const tarefa = await prisma.tarefas.findFirst({
-    where: {
-      id: tarefaId,
-      componenteCurricular: { professorId },
+  const tarefa = await prisma.tarefas.findUnique({
+    where: { id: tarefaId },
+    select: {
+      componenteCurricular: { select: { professorId: true } },
     },
   });
 
   if (!tarefa) {
+    const error = new Error("Tarefa não encontrada.");
+    (error as any).code = "P2025";
+    throw error;
+  }
+
+  if (tarefa.componenteCurricular.professorId !== professorId) {
     const error = new Error(
       "Você não tem permissão para modificar esta tarefa."
     );
@@ -34,7 +40,12 @@ export async function create(
   data: CreateTarefaInput,
   user: AuthenticatedRequest["user"]
 ) {
-  const professorId = user.perfilId!;
+  if (!user.perfilId) {
+    const error = new Error("Professor não autenticado corretamente.");
+    (error as any).code = "FORBIDDEN";
+    throw error;
+  }
+  const professorId = user.perfilId;
 
   const componente = await prisma.componenteCurricular.findFirst({
     where: {
@@ -118,7 +129,12 @@ export async function update(
   data: Prisma.TarefasUpdateInput,
   user: AuthenticatedRequest["user"]
 ) {
-  await verifyOwnership(id, user.perfilId!);
+  if (!user.perfilId) {
+    const error = new Error("Professor não autenticado corretamente.");
+    (error as any).code = "FORBIDDEN";
+    throw error;
+  }
+  await verifyOwnership(id, user.perfilId);
   return prisma.tarefas.update({ where: { id }, data });
 }
 
@@ -127,13 +143,38 @@ export async function publish(
   publicado: boolean,
   user: AuthenticatedRequest["user"]
 ) {
-  await verifyOwnership(id, user.perfilId!);
+  if (!user.perfilId) {
+    const error = new Error("Professor não autenticado corretamente.");
+    (error as any).code = "FORBIDDEN";
+    throw error;
+  }
+  await verifyOwnership(id, user.perfilId);
   return prisma.tarefas.update({ where: { id }, data: { publicado } });
 }
 
 export async function remove(id: string, user: AuthenticatedRequest["user"]) {
-  await verifyOwnership(id, user.perfilId!);
-  return prisma.tarefas.delete({ where: { id } });
+  console.log("[DEBUG] Tentando deletar tarefa com ID:", id);
+
+  if (!user.perfilId) {
+    const error = new Error("Professor não autenticado corretamente.");
+    (error as any).code = "FORBIDDEN";
+    throw error;
+  }
+
+  await verifyOwnership(id, user.perfilId);
+  console.log("[DEBUG] Ownership verificada com sucesso");
+
+  try {
+    const result = await prisma.tarefas.delete({
+      where: { id },
+    });
+
+    console.log("[DEBUG] Tarefa deletada com sucesso via cascade");
+    return result;
+  } catch (error) {
+    console.log("[DEBUG] Erro ao deletar tarefa:", error);
+    throw error;
+  }
 }
 
 export const tarefaService = {

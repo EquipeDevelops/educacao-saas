@@ -1,17 +1,18 @@
 import { Router } from "express";
 import { questaoController } from "./questao.controller";
 import { validate } from "../../middlewares/validate";
-import { protect, authorize } from "../../middlewares/auth"; // <-- IMPORTAÇÃO
+import { protect, authorize } from "../../middlewares/auth";
 import {
   createQuestaoSchema,
   updateQuestaoSchema,
   paramsSchema,
   findAllQuestoesSchema,
+  deleteQuestaoSchema,
+  findQuestaoByIdSchema,
 } from "./questao.validator";
 
 const router = Router();
 
-// SEGURANÇA: Apenas PROFESSORES podem criar, editar e deletar questões.
 router.post(
   "/",
   protect,
@@ -30,11 +31,10 @@ router.delete(
   "/:id",
   protect,
   authorize("PROFESSOR"),
-  validate({ params: paramsSchema }),
+  validate(deleteQuestaoSchema),
   questaoController.remove
 );
 
-// PROFESSORES e ALUNOS podem visualizar as questões.
 router.get(
   "/",
   protect,
@@ -46,7 +46,7 @@ router.get(
   "/:id",
   protect,
   authorize("PROFESSOR", "ALUNO"),
-  validate({ params: paramsSchema }),
+  validate(findQuestaoByIdSchema),
   questaoController.findById
 );
 
