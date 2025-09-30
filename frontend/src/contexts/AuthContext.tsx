@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import {
   createContext,
@@ -6,16 +6,11 @@ import {
   useState,
   useEffect,
   ReactNode,
-} from "react";
-import { useRouter } from "next/navigation";
-import { api } from "../services/api";
-
-type User = {
-  id: string;
-  nome: string;
-  email: string;
-  papel: "ADMINISTRADOR" | "PROFESSOR" | "ALUNO";
-};
+} from 'react';
+import { useRouter } from 'next/navigation';
+import { api } from '../services/api';
+import Cookies from 'js-cookie';
+import { User } from '@/types/users';
 
 type AuthContextData = {
   user: User | null;
@@ -40,46 +35,69 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const isAuthenticated = !!user;
 
   useEffect(() => {
-    const token = localStorage.getItem("plataforma.token");
-    const userData = localStorage.getItem("plataforma.user");
+    async function handleFech() {
+      const token = Cookies.get('plataforma.token');
+      const userData = localStorage.getItem('plataforma.user');
 
-    if (token && userData) {
-      setUser(JSON.parse(userData));
-      api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+      if (token && userData) {
+        setUser(JSON.parse(userData));
+        api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      }
+      setLoading(false);
     }
-    setLoading(false);
+
+    handleFech();
   }, []);
 
   async function signIn({ email, senha }: SignInCredentials) {
     try {
-      const response = await api.post("/auth/login", {
-        email,
-        senha,
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, senha }),
       });
 
-      const { token, usuario } = response.data;
+      const { token, usuario } = await response.json();
 
-      localStorage.setItem("plataforma.token", token);
-      localStorage.setItem("plataforma.user", JSON.stringify(usuario));
+      localStorage.setItem('plataforma.user', JSON.stringify(usuario));
 
-      api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+      api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       setUser(usuario);
 
-      router.push("/dashboard");
+      switch (usuario.papel) {
+        case 'ALUNO':
+          router.push('/aluno');
+          break;
+        case 'ADMINISTRADOR':
+          router.push('/administrador');
+          break;
+        case 'PROFESSOR':
+          router.push('/professor');
+          break;
+        case 'GESTOR':
+          router.push('/gestor');
+          break;
+        default:
+          router.push('/');
+      }
     } catch (error) {
-      console.error("Erro no login:", error);
-      throw new Error("Email ou senha inválidos.");
+      console.error('Erro no login:', error);
+      throw new Error('Email ou senha inválidos.');
     }
   }
 
-  function signOut() {
-    localStorage.removeItem("plataforma.token");
-    localStorage.removeItem("plataforma.user");
+  async function signOut() {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+      localStorage.removeItem('plataforma.user');
 
-    setUser(null);
-    delete api.defaults.headers.common["Authorization"];
+      setUser(null);
+      delete api.defaults.headers.common['Authorization'];
 
-    router.push("/login");
+      router.push('/auth/login');
+    } catch (error) {
+      console.log(error);
+    }
   }
 
   return (
