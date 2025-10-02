@@ -6,6 +6,7 @@ import Link from 'next/link';
 import styles from './login.module.css';
 import imgLogin from '@/assets/imgs/loginImage.png';
 import Image from 'next/image';
+import ErrorMsg from '@/components/errorMsg/ErrorMsg';
 
 export default function LoginPage() {
   const { signIn } = useAuth();
@@ -35,21 +36,28 @@ export default function LoginPage() {
           <h1>Educa+</h1>
           <p>Faça login para acessar o portal educa+ e utilizar a plataforma</p>
         </div>
-        <input
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="Email"
-          required
-        />
-        <input
-          type="password"
-          value={senha}
-          onChange={(e) => setSenha(e.target.value)}
-          placeholder="Senha"
-          required
-        />
-        {error && <p className={styles.error}>{error}</p>}
+        <div className={styles.inputs}>
+          <label>
+            <p>Login</p>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+          </label>
+          <label>
+            <p>Senha</p>
+            <input
+              type="password"
+              value={senha}
+              onChange={(e) => setSenha(e.target.value)}
+              required
+            />
+          </label>
+        </div>
+
+        {error && <ErrorMsg text={error} />}
         <button type="submit" disabled={isLoading} className={styles.button}>
           {isLoading ? 'Carregando...' : 'Entrar'}
         </button>
@@ -57,7 +65,7 @@ export default function LoginPage() {
           Não lembro a senha
         </Link>
       </form>
-      <div className={styles.imgImage}>
+      <div className={styles.imageContainer}>
         <Image src={imgLogin} alt="Imagem da tela de login" />
         <div className={styles.circle01}></div>
         <div className={styles.circle02}></div>

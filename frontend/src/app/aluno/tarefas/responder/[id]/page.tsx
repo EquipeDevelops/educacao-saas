@@ -118,7 +118,7 @@ export default function ResponderTarefaPage() {
       };
       await api.post(`/respostas/submissao/${submissaoId}/save`, payload);
       alert("Tarefa enviada com sucesso!");
-      router.push("/dashboard/minhas-tarefas");
+      router.push("/aluno/tarefas");
     } catch (err: any) {
       setError(err.response?.data?.message || "Erro ao enviar suas respostas.");
       setIsLoading(false);

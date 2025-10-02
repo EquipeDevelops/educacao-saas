@@ -6,7 +6,7 @@ import { useEffect, ReactNode } from 'react';
 import AlunoSideBar from './components/sideBar/AlunoSideBar';
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
-  const { user, isAuthenticated, loading } = useAuth();
+  const { isAuthenticated, loading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
@@ -15,12 +15,8 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     }
   }, [isAuthenticated, loading, router]);
 
-  if (loading || !isAuthenticated || !user) {
-    return <div>Verificando autenticação...</div>;
-  }
-
   return (
-    <div>
+    <div style={{ display: 'flex' }}>
       <AlunoSideBar />
       <main>{children}</main>
     </div>

@@ -36,14 +36,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     async function handleFech() {
-      const token = Cookies.get('plataforma.token');
-      const userData = localStorage.getItem('plataforma.user');
-
-      if (token && userData) {
-        setUser(JSON.parse(userData));
-        api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      try {
+        const token = await fetch('/api/auth/me');
+        const tokenData = await token.json()
+        const userData = localStorage.getItem('plataforma.user');
+  
+        if (tokenData.token && userData) {
+          setUser(JSON.parse(userData));
+          api.defaults.headers.common['Authorization'] = `Bearer ${tokenData.token}`;
+        }
+        setLoading(false);
+      } catch(error) {
+        return error
       }
-      setLoading(false);
+
     }
 
     handleFech();
