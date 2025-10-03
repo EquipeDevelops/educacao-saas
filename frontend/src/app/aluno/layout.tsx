@@ -3,7 +3,7 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect, ReactNode } from 'react';
-import AlunoSideBar from './components/sideBar/AlunoSideBar';
+import AlunoSideBar from '../../components/aluno/sideBar/AlunoSideBar';
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   const { isAuthenticated, loading } = useAuth();
