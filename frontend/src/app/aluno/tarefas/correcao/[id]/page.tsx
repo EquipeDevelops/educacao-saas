@@ -9,6 +9,7 @@ import styles from './style.module.css';
 import Link from 'next/link';
 import { FaRegCheckCircle } from 'react-icons/fa';
 import { IoAlertCircleOutline } from 'react-icons/io5';
+import ResumoNota from './ResumoNota';
 
 export default function VerCorrecaoPage() {
   const params = useParams();
@@ -76,18 +77,7 @@ export default function VerCorrecaoPage() {
           </Link>
           <h2>{submissao.tarefa.titulo} - Correção</h2>
         </div>
-        <div className={styles.resumo}>
-          <div className={styles.notaContainer}>
-            <div className={styles.nota}>
-              <p>Nota Final: {submissao.nota_total}</p>
-              <p>
-                {totalAcertos} de {totalQuestoes} (
-                {(totalAcertos / totalQuestoes) * 100}%)
-              </p>
-            </div>
-            <div className={styles.porcentagem}></div>
-          </div>
-        </div>
+        {/* <ResumoNota total_questoes={totalQuestoes} total_acertos={totalAcertos}  /> */}
       </div>
     </Section>
   );
