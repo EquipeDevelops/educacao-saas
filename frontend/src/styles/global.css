@@ -1,27 +1,27 @@
 :root {
   --cor-primaria: #0070f3;
   --cor-primaria-hover: #1365c4;
-  --cor-primaria-dark: #0D57B5;
-  --cor-primaria-light: #E2ECFF;
-  --cor-icons: #73B1FB;
+  --cor-primaria-dark: #0d57b5;
+  --cor-primaria-light: #e2ecff;
+  --cor-icons: #73b1fb;
   --cor-icons-background: #092984;
   --cor-icons-background-hover: #092a8462;
-  --cor-sucesso: #5CCD9F;
-  --cor-sucesso-light: #EDFFEF;
-  --cor-sucesso-dark: #016630;
+  --cor-sucesso: #5ccd9f;
+  --cor-sucesso-light: #edffef;
+  --cor-sucesso-dark: #3cb970;
   --cor-perigo: #fc5659ff;
-  --cor-perido-light: #FFE3E3;
-  --cor-perigo-dark: #9A0000;
+  --cor-perigo-light: #ffe3e3;
+  --cor-perigo-dark: #9a0000;
   --cor-aviso: #ffc107;
   --cor-aviso-hover: #e0a800;
-  --cor-cinza: #A7A7A7;
+  --cor-cinza: #a7a7a7;
   --cor-cinza-hover: #5a6268;
-  --cor-fundo: #F6F6F6;
+  --cor-fundo: #f6f6f6;
   --cor-fundo-card: #ffffff;
   --cor-texto: #282828;
-  --cor-texto-destaque: #1E1E1E;
+  --cor-texto-destaque: #1e1e1e;
   --cor-subtexto: #717182;
-  --cor-borda: #EBEBEB;
+  --cor-borda: #ebebeb;
 }
 
 * {
@@ -95,7 +95,6 @@ h6 {
   line-height: 1.5;
 }
 
-
 p {
   color: var(--cor-texto);
 }
@@ -126,7 +125,7 @@ textarea {
   border: 1px solid var(--cor-borda);
   font-size: 1rem;
   box-sizing: border-box;
-  transition: all .2s ease;
+  transition: all 0.2s ease;
 }
 
 input:focus,

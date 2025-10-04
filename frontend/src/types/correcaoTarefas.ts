@@ -14,12 +14,13 @@ export type Resposta = {
   resposta_texto: string | null;
   opcaoEscolhidaId: string | null;
   nota: number | null;
-  feedback: string | null;    t
+  feedback: string | null;
 };
 
 export type SubmissaoDetail = {
   id: string;
   enviado_em: string;
+  atualizado_em: string;
   aluno: { usuario: { nome: string } };
   tarefa: { id: string; titulo: string; pontos: number;};
   status: "ENVIADA" | "AVALIADA" | "ENVIADA_COM_ATRASO";

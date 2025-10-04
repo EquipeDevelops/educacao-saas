@@ -9,7 +9,7 @@ import styles from './style.module.css';
 import Link from 'next/link';
 import { FaRegCheckCircle } from 'react-icons/fa';
 import { IoAlertCircleOutline } from 'react-icons/io5';
-import ResumoNota from './ResumoNota';
+import ResumoNota from '../../../../../components/aluno/resumoNota/ResumoNota';
 
 export default function VerCorrecaoPage() {
   const params = useParams();
@@ -46,6 +46,7 @@ export default function VerCorrecaoPage() {
 
     return acertos;
   }, 0);
+  const porcentagemAcertos = (totalAcertos / totalQuestoes) * 100;
 
   if (isLoading)
     return (
@@ -70,14 +71,21 @@ export default function VerCorrecaoPage() {
 
   return (
     <Section>
-      <div>
+      <div className={styles.correcaoContainer}>
         <div className={styles.titulo}>
           <Link href={'/aluno/tarefas'}>
             <FaArrowLeft /> Voltar
           </Link>
           <h2>{submissao.tarefa.titulo} - Correção</h2>
         </div>
-        {/* <ResumoNota total_questoes={totalQuestoes} total_acertos={totalAcertos}  /> */}
+        <ResumoNota
+          total_questoes={totalQuestoes}
+          total_acertos={totalAcertos}
+          entregue_em={submissao.enviado_em}
+          corrigido_em={submissao.atualizado_em}
+          nota_total={Number(submissao.nota_total)}
+          porcentagem_acertos={porcentagemAcertos}
+        />
       </div>
     </Section>
   );
