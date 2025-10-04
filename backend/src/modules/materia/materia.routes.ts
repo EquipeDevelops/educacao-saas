@@ -2,6 +2,7 @@ import { Router } from "express";
 import { materiaController } from "./materia.controller";
 import { validate } from "../../middlewares/validate";
 import { protect, authorize } from "../../middlewares/auth";
+import { materiaDeleteSchema } from "./materia.schemas";
 import {
   createMateriaSchema,
   updateMateriaSchema,
@@ -24,14 +25,15 @@ router.put(
   validate(updateMateriaSchema),
   materiaController.update
 );
-router.delete(
-  "/:id",
-  protect,
-  authorize("GESTOR"),
-  validate({ params: paramsSchema }),
-  materiaController.remove
-);
 
+router.delete(
+  "/:id",
+  protect,
+  authorize("GESTOR"),
+  // === AQUI ESTÁ A CORREÇÃO ===
+  validate(materiaDeleteSchema), // Passamos o esquema completo que o validate espera
+  materiaController.remove
+);
 router.get(
   "/",
   protect,

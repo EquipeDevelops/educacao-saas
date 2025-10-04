@@ -230,7 +230,7 @@ model ComponenteCurricular {
   carga_horaria       Int?
   turma               Turmas               @relation(fields: [turmaId], references: [id])
   turmaId             String               @db.ObjectId
-  materia             Materias             @relation(fields: [materiaId], references: [id])
+  materia             Materias             @relation(fields: [materiaId], references: [id], onDelete: Cascade)
   materiaId           String               @db.ObjectId
   professor           Usuarios_professor   @relation(fields: [professorId], references: [id])
   professorId         String               @db.ObjectId

@@ -63,7 +63,7 @@ export async function findAll(
 ) {
   // Filtro base de segurança: sempre pela unidade do usuário
   const where: Prisma.MatriculasWhereInput = {
-    turma: { unidadeEscolarId: user.unidadeEscolarId },
+    turma: { unidadeEscolarId: user.unidadeEscolarId ?? undefined },
   };
 
   // Filtro específico para o ALUNO logado, para que ele veja apenas a si mesmo
@@ -91,23 +91,33 @@ export async function findById(id: string, user: AuthenticatedRequest["user"]) {
   });
 }
 
+
 export async function updateStatus(
   id: string,
   status: StatusMatricula,
   user: AuthenticatedRequest["user"]
 ) {
-  const matricula = await findById(id, user);
-  if (!matricula) {
-    const error = new Error("Matrícula não encontrada.");
+  // Otimização: Tentar atualizar usando o filtro de segurança (id da Matrícula + id da Unidade)
+  const result = await prisma.matriculas.updateMany({
+    where: {
+      id,
+      // Filtro de segurança: Matrícula deve pertencer a uma turma da unidade do Gestor
+      turma: { unidadeEscolarId: user.unidadeEscolarId },
+    },
+    data: { status },
+  });
+
+  // Se updateMany retornar 0, significa que não encontrou a Matrícula (ou a Matrícula não pertence à unidade)
+  if (result.count === 0) {
+    const error = new Error("Matrícula não encontrada ou você não tem permissão.");
     (error as any).code = "P2025";
     throw error;
   }
-  return prisma.matriculas.update({
-    where: { id },
-    data: { status },
-    include: fullInclude,
-  });
+  
+  // Após a atualização, buscar e retornar a Matrícula completa
+  return findById(id, user); 
 }
+
 
 export async function remove(id: string, user: AuthenticatedRequest["user"]) {
   const matricula = await findById(id, user);

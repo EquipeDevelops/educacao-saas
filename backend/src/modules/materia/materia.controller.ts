@@ -54,8 +54,8 @@ export const materiaController = {
   update: async (req: AuthenticatedRequest, res: Response) => {
     try {
       const { id } = req.params;
-      const { instituicaoId } = req.user;
-      const result = await materiaService.update(id, req.body, instituicaoId!);
+      const { unidadeEscolarId} = req.user;
+      const result = await materiaService.update(id, req.body, unidadeEscolarId!);
       if (result.count === 0) {
         return res
           .status(404)
@@ -72,8 +72,8 @@ export const materiaController = {
   remove: async (req: AuthenticatedRequest, res: Response) => {
     try {
       const { id } = req.params;
-      const { instituicaoId } = req.user;
-      const result = await materiaService.remove(id, instituicaoId!);
+      const { unidadeEscolarId } = req.user;
+      const result = await materiaService.remove(id,unidadeEscolarId!);
       if (result.count === 0) {
         return res
           .status(404)
@@ -81,7 +81,7 @@ export const materiaController = {
       }
       return res.status(204).send();
     } catch (error: any) {
-      return res.status(500).json({ message: "Erro ao deletar matéria." });
+      return res.status(500).json({ message: "Erro ao deletar matéria." ,error: error.message});
     }
   },
 };

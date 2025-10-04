@@ -1,6 +1,7 @@
 import { Prisma, PrismaClient } from "@prisma/client";
 import { CreateMateriaInput } from "./materia.validator";
 
+
 const prisma = new PrismaClient();
 
 const create = (data: CreateMateriaInput, unidadeEscolarId: string) => {
@@ -36,10 +37,14 @@ const update = (
   });
 };
 
-const remove = (id: string, unidadeEscolarId: string) => {
-  return prisma.materias.deleteMany({
-    where: { id, unidadeEscolarId },
-  });
-};
 
+const remove = (id: string, unidadeEscolarId: string) => {
+  return prisma.materias.deleteMany({
+    where: { 
+        // REVERTER PARA O USO DE STRINGS
+        id: id, // <== Deve ser string pura
+        unidadeEscolarId: unidadeEscolarId // <== Deve ser string pura
+    },
+  });
+};
 export const materiaService = { create, findAll, findById, update, remove };
