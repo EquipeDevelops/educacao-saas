@@ -1,0 +1,97 @@
+.pageContainer {
+  padding: 1.5rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+.pageContainer h1 {
+  font-size: 1.8rem;
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin: 2rem 0;
+}
+
+.statCard {
+  padding: 1.5rem;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-size: 1rem;
+  font-weight: 500;
+}
+.statCard svg {
+  font-size: 1.5rem;
+}
+.statCard strong {
+  font-size: 1.5rem;
+  margin-left: 0.5rem;
+}
+
+.aulas {
+  background-color: #e0e7ff;
+  color: #4338ca;
+}
+.provas {
+  background-color: #fee2e2;
+  color: #b91c1c;
+}
+.recuperacoes {
+  background-color: #fef9c3;
+  color: #a16207;
+}
+.reunioes {
+  background-color: #f3e8ff;
+  color: #7e22ce;
+}
+
+.calendarSection {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 1.5rem;
+  align-items: start;
+  margin-bottom: 2rem;
+}
+
+.selectedDayPanel {
+  background-color: var(--cor-primaria-dark);
+  color: white;
+  padding: 1.5rem;
+  border-radius: 12px;
+}
+.selectedDayPanel h4 {
+  color: #a5b4fc;
+}
+.selectedDayPanel p {
+  color: white;
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 500;
+}
+.selectedDayPanel p + p {
+  font-size: 1rem;
+  font-weight: normal;
+  color: #c7d2fe;
+}
+
+.noEvents {
+  text-align: center;
+  padding: 3rem 0;
+  color: #a5b4fc;
+}
+.noEvents svg {
+  font-size: 2.5rem;
+}
+.noEvents p {
+  color: #a5b4fc;
+  font-size: 1rem;
+}
+
+.subText {
+  color: #030303;
+  margin-top: 0.5rem;
+  margin-bottom: 1rem;
+}

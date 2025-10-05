@@ -1,0 +1,249 @@
+.pageContainer {
+  padding: 1.5rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.header h1 {
+  font-size: 1.8rem;
+  margin: 0;
+  color: var(--cor-texto-destaque);
+}
+.header p {
+  color: var(--cor-subtexto);
+  margin-top: 0.25rem;
+}
+
+.headerActions {
+  display: flex;
+  gap: 1rem;
+}
+
+.previewButton,
+.saveButton {
+  background-color: var(--cor-fundo-card);
+  border: 1px solid var(--cor-borda);
+  color: var(--cor-texto-destaque);
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s;
+}
+
+.saveButton {
+  background-color: var(--cor-primaria);
+  color: white;
+  border-color: var(--cor-primaria);
+}
+
+.previewButton:hover {
+  background-color: #f0f0f0;
+}
+.saveButton:hover {
+  background-color: var(--cor-primaria-hover);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.card {
+  background-color: var(--cor-fundo-card);
+  border: 1px solid var(--cor-borda);
+  border-radius: 12px;
+  padding: 1.5rem;
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.cardTitle {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--cor-texto-destaque);
+}
+
+.grid2cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.field:last-child {
+  margin-bottom: 0;
+}
+
+.field label {
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.field input,
+.field select,
+.field textarea {
+  background-color: var(--cor-fundo);
+}
+
+.questionTypeButton {
+  background-color: transparent;
+  border: 1px solid var(--cor-borda);
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  margin-left: 0.5rem;
+  cursor: pointer;
+}
+
+.emptyState {
+  text-align: center;
+  padding: 2rem;
+  color: var(--cor-subtexto);
+}
+
+.emptyState svg {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+}
+
+.emptyStateActions {
+  margin-top: 1rem;
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.actionLink {
+  background: none;
+  border: none;
+  color: var(--cor-primaria);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.dropzone {
+  border: 2px dashed var(--cor-borda);
+  border-radius: 8px;
+  padding: 2rem;
+  text-align: center;
+  color: var(--cor-subtexto);
+  background-color: var(--cor-fundo);
+  cursor: pointer;
+}
+
+.dropzone svg {
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+.dropzone small {
+  font-size: 0.8rem;
+}
+
+.switchRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 0;
+  border-bottom: 1px solid var(--cor-borda);
+}
+.switchRow:last-of-type {
+  border-bottom: none;
+}
+
+.switchRow label {
+  font-weight: 500;
+}
+.switchRow p {
+  font-size: 0.9rem;
+  color: var(--cor-subtexto);
+  margin-top: 0.25rem;
+}
+.switch {
+}
+
+.footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.cancelButton,
+.draftButton,
+.publishButton {
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s;
+}
+
+.cancelButton {
+  background-color: transparent;
+  color: var(--cor-subtexto);
+}
+.draftButton {
+  background-color: #e9ecef;
+  color: var(--cor-texto-destaque);
+  border: 1px solid var(--cor-borda);
+}
+.publishButton {
+  background-color: var(--cor-primaria);
+  color: white;
+}
+
+.cancelButton:hover {
+  background-color: #f0f0f0;
+}
+.draftButton:hover {
+  border-color: #ccc;
+}
+.publishButton:hover {
+  background-color: var(--cor-primaria-hover);
+}
+
+.deleteButton {
+  background-color: var(--cor-perigo-light);
+  border: 1px solid var(--cor-perigo-light);
+  color: var(--cor-perigo-dark);
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s;
+}
+.deleteButton:hover {
+  background-color: var(--cor-perigo);
+  color: white;
+}

@@ -1,0 +1,91 @@
+.widget {
+  background-color: var(--cor-fundo-card);
+  padding: 1.5rem;
+  border-radius: 12px;
+  border: 1px solid var(--cor-borda);
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.title {
+  font-size: 1.2rem;
+  margin: 0;
+  color: var(--cor-texto-destaque);
+}
+
+.badge {
+  background-color: var(--cor-perigo-light);
+  color: var(--cor-perigo-dark);
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background-color: var(--cor-primaria);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  flex-shrink: 0;
+  font-size: 0.8rem;
+}
+
+.itemInfo {
+  flex-grow: 1;
+  overflow: hidden;
+}
+
+.itemName {
+  font-weight: 600;
+  color: var(--cor-texto-destaque);
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.itemPreview {
+  color: var(--cor-subtexto);
+  font-size: 0.85rem;
+  margin: 0.1rem 0 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.time {
+  color: var(--cor-cinza);
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+
+.viewAll {
+  display: block;
+  margin-top: 1.5rem;
+  text-align: center;
+  color: var(--cor-primaria);
+  font-weight: 600;
+  text-decoration: none;
+  font-size: 0.9rem;
+}

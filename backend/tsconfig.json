@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "baseUrl": "./src",
+    "paths": {
+      "@/*": ["*"],
+      "@modules/*": ["modules/*"],
+      "@middlewares/*": ["middlewares/*"]
+    },
+    "target": "es2020",
+    "sourceMap": true,
+    "outDir": "./dist",
+    "rootDir": "./src",
+
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules"]
+}

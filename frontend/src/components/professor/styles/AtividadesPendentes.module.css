@@ -1,0 +1,101 @@
+.widget {
+  background-color: var(--cor-fundo-card);
+  padding: 1.5rem;
+  border-radius: 12px;
+  border: 1px solid var(--cor-borda);
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.title {
+  font-size: 1.2rem;
+  margin: 0;
+  color: var(--cor-texto-destaque);
+}
+
+.badge {
+  background-color: var(--cor-primaria-light);
+  color: var(--cor-primaria-dark);
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--cor-borda);
+}
+
+.item:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.materiaBadge {
+  background-color: #f0f0f0;
+  border-radius: 8px;
+  padding: 0.8rem;
+  font-weight: bold;
+  color: var(--cor-subtexto);
+  min-width: 40px;
+  text-align: center;
+}
+
+.itemInfo {
+  flex-grow: 1;
+}
+
+.itemTitle {
+  font-weight: 600;
+  color: var(--cor-texto-destaque);
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.itemTurma {
+  color: var(--cor-subtexto);
+  font-size: 0.8rem;
+  margin: 0.25rem 0 0;
+}
+
+.itemDetails {
+  text-align: right;
+}
+
+.submissoes {
+  display: block;
+  font-size: 1rem;
+  font-weight: bold;
+  color: var(--cor-perigo);
+}
+
+.dataEntrega {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--cor-cinza);
+}
+
+.viewAll {
+  display: block;
+  margin-top: 1.5rem;
+  text-align: center;
+  color: var(--cor-primaria);
+  font-weight: 600;
+  text-decoration: none;
+  font-size: 0.9rem;
+}

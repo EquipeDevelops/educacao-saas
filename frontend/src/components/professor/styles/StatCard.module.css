@@ -1,0 +1,45 @@
+.card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background-color: var(--cor-fundo-card);
+  padding: 1.25rem;
+  border-radius: 12px;
+  border: 1px solid var(--cor-borda);
+}
+
+.iconWrapper {
+  font-size: 1.2rem;
+  color: var(--cor-primaria);
+  background-color: var(--cor-primaria-light);
+  padding: 10px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+}
+
+.title {
+  color: var(--cor-subtexto);
+  font-size: 0.85rem;
+  font-weight: 500;
+  margin: 0;
+}
+
+.value {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--cor-texto-destaque);
+  margin: 0.1rem 0;
+}
+
+.subtitle {
+  color: var(--cor-cinza);
+  font-size: 0.75rem;
+  margin: 0;
+}

@@ -1,0 +1,31 @@
+.pageContainer {
+  padding: 1.5rem;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.header h1 {
+  font-size: 1.8rem;
+  margin: 0;
+  color: var(--cor-texto-destaque);
+}
+
+.header p {
+  color: var(--cor-subtexto);
+  margin-top: 0.25rem;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1.5rem;
+}
+
+.error {
+  color: var(--cor-perigo);
+}

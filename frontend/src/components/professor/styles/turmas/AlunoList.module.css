@@ -1,0 +1,85 @@
+.list {
+  padding: 0.5rem;
+}
+
+.alunoRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 0.5rem;
+  border-bottom: 1px solid var(--cor-borda);
+}
+
+.alunoRow:last-child {
+  border-bottom: none;
+}
+
+.alunoInfo {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: var(--cor-primaria-light);
+  color: var(--cor-primaria-dark);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  flex-shrink: 0;
+}
+
+.alunoNome {
+  font-weight: 600;
+  margin: 0;
+  color: var(--cor-texto-destaque);
+}
+
+.alunoStats {
+  font-size: 0.85rem;
+  color: var(--cor-subtexto);
+  margin: 0.25rem 0 0;
+}
+
+.alunoActions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.status {
+  font-size: 0.8rem;
+  font-weight: bold;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+}
+
+.ativo {
+  background-color: var(--cor-sucesso-light);
+  color: var(--cor-sucesso-dark);
+}
+
+.atencao {
+  background-color: var(--cor-perigo-light);
+  color: var(--cor-perigo-dark);
+}
+
+.profileButton {
+  background-color: transparent;
+  color: var(--cor-primaria);
+  border: 1px solid var(--cor-borda);
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.profileButton:hover {
+  background-color: var(--cor-primaria-light);
+  border-color: var(--cor-primaria);
+}

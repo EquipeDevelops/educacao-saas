@@ -1,0 +1,114 @@
+.card {
+  background-color: var(--cor-fundo-card);
+  border: 1px solid var(--cor-borda);
+  border-radius: 12px;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.2s ease-in-out;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.iconWrapper {
+  color: white;
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.nomeTurma {
+  margin: 0;
+  font-size: 1.2rem;
+  color: var(--cor-texto-destaque);
+}
+
+.materia {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--cor-subtexto);
+}
+
+.mediaBadge {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.3rem 0.6rem;
+  border-radius: 12px;
+  font-weight: bold;
+  font-size: 0.8rem;
+}
+
+.mediaBoa {
+  background-color: var(--cor-sucesso-light);
+  color: var(--cor-sucesso-dark);
+}
+.mediaMedia {
+  background-color: var(--cor-aviso-light);
+  color: var(--cor-aviso-dark);
+}
+.mediaRuim {
+  background-color: var(--cor-perigo-light);
+  color: var(--cor-perigo-dark);
+}
+
+.details {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  border-top: 1px solid var(--cor-borda);
+  border-bottom: 1px solid var(--cor-borda);
+  padding: 1rem 0;
+  margin-bottom: 1.5rem;
+}
+
+.detailItem {
+  display: flex;
+  flex-direction: column;
+  text-align: center;
+}
+
+.detailItem span {
+  font-size: 0.8rem;
+  color: var(--cor-subtexto);
+  margin-bottom: 0.25rem;
+}
+
+.detailItem strong {
+  font-size: 0.9rem;
+  color: var(--cor-texto-destaque);
+}
+
+.detailsButton {
+  background-color: var(--cor-fundo-card);
+  color: var(--cor-primaria);
+  border: 1px solid var(--cor-primaria);
+  padding: 0.75rem;
+  border-radius: 8px;
+  text-align: center;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.2s ease-in-out;
+}
+
+.detailsButton:hover {
+  background-color: var(--cor-primaria);
+  color: white;
+}
