@@ -1,3 +1,4 @@
+
 import { Response } from "express";
 import * as UsuarioService from "./usuario.service";
 import { CreateUserInput, UpdateUserInput } from "./usuario.validator";
@@ -120,4 +121,42 @@ export const usuarioController = {
         .json({ message: error.message || "Erro ao deletar usuário." });
     }
   },
+
+  // 🔄 Função adicionada para ativar/desativar usuário
+  toggleStatus: async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const { id } = req.params;
+      const { user } = req;
+
+      const where: Prisma.UsuariosWhereInput = {
+        instituicaoId: user.instituicaoId,
+      };
+      if (user.papel === "GESTOR") {
+        where.unidadeEscolarId = user.unidadeEscolarId;
+      }
+
+      const usuario = await UsuarioService.findUserById(id, where);
+      if (!usuario) {
+        return res.status(404).json({ message: "Usuário não encontrado." });
+      }
+
+      const novoStatus = !usuario.status;
+
+      const usuarioAtualizado = await UsuarioService.updateUser(
+        id,
+        { status: novoStatus },
+        where
+      );
+
+      return res.status(200).json({
+        message: `Usuário ${novoStatus ? "ativado" : "desativado"} com sucesso.`,
+        usuario: usuarioAtualizado,
+      });
+    } catch (error: any) {
+      return res.status(500).json({
+        message: error.message || "Erro ao alterar status do usuário.",
+      });
+    }
+  }, // ⬅️ Fim da função adicionada
 };
+

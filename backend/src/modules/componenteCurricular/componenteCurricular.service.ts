@@ -1,8 +1,5 @@
 import { Prisma, PrismaClient } from "@prisma/client";
-import {
-  CreateComponenteInput,
-  FindAllComponentesInput,
-} from "./componenteCurricular.validator";
+import { CreateComponenteInput, FindAllComponentesInput } from "./componenteCurricular.validator";
 import { AuthenticatedRequest } from "../../middlewares/auth";
 
 const prisma = new PrismaClient();
@@ -19,26 +16,17 @@ const fullInclude = {
   },
 };
 
-export async function create(
-  data: CreateComponenteInput,
-  user: AuthenticatedRequest["user"]
-) {
+export async function create(data: CreateComponenteInput, user: AuthenticatedRequest["user"]) {
   const { instituicaoId, unidadeEscolarId } = user;
 
   const [turma, materia, professor] = await Promise.all([
     prisma.turmas.findFirst({ where: { id: data.turmaId, unidadeEscolarId } }),
-    prisma.materias.findFirst({
-      where: { id: data.materiaId, unidadeEscolarId },
-    }),
-    prisma.usuarios_professor.findFirst({
-      where: { id: data.professorId, usuario: { instituicaoId } },
-    }),
+    prisma.materias.findFirst({ where: { id: data.materiaId, unidadeEscolarId } }),
+    prisma.usuarios_professor.findFirst({ where: { id: data.professorId, usuario: { instituicaoId } } }),
   ]);
 
   if (!turma || !materia || !professor) {
-    throw new Error(
-      "Turma, matéria ou professor inválido ou não pertence ao escopo permitido."
-    );
+    throw new Error("Turma, matéria ou professor inválido ou não pertence ao escopo permitido.");
   }
 
   return prisma.componenteCurricular.create({
@@ -47,10 +35,7 @@ export async function create(
   });
 }
 
-export async function findAll(
-  user: AuthenticatedRequest["user"],
-  filters: FindAllComponentesInput
-) {
+export async function findAll(user: AuthenticatedRequest["user"], filters: FindAllComponentesInput) {
   const where: Prisma.ComponenteCurricularWhereInput = {};
 
   if (user.unidadeEscolarId) {
@@ -84,42 +69,16 @@ export async function findById(id: string, user: AuthenticatedRequest["user"]) {
     include: fullInclude,
   });
 
-  if (!componente) {
-    console.log(
-      "[DEBUG] Componente não encontrado no banco de dados. Retornando null."
-    );
-    return null;
-  }
-  console.log("[DEBUG] Componente encontrado:", componente);
+  if (!componente) return null;
 
-  console.log(`[DEBUG] Verificando permissão para o papel: ${user.papel}`);
   switch (user.papel) {
     case "GESTOR":
-      console.log(
-        `[DEBUG] Comparando Unidade do Componente (${componente.turma.unidadeEscolarId}) com Unidade do Gestor (${user.unidadeEscolarId})`
-      );
-      if (componente.turma.unidadeEscolarId !== user.unidadeEscolarId) {
-        console.log(
-          "[DEBUG] PERMISSÃO NEGADA: Gestor não pertence à unidade escolar do componente."
-        );
-        return null;
-      }
+      if (componente.turma.unidadeEscolarId !== user.unidadeEscolarId) return null;
       break;
     case "PROFESSOR":
-      console.log(
-        `[DEBUG] Comparando Professor do Componente (${componente.professorId}) com Perfil do Usuário (${user.perfilId})`
-      );
-      if (componente.professorId !== user.perfilId) {
-        console.log(
-          "[DEBUG] PERMISSÃO NEGADA: Usuário não é o professor deste componente."
-        );
-        return null;
-      }
+      if (componente.professorId !== user.perfilId) return null;
       break;
     case "ALUNO":
-      console.log(
-        `[DEBUG] Verificando se o aluno (perfil ${user.perfilId}) está matriculado na turma ${componente.turmaId}`
-      );
       const matricula = await prisma.matriculas.findFirst({
         where: {
           alunoId: user.perfilId!,
@@ -127,22 +86,12 @@ export async function findById(id: string, user: AuthenticatedRequest["user"]) {
           status: "ATIVA",
         },
       });
-      if (!matricula) {
-        console.log(
-          "[DEBUG] PERMISSÃO NEGADA: Aluno não encontrado na turma do componente."
-        );
-        return null;
-      }
-      console.log("[DEBUG] Aluno encontrado na turma. Permissão concedida.");
+      if (!matricula) return null;
       break;
     default:
-      console.log(
-        "[DEBUG] Papel não tem permissão de acesso. Retornando null."
-      );
       return null;
   }
 
-  console.log("[DEBUG] PERMISSÃO CONCEDIDA. Retornando dados do componente.");
   return componente;
 }
 
@@ -153,9 +102,31 @@ export async function update(
 ) {
   const componenteExistente = await findById(id, user);
   if (!componenteExistente) {
-    throw new Error(
-      "Componente curricular não encontrado ou sem permissão para editar."
-    );
+    throw new Error("Componente curricular não encontrado ou sem permissão para editar.");
+  }
+
+  const { turmaId, materiaId, professorId } = data;
+
+  const { instituicaoId, unidadeEscolarId } = user;
+
+  if (turmaId || materiaId || professorId) {
+    const [turma, materia, professor] = await Promise.all([
+      turmaId
+        ? prisma.turmas.findFirst({ where: { id: turmaId as string, unidadeEscolarId } })
+        : Promise.resolve(true),
+      materiaId
+        ? prisma.materias.findFirst({ where: { id: materiaId as string, unidadeEscolarId } })
+        : Promise.resolve(true),
+      professorId
+        ? prisma.usuarios_professor.findFirst({
+            where: { id: professorId as string, usuario: { instituicaoId } },
+          })
+        : Promise.resolve(true),
+    ]);
+
+    if (!turma || !materia || !professor) {
+      throw new Error("Turma, matéria ou professor inválido ou fora do escopo permitido.");
+    }
   }
 
   return prisma.componenteCurricular.update({
@@ -168,9 +139,7 @@ export async function update(
 export async function remove(id: string, user: AuthenticatedRequest["user"]) {
   const componenteExistente = await findById(id, user);
   if (!componenteExistente) {
-    throw new Error(
-      "Componente curricular não encontrado ou sem permissão para deletar."
-    );
+    throw new Error("Componente curricular não encontrado ou sem permissão para deletar.");
   }
   return prisma.componenteCurricular.delete({ where: { id } });
 }

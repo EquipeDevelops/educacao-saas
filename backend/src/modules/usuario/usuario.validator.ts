@@ -1,8 +1,16 @@
 import { z } from "zod";
 import { PapelUsuario } from "@prisma/client";
 
+// ✅ Schema para validar o parâmetro :id em rotas
 export const paramsSchema = z.object({
   id: z.string().nonempty("O ID é obrigatório"),
+});
+
+// ✅ Schema combinado para a rota PATCH /usuarios/:id/status
+export const toggleStatusSchema = z.object({
+  body: z.any().optional(), // aceita ausência de body
+  query: z.any().optional(), // aceita ausência de query
+  params: paramsSchema, // usa o schema já definido
 });
 
 const alunoProfileSchema = z.object({
