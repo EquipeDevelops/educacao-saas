@@ -13,9 +13,50 @@ const dayMap: { [key: string]: number } = {
   SABADO: 6,
 };
 
-/**
- * Endpoint para os cards da página inicial do professor.
- */
+async function getHeaderInfo(user: AuthenticatedRequest["user"]) {
+  const professorId = user.perfilId;
+  if (!professorId || !user.unidadeEscolarId) {
+    throw new Error(
+      "Usuário não é um professor ou não está vinculado a uma unidade escolar."
+    );
+  }
+
+  const [componentes, unidadeEscolar, unreadMessages] = await Promise.all([
+    prisma.componenteCurricular.findMany({
+      where: { professorId },
+      select: {
+        materia: { select: { nome: true } },
+        turma: { select: { serie: true } },
+      },
+      distinct: ["materiaId", "turmaId"],
+      take: 2,
+    }),
+    prisma.unidades_Escolares.findUnique({
+      where: { id: user.unidadeEscolarId },
+      select: { nome: true },
+    }),
+    prisma.conversa.count({
+      where: {
+        participantes: { some: { usuarioId: user.id } },
+        atualizado_em: {
+          gte: new Date(new Date().setDate(new Date().getDate() - 7)),
+        },
+      },
+    }),
+  ]);
+
+  const userDetails = componentes
+    .map((c) => `${c.materia.nome} - ${c.turma.serie}`)
+    .join(" | ");
+
+  const schoolName = unidadeEscolar?.nome || "Escola não encontrada";
+
+  return {
+    userDetails: `${userDetails} | ${schoolName}`,
+    notificationCount: unreadMessages,
+  };
+}
+
 async function getHomeStats(user: AuthenticatedRequest["user"]) {
   const professorId = user.perfilId;
   if (!professorId) throw new Error("Usuário não é um professor.");
@@ -78,9 +119,6 @@ async function getHomeStats(user: AuthenticatedRequest["user"]) {
   };
 }
 
-/**
- * NOVO: Busca as 3 atividades com correções pendentes mais próximas do prazo.
- */
 async function getAtividadesPendentes(user: AuthenticatedRequest["user"]) {
   const professorId = user.perfilId;
   if (!professorId) return [];
@@ -128,9 +166,6 @@ async function getAtividadesPendentes(user: AuthenticatedRequest["user"]) {
   }));
 }
 
-/**
- * NOVO: Calcula o desempenho geral e por turma do professor.
- */
 async function getDesempenhoTurmas(user: AuthenticatedRequest["user"]) {
   const professorId = user.perfilId;
   if (!professorId) throw new Error("Usuário não é um professor.");
@@ -282,6 +317,7 @@ async function getTurmasDashboard(user: AuthenticatedRequest["user"]) {
 
       return {
         componenteId: componente.id,
+        turmaId: componente.turma.id,
         nomeTurma: `${componente.turma.serie} ${componente.turma.nome}`,
         materia: componente.materia.nome,
         alunosCount,
@@ -303,6 +339,7 @@ async function getTurmaDetails(
   const componente = await prisma.componenteCurricular.findFirstOrThrow({
     where: { id: componenteId, professorId },
     select: {
+      id: true,
       materia: { select: { nome: true } },
       turma: { select: { id: true, nome: true, serie: true } },
     },
@@ -310,10 +347,11 @@ async function getTurmaDetails(
 
   const turmaId = componente.turma.id;
 
-  const [matriculas, tarefas, avaliacoes] = await Promise.all([
+  const [matriculas, tarefas] = await Promise.all([
     prisma.matriculas.findMany({
       where: { turmaId: turmaId, status: "ATIVA" },
       select: {
+        id: true,
         aluno: { select: { id: true, usuario: { select: { nome: true } } } },
       },
     }),
@@ -321,19 +359,61 @@ async function getTurmaDetails(
       where: { componenteCurricularId: componenteId },
       include: { _count: { select: { submissoes: true } } },
     }),
-    prisma.avaliacaoParcial.findMany({
-      where: { componenteCurricularId: componenteId },
-      select: { nota: true },
-    }),
   ]);
 
-  const alunos = matriculas.map((m) => ({
-    id: m.aluno.id,
-    nome: m.aluno.usuario.nome,
-    media: parseFloat((Math.random() * 5 + 5).toFixed(1)),
-    presenca: Math.floor(Math.random() * 20 + 80),
-    status: Math.random() > 0.15 ? "Ativo" : ("Atenção" as "Ativo" | "Atenção"),
-  }));
+  const alunos = await Promise.all(
+    matriculas.map(async (m) => {
+      const [avaliacoesParciais, submissoesAvaliadas] = await Promise.all([
+        prisma.avaliacaoParcial.findMany({
+          where: {
+            matriculaId: m.id,
+            componenteCurricularId: componente.id,
+          },
+          select: { nota: true },
+        }),
+        prisma.submissoes.findMany({
+          where: {
+            alunoId: m.aluno.id,
+            tarefa: { componenteCurricularId: componente.id },
+            status: StatusSubmissao.AVALIADA,
+            nota_total: { not: null },
+          },
+          select: { nota_total: true },
+        }),
+      ]);
+
+      const todasAsNotas = [
+        ...avaliacoesParciais.map((a) => a.nota),
+        ...submissoesAvaliadas.map((s) => s.nota_total!),
+      ];
+
+      const media =
+        todasAsNotas.length > 0
+          ? todasAsNotas.reduce((acc, nota) => acc + nota, 0) /
+            todasAsNotas.length
+          : 0;
+
+      const totalFaltas = await prisma.registroFalta.count({
+        where: { matriculaId: m.id },
+      });
+      const DIAS_LETIVOS_TOTAIS = 100;
+      const presenca = Math.max(
+        0,
+        ((DIAS_LETIVOS_TOTAIS - totalFaltas) / DIAS_LETIVOS_TOTAIS) * 100
+      );
+
+      return {
+        id: m.aluno.id,
+        nome: m.aluno.usuario.nome,
+        media: parseFloat(media.toFixed(1)),
+        presenca: Math.round(presenca),
+        status:
+          media < 6 || presenca < 75
+            ? "Atenção"
+            : ("Ativo" as "Ativo" | "Atenção"),
+      };
+    })
+  );
 
   const atividades = tarefas.map((t) => ({
     id: t.id,
@@ -344,14 +424,31 @@ async function getTurmaDetails(
     total: matriculas.length,
   }));
 
-  const notas = avaliacoes.map((a) => a.nota);
+  const todasAsNotasDaTurma = alunos.map((a) => a.media).filter((m) => m > 0);
+
   const mediaGeral =
-    notas.length > 0 ? notas.reduce((a, b) => a + b, 0) / notas.length : 0;
+    todasAsNotasDaTurma.length > 0
+      ? todasAsNotasDaTurma.reduce((a, b) => a + b, 0) /
+        todasAsNotasDaTurma.length
+      : 0;
+
   const distribuicao = [
-    { range: "9.0 - 10.0", alunos: notas.filter((n) => n >= 9).length },
-    { range: "7.0 - 8.9", alunos: notas.filter((n) => n >= 7 && n < 9).length },
-    { range: "5.0 - 6.9", alunos: notas.filter((n) => n >= 5 && n < 7).length },
-    { range: "0.0 - 4.9", alunos: notas.filter((n) => n < 5).length },
+    {
+      range: "9.0 - 10.0",
+      alunos: todasAsNotasDaTurma.filter((n) => n >= 9).length,
+    },
+    {
+      range: "7.0 - 8.9",
+      alunos: todasAsNotasDaTurma.filter((n) => n >= 7 && n < 9).length,
+    },
+    {
+      range: "5.0 - 6.9",
+      alunos: todasAsNotasDaTurma.filter((n) => n >= 5 && n < 7).length,
+    },
+    {
+      range: "0.0 - 4.9",
+      alunos: todasAsNotasDaTurma.filter((n) => n < 5).length,
+    },
   ].map((d) => ({
     ...d,
     percent:
@@ -367,11 +464,21 @@ async function getTurmaDetails(
     distribuicao: distribuicao,
   };
 
+  const horarios = await prisma.horarioAula.findMany({
+    where: { componenteCurricularId: componente.id },
+    select: { dia_semana: true, hora_inicio: true },
+    orderBy: { dia_semana: "asc" },
+  });
+  const horarioResumo = horarios
+    .map((h) => `${h.dia_semana.substring(0, 3)}. ${h.hora_inicio}`)
+    .slice(0, 2)
+    .join(" | ");
+
   return {
     headerInfo: {
       nomeTurma: `${componente.turma.serie} ${componente.turma.nome}`,
       materia: componente.materia.nome,
-      horarioResumo: "Seg, Ter, Qui - 08:00",
+      horarioResumo: horarioResumo || "N/D",
       mediaGeral: estatisticas.mediaGeral,
     },
     alunos,
@@ -380,7 +487,81 @@ async function getTurmaDetails(
   };
 }
 
+async function getMyStudents(user: AuthenticatedRequest["user"]) {
+  const professorId = user.perfilId;
+  if (!professorId) return [];
+
+  const componentes = await prisma.componenteCurricular.findMany({
+    where: { professorId },
+    select: { turmaId: true },
+  });
+  const turmaIds = [...new Set(componentes.map((c) => c.turmaId))];
+
+  const matriculas = await prisma.matriculas.findMany({
+    where: {
+      turmaId: { in: turmaIds },
+      status: "ATIVA",
+    },
+    select: {
+      aluno: {
+        select: {
+          usuario: {
+            select: { id: true, nome: true, papel: true },
+          },
+        },
+      },
+    },
+    orderBy: { aluno: { usuario: { nome: "asc" } } },
+  });
+
+  const studentMap = new Map();
+  matriculas.forEach((m) => {
+    if (!studentMap.has(m.aluno.usuario.id)) {
+      studentMap.set(m.aluno.usuario.id, m.aluno.usuario);
+    }
+  });
+
+  return Array.from(studentMap.values());
+}
+
+/**
+ * NOVO: Busca uma lista de todos os outros professores na mesma escola.
+ */
+async function getColleagues(user: AuthenticatedRequest["user"]) {
+  const professorId = user.perfilId;
+  if (!professorId || !user.unidadeEscolarId) return [];
+
+  const professores = await prisma.usuarios_professor.findMany({
+    where: {
+      componentes_lecionados: {
+        some: {
+          turma: {
+            unidadeEscolarId: user.unidadeEscolarId,
+          },
+        },
+      },
+      id: { not: professorId },
+    },
+    select: {
+      usuario: {
+        select: { id: true, nome: true, papel: true },
+      },
+    },
+    distinct: ["usuarioId"],
+    orderBy: {
+      usuario: {
+        nome: "asc",
+      },
+    },
+  });
+
+  return professores.map((p) => p.usuario);
+}
+
 export const professorDashboardService = {
+  getColleagues,
+  getMyStudents,
+  getHeaderInfo,
   getHomeStats,
   getAtividadesPendentes,
   getDesempenhoTurmas,

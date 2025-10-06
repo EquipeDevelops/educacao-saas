@@ -22,7 +22,6 @@ export async function create(
 ) {
   const { unidadeEscolarId } = user;
 
-  // Validação de segurança: garante que o aluno e a turma pertencem à unidade do gestor
   const [aluno, turma] = await Promise.all([
     prisma.usuarios_aluno.findFirst({
       where: { id: data.alunoId, usuario: { unidadeEscolarId } },
@@ -38,7 +37,7 @@ export async function create(
     where: {
       alunoId: data.alunoId,
       ano_letivo: data.ano_letivo,
-      status: "ATIVA", // Apenas matrículas ativas contam
+      status: "ATIVA",
     },
   });
 
@@ -61,14 +60,27 @@ export async function findAll(
   user: AuthenticatedRequest["user"],
   filters: FindAllMatriculasInput
 ) {
-  // Filtro base de segurança: sempre pela unidade do usuário
   const where: Prisma.MatriculasWhereInput = {
     turma: { unidadeEscolarId: user.unidadeEscolarId },
   };
 
-  // Filtro específico para o ALUNO logado, para que ele veja apenas a si mesmo
   if (user.papel === "ALUNO") {
     where.aluno = { usuarioId: user.id };
+  }
+
+  if (user.papel === "PROFESSOR") {
+    if (!filters.turmaId) {
+      return [];
+    }
+    const temAcesso = await prisma.componenteCurricular.findFirst({
+      where: {
+        professorId: user.perfilId!,
+        turmaId: filters.turmaId,
+      },
+    });
+    if (!temAcesso) {
+      throw new Error("Você não tem permissão para ver os alunos desta turma.");
+    }
   }
 
   if (filters.turmaId) where.turmaId = filters.turmaId;

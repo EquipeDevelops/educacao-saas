@@ -3,6 +3,44 @@ import { AuthenticatedRequest } from "../../middlewares/auth";
 import { professorDashboardService } from "./professorDashboard.service";
 
 export const professorDashboardController = {
+  getMyStudents: async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const students = await professorDashboardService.getMyStudents(req.user);
+      res.status(200).json(students);
+    } catch (error: any) {
+      res.status(500).json({
+        message: "Erro ao buscar alunos do professor.",
+        error: error.message,
+      });
+    }
+  },
+
+  getColleagues: async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const colleagues = await professorDashboardService.getColleagues(
+        req.user
+      );
+      res.status(200).json(colleagues);
+    } catch (error: any) {
+      res.status(500).json({
+        message: "Erro ao buscar colegas professores.",
+        error: error.message,
+      });
+    }
+  },
+
+  getHeaderInfo: async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const info = await professorDashboardService.getHeaderInfo(req.user);
+      res.status(200).json(info);
+    } catch (error: any) {
+      res.status(500).json({
+        message: "Erro ao buscar informações do cabeçalho.",
+        error: error.message,
+      });
+    }
+  },
+
   getHomeStats: async (req: AuthenticatedRequest, res: Response) => {
     try {
       const stats = await professorDashboardService.getHomeStats(req.user);

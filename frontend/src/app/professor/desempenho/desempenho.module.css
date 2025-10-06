@@ -1,0 +1,60 @@
+.pageContainer {
+  padding: 1.5rem;
+}
+
+.header {
+  margin-bottom: 2rem;
+}
+
+.header h1 {
+  font-size: 1.8rem;
+}
+
+.header p {
+  color: var(--cor-subtexto);
+  margin-top: 0.25rem;
+}
+
+.tabs {
+  display: flex;
+  gap: 0.5rem;
+  border-bottom: 2px solid var(--cor-borda);
+  margin-bottom: 1.5rem;
+}
+
+.tabs button {
+  padding: 0.75rem 1rem;
+  border: none;
+  background-color: transparent;
+  font-weight: 600;
+  color: var(--cor-subtexto);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transform: translateY(2px);
+}
+
+.tabs .activeTab {
+  color: var(--cor-primaria);
+  border-bottom-color: var(--cor-primaria);
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.mainContent {
+}
+
+.geralContainer {
+  background-color: var(--cor-fundo-card);
+  border-radius: 12px;
+  padding: 2rem;
+  border: 1px solid var(--cor-borda);
+}
+
+.error {
+  color: var(--cor-perigo);
+}

@@ -12,6 +12,7 @@ import {
   FiMessageSquare,
   FiSettings,
   FiEdit,
+  FiUserX,
 } from "react-icons/fi";
 
 const navLinks = [
@@ -19,6 +20,7 @@ const navLinks = [
   { href: "/professor/turmas", text: "Turmas", icon: <FiUsers /> },
   { href: "/professor/atividades", text: "Atividades", icon: <FiClipboard /> },
   { href: "/professor/correcoes", text: "Correções", icon: <FiEdit /> },
+  { href: "/professor/faltas", text: "Faltas", icon: <FiUserX /> },
   { href: "/professor/agenda", text: "Agenda", icon: <FiCalendar /> },
   { href: "/professor/desempenho", text: "Desempenho", icon: <FiBarChart2 /> },
   {
@@ -41,7 +43,9 @@ export default function ProfessorSidebar() {
       <div className={styles.logo}>Educa+</div>
       <nav className={styles.nav}>
         {navLinks.map((link) => {
-          const isActive = pathname.startsWith(link.href);
+          const isActive =
+            pathname === link.href ||
+            (link.href !== "/professor" && pathname.startsWith(link.href));
           return (
             <Link
               key={link.href}

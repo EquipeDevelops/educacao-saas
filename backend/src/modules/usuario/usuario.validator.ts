@@ -64,6 +64,7 @@ export const updateUserSchema = z.object({
       .min(3, "O nome deve ter no mínimo 3 caracteres.")
       .optional(),
     status: z.boolean().optional(),
+    perfil_professor: professorProfileSchema.optional(),
   }),
   params: paramsSchema,
 });

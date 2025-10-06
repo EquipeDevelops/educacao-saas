@@ -81,21 +81,43 @@ export async function findUserById(
 
 export async function updateUser(
   id: string,
-  data: Prisma.UsuariosUpdateInput,
+  data: Prisma.UsuariosUpdateInput & {
+    perfil_professor?: { titulacao?: string; area_especializacao?: string };
+  },
   where: Prisma.UsuariosWhereInput
 ) {
   const userExists = await prisma.usuarios.findFirst({
     where: { id, ...where },
+    select: { perfil_professor: { select: { id: true } } },
   });
-  if (!userExists)
-    throw new Error("Usuário não encontrado ou sem permissão para atualizar.");
 
-  const usuarioAtualizado = await prisma.usuarios.update({
-    where: { id },
-    data,
+  if (!userExists) {
+    throw new Error("Usuário não encontrado ou sem permissão para atualizar.");
+  }
+
+  const { perfil_professor, ...userData } = data;
+
+  return prisma.$transaction(async (tx) => {
+    await tx.usuarios.update({
+      where: { id },
+      data: userData,
+    });
+
+    if (perfil_professor && userExists.perfil_professor) {
+      await tx.usuarios_professor.update({
+        where: { id: userExists.perfil_professor.id },
+        data: perfil_professor,
+      });
+    }
+
+    const finalUser = await tx.usuarios.findUniqueOrThrow({
+      where: { id },
+      include: { perfil_aluno: true, perfil_professor: true },
+    });
+
+    const { senha_hash, ...usuarioSemSenha } = finalUser;
+    return usuarioSemSenha;
   });
-  const { senha_hash, ...usuarioSemSenha } = usuarioAtualizado;
-  return usuarioSemSenha;
 }
 
 export async function deleteUser(id: string, where: Prisma.UsuariosWhereInput) {

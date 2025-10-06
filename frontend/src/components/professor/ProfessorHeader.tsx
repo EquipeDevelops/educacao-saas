@@ -1,12 +1,37 @@
+"use client";
+
+import { useState, useEffect } from "react";
 import { User } from "@/types/users";
 import styles from "./styles/ProfessorHeader.module.css";
 import { FiBell } from "react-icons/fi";
+import { api } from "@/services/api";
 
 type ProfessorHeaderProps = {
   user: User | null;
 };
 
+type HeaderInfo = {
+  userDetails: string;
+  notificationCount: number;
+};
+
 export default function ProfessorHeader({ user }: ProfessorHeaderProps) {
+  const [headerInfo, setHeaderInfo] = useState<HeaderInfo | null>(null);
+
+  useEffect(() => {
+    async function fetchHeaderInfo() {
+      try {
+        const response = await api.get("/professor/dashboard/header-info");
+        setHeaderInfo(response.data);
+      } catch (error) {
+        console.error("Erro ao buscar informações do header:", error);
+      }
+    }
+    if (user) {
+      fetchHeaderInfo();
+    }
+  }, [user]);
+
   const userInitials =
     user?.nome
       .split(" ")
@@ -21,7 +46,7 @@ export default function ProfessorHeader({ user }: ProfessorHeaderProps) {
         <div>
           <h2 className={styles.userName}>Olá, {user?.nome}!</h2>
           <p className={styles.userDetails}>
-            Matemática • 2º Ano Médio | Escola Pública Exemplo de Ensino
+            {headerInfo ? headerInfo.userDetails : "Carregando..."}
           </p>
         </div>
       </div>
@@ -36,7 +61,11 @@ export default function ProfessorHeader({ user }: ProfessorHeaderProps) {
         </span>
         <div className={styles.notification}>
           <FiBell />
-          <span className={styles.notificationBadge}>3</span>
+          {headerInfo && headerInfo.notificationCount > 0 && (
+            <span className={styles.notificationBadge}>
+              {headerInfo.notificationCount}
+            </span>
+          )}
         </div>
       </div>
     </header>

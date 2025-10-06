@@ -1,6 +1,6 @@
 import { Response } from "express";
 import * as UsuarioService from "./usuario.service";
-import { CreateUserInput, UpdateUserInput } from "./usuario.validator";
+import { CreateUserInput } from "./usuario.validator";
 import { AuthenticatedRequest } from "../../middlewares/auth";
 import { Prisma, PrismaClient } from "@prisma/client";
 
@@ -44,11 +44,12 @@ export const usuarioController = {
   findAll: async (req: AuthenticatedRequest, res: Response) => {
     try {
       const { user } = req;
-      const where: Prisma.UsuariosWhereInput = {
-        instituicaoId: user.instituicaoId,
-      };
+      const where: Prisma.UsuariosWhereInput = {};
+      if (user.instituicaoId) {
+        where.instituicaoId = user.instituicaoId;
+      }
 
-      if (user.papel === "GESTOR") {
+      if (user.papel === "GESTOR" && user.unidadeEscolarId) {
         where.unidadeEscolarId = user.unidadeEscolarId;
       }
 
@@ -63,11 +64,20 @@ export const usuarioController = {
     try {
       const { id } = req.params;
       const { user } = req;
-      const where: Prisma.UsuariosWhereInput = {
-        instituicaoId: user.instituicaoId,
-      };
-      if (user.papel === "GESTOR")
+      const where: Prisma.UsuariosWhereInput = {};
+
+      if (user.papel === "PROFESSOR" || user.papel === "ALUNO") {
+        if (user.id !== id) {
+          return res.status(403).json({ message: "Acesso não autorizado." });
+        }
+      }
+
+      if (user.instituicaoId) {
+        where.instituicaoId = user.instituicaoId;
+      }
+      if (user.papel === "GESTOR" && user.unidadeEscolarId) {
         where.unidadeEscolarId = user.unidadeEscolarId;
+      }
 
       const usuario = await UsuarioService.findUserById(id, where);
       if (!usuario)
@@ -75,6 +85,7 @@ export const usuarioController = {
 
       return res.status(200).json(usuario);
     } catch (error: any) {
+      console.error("[ERRO NO CONTROLLER - findById]:", error);
       return res.status(500).json({ message: "Erro ao buscar usuário." });
     }
   },
@@ -83,11 +94,19 @@ export const usuarioController = {
     try {
       const { id } = req.params;
       const { user } = req;
-      const where: Prisma.UsuariosWhereInput = {
-        instituicaoId: user.instituicaoId,
-      };
-      if (user.papel === "GESTOR")
+      const where: Prisma.UsuariosWhereInput = {};
+
+      if (user.papel === "PROFESSOR") {
+        if (user.id !== id) {
+          return res.status(403).json({ message: "Acesso não autorizado." });
+        }
+      } else if (user.papel === "GESTOR" && user.unidadeEscolarId) {
         where.unidadeEscolarId = user.unidadeEscolarId;
+      }
+
+      if (user.instituicaoId) {
+        where.instituicaoId = user.instituicaoId;
+      }
 
       const usuarioAtualizado = await UsuarioService.updateUser(
         id,
@@ -96,6 +115,7 @@ export const usuarioController = {
       );
       return res.status(200).json(usuarioAtualizado);
     } catch (error: any) {
+      console.error("[ERRO NO CONTROLLER - update]:", error);
       return res
         .status(500)
         .json({ message: error.message || "Erro ao atualizar usuário." });
@@ -106,11 +126,14 @@ export const usuarioController = {
     try {
       const { id } = req.params;
       const { user } = req;
-      const where: Prisma.UsuariosWhereInput = {
-        instituicaoId: user.instituicaoId,
-      };
-      if (user.papel === "GESTOR")
+      const where: Prisma.UsuariosWhereInput = {};
+
+      if (user.instituicaoId) {
+        where.instituicaoId = user.instituicaoId;
+      }
+      if (user.papel === "GESTOR" && user.unidadeEscolarId) {
         where.unidadeEscolarId = user.unidadeEscolarId;
+      }
 
       await UsuarioService.deleteUser(id, where);
       return res.status(204).send();

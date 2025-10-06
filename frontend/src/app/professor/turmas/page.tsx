@@ -7,6 +7,7 @@ import TurmaCard from "@/components/professor/turmas/TurmaCard";
 
 export type TurmaDashboardInfo = {
   componenteId: string;
+  turmaId: string;
   nomeTurma: string;
   materia: string;
   alunosCount: number;

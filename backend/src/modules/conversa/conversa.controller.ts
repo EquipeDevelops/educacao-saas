@@ -5,11 +5,19 @@ import { AuthenticatedRequest } from "../../middlewares/auth";
 export const conversaController = {
   findOrCreate: async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const { id: remetenteId, instituicaoId } = req.user;
+      const { id: remetenteId, unidadeEscolarId } = req.user;
+
+      if (!unidadeEscolarId) {
+        return res.status(403).json({
+          message:
+            "Apenas usuários vinculados a uma escola podem iniciar conversas.",
+        });
+      }
+
       const conversa = await conversaService.findOrCreate(
         req.body,
         remetenteId,
-        instituicaoId!
+        unidadeEscolarId
       );
       return res.status(200).json(conversa);
     } catch (error: any) {

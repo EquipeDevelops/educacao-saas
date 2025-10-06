@@ -2,7 +2,6 @@ import { Router } from "express";
 import { conversaController } from "./conversa.controller";
 import { validate } from "../../middlewares/validate";
 import { protect } from "../../middlewares/auth";
-import { z } from "zod";
 import { createConversaSchema, paramsSchema } from "./conversa.validator";
 import { mensagemController } from "../mensagem/mensagem.controller";
 import { createMensagemSchema } from "../mensagem/mensagem.validator";
@@ -21,7 +20,7 @@ router.get("/", conversaController.findAllForUser);
 
 router.get(
   "/:id",
-  validate(z.object({ params: paramsSchema })),
+  validate({ params: paramsSchema }),
   conversaController.findById
 );
 
