@@ -1,0 +1,142 @@
+.pageContainer {
+  padding: 1.5rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.header h1 {
+  font-size: 1.8rem;
+  margin: 0;
+  color: var(--cor-texto-destaque);
+}
+.header p {
+  color: var(--cor-subtexto);
+  margin-top: 0.25rem;
+}
+
+.headerActions {
+  display: flex;
+  gap: 1rem;
+}
+
+.saveButton {
+  background-color: var(--cor-primaria);
+  color: white;
+  border: 1px solid var(--cor-primaria);
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s;
+}
+
+.saveButton:hover {
+  background-color: var(--cor-primaria-hover);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.card {
+  background-color: var(--cor-fundo-card);
+  border: 1px solid var(--cor-borda);
+  border-radius: 12px;
+  padding: 1.5rem;
+}
+
+.cardTitle {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0 0 1.5rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--cor-texto-destaque);
+}
+
+.grid2cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+.grid2cols:last-child {
+  margin-bottom: 0;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.field:last-child {
+  margin-bottom: 0;
+}
+
+.field label {
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.field input,
+.field select,
+.field textarea {
+  background-color: var(--cor-fundo);
+}
+
+.footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.cancelButton,
+.draftButton,
+.publishButton {
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s;
+}
+
+.cancelButton {
+  background-color: transparent;
+  color: var(--cor-subtexto);
+}
+.draftButton {
+  background-color: #e9ecef;
+  color: var(--cor-texto-destaque);
+  border: 1px solid var(--cor-borda);
+}
+.publishButton {
+  background-color: var(--cor-primaria);
+  color: white;
+}
+
+.cancelButton:hover {
+  background-color: #f0f0f0;
+}
+.draftButton:hover {
+  border-color: #ccc;
+}
+.publishButton:hover {
+  background-color: var(--cor-primaria-hover);
+}

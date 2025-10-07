@@ -1,28 +1,56 @@
-.list {
-  padding: 0.5rem;
+.container {
+  padding: 0;
+  overflow-x: auto;
 }
 
-.alunoRow {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1rem 0.5rem;
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 700px;
+}
+
+.table th,
+.table td {
+  padding: 1rem 1.5rem;
+  text-align: left;
   border-bottom: 1px solid var(--cor-borda);
+  vertical-align: middle;
+  white-space: nowrap;
 }
 
-.alunoRow:last-child {
+.table th {
+  font-size: 0.8rem;
+  color: var(--cor-subtexto);
+  text-transform: uppercase;
+  font-weight: 600;
+  background-color: #fcfcfc;
+}
+
+.thContent {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.table tbody tr:last-child td {
   border-bottom: none;
+}
+
+.table tbody tr:hover {
+  background-color: #f9fafb;
 }
 
 .alunoInfo {
   display: flex;
   align-items: center;
   gap: 1rem;
+  font-weight: 500;
+  color: var(--cor-texto-destaque);
 }
 
 .avatar {
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   background-color: var(--cor-primaria-light);
   color: var(--cor-primaria-dark);
@@ -31,44 +59,35 @@
   justify-content: center;
   font-weight: bold;
   flex-shrink: 0;
+  font-size: 0.9rem;
 }
 
-.alunoNome {
-  font-weight: 600;
-  margin: 0;
-  color: var(--cor-texto-destaque);
+.centerAlign {
+  text-align: center;
 }
 
-.alunoStats {
-  font-size: 0.85rem;
-  color: var(--cor-subtexto);
-  margin: 0.25rem 0 0;
-}
-
-.alunoActions {
-  display: flex;
+.statusAtivo,
+.statusAtencao {
+  display: inline-flex;
   align-items: center;
-  gap: 1rem;
-}
-
-.status {
+  gap: 0.4rem;
   font-size: 0.8rem;
   font-weight: bold;
   padding: 0.25rem 0.75rem;
   border-radius: 12px;
 }
 
-.ativo {
+.statusAtivo {
   background-color: var(--cor-sucesso-light);
   color: var(--cor-sucesso-dark);
 }
 
-.atencao {
+.statusAtencao {
   background-color: var(--cor-perigo-light);
   color: var(--cor-perigo-dark);
 }
 
-.profileButton {
+.actionButton {
   background-color: transparent;
   color: var(--cor-primaria);
   border: 1px solid var(--cor-borda);
@@ -77,9 +96,12 @@
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
+  text-decoration: none;
+  white-space: nowrap;
 }
 
-.profileButton:hover {
+.actionButton:hover {
   background-color: var(--cor-primaria-light);
   border-color: var(--cor-primaria);
+  color: var(--cor-primaria-dark);
 }

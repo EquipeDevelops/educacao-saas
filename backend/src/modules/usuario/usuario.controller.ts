@@ -66,22 +66,28 @@ export const usuarioController = {
       const { user } = req;
       const where: Prisma.UsuariosWhereInput = {};
 
-      if (user.papel === "PROFESSOR" || user.papel === "ALUNO") {
+      if (user.papel === "PROFESSOR") {
+        if (user.id !== id) {
+          where.unidadeEscolarId = user.unidadeEscolarId;
+        }
+      } else if (user.papel === "ALUNO") {
         if (user.id !== id) {
           return res.status(403).json({ message: "Acesso não autorizado." });
         }
+      } else if (user.papel === "GESTOR" && user.unidadeEscolarId) {
+        where.unidadeEscolarId = user.unidadeEscolarId;
       }
 
       if (user.instituicaoId) {
         where.instituicaoId = user.instituicaoId;
       }
-      if (user.papel === "GESTOR" && user.unidadeEscolarId) {
-        where.unidadeEscolarId = user.unidadeEscolarId;
-      }
 
       const usuario = await UsuarioService.findUserById(id, where);
-      if (!usuario)
-        return res.status(404).json({ message: "Usuário não encontrado." });
+      if (!usuario) {
+        return res.status(404).json({
+          message: "Usuário não encontrado ou sem permissão para visualizar.",
+        });
+      }
 
       return res.status(200).json(usuario);
     } catch (error: any) {

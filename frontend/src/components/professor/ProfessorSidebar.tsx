@@ -13,12 +13,15 @@ import {
   FiSettings,
   FiEdit,
   FiUserX,
+  FiFileText, // Novo ícone para Provas
 } from "react-icons/fi";
 
 const navLinks = [
   { href: "/professor", text: "Início", icon: <FiHome /> },
   { href: "/professor/turmas", text: "Turmas", icon: <FiUsers /> },
   { href: "/professor/atividades", text: "Atividades", icon: <FiClipboard /> },
+  // NOVO LINK PARA PROVAS
+  { href: "/professor/provas", text: "Provas", icon: <FiFileText /> },
   { href: "/professor/correcoes", text: "Correções", icon: <FiEdit /> },
   { href: "/professor/faltas", text: "Faltas", icon: <FiUserX /> },
   { href: "/professor/agenda", text: "Agenda", icon: <FiCalendar /> },

@@ -21,7 +21,7 @@ async function getHeaderInfo(user: AuthenticatedRequest["user"]) {
     );
   }
 
-  const [componentes, unidadeEscolar, unreadMessages] = await Promise.all([
+  const [componentes, unidadeEscolar] = await Promise.all([
     prisma.componenteCurricular.findMany({
       where: { professorId },
       select: {
@@ -35,14 +35,6 @@ async function getHeaderInfo(user: AuthenticatedRequest["user"]) {
       where: { id: user.unidadeEscolarId },
       select: { nome: true },
     }),
-    prisma.conversa.count({
-      where: {
-        participantes: { some: { usuarioId: user.id } },
-        atualizado_em: {
-          gte: new Date(new Date().setDate(new Date().getDate() - 7)),
-        },
-      },
-    }),
   ]);
 
   const userDetails = componentes
@@ -53,7 +45,7 @@ async function getHeaderInfo(user: AuthenticatedRequest["user"]) {
 
   return {
     userDetails: `${userDetails} | ${schoolName}`,
-    notificationCount: unreadMessages,
+    notificationCount: 0,
   };
 }
 
@@ -66,15 +58,23 @@ async function getHomeStats(user: AuthenticatedRequest["user"]) {
     select: { turmaId: true, id: true },
   });
 
+  if (componentes.length === 0) {
+    return {
+      totalAlunos: 0,
+      aulasHoje: { count: 0, proxima: null },
+      atividadesParaCorrigir: 0,
+      taxaDeConclusao: 0,
+    };
+  }
+
   const turmaIds = [...new Set(componentes.map((c) => c.turmaId))];
   const componenteIds = componentes.map((c) => c.id);
 
-  const [totalAlunos, aulasHoje, atividadesParaCorrigir, tarefas] =
+  const [totalAlunos, aulasHoje, atividadesParaCorrigir, tarefasComAlunos] =
     await Promise.all([
       prisma.matriculas.count({
         where: { turmaId: { in: turmaIds }, status: "ATIVA" },
       }),
-
       prisma.horarioAula.findMany({
         where: {
           componenteCurricularId: { in: componenteIds },
@@ -84,25 +84,39 @@ async function getHomeStats(user: AuthenticatedRequest["user"]) {
         },
         orderBy: { hora_inicio: "asc" },
       }),
-
       prisma.submissoes.count({
         where: {
           tarefa: { componenteCurricularId: { in: componenteIds } },
           status: { in: ["ENVIADA", "ENVIADA_COM_ATRASO"] },
         },
       }),
-
       prisma.tarefas.findMany({
         where: { componenteCurricularId: { in: componenteIds } },
-        select: { _count: { select: { submissoes: true } } },
+        select: {
+          _count: { select: { submissoes: true } },
+          componenteCurricular: {
+            select: {
+              turma: {
+                select: {
+                  _count: {
+                    select: { matriculas: { where: { status: "ATIVA" } } },
+                  },
+                },
+              },
+            },
+          },
+        },
       }),
     ]);
 
-  const totalSubmissoesPossiveis = tarefas.length * totalAlunos;
-  const totalEntregas = tarefas.reduce(
-    (acc, t) => acc + t._count.submissoes,
-    0
-  );
+  let totalSubmissoesPossiveis = 0;
+  let totalEntregas = 0;
+  tarefasComAlunos.forEach((tarefa) => {
+    const alunosNaTurma = tarefa.componenteCurricular.turma._count.matriculas;
+    totalSubmissoesPossiveis += alunosNaTurma;
+    totalEntregas += tarefa._count.submissoes;
+  });
+
   const taxaDeConclusao =
     totalSubmissoesPossiveis > 0
       ? Math.round((totalEntregas / totalSubmissoesPossiveis) * 100)
@@ -148,9 +162,7 @@ async function getAtividadesPendentes(user: AuthenticatedRequest["user"]) {
         },
       },
     },
-    orderBy: {
-      data_entrega: "asc",
-    },
+    orderBy: { data_entrega: "asc" },
     take: 3,
   });
 
@@ -166,6 +178,38 @@ async function getAtividadesPendentes(user: AuthenticatedRequest["user"]) {
   }));
 }
 
+async function calcularMediaGeralComponente(
+  componenteId: string
+): Promise<number> {
+  const [avaliacoes, submissoes] = await Promise.all([
+    prisma.avaliacaoParcial.findMany({
+      where: { componenteCurricularId: componenteId },
+      select: { nota: true },
+    }),
+    prisma.submissoes.findMany({
+      where: {
+        tarefa: { componenteCurricularId: componenteId },
+        status: "AVALIADA",
+        nota_total: { not: null },
+      },
+      select: { nota_total: true },
+    }),
+  ]);
+
+  const todasAsNotas = [
+    ...avaliacoes.map((a) => a.nota),
+    ...submissoes.map((s) => s.nota_total!),
+  ];
+
+  if (todasAsNotas.length === 0) {
+    return 0;
+  }
+
+  const media =
+    todasAsNotas.reduce((acc, nota) => acc + nota, 0) / todasAsNotas.length;
+  return media;
+}
+
 async function getDesempenhoTurmas(user: AuthenticatedRequest["user"]) {
   const professorId = user.perfilId;
   if (!professorId) throw new Error("Usuário não é um professor.");
@@ -178,45 +222,76 @@ async function getDesempenhoTurmas(user: AuthenticatedRequest["user"]) {
     },
   });
 
-  const componenteIds = componentes.map((c) => c.id);
+  if (componentes.length === 0) {
+    return {
+      desempenhoGeral: 0,
+      porTurma: [],
+      taxaConclusaoGeral: 0,
+    };
+  }
 
-  const mediaGeralAgg = await prisma.avaliacaoParcial.aggregate({
-    _avg: { nota: true },
-    where: { componenteCurricularId: { in: componenteIds } },
-  });
-  const desempenhoGeral = mediaGeralAgg._avg.nota ?? 0;
-
-  const turmasUnicas = [
-    ...new Map(componentes.map((c) => [c.turma.id, c.turma])).values(),
-  ];
-  const porTurma = await Promise.all(
-    turmasUnicas.map(async (turma) => {
-      const componentesDaTurma = componentes
-        .filter((c) => c.turma.id === turma.id)
-        .map((c) => c.id);
-      const mediaTurmaAgg = await prisma.avaliacaoParcial.aggregate({
-        _avg: { nota: true },
-        where: { componenteCurricularId: { in: componentesDaTurma } },
-      });
-      return {
-        nome: `${turma.serie} ${turma.nome}`,
-        media: mediaTurmaAgg._avg.nota ?? 0,
-      };
-    })
+  const mediasPorComponente = await Promise.all(
+    componentes.map(async (c) => ({
+      id: c.id,
+      turmaId: c.turma.id,
+      turmaNome: `${c.turma.serie} ${c.turma.nome}`,
+      media: await calcularMediaGeralComponente(c.id),
+    }))
   );
 
-  const tarefas = await prisma.tarefas.findMany({
-    where: { componenteCurricularId: { in: componenteIds } },
-    select: { _count: { select: { submissoes: true } } },
+  const desempenhoGeral =
+    mediasPorComponente.length > 0
+      ? mediasPorComponente.reduce((acc, c) => acc + c.media, 0) /
+        mediasPorComponente.length
+      : 0;
+
+  const porTurma = Array.from(
+    mediasPorComponente
+      .reduce((map, comp) => {
+        const turma = map.get(comp.turmaId) ?? {
+          nome: comp.turmaNome,
+          medias: [],
+        };
+        turma.medias.push(comp.media);
+        map.set(comp.turmaId, turma);
+        return map;
+      }, new Map())
+      .values()
+  ).map((turma: any) => ({
+    nome: turma.nome,
+    media:
+      turma.medias.length > 0
+        ? turma.medias.reduce((a: number, b: number) => a + b, 0) /
+          turma.medias.length
+        : 0,
+  }));
+
+  const tarefasComAlunos = await prisma.tarefas.findMany({
+    where: { componenteCurricularId: { in: componentes.map((c) => c.id) } },
+    select: {
+      _count: { select: { submissoes: true } },
+      componenteCurricular: {
+        select: {
+          turma: {
+            select: {
+              _count: {
+                select: { matriculas: { where: { status: "ATIVA" } } },
+              },
+            },
+          },
+        },
+      },
+    },
   });
-  const totalAlunos = await prisma.matriculas.count({
-    where: { turmaId: { in: turmasUnicas.map((t) => t.id) }, status: "ATIVA" },
+
+  let totalSubmissoesPossiveis = 0;
+  let totalEntregas = 0;
+  tarefasComAlunos.forEach((tarefa) => {
+    const alunosNaTurma = tarefa.componenteCurricular.turma._count.matriculas;
+    totalSubmissoesPossiveis += alunosNaTurma;
+    totalEntregas += tarefa._count.submissoes;
   });
-  const totalSubmissoesPossiveis = tarefas.length * totalAlunos;
-  const totalEntregas = tarefas.reduce(
-    (acc, t) => acc + t._count.submissoes,
-    0
-  );
+
   const taxaConclusaoGeral =
     totalSubmissoesPossiveis > 0
       ? Math.round((totalEntregas / totalSubmissoesPossiveis) * 100)
@@ -241,38 +316,57 @@ async function getCorrecoesDashboard(user: AuthenticatedRequest["user"]) {
       componenteCurricular: {
         select: { turma: { select: { nome: true, serie: true } } },
       },
-      _count: {
-        select: { submissoes: true },
-      },
-    },
-    orderBy: {
-      data_entrega: "desc",
     },
   });
 
-  const correcoesComStats = await Promise.all(
-    tarefas.map(async (tarefa) => {
-      const corrigidasCount = await prisma.submissoes.count({
-        where: {
-          tarefaId: tarefa.id,
-          status: "AVALIADA",
-        },
-      });
+  if (tarefas.length === 0) {
+    return [];
+  }
 
-      const entregas = tarefa._count.submissoes;
-      const pendentes = entregas - corrigidasCount;
+  const tarefaIds = tarefas.map((t) => t.id);
 
-      return {
-        id: tarefa.id,
-        titulo: tarefa.titulo,
-        turma: `${tarefa.componenteCurricular.turma.serie} ${tarefa.componenteCurricular.turma.nome}`,
-        entregas: entregas,
-        corrigidas: corrigidasCount,
-        pendentes: pendentes,
-        prazo: tarefa.data_entrega,
-        status: pendentes > 0 ? "PENDENTE" : "CONCLUIDA",
-      };
-    })
+  const submissionStats = await prisma.submissoes.groupBy({
+    by: ["tarefaId", "status"],
+    where: {
+      tarefaId: { in: tarefaIds },
+    },
+    _count: {
+      id: true,
+    },
+  });
+
+  const statsMap = new Map();
+  for (const stat of submissionStats) {
+    if (!statsMap.has(stat.tarefaId)) {
+      statsMap.set(stat.tarefaId, { entregas: 0, corrigidas: 0 });
+    }
+    const current = statsMap.get(stat.tarefaId);
+    current.entregas += stat._count.id;
+    if (stat.status === "AVALIADA") {
+      current.corrigidas += stat._count.id;
+    }
+  }
+
+  const correcoesComStats = tarefas.map((tarefa) => {
+    const stats = statsMap.get(tarefa.id) || { entregas: 0, corrigidas: 0 };
+    const pendentes = stats.entregas - stats.corrigidas;
+    return {
+      id: tarefa.id,
+      titulo: tarefa.titulo,
+      turma: `${tarefa.componenteCurricular.turma.serie} ${tarefa.componenteCurricular.turma.nome}`,
+      entregas: stats.entregas,
+      corrigidas: stats.corrigidas,
+      pendentes: pendentes,
+      prazo: tarefa.data_entrega,
+      status:
+        pendentes > 0
+          ? ("PENDENTE" as "PENDENTE" | "CONCLUIDA")
+          : ("CONCLUIDA" as "PENDENTE" | "CONCLUIDA"),
+    };
+  });
+
+  correcoesComStats.sort(
+    (a, b) => new Date(b.prazo).getTime() - new Date(a.prazo).getTime()
   );
 
   return correcoesComStats;
@@ -293,23 +387,18 @@ async function getTurmasDashboard(user: AuthenticatedRequest["user"]) {
 
   const turmasComStats = await Promise.all(
     componentes.map(async (componente) => {
-      const turmaId = componente.turma.id;
+      const [alunosCount, mediaGeral, horarios] = await Promise.all([
+        prisma.matriculas.count({
+          where: { turmaId: componente.turma.id, status: "ATIVA" },
+        }),
+        calcularMediaGeralComponente(componente.id),
+        prisma.horarioAula.findMany({
+          where: { componenteCurricularId: componente.id },
+          select: { dia_semana: true, hora_inicio: true },
+          orderBy: { dia_semana: "asc" },
+        }),
+      ]);
 
-      const alunosCount = await prisma.matriculas.count({
-        where: { turmaId: turmaId, status: "ATIVA" },
-      });
-
-      const mediaGeralResult = await prisma.avaliacaoParcial.aggregate({
-        _avg: { nota: true },
-        where: { componenteCurricularId: componente.id },
-      });
-      const mediaGeral = mediaGeralResult._avg.nota ?? 0;
-
-      const horarios = await prisma.horarioAula.findMany({
-        where: { componenteCurricularId: componente.id },
-        select: { dia_semana: true, hora_inicio: true },
-        orderBy: { dia_semana: "asc" },
-      });
       const horarioResumo = horarios
         .map((h) => `${h.dia_semana.substring(0, 3)}. ${h.hora_inicio}`)
         .slice(0, 2)
@@ -352,7 +441,12 @@ async function getTurmaDetails(
       where: { turmaId: turmaId, status: "ATIVA" },
       select: {
         id: true,
-        aluno: { select: { id: true, usuario: { select: { nome: true } } } },
+        aluno: {
+          select: {
+            id: true,
+            usuario: { select: { id: true, nome: true } },
+          },
+        },
       },
     }),
     prisma.tarefas.findMany({
@@ -403,14 +497,14 @@ async function getTurmaDetails(
       );
 
       return {
-        id: m.aluno.id,
+        id: m.aluno.usuario.id,
         nome: m.aluno.usuario.nome,
         media: parseFloat(media.toFixed(1)),
         presenca: Math.round(presenca),
         status:
           media < 6 || presenca < 75
-            ? "Atenção"
-            : ("Ativo" as "Ativo" | "Atenção"),
+            ? ("Atenção" as "Atenção")
+            : ("Ativo" as "Ativo"),
       };
     })
   );
@@ -424,31 +518,19 @@ async function getTurmaDetails(
     total: matriculas.length,
   }));
 
-  const todasAsNotasDaTurma = alunos.map((a) => a.media).filter((m) => m > 0);
-
-  const mediaGeral =
-    todasAsNotasDaTurma.length > 0
-      ? todasAsNotasDaTurma.reduce((a, b) => a + b, 0) /
-        todasAsNotasDaTurma.length
-      : 0;
+  const mediaGeral = await calcularMediaGeralComponente(componente.id);
 
   const distribuicao = [
-    {
-      range: "9.0 - 10.0",
-      alunos: todasAsNotasDaTurma.filter((n) => n >= 9).length,
-    },
+    { range: "9.0 - 10.0", alunos: alunos.filter((a) => a.media >= 9).length },
     {
       range: "7.0 - 8.9",
-      alunos: todasAsNotasDaTurma.filter((n) => n >= 7 && n < 9).length,
+      alunos: alunos.filter((a) => a.media >= 7 && a.media < 9).length,
     },
     {
       range: "5.0 - 6.9",
-      alunos: todasAsNotasDaTurma.filter((n) => n >= 5 && n < 7).length,
+      alunos: alunos.filter((a) => a.media >= 5 && a.media < 7).length,
     },
-    {
-      range: "0.0 - 4.9",
-      alunos: todasAsNotasDaTurma.filter((n) => n < 5).length,
-    },
+    { range: "0.0 - 4.9", alunos: alunos.filter((a) => a.media < 5).length },
   ].map((d) => ({
     ...d,
     percent:
@@ -486,7 +568,6 @@ async function getTurmaDetails(
     estatisticas,
   };
 }
-
 async function getMyStudents(user: AuthenticatedRequest["user"]) {
   const professorId = user.perfilId;
   if (!professorId) return [];
@@ -524,9 +605,6 @@ async function getMyStudents(user: AuthenticatedRequest["user"]) {
   return Array.from(studentMap.values());
 }
 
-/**
- * NOVO: Busca uma lista de todos os outros professores na mesma escola.
- */
 async function getColleagues(user: AuthenticatedRequest["user"]) {
   const professorId = user.perfilId;
   if (!professorId || !user.unidadeEscolarId) return [];
@@ -559,8 +637,6 @@ async function getColleagues(user: AuthenticatedRequest["user"]) {
 }
 
 export const professorDashboardService = {
-  getColleagues,
-  getMyStudents,
   getHeaderInfo,
   getHomeStats,
   getAtividadesPendentes,
@@ -568,4 +644,6 @@ export const professorDashboardService = {
   getTurmasDashboard,
   getCorrecoesDashboard,
   getTurmaDetails,
+  getMyStudents,
+  getColleagues,
 };

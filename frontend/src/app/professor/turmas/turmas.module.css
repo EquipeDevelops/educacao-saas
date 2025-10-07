@@ -1,23 +1,29 @@
 .pageContainer {
   padding: 1.5rem;
+  max-width: 1400px;
+  margin: 0 auto;
 }
 
 .header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 2rem;
+  align-items: flex-start;
+  margin-bottom: 2.5rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--cor-borda);
 }
 
 .header h1 {
   font-size: 1.8rem;
   margin: 0;
   color: var(--cor-texto-destaque);
+  line-height: 1.2;
 }
 
 .header p {
   color: var(--cor-subtexto);
   margin-top: 0.25rem;
+  max-width: 60ch;
 }
 
 .grid {
@@ -27,5 +33,30 @@
 }
 
 .error {
-  color: var(--cor-perigo);
+  color: var(--cor-perigo-dark);
+  background-color: var(--cor-perigo-light);
+  padding: 1rem;
+  border-radius: 8px;
+  font-weight: 500;
+}
+
+.loadingSkeleton {
+  background-color: var(--cor-fundo-card);
+  border: 1px solid var(--cor-borda);
+  border-radius: 12px;
+  padding: 1.5rem;
+  height: 250px;
+  animation: pulse 1.5s infinite ease-in-out;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+  100% {
+    opacity: 1;
+  }
 }

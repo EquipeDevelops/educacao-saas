@@ -2,29 +2,30 @@
   background-color: var(--cor-fundo-card);
   border: 1px solid var(--cor-borda);
   border-radius: 12px;
-  padding: 1.5rem;
   display: flex;
   flex-direction: column;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05),
+    0 2px 4px -2px rgba(0, 0, 0, 0.05);
   transition: all 0.2s ease-in-out;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 .card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08);
+  transform: translateY(-5px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08),
+    0 4px 6px -4px rgba(0, 0, 0, 0.08);
 }
 
 .header {
   display: flex;
   align-items: center;
   gap: 1rem;
-  margin-bottom: 1.5rem;
+  padding: 1.5rem;
 }
 
 .iconWrapper {
   color: white;
-  width: 45px;
-  height: 45px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -33,27 +34,32 @@
   flex-shrink: 0;
 }
 
+.titleContainer {
+  flex-grow: 1;
+}
+
 .nomeTurma {
   margin: 0;
   font-size: 1.2rem;
+  font-weight: 600;
   color: var(--cor-texto-destaque);
 }
 
 .materia {
-  margin: 0;
+  margin: 0.1rem 0 0;
   font-size: 0.9rem;
   color: var(--cor-subtexto);
 }
 
 .mediaBadge {
-  margin-left: auto;
   display: flex;
   align-items: center;
   gap: 0.3rem;
-  padding: 0.3rem 0.6rem;
+  padding: 0.3rem 0.75rem;
   border-radius: 12px;
-  font-weight: bold;
-  font-size: 0.8rem;
+  font-weight: 600;
+  font-size: 0.85rem;
+  flex-shrink: 0;
 }
 
 .mediaBoa {
@@ -74,38 +80,39 @@
   grid-template-columns: repeat(3, 1fr);
   gap: 1rem;
   border-top: 1px solid var(--cor-borda);
-  border-bottom: 1px solid var(--cor-borda);
-  padding: 1rem 0;
-  margin-bottom: 1.5rem;
+  padding: 1rem 1.5rem;
+  background-color: #fcfcfc;
 }
 
 .detailItem {
-  display: flex;
-  flex-direction: column;
   text-align: center;
 }
 
 .detailItem span {
   font-size: 0.8rem;
   color: var(--cor-subtexto);
+  display: block;
   margin-bottom: 0.25rem;
 }
 
 .detailItem strong {
-  font-size: 0.9rem;
+  font-size: 1.1rem;
+  font-weight: 600;
   color: var(--cor-texto-destaque);
 }
 
 .detailsButton {
   background-color: var(--cor-fundo-card);
   color: var(--cor-primaria);
-  border: 1px solid var(--cor-primaria);
-  padding: 0.75rem;
-  border-radius: 8px;
+  border: none;
+  border-top: 1px solid var(--cor-borda);
+  padding: 0.85rem;
+  border-radius: 0 0 11px 11px;
   text-align: center;
   font-weight: 600;
   text-decoration: none;
   transition: all 0.2s ease-in-out;
+  margin-top: auto;
 }
 
 .detailsButton:hover {

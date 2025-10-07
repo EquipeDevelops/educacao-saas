@@ -1,13 +1,8 @@
 import { Router } from "express";
 import { usuarioController } from "./usuario.controller";
 import { validate } from "../../middlewares/validate";
+import { createUserSchema, updateUserSchema } from "./usuario.validator";
 import { protect, authorize } from "../../middlewares/auth";
-import { z } from "zod";
-import {
-  createUserSchema,
-  updateUserSchema,
-  paramsSchema,
-} from "./usuario.validator";
 
 const router = Router();
 
@@ -19,35 +14,23 @@ router.post(
   usuarioController.create
 );
 
-router.get(
-  "/",
-  protect,
-  authorize("ADMINISTRADOR", "GESTOR"),
-  usuarioController.findAll
-);
+router.get("/", protect, authorize("GESTOR"), usuarioController.findAll);
 
 router.get(
-  "/:id",
-  protect,
-  authorize("ADMINISTRADOR", "GESTOR", "PROFESSOR", "ALUNO"),
-  validate(z.object({ params: paramsSchema })),
-  usuarioController.findById
-);
-
-router.put(
   "/:id",
   protect,
   authorize("GESTOR", "PROFESSOR"),
+  usuarioController.findById
+);
+
+router.patch(
+  "/:id",
+  protect,
+  authorize("GESTOR"),
   validate(updateUserSchema),
   usuarioController.update
 );
 
-router.delete(
-  "/:id",
-  protect,
-  authorize("GESTOR"),
-  validate(z.object({ params: paramsSchema })),
-  usuarioController.remove
-);
+router.delete("/:id", protect, authorize("GESTOR"), usuarioController.remove);
 
 export const usuarioRoutes = router;

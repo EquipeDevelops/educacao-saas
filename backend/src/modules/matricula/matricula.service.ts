@@ -69,21 +69,38 @@ export async function findAll(
   }
 
   if (user.papel === "PROFESSOR") {
-    if (!filters.turmaId) {
-      return [];
-    }
-    const temAcesso = await prisma.componenteCurricular.findFirst({
-      where: {
-        professorId: user.perfilId!,
-        turmaId: filters.turmaId,
-      },
-    });
-    if (!temAcesso) {
-      throw new Error("Você não tem permissão para ver os alunos desta turma.");
+    if (filters.turmaId) {
+      const temAcesso = await prisma.componenteCurricular.findFirst({
+        where: {
+          professorId: user.perfilId!,
+          turmaId: filters.turmaId,
+        },
+      });
+      if (!temAcesso) {
+        throw new Error(
+          "Você não tem permissão para ver os alunos desta turma."
+        );
+      }
+      where.turmaId = filters.turmaId;
+    } else {
+      const componentesDoProfessor = await prisma.componenteCurricular.findMany(
+        {
+          where: { professorId: user.perfilId! },
+          select: { turmaId: true },
+        }
+      );
+      const turmasIds = [
+        ...new Set(componentesDoProfessor.map((c) => c.turmaId)),
+      ];
+
+      if (turmasIds.length === 0) {
+        return [];
+      }
+
+      where.turmaId = { in: turmasIds };
     }
   }
 
-  if (filters.turmaId) where.turmaId = filters.turmaId;
   if (filters.ano_letivo) where.ano_letivo = Number(filters.ano_letivo);
   if (filters.status) where.status = filters.status;
 
@@ -92,7 +109,6 @@ export async function findAll(
     include: fullInclude,
   });
 }
-
 export async function findById(id: string, user: AuthenticatedRequest["user"]) {
   return prisma.matriculas.findFirst({
     where: {
