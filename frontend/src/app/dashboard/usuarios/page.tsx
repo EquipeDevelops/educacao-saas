@@ -83,6 +83,16 @@ export default function UsuariosPage() {
     }
   }
 
+  // ✅ Função para ativar/desativar usuário
+  async function toggleUsuarioStatus(id: string) {
+    try {
+      await api.patch(`/usuarios/${id}/status`);
+      await fetchUsuarios();
+    } catch (err) {
+      setError("Erro ao alterar status do usuário.");
+    }
+  }
+
   return (
     <div className="main-container">
       <header className={styles.header}>
@@ -188,15 +198,16 @@ export default function UsuariosPage() {
                   <td className={styles.td}>{usuario.email}</td>
                   <td className={styles.td}>{usuario.papel}</td>
                   <td className={styles.td}>
-                    <span
-                      className={
+                    <button
+                      onClick={() => toggleUsuarioStatus(usuario.id)}
+                      className={`${styles.button} ${
                         usuario.status
                           ? styles.statusActive
                           : styles.statusInactive
-                      }
+                      }`}
                     >
-                      {usuario.status ? "Ativo" : "Inativo"}
-                    </span>
+                      {usuario.status ? "Desativar" : "Ativar"}
+                    </button>
                   </td>
                 </tr>
               ))}

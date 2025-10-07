@@ -70,6 +70,7 @@ model Usuarios {
   nome               String
   email              String       @unique
   senha_hash         String?
+   resetPasswordRequestedAt DateTime?
   papel              PapelUsuario
   status             Boolean      @default(true)
   criado_em          DateTime     @default(now())

@@ -30,10 +30,12 @@ import { conquistaRoutes } from "../modules/conquista/conquista.routes";
 import { conquistaUsuarioRoutes } from "../modules/conquistaUsuario/conquistaUsuario.routes";
 import { comentarioRoutes } from "../modules/comentarioTarefa/comentarioTarefa.routes";
 import { conversaRoutes } from "../modules/conversa/conversa.routes";
+import { redefinirSenhaRoutes } from "../modules/redefinirsenha/redefinirSenha.routes";
 
 const mainRouter = Router();
 
 // --- ROTAS PÚBLICAS DE AUTENTICAÇÃO ---
+mainRouter.use("/redefinir", redefinirSenhaRoutes);
 mainRouter.use("/auth", authRoutes);
 
 // --- ROTAS DE GESTÃO (ADMIN / SUPER ADMIN) ---
@@ -63,5 +65,7 @@ mainRouter.use("/conquistas-por-unidade", conquistasPorUnidadeRoutes);
 mainRouter.use("/conquistas-usuarios", conquistaUsuarioRoutes);
 mainRouter.use("/comentarios-tarefa", comentarioRoutes);
 mainRouter.use("/conversas", conversaRoutes);
+
+
 
 export default mainRouter;

@@ -27,19 +27,20 @@ export default function ComponentePage() {
   const [tarefas, setTarefas] = useState<Tarefa[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
 
   const [titulo, setTitulo] = useState("");
   const [descricao, setDescricao] = useState("");
   const [dataEntrega, setDataEntrega] = useState("");
 
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
+
   async function fetchTarefas() {
     if (!componenteId) return;
     try {
-      const response = await api.get(
-        `/tarefas?componenteCurricularId=${componenteId}`
-      );
+      const response = await api.get(`/tarefas?componenteCurricularId=${componenteId}`);
       setTarefas(response.data);
-    } catch (err) {
+    } catch {
       setError("Falha ao carregar as tarefas.");
     }
   }
@@ -49,12 +50,10 @@ export default function ComponentePage() {
       if (!componenteId) return;
       setIsLoading(true);
       try {
-        const compResponse = await api.get(
-          `/componentes-curriculares/${componenteId}`
-        );
+        const compResponse = await api.get(`/componentes-curriculares/${componenteId}`);
         setComponente(compResponse.data);
         await fetchTarefas();
-      } catch (err) {
+      } catch {
         setError("Falha ao carregar os dados da disciplina.");
       } finally {
         setIsLoading(false);
@@ -66,6 +65,7 @@ export default function ComponentePage() {
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     setError(null);
+    setSuccess(null);
 
     if (!titulo || !dataEntrega) {
       setError("O título e a data de entrega são obrigatórios.");
@@ -82,6 +82,7 @@ export default function ComponentePage() {
       setTitulo("");
       setDescricao("");
       setDataEntrega("");
+      setSuccess("Tarefa criada com sucesso!");
       await fetchTarefas();
     } catch (err: any) {
       setError(err.response?.data?.message || "Erro ao criar a tarefa.");
@@ -89,30 +90,24 @@ export default function ComponentePage() {
   }
 
   async function handlePublishToggle(tarefa: Tarefa) {
+    setActionLoading(tarefa.id);
     try {
-      setError(null);
       await api.patch(`/tarefas/${tarefa.id}/publish`, {
         publicado: !tarefa.publicado,
       });
       await fetchTarefas();
     } catch (err: any) {
-      setError(
-        err.response?.data?.message || "Erro ao atualizar status da tarefa."
-      );
+      setError(err.response?.data?.message || "Erro ao atualizar status da tarefa.");
+    } finally {
+      setActionLoading(null);
     }
   }
 
   async function handleDeleteTarefa(tarefa: Tarefa) {
-    if (
-      !window.confirm(
-        `[AVISO] Tem certeza que deseja EXCLUIR a tarefa: ${tarefa.titulo}? Esta ação é irreversível!`
-      )
-    ) {
-      return;
-    }
+    if (!window.confirm(`Tem certeza que deseja excluir a tarefa: ${tarefa.titulo}?`)) return;
 
+    setActionLoading(tarefa.id);
     try {
-      setError(null);
       await api.delete(`/tarefas/${tarefa.id}`);
       await fetchTarefas();
     } catch (err: any) {
@@ -120,16 +115,14 @@ export default function ComponentePage() {
         err.response?.data?.message ||
         err.response?.data?.error?.message ||
         "Erro desconhecido ao deletar tarefa.";
-
-      setError(
-        `Falha ao Excluir (HTTP ${err.response?.status || 500}): ${apiMessage}`
-      );
+      setError(`Falha ao excluir: ${apiMessage}`);
+    } finally {
+      setActionLoading(null);
     }
   }
 
   const styles = {
     container: { padding: "2rem", fontFamily: "sans-serif" },
-    form: {},
     input: { padding: "0.5rem", borderRadius: "4px", border: "1px solid #ccc" },
     button: {
       padding: "0.75rem",
@@ -140,13 +133,10 @@ export default function ComponentePage() {
       cursor: "pointer",
     },
     table: { width: "100%", marginTop: "2rem", borderCollapse: "collapse" },
-    th: {
-      borderBottom: "2px solid #ccc",
-      padding: "0.5rem",
-      textAlign: "left",
-    },
+    th: { borderBottom: "2px solid #ccc", padding: "0.5rem", textAlign: "left" },
     td: { borderBottom: "1px solid #ccc", padding: "0.5rem" },
     error: { color: "red", marginTop: "1rem" },
+    success: { color: "green", marginTop: "1rem" },
     publishButton: {
       padding: "0.4rem 0.8rem",
       color: "white",
@@ -190,31 +180,21 @@ export default function ComponentePage() {
   };
 
   if (isLoading) return <p style={styles.container}>Carregando...</p>;
-  if (error && !componente)
-    return <p style={{ color: "red", ...styles.container }}>{error}</p>;
-  if (!componente)
-    return <p style={styles.container}>Disciplina não encontrada.</p>;
+  if (error && !componente) return <p style={{ color: "red", ...styles.container }}>{error}</p>;
+  if (!componente) return <p style={styles.container}>Disciplina não encontrada.</p>;
 
   return (
     <div style={styles.container}>
       <h1>{componente.materia.nome}</h1>
       <p>
-        <strong>Turma:</strong> {componente.turma.serie} -{" "}
-        {componente.turma.nome}
+        <strong>Turma:</strong> {componente.turma.serie} - {componente.turma.nome}
       </p>
 
       <section style={{ marginTop: "2rem", marginBottom: "2rem" }}>
         <h2>Criar Nova Tarefa</h2>
         <form
           onSubmit={handleSubmit}
-          style={
-            {
-              ...styles.form,
-              gap: "1rem",
-              display: "flex",
-              flexDirection: "column",
-            } as any
-          }
+          style={{ gap: "1rem", display: "flex", flexDirection: "column" }}
         >
           <input
             value={titulo}
@@ -240,13 +220,17 @@ export default function ComponentePage() {
             Criar Tarefa
           </button>
         </form>
-        {error && <p style={styles.error as any}>{error}</p>}
+        {success && <p style={styles.success}>{success}</p>}
+        {error && <p style={styles.error}>{error}</p>}
       </section>
 
       <hr />
 
       <section style={{ marginTop: "2rem" }}>
         <h2>Tarefas Criadas</h2>
+        <button onClick={fetchTarefas} style={{ ...styles.button, marginBottom: "1rem" }}>
+          Recarregar Tarefas
+        </button>
         <table style={styles.table}>
           <thead>
             <tr>
@@ -264,49 +248,3 @@ export default function ComponentePage() {
                   <Link
                     href={`/dashboard/tarefas/${tarefa.id}`}
                     style={{ color: "blue", textDecoration: "underline" }}
-                  >
-                    {tarefa.titulo}
-                  </Link>
-                </td>
-                <td style={styles.td}>
-                  {new Date(tarefa.data_entrega).toLocaleString("pt-BR")}
-                </td>
-                <td style={styles.td}>
-                  {tarefa.publicado ? "Publicada" : "Rascunho"}
-                </td>
-                <td style={styles.td}>
-                  <Link
-                    href={`/dashboard/tarefas/${tarefa.id}/submissoes`}
-                    style={{ ...styles.actionLink, backgroundColor: "#0070f3" }}
-                  >
-                    Ver Submissões
-                  </Link>
-                </td>
-                <td style={styles.td}>
-                  <div style={styles.actionGroup}>
-                    <button
-                      onClick={() => handlePublishToggle(tarefa)}
-                      style={
-                        tarefa.publicado
-                          ? styles.unpublishButton
-                          : styles.publishButton
-                      }
-                    >
-                      {tarefa.publicado ? "Despublicar" : "Publicar"}
-                    </button>
-                    <button
-                      onClick={() => handleDeleteTarefa(tarefa)}
-                      style={styles.deleteButton}
-                    >
-                      Excluir
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </section>
-    </div>
-  );
-}
