@@ -11,6 +11,8 @@ import { turmaRoutes } from "../modules/turma/turma.routes";
 import { materiaRoutes } from "../modules/materia/materia.routes";
 import { professorRoutes } from "../modules/professor/professor.routes";
 import { alunoRoutes } from "../modules/aluno/aluno.routes";
+import { superAdminRoutes } from "../modules/superadmin/superadmin.routes";
+
 import { componenteRoutes } from "../modules/componenteCurricular/componenteCurricular.routes";
 import { horarioRoutes } from "../modules/horarioAula/horarioAula.routes";
 import { conquistasPorUnidadeRoutes } from "../modules/conquistasPorUnidade/conquistasPorUnidade.routes";
@@ -40,6 +42,7 @@ const mainRouter = Router();
 mainRouter.use("/auth", authRoutes);
 
 // --- ROTAS DE GESTÃO (ADMIN / SUPER ADMIN) ---
+mainRouter.use("/super-admin", superAdminRoutes);
 mainRouter.use("/instituicoes", instituicaoRoutes);
 mainRouter.use("/unidades-escolares", unidadeEscolarRoutes);
 mainRouter.use("/usuarios", usuarioRoutes);
