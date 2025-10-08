@@ -3,6 +3,8 @@
   padding: 1.5rem;
   border-radius: 12px;
   border: 1px solid var(--cor-borda);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.03),
+    0 2px 4px -2px rgba(0, 0, 0, 0.03);
 }
 
 .header {
@@ -19,8 +21,8 @@
 }
 
 .badge {
-  background-color: var(--cor-primaria-light);
-  color: var(--cor-primaria-dark);
+  background-color: var(--cor-perigo-light);
+  color: var(--cor-perigo-dark);
   padding: 0.25rem 0.75rem;
   border-radius: 12px;
   font-size: 0.75rem;
@@ -30,30 +32,34 @@
 .list {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
 }
 
 .item {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
   align-items: center;
   gap: 1rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid var(--cor-borda);
+  padding: 1rem;
+  border-radius: 8px;
+  text-decoration: none;
+  transition: background-color 0.2s;
 }
 
-.item:last-child {
-  border-bottom: none;
-  padding-bottom: 0;
+.item:hover {
+  background-color: #f9fafb;
 }
 
 .materiaBadge {
-  background-color: #f0f0f0;
+  background-color: #f3f4f6;
   border-radius: 8px;
   padding: 0.8rem;
   font-weight: bold;
   color: var(--cor-subtexto);
-  min-width: 40px;
-  text-align: center;
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .itemInfo {
@@ -64,12 +70,12 @@
   font-weight: 600;
   color: var(--cor-texto-destaque);
   margin: 0;
-  font-size: 0.9rem;
+  font-size: 0.95rem;
 }
 
 .itemTurma {
   color: var(--cor-subtexto);
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   margin: 0.25rem 0 0;
 }
 
@@ -79,23 +85,30 @@
 
 .submissoes {
   display: block;
-  font-size: 1rem;
+  font-size: 1.1rem;
   font-weight: bold;
-  color: var(--cor-perigo);
+  color: var(--cor-perigo-dark);
 }
 
 .dataEntrega {
   display: block;
-  font-size: 0.75rem;
+  font-size: 0.8rem;
   color: var(--cor-cinza);
 }
 
 .viewAll {
   display: block;
-  margin-top: 1.5rem;
+  margin-top: 1rem;
   text-align: center;
   color: var(--cor-primaria);
   font-weight: 600;
   text-decoration: none;
   font-size: 0.9rem;
+  padding: 0.5rem;
+  border-radius: 8px;
+  transition: background-color 0.2s;
+}
+
+.viewAll:hover {
+  background-color: var(--cor-primaria-light);
 }

@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/services/api";
 import styles from "./nova-prova.module.css";
-import { FiInfo, FiSave, FiSend, FiX, FiFileText } from "react-icons/fi";
+import { FiInfo, FiSave, FiSend, FiX, FiCpu } from "react-icons/fi";
 import QuestoesBuilder from "@/components/professor/atividades/QuestoesBuilder";
 import { Questao } from "@/types/tarefas";
 
@@ -24,6 +24,11 @@ export default function NovaProvaPage() {
   const [dataEntrega, setDataEntrega] = useState("");
   const [pontos, setPontos] = useState(10);
   const [questoes, setQuestoes] = useState<Questao[]>([]);
+
+  const [isIAModalOpen, setIsIAModalOpen] = useState(false);
+  const [promptIA, setPromptIA] = useState("");
+  const [isGerando, setIsGerando] = useState(false);
+  const [erroIA, setErroIA] = useState<string | null>(null);
 
   useEffect(() => {
     api.get("/componentes-curriculares").then((response) => {
@@ -67,121 +72,168 @@ export default function NovaProvaPage() {
         }
       }
 
-      alert(`Prova "${titulo}" foi guardada com sucesso!`);
+      alert(`Prova "${titulo}" foi salva com sucesso!`);
       router.push(`/professor/provas`);
     } catch (error) {
-      console.error("Erro ao guardar prova", error);
-      alert("Falha ao guardar a prova. Verifique os campos e tente novamente.");
+      console.error("Erro ao salvar prova", error);
+      alert("Falha ao salvar a prova. Verifique os campos e tente novamente.");
+    }
+  };
+
+  const handleGerarProvaComIA = async () => {
+    if (!promptIA) {
+      setErroIA("Por favor, descreva o que você precisa na prova.");
+      return;
+    }
+    setIsGerando(true);
+    setErroIA(null);
+
+    try {
+      const response = await api.post(
+        "/gerador-prova-ia",
+        { prompt: promptIA },
+        { responseType: "blob" }
+      );
+
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", `prova-ia-${Date.now()}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+
+      link.parentNode?.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      setIsIAModalOpen(false);
+      setPromptIA("");
+    } catch (err: any) {
+      const message =
+        err.response?.data?.message ||
+        "Ocorreu um erro ao gerar a prova em PDF.";
+      setErroIA(message);
+      console.error(err);
+    } finally {
+      setIsGerando(false);
     }
   };
 
   return (
-    <div className={styles.pageContainer}>
-      <header className={styles.header}>
-        <div>
-          <h1>Criar Nova Prova</h1>
-          <p>Defina as questões, critérios e pontuação para a sua avaliação.</p>
-        </div>
-        <div className={styles.headerActions}>
-          <button
-            onClick={() => handleSaveProva(true)}
-            className={styles.saveButton}
-          >
-            <FiSend /> Salvar e Publicar Prova
-          </button>
-        </div>
-      </header>
-
-      <form className={styles.form} onSubmit={(e) => e.preventDefault()}>
-        <section className={styles.card}>
-          <h2 className={styles.cardTitle}>
-            <FiInfo /> Informações Básicas
-          </h2>
-          <div className={styles.grid2cols}>
-            <div className={styles.field}>
-              <label htmlFor="titulo">Título da Prova *</label>
-              <input
-                type="text"
-                id="titulo"
-                value={titulo}
-                onChange={(e) => setTitulo(e.target.value)}
-                placeholder="Ex: Prova Mensal de Português"
-              />
-            </div>
-            <div className={styles.field}>
-              <label htmlFor="turma">Turma *</label>
-              <select
-                id="turma"
-                value={componenteId}
-                onChange={(e) => setComponenteId(e.target.value)}
-              >
-                {componentes.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.turma.serie} {c.turma.nome} ({c.materia.nome})
-                  </option>
-                ))}
-              </select>
-            </div>
+    <>
+      <div className={styles.pageContainer}>
+        <header className={styles.header}>
+          <div>
+            <h1>Criar Nova Prova</h1>
+            <p>
+              Defina as questões, critérios e pontuação para a sua avaliação.
+            </p>
           </div>
-          <div className={styles.field}>
-            <label htmlFor="descricao">Descrição / Instruções</label>
+          <div className={styles.headerActions}>
+            <button
+              type="button"
+              onClick={() => setIsIAModalOpen(true)}
+              className={styles.saveButton}
+            >
+              <FiCpu /> Gerar com IA
+            </button>
+          </div>
+        </header>
+
+        <form className={styles.form} onSubmit={(e) => e.preventDefault()}>
+          <section className={styles.card}>
+            <h2 className={styles.cardTitle}>
+              <FiInfo /> Informações Básicas
+            </h2>
+            <div className={styles.grid2cols}>
+              <div className={styles.field}>
+                <label htmlFor="titulo">Título da Prova *</label>
+                <input
+                  type="text"
+                  id="titulo"
+                  value={titulo}
+                  onChange={(e) => setTitulo(e.target.value)}
+                  placeholder="Ex: Prova Mensal de Português"
+                />
+              </div>
+              <div className={styles.field}>
+                <label htmlFor="turma">Turma *</label>
+                <select
+                  id="turma"
+                  value={componenteId}
+                  onChange={(e) => setComponenteId(e.target.value)}
+                >
+                  {componentes.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.turma.serie} {c.turma.nome} ({c.materia.nome})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </section>
+
+          <QuestoesBuilder questoes={questoes} setQuestoes={setQuestoes} />
+
+          <footer className={styles.footer}>
+            <button
+              type="button"
+              onClick={() => router.back()}
+              className={styles.cancelButton}
+            >
+              <FiX /> Cancelar
+            </button>
+            <button
+              type="button"
+              onClick={() => handleSaveProva(false)}
+              className={styles.draftButton}
+            >
+              <FiSave /> Salvar como Rascunho
+            </button>
+            <button
+              type="button"
+              onClick={() => handleSaveProva(true)}
+              className={styles.publishButton}
+            >
+              <FiSend /> Publicar Prova
+            </button>
+          </footer>
+        </form>
+      </div>
+
+      {isIAModalOpen && (
+        <div className={styles.overlay}>
+          <div className={styles.modal}>
+            <h2>Gerar Prova com Inteligência Artificial</h2>
+            <p>
+              Descreva o conteúdo da prova. A IA irá criar um arquivo PDF pronto
+              para imprimir.
+            </p>
             <textarea
-              id="descricao"
-              value={descricao}
-              onChange={(e) => setDescricao(e.target.value)}
-              placeholder="Descreva os objetivos e instruções da prova..."
-              rows={3}
-            ></textarea>
-          </div>
-          <div className={styles.grid2cols}>
-            <div className={styles.field}>
-              <label htmlFor="dataEntrega">Data de Realização/Entrega *</label>
-              <input
-                type="datetime-local"
-                id="dataEntrega"
-                value={dataEntrega}
-                onChange={(e) => setDataEntrega(e.target.value)}
-              />
-            </div>
-            <div className={styles.field}>
-              <label htmlFor="pontos">Pontuação Total</label>
-              <input
-                type="number"
-                id="pontos"
-                value={pontos}
-                onChange={(e) => setPontos(Number(e.target.value))}
-                placeholder="pontos"
-              />
+              value={promptIA}
+              onChange={(e) => setPromptIA(e.target.value)}
+              rows={6}
+              placeholder="Ex: Crie uma prova com 5 questões de múltipla escolha sobre o ciclo da água para o 4º ano."
+              className={styles.modalTextarea}
+            />
+            {erroIA && <p className={styles.modalError}>{erroIA}</p>}
+            <div className={styles.modalActions}>
+              <button
+                onClick={() => setIsIAModalOpen(false)}
+                className={styles.cancelButton}
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleGerarProvaComIA}
+                disabled={isGerando}
+                className={styles.publishButton}
+              >
+                {isGerando ? "Gerando PDF..." : "Gerar Prova em PDF"}
+              </button>
             </div>
           </div>
-        </section>
-
-        <QuestoesBuilder questoes={questoes} setQuestoes={setQuestoes} />
-
-        <footer className={styles.footer}>
-          <button
-            type="button"
-            onClick={() => router.back()}
-            className={styles.cancelButton}
-          >
-            <FiX /> Cancelar
-          </button>
-          <button
-            type="button"
-            onClick={() => handleSaveProva(false)}
-            className={styles.draftButton}
-          >
-            <FiSave /> Salvar como Rascunho
-          </button>
-          <button
-            type="button"
-            onClick={() => handleSaveProva(true)}
-            className={styles.publishButton}
-          >
-            <FiSend /> Publicar Prova
-          </button>
-        </footer>
-      </form>
-    </div>
+        </div>
+      )}
+    </>
   );
 }

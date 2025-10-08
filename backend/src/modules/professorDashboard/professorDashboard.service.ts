@@ -137,45 +137,57 @@ async function getAtividadesPendentes(user: AuthenticatedRequest["user"]) {
   const professorId = user.perfilId;
   if (!professorId) return [];
 
-  const tarefasComPendencias = await prisma.tarefas.findMany({
+  const tarefasComSubmissoes = await prisma.tarefas.findMany({
     where: {
       componenteCurricular: { professorId },
-      submissoes: {
-        some: { status: { in: ["ENVIADA", "ENVIADA_COM_ATRASO"] } },
-      },
+      submissoes: { some: {} },
     },
-    select: {
-      id: true,
-      titulo: true,
-      data_entrega: true,
+    include: {
+      submissoes: {
+        select: {
+          status: true,
+        },
+      },
       componenteCurricular: {
         select: {
           materia: { select: { nome: true } },
           turma: { select: { nome: true, serie: true } },
         },
       },
-      _count: {
-        select: {
-          submissoes: {
-            where: { status: { in: ["ENVIADA", "ENVIADA_COM_ATRASO"] } },
-          },
-        },
-      },
     },
-    orderBy: { data_entrega: "asc" },
-    take: 3,
   });
 
-  return tarefasComPendencias.map((tarefa) => ({
-    id: tarefa.id,
-    materia: tarefa.componenteCurricular.materia.nome.substring(0, 3),
-    titulo: tarefa.titulo,
-    turma: `${tarefa.componenteCurricular.turma.serie} ${tarefa.componenteCurricular.turma.nome}`,
-    submissoes: tarefa._count.submissoes,
-    dataEntrega: `Até ${new Date(tarefa.data_entrega).toLocaleDateString(
-      "pt-BR"
-    )}`,
-  }));
+  const atividadesPendentes = tarefasComSubmissoes
+    .map((tarefa) => {
+      const corrigidas = tarefa.submissoes.filter(
+        (s) => s.status === "AVALIADA"
+      ).length;
+
+      const pendentes = tarefa.submissoes.length - corrigidas;
+
+      if (pendentes > 0) {
+        return {
+          id: tarefa.id,
+          materia: tarefa.componenteCurricular.materia.nome
+            .substring(0, 3)
+            .toUpperCase(),
+          titulo: tarefa.titulo,
+          turma: `${tarefa.componenteCurricular.turma.serie} ${tarefa.componenteCurricular.turma.nome}`,
+          submissoes: pendentes,
+          dataEntrega: `Prazo: ${new Date(
+            tarefa.data_entrega
+          ).toLocaleDateString("pt-BR")}`,
+        };
+      }
+      return null;
+    })
+    .filter((item): item is NonNullable<typeof item> => item !== null)
+    .sort(
+      (a, b) =>
+        new Date(a.dataEntrega).getTime() - new Date(b.dataEntrega).getTime()
+    );
+
+  return atividadesPendentes.slice(0, 5);
 }
 
 async function calcularMediaGeralComponente(
