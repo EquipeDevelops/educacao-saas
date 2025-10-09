@@ -4,7 +4,6 @@
   gap: 20px;
   padding: 20px;
   background-color: var(--cor-primaria-dark);
-  height: 100%;
   min-height: 100vh;
 }
 
@@ -22,7 +21,8 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  height: calc(100vh - 130px);
+  justify-content: space-between;
+  height: 100%;
 }
 
 .navLinks {

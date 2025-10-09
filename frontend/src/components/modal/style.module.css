@@ -1,0 +1,20 @@
+.modalContainer {
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  width: 100%;
+  background-color: rgba(0, 0, 0, 0.089);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
+.modalContent {
+  width: 100%;
+  background-color: var(--cor-fundo-card);
+  border-radius: 10px;
+  padding: 20px;
+  border: 1px solid var(--cor-borda);
+}
