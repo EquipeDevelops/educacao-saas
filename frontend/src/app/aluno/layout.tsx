@@ -18,7 +18,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   return (
     <div style={{ display: 'flex' }}>
       <AlunoSideBar />
-      <main>{children}</main>
+      <main style={{position: 'relative'}}>{children}</main>
     </div>
   );
 }

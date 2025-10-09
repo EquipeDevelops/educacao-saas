@@ -1,0 +1,35 @@
+.containerLoading {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  left: 0px;
+  top: 0px;
+  background-color: rgba(0, 0, 0, 0.055);
+  backdrop-filter: blur(2px);
+  height: 100%;
+  width: 100%;
+  & div {
+    position: relative;
+    & .loadingIcon {
+      font-size: 4rem;
+      color: var(--cor-primaria);
+      animation: loading 1s ease infinite;
+    }
+
+    & .marcaIcon {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 2rem;
+      color: var(--cor-primaria);
+    }
+  }
+}
+
+@keyframes loading {
+  100% {
+    rotate: 360deg;
+  }
+}

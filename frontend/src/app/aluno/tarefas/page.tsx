@@ -1,10 +1,11 @@
 'use client';
 
 import { useMinhasTarefas } from '@/hooks/tarefas/useMinhasTarefas';
-import TarefaCard from '@/components/aluno/tarefaCard/TarefaCard';
+import TarefaCard from '@/components/aluno/correcaoTarefas/tarefaCard/TarefaCard';
 import ErrorMsg from '@/components/errorMsg/ErrorMsg';
 import styles from './style.module.css';
 import Section from '@/components/section/Section';
+import Loading from '@/components/loading/Loading';
 
 export default function MinhasTarefasPage() {
   const { tarefas, isLoading, error } = useMinhasTarefas();
@@ -24,7 +25,7 @@ export default function MinhasTarefasPage() {
             <p>Exercícios e avaliações das suas disciplinas</p>
           </div>
           {isLoading ? (
-            <p>Carregando...</p>
+            <Loading />
           ) : (
             <div className={styles.cardGrid}>
               {tarefas.length > 0 ? (

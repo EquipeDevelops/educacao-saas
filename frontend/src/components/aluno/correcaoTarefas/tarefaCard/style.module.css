@@ -92,18 +92,32 @@
   & .botaoAcao {
     display: flex;
     align-items: center;
-    gap: 20px;
+    gap: 10px;
     background-color: var(--cor-primaria);
     border-radius: 10px;
-    font-size: 1.2rem;
+    font-size: 1.1rem;
     padding: 8px 10px;
     transition: all .2s ease;
     border: 1px solid var(--cor-primaria);
     & p, svg {
       color: white;
     }
+    & svg {
+      font-size: 1.5rem;
+    }
     &:hover {
       background-color: var(--cor-primaria-hover);
+    }
+  }
+
+  & .botaoAvaliado {
+    background-color: white;
+    border-color: var(--cor-borda);
+    & p, svg {
+      color: var(--cor-texto);
+    }
+    &:hover {
+      background-color: color-mix(in srgb, white 92%, black 8%);
     }
   }
 }

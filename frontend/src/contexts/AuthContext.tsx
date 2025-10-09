@@ -69,7 +69,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       setUser(usuario);
-
+      
       switch (usuario.papel) {
         case 'ALUNO':
           router.push('/aluno');

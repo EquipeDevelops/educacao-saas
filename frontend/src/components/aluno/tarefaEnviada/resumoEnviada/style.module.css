@@ -1,0 +1,55 @@
+.container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px;
+  border-radius: 10px;
+  background-color: var(--cor-envio-light);
+  border: 1px solid color-mix(in srgb, var(--cor-envio) 15%, white 85%);
+  margin-bottom: 30px;
+}
+
+.infoContainer {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  .infoIcon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 50px;
+    height: 50px;
+    background-color: color-mix(in srgb, var(--cor-envio) 13%, white 90%);
+    border-radius: 50%;
+    font-size: 1.8rem;
+    color: var(--cor-envio);
+  }
+
+  & .infoDate {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    & h2 {
+      font-size: 1.4rem;
+      font-weight: 500;
+    }
+
+    & p {
+      font-size: 1rem;
+      color: var(--cor-subtexto);
+    }
+
+    & .inforMessage {
+      color: var(--cor-envio);
+      margin-top: 10px;
+    }
+  }
+}
+
+  .totalRespostas {
+    font-size: 0.9rem;
+    color: white;
+    background-color: var(--cor-envio);
+    padding: 5px 10px;
+    border-radius: 10px;
+  }

@@ -37,14 +37,14 @@ export default function ResumoNota(resumoNota: ResumoProps) {
             Acertou {total_acertos} de {total_questoes} ({porcentagem_acertos}%)
           </p>
         </div>
-        <div className={styles.icone_porcentagem}>
-          <span
-            className={
-              porcentagem_acertos > 50
-                ? styles.iconPositivo
-                : styles.iconNegativo
-            }
-          >
+        <div
+          className={`${styles.icone_porcentagem} ${
+            porcentagem_acertos >= 50
+              ? styles.iconPositivo
+              : styles.iconNegativo
+          }`}
+        >
+          <span>
             {porcentagem_acertos >= 50 ? (
               <FaRegCircleCheck />
             ) : (
@@ -56,9 +56,13 @@ export default function ResumoNota(resumoNota: ResumoProps) {
       </div>
       <BarraDeProgresso porcentagem={porcentagem_acertos} />
       <div className={styles.datas}>
-        <p>Entregue em: {new Date(entregue_em).toLocaleDateString('pt-BR')}</p>
         <p>
-          Corrigido em: {new Date(corrigido_em).toLocaleDateString('pt-BR')}
+          <span>Entregue em:</span>{' '}
+          {new Date(entregue_em).toLocaleDateString('pt-BR')}
+        </p>
+        <p>
+          <span>Corrigido em:</span>{' '}
+          {new Date(corrigido_em).toLocaleDateString('pt-BR')}
         </p>
       </div>
     </div>

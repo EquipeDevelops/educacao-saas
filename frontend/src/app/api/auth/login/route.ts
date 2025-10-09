@@ -7,6 +7,7 @@ export async function POST(req: NextRequest) {
     const { email, senha } = await req.json();
     const backResponse = await api.post('/auth/login', { email, senha });
     const { token, usuario } = backResponse.data;
+    console.log(usuario);
 
     (await cookies()).set({
       name: 'plataforma.token',
@@ -20,8 +21,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ token, usuario }, { status: 200 });
   } catch (error) {
     return NextResponse.json(
-      { error: error || "Erro interno" },
-      { status: 500 }
+      { error: error || 'Erro interno' },
+      { status: 500 },
     );
   }
 }

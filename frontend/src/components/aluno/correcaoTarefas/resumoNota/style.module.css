@@ -1,0 +1,101 @@
+.resumoContainer {
+  display: flex;
+  flex-direction: column;
+  padding: 30px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+}
+
+.resumoPositivo {
+  border-color: color-mix(in srgb, var(--cor-sucesso) 40%, white 60%);
+  background-image: linear-gradient(
+    120deg,
+    color-mix(in srgb, var(--cor-sucesso) 20%, white 80%),
+    white
+  );
+}
+
+.resumoNegativo {
+  border-color: color-mix(in srgb, var(--cor-perigo) 40%, white 60%);
+  background-image: linear-gradient(
+    120deg,
+    color-mix(in srgb, var(--cor-perigo) 10%, white 90%),
+    white
+  );
+}
+
+.nota_e_icone {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 40px;
+  & .nota {
+    & h3 {
+      font-weight: 500;
+      margin-bottom: 10px;
+    }
+    & p {
+      font-size: 1.2rem;
+      color: var(--cor-subtexto);
+    }
+  }
+  .icone_porcentagem {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    & span {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 25px;
+      border-radius: 50%;
+      & svg {
+        font-size: 2rem;
+      }
+    }
+    & p {
+      margin-top: 10px;
+      color: white;
+      padding: 5px 10px;
+      border-radius: 10px;
+    }
+  }
+}
+
+.iconPositivo {
+  & span {
+    background-color: color-mix(
+      in srgb,
+        var(--cor-sucesso-dark) 8%,
+        var(--cor-sucesso-light) 92%
+    );
+    color: var(--cor-sucesso-dark);
+  }
+  p {
+    background-color: var(--cor-sucesso-dark);
+  }
+}
+
+.iconNegativo {
+  & span {
+    background-color: color-mix(in srgb, var(--cor-perigo) 10%, white 90%);
+    color: var(--cor-perigo);
+  }
+  & p {
+    background-color: var(--cor-perigo);
+  }
+}
+
+.datas {
+  display: flex;
+  gap: 100px;
+  margin-top: 20px;
+  & p {
+    color: var(--cor-subtexto);
+    & span {
+      color: var(--cor-texto);
+      font-weight: 500;
+    }
+  }
+}

@@ -5,6 +5,8 @@ import { LuClipboardList } from 'react-icons/lu';
 import { IoPlayOutline } from 'react-icons/io5';
 import { IoIosCheckmarkCircleOutline } from 'react-icons/io';
 import { IoEyeOutline } from 'react-icons/io5';
+import { useCorrecaoData } from '@/hooks/tarefas/useCorrecaoData';
+import { useState } from 'react';
 
 type StatusInfo = {
   text: string;
@@ -53,6 +55,13 @@ type TarefaCardProps = {
 };
 
 export default function TarefaCard({ tarefa }: TarefaCardProps) {
+  console.log(tarefa);
+
+  const totalPontos = tarefa.correcaoMap.reduce((value, tarefa) => {
+    return value + tarefa.questao.pontos;
+  }, 0);
+  const totalQuestoes = tarefa.correcaoMap.length
+
   const statusInfo = getStatusInfo(tarefa);
   const dataEntregaFormatada = new Date(tarefa.data_entrega).toLocaleString(
     'pt-BR',
@@ -88,7 +97,7 @@ export default function TarefaCard({ tarefa }: TarefaCardProps) {
             <span>AL</span> Prof. Alaxandre
           </li>
           <li>
-            <LuClipboardList /> 10 questões
+            <LuClipboardList /> {totalQuestoes} questões
           </li>
         </ul>
       </div>
@@ -96,8 +105,17 @@ export default function TarefaCard({ tarefa }: TarefaCardProps) {
         <li className={styles.prazo}>
           Prazo: {dataEntregaFormatada.slice(0, 5)}
         </li>
-        <li className={styles.pontos}>10 pontos</li>
-        <Link href={statusInfo.link} className={styles.botaoAcao}>
+        <li className={styles.pontos}>{totalPontos} pontos</li>
+        <Link
+          href={statusInfo.link}
+          className={`${styles.botaoAcao} ${
+            tarefa.submissao?.status === 'AVALIADA'
+              ? styles.botaoAvaliado
+              : tarefa.submissao?.status === 'EM_ANDAMENTO'
+              ? styles.botaoContinuar
+              : ''
+          }`}
+        >
           {tarefa.submissao?.status === 'AVALIADA' ? (
             <IoIosCheckmarkCircleOutline />
           ) : tarefa.submissao?.status === 'ENVIADA' ? (
@@ -114,7 +132,7 @@ export default function TarefaCard({ tarefa }: TarefaCardProps) {
               ? 'Ver Respostas'
               : tarefa.submissao?.status === 'NAO_INICIADA'
               ? 'Iniciar Atividade'
-              : ''}
+              : 'Iniciar Atividade'}
           </p>
         </Link>
       </ul>
