@@ -11,6 +11,9 @@ const fullInclude = {
       materia: { select: { nome: true } },
     },
   },
+  _count: {
+    select: { questoes: true },
+  },
 };
 
 async function verifyOwnership(tarefaId: string, professorId: string) {

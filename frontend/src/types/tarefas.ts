@@ -7,6 +7,9 @@ export type ApiTarefa = {
     materia: { nome: string };
     turma: { nome: string; serie: string };
   };
+  _count: {
+    questoes: number;
+  };
 };
 
 export type ApiSubmissao = {

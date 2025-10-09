@@ -1,12 +1,11 @@
-import Link from 'next/link';
-import { TarefaComStatus } from '@/types/tarefas';
-import styles from './style.module.css';
-import { LuClipboardList } from 'react-icons/lu';
-import { IoPlayOutline } from 'react-icons/io5';
-import { IoIosCheckmarkCircleOutline } from 'react-icons/io';
-import { IoEyeOutline } from 'react-icons/io5';
-import { useCorrecaoData } from '@/hooks/tarefas/useCorrecaoData';
-import { useState } from 'react';
+import Link from "next/link";
+import { TarefaComStatus } from "@/types/tarefas";
+import styles from "./style.module.css";
+import { LuClipboardList } from "react-icons/lu";
+import { IoPlayOutline } from "react-icons/io5";
+import { IoIosCheckmarkCircleOutline } from "react-icons/io";
+import { IoEyeOutline } from "react-icons/io5";
+import { useState } from "react";
 
 type StatusInfo = {
   text: string;
@@ -18,34 +17,34 @@ type StatusInfo = {
 function getStatusInfo(tarefa: TarefaComStatus): StatusInfo {
   if (tarefa.submissao) {
     switch (tarefa.submissao.status) {
-      case 'AVALIADA':
+      case "AVALIADA":
         return {
-          text: 'Avaliada',
-          backgroundColor: '#EDFFEF',
-          color: '#0A6C4D',
+          text: "Avaliada",
+          backgroundColor: "#EDFFEF",
+          color: "#0A6C4D",
           link: `/aluno/tarefas/correcao/${tarefa.submissao.id}`,
         };
-      case 'ENVIADA':
-      case 'ENVIADA_COM_ATRASO':
+      case "ENVIADA":
+      case "ENVIADA_COM_ATRASO":
         return {
-          text: 'Enviada',
-          backgroundColor: '#F0ECFD',
-          color: '#563D9D',
+          text: "Enviada",
+          backgroundColor: "#F0ECFD",
+          color: "#563D9D",
           link: `/aluno/tarefas/correcao/${tarefa.submissao.id}`,
         };
-      case 'EM_ANDAMENTO':
+      case "EM_ANDAMENTO":
         return {
-          text: 'Em Andamento',
-          backgroundColor: '#FFF8E6',
-          color: '#B38B00',
+          text: "Em Andamento",
+          backgroundColor: "#FFF8E6",
+          color: "#B38B00",
           link: `/aluno/tarefas/responder/${tarefa.id}`,
         };
     }
   }
   return {
-    text: 'Disponível',
-    backgroundColor: '#E2ECFF',
-    color: '#0070f3',
+    text: "Disponível",
+    backgroundColor: "#E2ECFF",
+    color: "#0070f3",
     link: `/aluno/tarefas/responder/${tarefa.id}`,
   };
 }
@@ -55,20 +54,16 @@ type TarefaCardProps = {
 };
 
 export default function TarefaCard({ tarefa }: TarefaCardProps) {
-  console.log(tarefa);
-
-  const totalPontos = tarefa.correcaoMap.reduce((value, tarefa) => {
-    return value + tarefa.questao.pontos;
-  }, 0);
-  const totalQuestoes = tarefa.correcaoMap.length
+  const totalPontos = tarefa.pontos || 0;
+  const totalQuestoes = tarefa._count?.questoes || 0;
 
   const statusInfo = getStatusInfo(tarefa);
   const dataEntregaFormatada = new Date(tarefa.data_entrega).toLocaleString(
-    'pt-BR',
+    "pt-BR",
     {
-      dateStyle: 'short',
-      timeStyle: 'short',
-    },
+      dateStyle: "short",
+      timeStyle: "short",
+    }
   );
 
   return (
@@ -90,7 +85,7 @@ export default function TarefaCard({ tarefa }: TarefaCardProps) {
         </div>
         <div className={styles.descricao}>
           <h3>{tarefa.titulo}</h3>
-          {tarefa.descricao !== '......' ? <p>{tarefa.descricao}</p> : ''}
+          {tarefa.descricao !== "......" ? <p>{tarefa.descricao}</p> : ""}
         </div>
         <ul className={styles.outrasInfo}>
           <li>
@@ -109,30 +104,30 @@ export default function TarefaCard({ tarefa }: TarefaCardProps) {
         <Link
           href={statusInfo.link}
           className={`${styles.botaoAcao} ${
-            tarefa.submissao?.status === 'AVALIADA'
+            tarefa.submissao?.status === "AVALIADA"
               ? styles.botaoAvaliado
-              : tarefa.submissao?.status === 'EM_ANDAMENTO'
+              : tarefa.submissao?.status === "EM_ANDAMENTO"
               ? styles.botaoContinuar
-              : ''
+              : ""
           }`}
         >
-          {tarefa.submissao?.status === 'AVALIADA' ? (
+          {tarefa.submissao?.status === "AVALIADA" ? (
             <IoIosCheckmarkCircleOutline />
-          ) : tarefa.submissao?.status === 'ENVIADA' ? (
+          ) : tarefa.submissao?.status === "ENVIADA" ? (
             <IoEyeOutline />
           ) : (
             <IoPlayOutline />
           )}
           <p>
-            {tarefa.submissao?.status === 'AVALIADA'
-              ? 'Ver Correção'
-              : tarefa.submissao?.status === 'EM_ANDAMENTO'
-              ? 'Continuar atividade'
-              : tarefa.submissao?.status === 'ENVIADA'
-              ? 'Ver Respostas'
-              : tarefa.submissao?.status === 'NAO_INICIADA'
-              ? 'Iniciar Atividade'
-              : 'Iniciar Atividade'}
+            {tarefa.submissao?.status === "AVALIADA"
+              ? "Ver Correção"
+              : tarefa.submissao?.status === "EM_ANDAMENTO"
+              ? "Continuar atividade"
+              : tarefa.submissao?.status === "ENVIADA"
+              ? "Ver Respostas"
+              : tarefa.submissao?.status === "NAO_INICIADA"
+              ? "Iniciar Atividade"
+              : "Iniciar Atividade"}
           </p>
         </Link>
       </ul>
