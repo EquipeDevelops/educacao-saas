@@ -3,6 +3,7 @@
 import { NextFunction, Request, Response } from "express";
 import { ZodError } from "zod";
 import { Prisma } from "@prisma/client";
+import { AppError } from "../errors/AppError"; // <-- 1. IMPORTAMOS O AppError
 
 export const errorHandler = (
   err: Error,
@@ -10,16 +11,21 @@ export const errorHandler = (
   res: Response,
   next: NextFunction
 ) => {
-  // --- ADICIONADO PARA DEPURAÇÃO ---
-  console.error("\n--- [GLOBAL ERROR HANDLER] UM ERRO FOI CAPTURADO! ---");
-  console.error(
-    `[ERROR HANDLER] Rota do Erro: ${req.method} ${req.originalUrl}`
-  );
-  console.error("[ERROR HANDLER] Nome do Erro:", err.name);
-  console.error("[ERROR HANDLER] Mensagem do Erro:", err.message);
-  console.error("[ERROR HANDLER] Stack Trace:", err.stack);
-  console.error("-------------------------------------------------");
+  // --- Bloco de depuração (pode manter ou remover) ---
+  console.error("\n--- [GLOBAL ERROR HANDLER] ---");
+  console.error(`Rota: ${req.method} ${req.originalUrl}`);
+  console.error("Nome do Erro:", err.name);
+  console.error("Mensagem:", err.message);
+  console.error("Stack:", err.stack);
+  console.error("------------------------------");
   // --------------------------------------------------------
+
+  // <-- 2. ADICIONAMOS O TRATAMENTO PARA AppError
+  if (err instanceof AppError) {
+    return res.status(err.statusCode).json({
+      message: err.message,
+    });
+  }
 
   if (err instanceof ZodError) {
     return res.status(400).json({
@@ -31,60 +37,34 @@ export const errorHandler = (
     });
   }
 
-  // Variável para determinar se vamos retornar o stack trace
-  const isProduction = process.env.NODE_ENV === "production";
-  let responseMessage = isProduction
-    ? "Ocorreu um erro interno inesperado no servidor."
-    : "Erro interno do servidor: Exceção não mapeada.";
-  let statusCode = 500;
-  let responseDetails: any = isProduction
-    ? undefined
-    : {
-        name: err.name,
-        message: err.message,
-        stack: err.stack,
-      };
-
   if (err instanceof Prisma.PrismaClientKnownRequestError) {
-    responseDetails = isProduction
-      ? undefined
-      : {
-          ...responseDetails,
-          code: err.code,
-          meta: err.meta,
-        };
-
     switch (err.code) {
       case "P2002":
-        statusCode = 409;
-        responseMessage = `Conflito: o campo '${(
-          err.meta?.target as string[]
-        )?.join(", ")}' já existe.`;
-        responseDetails = undefined;
-        break;
+        return res.status(409).json({
+          message: `Conflito: o campo '${(err.meta?.target as string[])?.join(
+            ", "
+          )}' já existe.`,
+        });
       case "P2025":
-        statusCode = 404;
-        responseMessage = "O recurso solicitado não foi encontrado.";
-        responseDetails = undefined;
-        break;
-      case "P2003": // Foreign key constraint violation (Impossível excluir com dependências)
-        statusCode = 409;
-        responseMessage =
-          "Impossível excluir. Existem itens (Questões, Submissões, etc.) associados a este recurso.";
-        responseDetails = undefined;
-        break;
+        return res.status(404).json({
+          message: `O recurso solicitado com o ID fornecido não foi encontrado.`,
+        });
+      case "P2003":
+        return res.status(409).json({
+          message:
+            "Impossível excluir. Existem outros registros associados a este item.",
+        });
       default:
-        // Erro genérico do Prisma (ex: falha de conexão)
-        statusCode = 500;
-        responseMessage = isProduction
-          ? "Ocorreu um erro interno inesperado no servidor (Erro no DB)."
-          : "Erro interno do servidor: " + err.message; // Retorna a mensagem do Prisma em dev
-        break;
+        break; // Deixa o handler genérico abaixo cuidar de outros erros do Prisma.
     }
   }
 
-  return res.status(statusCode).json({
-    message: responseMessage,
-    error: responseDetails,
+  // Handler genérico para todos os outros erros
+  const isProduction = process.env.NODE_ENV === "production";
+  return res.status(500).json({
+    message: isProduction
+      ? "Ocorreu um erro interno inesperado no servidor."
+      : err.message,
+    error: isProduction ? undefined : { name: err.name, stack: err.stack },
   });
 };

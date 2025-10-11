@@ -1,0 +1,256 @@
+.container {
+  padding: 1rem 2rem;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 2rem;
+}
+
+.header h1 {
+  font-size: 1.8rem;
+}
+
+.header p {
+  color: var(--cor-subtexto);
+  margin-top: 0.25rem;
+}
+
+.primaryButton {
+  background-color: var(--cor-primaria);
+  color: white;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.primaryButton:hover {
+  background-color: var(--cor-primaria-hover);
+}
+
+.feedback {
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  font-weight: 500;
+  text-align: center;
+}
+
+.error {
+  color: var(--cor-perigo-dark);
+  background-color: var(--cor-perigo-light);
+  border: 1px solid var(--cor-perigo);
+}
+
+.success {
+  color: var(--cor-sucesso-dark);
+  background-color: var(--cor-sucesso-light);
+  border: 1px solid var(--cor-sucesso);
+}
+
+.tableContainer {
+  background-color: var(--cor-fundo-card);
+  border: 1px solid var(--cor-borda);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.tableHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--cor-borda);
+}
+
+.tableContainer h2 {
+  font-size: 1.4rem;
+  margin: 0;
+  font-weight: 600;
+}
+
+.loading {
+  padding: 2rem;
+  text-align: center;
+  color: var(--cor-subtexto);
+}
+
+.bulkActionsContainer {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background-color: var(--cor-primaria-light);
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+}
+
+.bulkActionsContainer span {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--cor-primaria-dark);
+}
+
+.bulkActionsContainer button {
+  background: none;
+  border: 1px solid var(--cor-primaria-dark);
+  color: var(--cor-primaria-dark);
+  padding: 0.4rem 0.8rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.bulkActionsContainer button:hover {
+  background-color: var(--cor-primaria-dark);
+  color: white;
+}
+
+.bulkDeleteButton {
+  border-color: var(--cor-perigo) !important;
+  color: var(--cor-perigo) !important;
+}
+
+.bulkDeleteButton:hover {
+  background-color: var(--cor-perigo) !important;
+  color: white !important;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.th,
+.td {
+  padding: 1rem 1.5rem;
+  text-align: left;
+  border-bottom: 1px solid var(--cor-borda);
+  vertical-align: middle;
+}
+
+.thCheckbox,
+.tdCheckbox {
+  width: 1%;
+  padding-left: 1.5rem;
+}
+
+.th {
+  color: var(--cor-subtexto);
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.table tbody tr:hover {
+  background-color: #f9fafb;
+}
+
+.table tbody tr:last-child .td {
+  border-bottom: none;
+}
+
+.selectedRow {
+  background-color: var(--cor-primaria-light) !important;
+}
+
+.actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.editButton,
+.deleteButton {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+  font-size: 1rem;
+}
+
+.editButton {
+  color: var(--cor-primaria-dark);
+}
+.editButton:hover {
+  background-color: var(--cor-primaria-light);
+}
+
+.deleteButton {
+  color: var(--cor-perigo-dark);
+}
+.deleteButton:hover {
+  background-color: var(--cor-perigo-light);
+}
+
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.modalContent {
+  background-color: white;
+  padding: 2rem;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 500px;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.modalContent h2 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.modalContent form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.modalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.cancelButton,
+.saveButton {
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+.cancelButton {
+  background-color: #e9ecef;
+  color: var(--cor-texto-destaque);
+  border-color: var(--cor-borda);
+}
+
+.saveButton {
+  background-color: var(--cor-primaria);
+  color: white;
+}

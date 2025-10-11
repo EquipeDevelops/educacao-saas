@@ -7,6 +7,7 @@ import {
   updateTurmaSchema,
   paramsSchema,
 } from "./turma.validator";
+import { z } from "zod";
 
 const router = Router();
 
@@ -24,11 +25,12 @@ router.put(
   validate(updateTurmaSchema),
   turmaController.update
 );
+
 router.delete(
   "/:id",
   protect,
   authorize("GESTOR"),
-  validate({ params: paramsSchema }),
+  validate(z.object({ params: paramsSchema })),
   turmaController.remove
 );
 
@@ -38,11 +40,12 @@ router.get(
   authorize("GESTOR", "PROFESSOR"),
   turmaController.findAll
 );
+
 router.get(
   "/:id",
   protect,
   authorize("GESTOR", "PROFESSOR"),
-  validate({ params: paramsSchema }),
+  validate(z.object({ params: paramsSchema })),
   turmaController.findById
 );
 

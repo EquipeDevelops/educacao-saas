@@ -1,0 +1,187 @@
+.container {
+  padding: 1rem 2rem;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 2rem;
+}
+
+.header h1 {
+  font-size: 1.8rem;
+}
+
+.header p {
+  color: var(--cor-subtexto);
+  margin-top: 0.25rem;
+}
+
+.primaryButton {
+  background-color: var(--cor-primaria);
+  color: white;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.primaryButton:hover {
+  background-color: var(--cor-primaria-hover);
+}
+
+.feedback {
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  font-weight: 500;
+  text-align: center;
+}
+
+.error {
+  color: var(--cor-perigo-dark);
+  background-color: var(--cor-perigo-light);
+  border: 1px solid var(--cor-perigo);
+}
+
+.success {
+  color: var(--cor-sucesso-dark);
+  background-color: var(--cor-sucesso-light);
+  border: 1px solid var(--cor-sucesso);
+}
+
+.tableContainer {
+  background-color: var(--cor-fundo-card);
+  border: 1px solid var(--cor-borda);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.th {
+  border-bottom: 2px solid var(--cor-borda);
+  padding: 0.75rem 1.5rem;
+  text-align: left;
+  color: var(--cor-subtexto);
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.td {
+  border-bottom: 1px solid var(--cor-borda);
+  padding: 1rem 1.5rem;
+  vertical-align: middle;
+}
+
+.table tbody tr:hover {
+  background-color: #f9fafb;
+}
+
+.table tbody tr:last-child .td {
+  border-bottom: none;
+}
+
+.actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.editButton,
+.deleteButton {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+  font-size: 1rem;
+}
+
+.editButton {
+  color: var(--cor-primaria-dark);
+}
+.editButton:hover {
+  background-color: var(--cor-primaria-light);
+}
+
+.deleteButton {
+  color: var(--cor-perigo-dark);
+}
+.deleteButton:hover {
+  background-color: var(--cor-perigo-light);
+}
+
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.modalContent {
+  background-color: white;
+  padding: 2rem;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 500px;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.modalContent h2 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.modalContent form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.modalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.cancelButton,
+.saveButton {
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+.cancelButton {
+  background-color: #e9ecef;
+  color: var(--cor-texto-destaque);
+  border-color: var(--cor-borda);
+}
+
+.saveButton {
+  background-color: var(--cor-primaria);
+  color: white;
+}

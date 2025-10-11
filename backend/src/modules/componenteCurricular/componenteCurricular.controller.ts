@@ -1,88 +1,109 @@
-import { Response } from "express";
+import { Response, NextFunction } from "express";
+import { componenteCurricularService } from "./componenteCurricular.service";
 import { AuthenticatedRequest } from "../../middlewares/auth";
-import { componenteService } from "./componenteCurricular.service";
-import {
-  CreateComponenteInput,
-  FindAllComponentesInput,
-} from "./componenteCurricular.validator";
+import { CreateComponenteCurricularInput } from "./componenteCurricular.validator"; // Import com nome corrigido
 
-export const componenteController = {
-  create: async (req: AuthenticatedRequest, res: Response) => {
+export const componenteCurricularController = {
+  create: async (
+    req: AuthenticatedRequest,
+    res: Response,
+    next: NextFunction
+  ) => {
     try {
-      const componente = await componenteService.create(
-        req.body as CreateComponenteInput,
-        req.user
+      const { unidadeEscolarId } = req.user;
+      const componente = await componenteCurricularService.create(
+        req.body as CreateComponenteCurricularInput,
+        unidadeEscolarId
       );
       return res.status(201).json(componente);
-    } catch (error: any) {
-      if (error.code === "P2002") {
-        return res.status(409).json({
-          message:
-            "Esta matéria já foi atribuída a esta turma neste ano letivo.",
-        });
-      }
-      return res.status(400).json({ message: error.message });
+    } catch (error) {
+      next(error);
     }
   },
 
-  findAll: async (req: AuthenticatedRequest, res: Response) => {
+  findAll: async (
+    req: AuthenticatedRequest,
+    res: Response,
+    next: NextFunction
+  ) => {
     try {
-      const componentes = await componenteService.findAll(
-        req.user,
-        req.query as FindAllComponentesInput
+      const { unidadeEscolarId } = req.user;
+      const componentes = await componenteCurricularService.findAll(
+        unidadeEscolarId
       );
       return res.status(200).json(componentes);
-    } catch (error: any) {
-      return res.status(500).json({
-        message: "Erro ao buscar componentes curriculares.",
-        error: error.message,
-      });
+    } catch (error) {
+      next(error);
     }
   },
 
-  findById: async (req: AuthenticatedRequest, res: Response) => {
+  findById: async (
+    req: AuthenticatedRequest,
+    res: Response,
+    next: NextFunction
+  ) => {
     try {
       const { id } = req.params;
-      const componente = await componenteService.findById(id, req.user);
+      const { unidadeEscolarId } = req.user;
+      const componente = await componenteCurricularService.findById(
+        id,
+        unidadeEscolarId
+      );
       if (!componente) {
-        return res.status(404).json({
-          message: "Componente curricular não encontrado ou sem permissão.",
-        });
+        return res.status(404).json({ message: "Vínculo não encontrado." });
       }
       return res.status(200).json(componente);
-    } catch (error: any) {
-      console.error(
-        "--- [ERRO NO CONTROLLER] Erro capturado em findById:",
-        error
-      );
-      return res.status(500).json({
-        message: "Erro ao buscar componente curricular.",
-        error: error.message,
-      });
+    } catch (error) {
+      next(error);
     }
   },
 
-  update: async (req: AuthenticatedRequest, res: Response) => {
+  update: async (
+    req: AuthenticatedRequest,
+    res: Response,
+    next: NextFunction
+  ) => {
     try {
       const { id } = req.params;
-      const componenteAtualizado = await componenteService.update(
+      const { unidadeEscolarId } = req.user;
+      const result = await componenteCurricularService.update(
         id,
         req.body,
-        req.user
+        unidadeEscolarId
       );
-      return res.status(200).json(componenteAtualizado);
-    } catch (error: any) {
-      return res.status(403).json({ message: error.message });
+      if (result.count === 0) {
+        return res
+          .status(404)
+          .json({ message: "Vínculo não encontrado para atualizar." });
+      }
+      return res
+        .status(200)
+        .json({ message: "Vínculo atualizado com sucesso." });
+    } catch (error) {
+      next(error);
     }
   },
 
-  remove: async (req: AuthenticatedRequest, res: Response) => {
+  remove: async (
+    req: AuthenticatedRequest,
+    res: Response,
+    next: NextFunction
+  ) => {
     try {
       const { id } = req.params;
-      await componenteService.remove(id, req.user);
+      const { unidadeEscolarId } = req.user;
+      const result = await componenteCurricularService.remove(
+        id,
+        unidadeEscolarId
+      );
+      if (result.count === 0) {
+        return res
+          .status(404)
+          .json({ message: "Vínculo não encontrado para deletar." });
+      }
       return res.status(204).send();
-    } catch (error: any) {
-      return res.status(403).json({ message: error.message });
+    } catch (error) {
+      next(error);
     }
   },
 };

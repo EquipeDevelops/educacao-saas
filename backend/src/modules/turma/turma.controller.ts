@@ -1,10 +1,15 @@
-import { Response } from "express";
+import { Response, NextFunction } from "express";
 import { turmaService } from "./turma.service";
 import { CreateTurmaInput } from "./turma.validator";
 import { AuthenticatedRequest } from "../../middlewares/auth";
 
 export const turmaController = {
-  create: async (req: AuthenticatedRequest, res: Response) => {
+  create: async (
+    req: AuthenticatedRequest,
+    res: Response,
+    next: NextFunction
+  ) => {
+    console.log("[TurmaController] Recebida requisição para CRIAR turma.");
     try {
       const { unidadeEscolarId } = req.user;
       if (!unidadeEscolarId) {
@@ -16,28 +21,42 @@ export const turmaController = {
         req.body as CreateTurmaInput,
         unidadeEscolarId
       );
+      console.log(`[TurmaController] Turma criada com sucesso: ${turma.id}`);
       return res.status(201).json(turma);
-    } catch (error: any) {
-      return res
-        .status(500)
-        .json({ message: "Erro ao criar turma.", error: error.message });
+    } catch (error) {
+      console.error("[TurmaController] Erro ao CRIAR turma:", error);
+      next(error);
     }
   },
 
-  findAll: async (req: AuthenticatedRequest, res: Response) => {
+  findAll: async (
+    req: AuthenticatedRequest,
+    res: Response,
+    next: NextFunction
+  ) => {
+    console.log("[TurmaController] Recebida requisição para LISTAR turmas.");
     try {
       const { unidadeEscolarId } = req.user;
       if (!unidadeEscolarId) {
         return res.status(200).json([]);
       }
       const turmas = await turmaService.findAll(unidadeEscolarId);
+      console.log(`[TurmaController] ${turmas.length} turmas encontradas.`);
       return res.status(200).json(turmas);
-    } catch (error: any) {
-      return res.status(500).json({ message: "Erro ao buscar turmas." });
+    } catch (error) {
+      console.error("[TurmaController] Erro ao LISTAR turmas:", error);
+      next(error);
     }
   },
 
-  findById: async (req: AuthenticatedRequest, res: Response) => {
+  findById: async (
+    req: AuthenticatedRequest,
+    res: Response,
+    next: NextFunction
+  ) => {
+    console.log(
+      `[TurmaController] Recebida requisição para BUSCAR turma ID: ${req.params.id}`
+    );
     try {
       const { id } = req.params;
       const { unidadeEscolarId } = req.user;
@@ -52,12 +71,23 @@ export const turmaController = {
         });
       }
       return res.status(200).json(turma);
-    } catch (error: any) {
-      return res.status(500).json({ message: "Erro ao buscar turma." });
+    } catch (error) {
+      console.error(
+        `[TurmaController] Erro ao BUSCAR turma ID: ${req.params.id}`,
+        error
+      );
+      next(error);
     }
   },
 
-  update: async (req: AuthenticatedRequest, res: Response) => {
+  update: async (
+    req: AuthenticatedRequest,
+    res: Response,
+    next: NextFunction
+  ) => {
+    console.log(
+      `[TurmaController] Recebida requisição para ATUALIZAR turma ID: ${req.params.id}`
+    );
     try {
       const { id } = req.params;
       const { unidadeEscolarId } = req.user;
@@ -76,12 +106,23 @@ export const turmaController = {
           .status(404)
           .json({ message: "Turma não encontrada para atualizar." });
       return res.status(200).json({ message: "Turma atualizada com sucesso." });
-    } catch (error: any) {
-      return res.status(500).json({ message: "Erro ao atualizar turma." });
+    } catch (error) {
+      console.error(
+        `[TurmaController] Erro ao ATUALIZAR turma ID: ${req.params.id}`,
+        error
+      );
+      next(error);
     }
   },
 
-  remove: async (req: AuthenticatedRequest, res: Response) => {
+  remove: async (
+    req: AuthenticatedRequest,
+    res: Response,
+    next: NextFunction
+  ) => {
+    console.log(
+      `[TurmaController] Recebida requisição para DELETAR turma ID: ${req.params.id}`
+    );
     try {
       const { id } = req.params;
       const { unidadeEscolarId } = req.user;
@@ -90,14 +131,29 @@ export const turmaController = {
           .status(404)
           .json({ message: "Turma não encontrada para deletar." });
       }
+
+      console.log(
+        `[TurmaController] Chamando turmaService.remove para o ID: ${id}`
+      );
       const result = await turmaService.remove(id, unidadeEscolarId);
-      if (result.count === 0)
+
+      if (result.count === 0) {
+        console.warn(
+          `[TurmaController] Nenhuma turma encontrada com o ID: ${id} para deletar.`
+        );
         return res
           .status(404)
           .json({ message: "Turma não encontrada para deletar." });
+      }
+
+      console.log(`[TurmaController] Turma ID: ${id} deletada com sucesso.`);
       return res.status(204).send();
-    } catch (error: any) {
-      return res.status(500).json({ message: "Erro ao deletar turma." });
+    } catch (error) {
+      console.error(
+        `[TurmaController] ERRO ao deletar turma ID: ${req.params.id}`,
+        error
+      );
+      next(error);
     }
   },
 };

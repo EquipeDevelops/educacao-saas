@@ -13,7 +13,7 @@ import { professorRoutes } from "../modules/professor/professor.routes";
 import { alunoRoutes } from "../modules/aluno/aluno.routes";
 import { superAdminRoutes } from "../modules/superadmin/superadmin.routes";
 
-import { componenteRoutes } from "../modules/componenteCurricular/componenteCurricular.routes";
+import { componenteCurricularRoutes } from "../modules/componenteCurricular/componenteCurricular.routes";
 import { horarioRoutes } from "../modules/horarioAula/horarioAula.routes";
 import { conquistasPorUnidadeRoutes } from "../modules/conquistasPorUnidade/conquistasPorUnidade.routes";
 
@@ -50,7 +50,7 @@ mainRouter.use("/turmas", turmaRoutes);
 mainRouter.use("/materias", materiaRoutes);
 mainRouter.use("/professores", professorRoutes);
 mainRouter.use("/alunos", alunoRoutes);
-mainRouter.use("/componentes-curriculares", componenteRoutes);
+mainRouter.use("/componentes-curriculares", componenteCurricularRoutes);
 mainRouter.use("/horarios", horarioRoutes);
 
 // --- ROTAS DO FLUXO ACADÊMICO ---

@@ -1,3 +1,5 @@
+"use client";
+
 import { useAuth } from "@/contexts/AuthContext";
 
 export default function GestorPage() {
@@ -8,10 +10,12 @@ export default function GestorPage() {
   }
 
   return (
-    <>
-      <div>
-        Página inicial do gestor
-      </div>
-    </>
-  )
+    <div>
+      <h1>Bem-vindo(a), {user.nome}!</h1>
+      <p>
+        Este é o seu painel de gestão. Use o menu à esquerda para navegar pelas
+        funcionalidades.
+      </p>
+    </div>
+  );
 }

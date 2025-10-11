@@ -7,6 +7,7 @@ import {
   updateMateriaSchema,
   paramsSchema,
 } from "./materia.validator";
+import { z } from "zod";
 
 const router = Router();
 
@@ -17,6 +18,7 @@ router.post(
   validate(createMateriaSchema),
   materiaController.create
 );
+
 router.put(
   "/:id",
   protect,
@@ -24,26 +26,20 @@ router.put(
   validate(updateMateriaSchema),
   materiaController.update
 );
+
 router.delete(
   "/:id",
   protect,
   authorize("GESTOR"),
-  validate({ params: paramsSchema }),
+  validate(z.object({ params: paramsSchema })),
   materiaController.remove
 );
 
 router.get(
   "/",
   protect,
-  authorize("GESTOR", "PROFESSOR", "ALUNO"),
+  authorize("GESTOR", "PROFESSOR"),
   materiaController.findAll
-);
-router.get(
-  "/:id",
-  protect,
-  authorize("GESTOR", "PROFESSOR", "ALUNO"),
-  validate({ params: paramsSchema }),
-  materiaController.findById
 );
 
 export const materiaRoutes = router;
