@@ -12,7 +12,7 @@ import { materiaRoutes } from "../modules/materia/materia.routes";
 import { professorRoutes } from "../modules/professor/professor.routes";
 import { alunoRoutes } from "../modules/aluno/aluno.routes";
 import { superAdminRoutes } from "../modules/superadmin/superadmin.routes";
-
+import { gestorDashboardRoutes } from "@/modules/gestorDashboard/gestorDashboard.routes";
 import { componenteCurricularRoutes } from "../modules/componenteCurricular/componenteCurricular.routes";
 import { horarioRoutes } from "../modules/horarioAula/horarioAula.routes";
 import { conquistasPorUnidadeRoutes } from "../modules/conquistasPorUnidade/conquistasPorUnidade.routes";
@@ -74,5 +74,6 @@ mainRouter.use("/gerador-prova-ia", geradorProvaIARoutes);
 
 // --- ROTAS DE DASHBOARD E RELATÓRIOS ---
 mainRouter.use("/professor/dashboard", professorDashboardRoutes);
+mainRouter.use("/gestor/dashboard", gestorDashboardRoutes);
 
 export default mainRouter;
