@@ -7,27 +7,37 @@ export const paramsSchema = z.object({
 
 export const createEventoSchema = z.object({
   body: z.object({
-    titulo: z.string({ required_error: "O título é obrigatório." }).min(3),
+    titulo: z.string().min(1, "O título é obrigatório."),
     descricao: z.string().optional(),
-    tipo: z.nativeEnum(TipoEvento, {
-      required_error: "O tipo de evento é obrigatório.",
-    }),
-    data_inicio: z.string().datetime({ message: "Data de início inválida." }),
-    data_fim: z.string().datetime({ message: "Data de fim inválida." }),
-    dia_inteiro: z.boolean().optional(),
-    turmaId: z.string().optional(),
+    data_inicio: z
+      .string()
+      .datetime("A data de início deve ser uma data válida."),
+    data_fim: z.string().datetime("A data de fim deve ser uma data válida."),
+    tipo: z.nativeEnum(TipoEvento),
+    turmaId: z.string().optional().nullable(),
   }),
 });
 
 export const updateEventoSchema = z.object({
-  body: createEventoSchema.shape.body.partial(),
+  body: z.object({
+    titulo: z.string().min(1).optional(),
+    descricao: z.string().optional(),
+    data_inicio: z.string().datetime().optional(),
+    data_fim: z.string().datetime().optional(),
+    tipo: z.nativeEnum(TipoEvento).optional(),
+    turmaId: z.string().optional().nullable(),
+  }),
   params: paramsSchema,
 });
 
-export const findEventosSchema = z.object({
+export const findAllEventosSchema = z.object({
   query: z.object({
-    mes: z
-      .string()
-      .regex(/^\d{4}-\d{2}$/, "Formato de mês inválido. Use AAAA-MM."),
+    mes: z.string().optional(),
+    ano: z.string().optional(),
+    turmaId: z.string().optional(),
   }),
 });
+
+export type CreateEventoInput = z.infer<typeof createEventoSchema>["body"];
+export type UpdateEventoInput = z.infer<typeof updateEventoSchema>;
+export type FindAllEventosInput = z.infer<typeof findAllEventosSchema>["query"];

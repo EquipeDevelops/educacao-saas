@@ -33,7 +33,7 @@ import { conquistaRoutes } from "../modules/conquista/conquista.routes";
 import { conquistaUsuarioRoutes } from "../modules/conquistaUsuario/conquistaUsuario.routes";
 import { comentarioRoutes } from "../modules/comentarioTarefa/comentarioTarefa.routes";
 import { conversaRoutes } from "../modules/conversa/conversa.routes";
-import { eventosRoutes } from "../modules/eventos/eventos.routes";
+import { eventoRoutes } from "../modules/eventos/eventos.routes";
 import { geradorProvaIARoutes } from "../modules/geradorProvaIA/geradorProvaIA.routes";
 
 const mainRouter = Router();
@@ -69,7 +69,7 @@ mainRouter.use("/conquistas-por-unidade", conquistasPorUnidadeRoutes);
 mainRouter.use("/conquistas-usuarios", conquistaUsuarioRoutes);
 mainRouter.use("/comentarios-tarefa", comentarioRoutes);
 mainRouter.use("/conversas", conversaRoutes);
-mainRouter.use("/eventos", eventosRoutes);
+mainRouter.use("/eventos", eventoRoutes);
 mainRouter.use("/gerador-prova-ia", geradorProvaIARoutes);
 
 // --- ROTAS DE DASHBOARD E RELATÓRIOS ---
