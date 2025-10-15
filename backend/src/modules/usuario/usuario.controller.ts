@@ -1,152 +1,91 @@
-import { Response } from "express";
-import * as UsuarioService from "./usuario.service";
-import { CreateUserInput } from "./usuario.validator";
+import { Request, Response, NextFunction } from "express";
 import { AuthenticatedRequest } from "../../middlewares/auth";
-import { Prisma, PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { usuarioService } from "./usuario.service";
+import { CreateUserSchema, UpdateUserSchema } from "./usuario.validator";
 
 export const usuarioController = {
-  create: async (req: AuthenticatedRequest, res: Response) => {
+  create: async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { user: gestor } = req;
-      const dataToCreate = req.body as CreateUserInput;
-
-      if (
-        dataToCreate.papel === "ADMINISTRADOR" ||
-        dataToCreate.papel === "GESTOR"
-      ) {
-        return res
-          .status(403)
-          .json({ message: "Gestores só podem criar Professores e Alunos." });
-      }
-
-      const payload = {
-        ...dataToCreate,
-        instituicaoId: gestor.instituicaoId!,
-        unidadeEscolarId: gestor.unidadeEscolarId!,
-      };
-
-      const novoUsuario = await prisma.$transaction(async (tx) => {
-        return await UsuarioService.createUser(payload, tx);
+      const userData = CreateUserSchema.parse(req.body);
+      const authReq = req as AuthenticatedRequest;
+      const newUser = await usuarioService.createUser({
+        ...userData,
+        instituicaoId: authReq.user.instituicaoId!,
+        unidadeEscolarId: authReq.user.unidadeEscolarId!,
       });
-
-      return res.status(201).json(novoUsuario);
-    } catch (error: any) {
-      if (error.code === "P2002")
-        return res.status(409).json({ message: "Este email já está em uso." });
-      return res
-        .status(500)
-        .json({ message: error.message || "Erro interno ao criar usuário." });
+      res.status(201).json(newUser);
+    } catch (error) {
+      next(error);
     }
   },
 
-  findAll: async (req: AuthenticatedRequest, res: Response) => {
+  list: async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { user } = req;
-      const where: Prisma.UsuariosWhereInput = {};
-      if (user.instituicaoId) {
-        where.instituicaoId = user.instituicaoId;
-      }
-
-      if (user.papel === "GESTOR" && user.unidadeEscolarId) {
-        where.unidadeEscolarId = user.unidadeEscolarId;
-      }
-
-      const usuarios = await UsuarioService.findAllUsers(where);
-      return res.status(200).json(usuarios);
-    } catch (error: any) {
-      return res.status(500).json({ message: "Erro ao buscar usuários." });
+      const authReq = req as AuthenticatedRequest;
+      const where = { unidadeEscolarId: authReq.user.unidadeEscolarId! };
+      const users = await usuarioService.findAllUsers(where);
+      res.status(200).json(users);
+    } catch (error) {
+      next(error);
     }
   },
 
-  findById: async (req: AuthenticatedRequest, res: Response) => {
+  getById: async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { id } = req.params;
-      const { user } = req;
-      const where: Prisma.UsuariosWhereInput = {};
-
-      if (user.papel === "PROFESSOR") {
-        if (user.id !== id) {
-          where.unidadeEscolarId = user.unidadeEscolarId;
-        }
-      } else if (user.papel === "ALUNO") {
-        if (user.id !== id) {
-          return res.status(403).json({ message: "Acesso não autorizado." });
-        }
-      } else if (user.papel === "GESTOR" && user.unidadeEscolarId) {
-        where.unidadeEscolarId = user.unidadeEscolarId;
+      const authReq = req as AuthenticatedRequest;
+      const where = { unidadeEscolarId: authReq.user.unidadeEscolarId! };
+      const user = await usuarioService.findUserById(id, where);
+      if (!user) {
+        return res.status(404).json({ message: "Usuário não encontrado." });
       }
-
-      if (user.instituicaoId) {
-        where.instituicaoId = user.instituicaoId;
-      }
-
-      const usuario = await UsuarioService.findUserById(id, where);
-      if (!usuario) {
-        return res.status(404).json({
-          message: "Usuário não encontrado ou sem permissão para visualizar.",
-        });
-      }
-
-      return res.status(200).json(usuario);
-    } catch (error: any) {
-      console.error("[ERRO NO CONTROLLER - findById]:", error);
-      return res.status(500).json({ message: "Erro ao buscar usuário." });
+      res.status(200).json(user);
+    } catch (error) {
+      next(error);
     }
   },
 
-  update: async (req: AuthenticatedRequest, res: Response) => {
+  update: async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { id } = req.params;
-      const { user } = req;
-      const where: Prisma.UsuariosWhereInput = {};
+      const userData = UpdateUserSchema.parse(req.body);
+      const authReq = req as AuthenticatedRequest;
+      const where = { unidadeEscolarId: authReq.user.unidadeEscolarId! };
+      const updatedUser = await usuarioService.updateUser(id, userData, where);
+      res.status(200).json(updatedUser);
+    } catch (error) {
+      next(error);
+    }
+  },
 
-      if (user.papel === "PROFESSOR") {
-        if (user.id !== id) {
-          return res.status(403).json({ message: "Acesso não autorizado." });
-        }
-      } else if (user.papel === "GESTOR" && user.unidadeEscolarId) {
-        where.unidadeEscolarId = user.unidadeEscolarId;
+  delete: async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { id } = req.params;
+      const authReq = req as AuthenticatedRequest;
+      const where = { unidadeEscolarId: authReq.user.unidadeEscolarId! };
+      await usuarioService.deleteUser(id, where);
+      res.status(204).send();
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  importarAlunos: async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const authReq = req as AuthenticatedRequest;
+      if (!req.file) {
+        return res.status(400).json({ message: "Nenhum arquivo enviado." });
       }
-
-      if (user.instituicaoId) {
-        where.instituicaoId = user.instituicaoId;
-      }
-
-      const usuarioAtualizado = await UsuarioService.updateUser(
-        id,
-        req.body,
-        where
+      const resultado = await usuarioService.importarAlunos(
+        authReq.user,
+        req.file.buffer
       );
-      return res.status(200).json(usuarioAtualizado);
-    } catch (error: any) {
-      console.error("[ERRO NO CONTROLLER - update]:", error);
-      return res
-        .status(500)
-        .json({ message: error.message || "Erro ao atualizar usuário." });
-    }
-  },
-
-  remove: async (req: AuthenticatedRequest, res: Response) => {
-    try {
-      const { id } = req.params;
-      const { user } = req;
-      const where: Prisma.UsuariosWhereInput = {};
-
-      if (user.instituicaoId) {
-        where.instituicaoId = user.instituicaoId;
-      }
-      if (user.papel === "GESTOR" && user.unidadeEscolarId) {
-        where.unidadeEscolarId = user.unidadeEscolarId;
-      }
-
-      await UsuarioService.deleteUser(id, where);
-      return res.status(204).send();
-    } catch (error: any) {
-      return res
-        .status(500)
-        .json({ message: error.message || "Erro ao deletar usuário." });
+      res.status(200).json({
+        message: "Importação concluída.",
+        ...resultado,
+      });
+    } catch (error) {
+      next(error);
     }
   },
 };

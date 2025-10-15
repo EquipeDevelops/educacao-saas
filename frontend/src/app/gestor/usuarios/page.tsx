@@ -1,9 +1,12 @@
 "use client";
 
-import { useState, useEffect, FormEvent, ChangeEvent } from "react";
+import { useState, useEffect, useMemo, FormEvent, ChangeEvent } from "react";
 import { api } from "@/services/api";
 import styles from "./usuarios.module.css";
-import { FiEdit, FiTrash2, FiUsers } from "react-icons/fi";
+import Loading from "@/components/loading/Loading";
+import Modal from "@/components/modal/Modal";
+import ImportarAlunosModal from "@/components/gestor/usuarios/ImportarAlunosModal";
+import { FiPlus, FiSearch, FiUpload, FiEdit, FiTrash2 } from "react-icons/fi";
 
 type PapelUsuario = "PROFESSOR" | "ALUNO";
 
@@ -14,6 +17,7 @@ type Usuario = {
   papel: PapelUsuario;
   status: boolean;
   perfil_professor?: { titulacao?: string };
+  perfil_aluno?: { numero_matricula?: string };
 };
 
 const initialState = {
@@ -25,29 +29,51 @@ const initialState = {
   titulacao: "",
 };
 
-export default function GestaoUsuariosPage() {
+export default function GestorUsuariosPage() {
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [filtro, setFiltro] = useState("");
 
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [editingUser, setEditingUser] = useState<Usuario | null>(null);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
   const [formState, setFormState] = useState(initialState);
-
+  const [editingUser, setEditingUser] = useState<Usuario | null>(null);
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
 
-  const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
-    const { name, value } = e.target;
-    setFormState((prevState) => ({ ...prevState, [name]: value }));
+  const fetchUsuarios = () => {
+    setIsLoading(true);
+    api
+      .get("/usuarios")
+      .then((response) => setUsuarios(response.data))
+      .catch(() => setError("Falha ao carregar os usuários."))
+      .finally(() => setIsLoading(false));
   };
 
-  const handleEditInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!editingUser) return;
+  useEffect(() => {
+    fetchUsuarios();
+  }, []);
+
+  const handleInputChange = (
+    e: ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
     const { name, value } = e.target;
+    setFormState((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleEditInputChange = (
+    e: ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
+    if (!editingUser) return;
+    const { name, value, type } = e.target;
+
+    const isCheckbox = type === "checkbox";
+    const finalValue = isCheckbox
+      ? (e.target as HTMLInputElement).checked
+      : value;
 
     if (name === "titulacao") {
       setEditingUser({
@@ -55,26 +81,26 @@ export default function GestaoUsuariosPage() {
         perfil_professor: { ...editingUser.perfil_professor, titulacao: value },
       });
     } else {
-      setEditingUser({ ...editingUser, [name]: value as any });
+      setEditingUser({ ...editingUser, [name]: finalValue });
     }
   };
 
-  async function fetchUsuarios() {
-    try {
-      setIsLoading(true);
-      setError(null);
-      const response = await api.get("/usuarios");
-      setUsuarios(response.data);
-    } catch (err) {
-      setError("Falha ao carregar os usuários.");
-    } finally {
-      setIsLoading(false);
-    }
-  }
+  const openCreateModal = () => {
+    setFormState(initialState);
+    setIsCreateModalOpen(true);
+  };
 
-  useEffect(() => {
-    fetchUsuarios();
-  }, []);
+  const openEditModal = (user: Usuario) => {
+    setEditingUser(JSON.parse(JSON.stringify(user)));
+    setIsEditModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsCreateModalOpen(false);
+    setIsEditModalOpen(false);
+    setError(null);
+    setSuccess(null);
+  };
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
@@ -87,15 +113,12 @@ export default function GestaoUsuariosPage() {
       senha: formState.senha,
       papel: formState.papel,
     };
-
     if (formState.papel === "ALUNO") {
       if (!formState.numero_matricula) {
         setError("O número de matrícula é obrigatório para alunos.");
         return;
       }
-      payload.perfil_aluno = {
-        numero_matricula: formState.numero_matricula,
-      };
+      payload.perfil_aluno = { numero_matricula: formState.numero_matricula };
     } else if (formState.papel === "PROFESSOR") {
       payload.perfil_professor = {
         titulacao: formState.titulacao || undefined,
@@ -105,17 +128,12 @@ export default function GestaoUsuariosPage() {
     try {
       await api.post("/usuarios", payload);
       setSuccess(`Usuário "${formState.nome}" criado com sucesso!`);
-      setFormState(initialState);
-      await fetchUsuarios();
+      closeModal();
+      fetchUsuarios();
     } catch (err: any) {
       setError(err.response?.data?.message || "Erro ao criar o usuário.");
     }
   }
-
-  const openEditModal = (user: Usuario) => {
-    setEditingUser(user);
-    setIsEditModalOpen(true);
-  };
 
   async function handleUpdate(event: FormEvent) {
     event.preventDefault();
@@ -134,26 +152,23 @@ export default function GestaoUsuariosPage() {
     try {
       await api.patch(`/usuarios/${editingUser.id}`, payload);
       setSuccess("Usuário atualizado com sucesso!");
-      setIsEditModalOpen(false);
-      setEditingUser(null);
-      await fetchUsuarios();
+      closeModal();
+      fetchUsuarios();
     } catch (err: any) {
       setError(err.response?.data?.message || "Erro ao atualizar o usuário.");
     }
   }
 
-  async function handleDelete(userId: string, userName: string) {
+  async function handleDelete(user: Usuario) {
     if (
       window.confirm(
-        `Tem certeza que deseja excluir o usuário "${userName}"? Esta ação é irreversível.`
+        `Tem certeza que deseja excluir o usuário "${user.nome}"? Esta ação é irreversível.`
       )
     ) {
-      setError(null);
-      setSuccess(null);
       try {
-        await api.delete(`/usuarios/${userId}`);
-        setSuccess(`Usuário "${userName}" excluído com sucesso!`);
-        await fetchUsuarios();
+        await api.delete(`/usuarios/${user.id}`);
+        setSuccess(`Usuário "${user.nome}" excluído com sucesso!`);
+        fetchUsuarios();
       } catch (err: any) {
         setError(err.response?.data?.message || "Erro ao excluir o usuário.");
       }
@@ -161,11 +176,7 @@ export default function GestaoUsuariosPage() {
   }
 
   const handleSelectAll = (e: ChangeEvent<HTMLInputElement>) => {
-    if (e.target.checked) {
-      setSelectedUserIds(usuarios.map((u) => u.id));
-    } else {
-      setSelectedUserIds([]);
-    }
+    setSelectedUserIds(e.target.checked ? usuarios.map((u) => u.id) : []);
   };
 
   const handleSelectOne = (userId: string) => {
@@ -184,29 +195,23 @@ export default function GestaoUsuariosPage() {
       deactivate: "desativar",
       delete: "excluir",
     }[action];
-
     if (
       window.confirm(
         `Tem certeza que deseja ${actionText} ${selectedUserIds.length} usuário(s) selecionado(s)?`
       )
     ) {
-      setError(null);
-      setSuccess(null);
-
       const promises = selectedUserIds.map((id) => {
-        if (action === "delete") {
-          return api.delete(`/usuarios/${id}`);
-        }
+        if (action === "delete") return api.delete(`/usuarios/${id}`);
         return api.patch(`/usuarios/${id}`, { status: action === "activate" });
       });
 
       try {
         await Promise.all(promises);
         setSuccess(
-          `${selectedUserIds.length} usuário(s) foram atualizados com sucesso.`
+          `${selectedUserIds.length} usuário(s) foram processados com sucesso.`
         );
         setSelectedUserIds([]);
-        await fetchUsuarios();
+        fetchUsuarios();
       } catch (err: any) {
         setError(
           err.response?.data?.message || `Erro ao executar ação em massa.`
@@ -214,6 +219,19 @@ export default function GestaoUsuariosPage() {
       }
     }
   };
+
+  const usuariosFiltrados = useMemo(() => {
+    if (!filtro) return usuarios;
+    return usuarios.filter(
+      (user) =>
+        user.nome.toLowerCase().includes(filtro.toLowerCase()) ||
+        user.email.toLowerCase().includes(filtro.toLowerCase())
+    );
+  }, [usuarios, filtro]);
+
+  if (isLoading) {
+    return <Loading />;
+  }
 
   return (
     <div className={styles.container}>
@@ -226,232 +244,269 @@ export default function GestaoUsuariosPage() {
 
       <header className={styles.header}>
         <h1>Gerenciamento de Usuários</h1>
-        <p>
-          Cadastre e visualize os professores e alunos da sua unidade escolar.
-        </p>
+        <div className={styles.actions}>
+          <button
+            onClick={() => setIsImportModalOpen(true)}
+            className={styles.button}
+          >
+            <FiUpload />
+            Importar Alunos
+          </button>
+          <button onClick={openCreateModal} className={styles.buttonPrimary}>
+            <FiPlus />
+            Novo Usuário
+          </button>
+        </div>
       </header>
 
-      <section className={styles.formSection}>
-        <h2>Cadastrar Novo Usuário</h2>
-        <form onSubmit={handleSubmit} className={styles.form}>
-          <label className={`${styles.label} ${styles.fullWidth}`}>
-            Nome Completo:
-            <input
-              name="nome"
-              value={formState.nome}
-              onChange={handleInputChange}
-              required
-            />
-          </label>
-          <label className={styles.label}>
-            Email:
-            <input
-              type="email"
-              name="email"
-              value={formState.email}
-              onChange={handleInputChange}
-              required
-            />
-          </label>
-          <label className={styles.label}>
-            Senha Provisória:
-            <input
-              type="password"
-              name="senha"
-              value={formState.senha}
-              onChange={handleInputChange}
-              required
-            />
-          </label>
-          <label className={`${styles.label} ${styles.fullWidth}`}>
-            Papel:
-            <select
-              name="papel"
-              value={formState.papel}
-              onChange={handleInputChange}
+      <div className={styles.toolbar}>
+        <div className={styles.searchContainer}>
+          <FiSearch />
+          <input
+            type="text"
+            placeholder="Buscar por nome ou e-mail..."
+            value={filtro}
+            onChange={(e) => setFiltro(e.target.value)}
+          />
+        </div>
+        {selectedUserIds.length > 0 && (
+          <div className={styles.bulkActionsContainer}>
+            <span>{selectedUserIds.length} selecionado(s)</span>
+            <button onClick={() => handleBulkAction("activate")}>Ativar</button>
+            <button onClick={() => handleBulkAction("deactivate")}>
+              Desativar
+            </button>
+            <button
+              className={styles.bulkDeleteButton}
+              onClick={() => handleBulkAction("delete")}
             >
-              <option value="PROFESSOR">Professor</option>
-              <option value="ALUNO">Aluno</option>
-            </select>
-          </label>
+              Excluir
+            </button>
+          </div>
+        )}
+      </div>
 
+      <div className={styles.tableContainer}>
+        <table className={styles.userTable}>
+          <thead>
+            <tr>
+              <th className={styles.thCheckbox}>
+                <input
+                  type="checkbox"
+                  onChange={handleSelectAll}
+                  checked={
+                    selectedUserIds.length === usuarios.length &&
+                    usuarios.length > 0
+                  }
+                />
+              </th>
+              <th>Nome</th>
+              <th>Email</th>
+              <th>Papel</th>
+              <th>Status</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            {usuariosFiltrados.length > 0 ? (
+              usuariosFiltrados.map((user) => (
+                <tr
+                  key={user.id}
+                  className={
+                    selectedUserIds.includes(user.id) ? styles.selectedRow : ""
+                  }
+                >
+                  <td className={styles.tdCheckbox}>
+                    <input
+                      type="checkbox"
+                      checked={selectedUserIds.includes(user.id)}
+                      onChange={() => handleSelectOne(user.id)}
+                    />
+                  </td>
+                  <td>{user.nome}</td>
+                  <td>{user.email}</td>
+                  <td>
+                    <span
+                      className={`${styles.roleTag} ${
+                        styles[user.papel.toLowerCase()]
+                      }`}
+                    >
+                      {user.papel}
+                    </span>
+                  </td>
+                  <td>
+                    <span
+                      className={
+                        user.status
+                          ? styles.statusActive
+                          : styles.statusInactive
+                      }
+                    >
+                      {user.status ? "Ativo" : "Inativo"}
+                    </span>
+                  </td>
+                  <td className={styles.actionButtons}>
+                    <button
+                      onClick={() => openEditModal(user)}
+                      className={styles.editButton}
+                    >
+                      <FiEdit />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(user)}
+                      className={styles.deleteButton}
+                    >
+                      <FiTrash2 />
+                    </button>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={6} className={styles.emptyRow}>
+                  Nenhum usuário encontrado.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      <Modal
+        isOpen={isCreateModalOpen}
+        onClose={closeModal}
+        title="Criar Novo Usuário"
+      >
+        <form onSubmit={handleSubmit} className={styles.modalForm}>
+          <label>Nome Completo*</label>
+          <input
+            name="nome"
+            value={formState.nome}
+            onChange={handleInputChange}
+            required
+          />
+          <label>Email*</label>
+          <input
+            type="email"
+            name="email"
+            value={formState.email}
+            onChange={handleInputChange}
+            required
+          />
+          <label>Senha Provisória*</label>
+          <input
+            type="password"
+            name="senha"
+            value={formState.senha}
+            onChange={handleInputChange}
+            required
+          />
+          <label>Papel*</label>
+          <select
+            name="papel"
+            value={formState.papel}
+            onChange={handleInputChange}
+          >
+            <option value="PROFESSOR">Professor</option>
+            <option value="ALUNO">Aluno</option>
+          </select>
           {formState.papel === "ALUNO" && (
-            <label className={`${styles.label} ${styles.fullWidth}`}>
-              Número de Matrícula:
+            <>
+              <label>Número de Matrícula*</label>
               <input
                 name="numero_matricula"
                 value={formState.numero_matricula}
                 onChange={handleInputChange}
                 required
               />
-            </label>
+            </>
           )}
-
           {formState.papel === "PROFESSOR" && (
-            <label className={`${styles.label} ${styles.fullWidth}`}>
-              Titulação (Ex: Graduado, Mestre):
+            <>
+              <label>Titulação</label>
               <input
                 name="titulacao"
                 value={formState.titulacao}
                 onChange={handleInputChange}
-                placeholder="Opcional"
+                placeholder="Ex: Mestre, Doutor"
               />
-            </label>
+            </>
           )}
-
-          <button type="submit" className={`${styles.button} btn`}>
-            Cadastrar Usuário
-          </button>
+          <div className={styles.modalActions}>
+            <button
+              type="button"
+              onClick={closeModal}
+              className={styles.cancelButton}
+            >
+              Cancelar
+            </button>
+            <button type="submit" className={styles.saveButton}>
+              Salvar
+            </button>
+          </div>
         </form>
-      </section>
+      </Modal>
 
-      <section className={styles.tableContainer}>
-        <div className={styles.tableHeader}>
-          <h2>Usuários Cadastrados</h2>
-          {selectedUserIds.length > 0 && (
-            <div className={styles.bulkActionsContainer}>
-              <span>{selectedUserIds.length} selecionado(s)</span>
-              <button onClick={() => handleBulkAction("activate")}>
-                Ativar
-              </button>
-              <button onClick={() => handleBulkAction("deactivate")}>
-                Desativar
-              </button>
+      {editingUser && (
+        <Modal
+          isOpen={isEditModalOpen}
+          onClose={closeModal}
+          title={`Editar Usuário: ${editingUser.nome}`}
+        >
+          <form onSubmit={handleUpdate} className={styles.modalForm}>
+            <label>Nome Completo*</label>
+            <input
+              name="nome"
+              value={editingUser.nome}
+              onChange={handleEditInputChange}
+              required
+            />
+            <label>Email</label>
+            <input type="email" value={editingUser.email} disabled />
+            {editingUser.papel === "PROFESSOR" && (
+              <>
+                <label>Titulação</label>
+                <input
+                  name="titulacao"
+                  value={editingUser.perfil_professor?.titulacao || ""}
+                  onChange={handleEditInputChange}
+                />
+              </>
+            )}
+            <div className={styles.checkboxContainer}>
+              <input
+                type="checkbox"
+                name="status"
+                checked={!!editingUser.status}
+                onChange={handleEditInputChange}
+                id="status-edit"
+              />
+              <label htmlFor="status-edit">Usuário Ativo</label>
+            </div>
+            <div className={styles.modalActions}>
               <button
-                className={styles.bulkDeleteButton}
-                onClick={() => handleBulkAction("delete")}
+                type="button"
+                onClick={closeModal}
+                className={styles.cancelButton}
               >
-                Excluir
+                Cancelar
+              </button>
+              <button type="submit" className={styles.saveButton}>
+                Salvar Alterações
               </button>
             </div>
-          )}
-        </div>
-        {isLoading ? (
-          <p>Carregando...</p>
-        ) : (
-          <table className={styles.table}>
-            <thead>
-              <tr>
-                <th className={styles.thCheckbox}>
-                  <input
-                    type="checkbox"
-                    onChange={handleSelectAll}
-                    checked={
-                      selectedUserIds.length === usuarios.length &&
-                      usuarios.length > 0
-                    }
-                  />
-                </th>
-                <th className={styles.th}>Nome</th>
-                <th className={styles.th}>Email</th>
-                <th className={styles.th}>Papel</th>
-                <th className={styles.th}>Status</th>
-                <th className={styles.th}>Ações</th>
-              </tr>
-            </thead>
-            <tbody>
-              {usuarios.map((usuario) => (
-                <tr
-                  key={usuario.id}
-                  className={
-                    selectedUserIds.includes(usuario.id)
-                      ? styles.selectedRow
-                      : ""
-                  }
-                >
-                  <td className={styles.tdCheckbox}>
-                    <input
-                      type="checkbox"
-                      checked={selectedUserIds.includes(usuario.id)}
-                      onChange={() => handleSelectOne(usuario.id)}
-                    />
-                  </td>
-                  <td className={styles.td}>{usuario.nome}</td>
-                  <td className={styles.td}>{usuario.email}</td>
-                  <td className={styles.td}>{usuario.papel}</td>
-                  <td className={styles.td}>
-                    <span
-                      className={
-                        usuario.status
-                          ? styles.statusActive
-                          : styles.statusInactive
-                      }
-                    >
-                      {usuario.status ? "Ativo" : "Inativo"}
-                    </span>
-                  </td>
-                  <td className={styles.td}>
-                    <div className={styles.actions}>
-                      <button
-                        className={styles.editButton}
-                        onClick={() => openEditModal(usuario)}
-                      >
-                        <FiEdit />
-                      </button>
-                      <button
-                        className={styles.deleteButton}
-                        onClick={() => handleDelete(usuario.id, usuario.nome)}
-                      >
-                        <FiTrash2 />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </section>
-
-      {isEditModalOpen && editingUser && (
-        <div className={styles.modalOverlay}>
-          <div className={styles.modalContent}>
-            <h2>Editar Usuário</h2>
-            <form onSubmit={handleUpdate}>
-              <label className={styles.label}>
-                Nome Completo:
-                <input
-                  name="nome"
-                  value={editingUser.nome}
-                  onChange={handleEditInputChange}
-                  required
-                />
-              </label>
-              <label className={styles.label}>
-                Email:
-                <input
-                  type="email"
-                  name="email"
-                  value={editingUser.email}
-                  disabled
-                />
-              </label>
-              {editingUser.papel === "PROFESSOR" && (
-                <label className={styles.label}>
-                  Titulação:
-                  <input
-                    name="titulacao"
-                    value={editingUser.perfil_professor?.titulacao || ""}
-                    onChange={handleEditInputChange}
-                  />
-                </label>
-              )}
-              <div className={styles.modalActions}>
-                <button
-                  type="button"
-                  className={styles.cancelButton}
-                  onClick={() => setIsEditModalOpen(false)}
-                >
-                  Cancelar
-                </button>
-                <button type="submit" className={styles.saveButton}>
-                  Salvar Alterações
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+          </form>
+        </Modal>
       )}
+
+      <ImportarAlunosModal
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+        onImportComplete={() => {
+          setIsImportModalOpen(false);
+          fetchUsuarios();
+        }}
+      />
     </div>
   );
 }

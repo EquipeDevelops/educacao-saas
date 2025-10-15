@@ -10,7 +10,21 @@ import {
 } from "recharts";
 import styles from "./Charts.module.css";
 
-export default function ClassPerformanceChart({ data }) {
+interface PerformanceData {
+  turmaId: string;
+  nomeTurma: string;
+  mediaNota: number;
+}
+
+interface ClassPerformanceChartProps {
+  data: PerformanceData[];
+  onBarClick: (turmaId: string, nomeTurma: string) => void;
+}
+
+export default function ClassPerformanceChart({
+  data,
+  onBarClick,
+}: ClassPerformanceChartProps) {
   if (!data || data.length === 0) {
     return (
       <div className={styles.chartCard}>
@@ -40,12 +54,23 @@ export default function ClassPerformanceChart({ data }) {
             tickLine={false}
             axisLine={false}
           />
-          <YAxis fontSize={12} tickLine={false} axisLine={false} />
+          <YAxis
+            fontSize={12}
+            tickLine={false}
+            axisLine={false}
+            domain={[0, 10]}
+          />
           <Tooltip cursor={{ fill: "rgba(239, 246, 255, 0.5)" }} />
+
           <Bar
             dataKey="mediaNota"
-            fill="var(--cor-primaria)"
+            fill="#8884d8"
             radius={[4, 4, 0, 0]}
+            name="Média da Turma"
+            cursor="pointer"
+            onClick={(data: PerformanceData) =>
+              onBarClick(data.turmaId, data.nomeTurma)
+            }
           />
         </BarChart>
       </ResponsiveContainer>

@@ -1,38 +1,44 @@
-import { MouseEvent, ReactNode, SetStateAction } from 'react';
-import styles from './style.module.css';
+import { MouseEvent, ReactNode } from "react";
+import styles from "./style.module.css";
+import { FiX } from "react-icons/fi";
 
 interface ModalProps {
   children: ReactNode;
-  maxWidth: number;
+  title: string;
   isOpen: boolean;
-  setIsOpen: React.Dispatch<SetStateAction<boolean>>;
-  closeButton?: boolean;
+  onClose: () => void;
+  showCloseButton?: boolean;
 }
 
 export default function Modal({
   children,
   isOpen,
-  closeButton,
-  setIsOpen,
-  maxWidth,
+  onClose,
+  title,
+  showCloseButton = true,
 }: ModalProps) {
-  function closeModal({ currentTarget, target }: MouseEvent) {
-    if (target === currentTarget) {
-      setIsOpen(false);
+  if (!isOpen) {
+    return null;
+  }
+
+  function handleOverlayClick(e: MouseEvent<HTMLDivElement>) {
+    if (e.target === e.currentTarget) {
+      onClose();
     }
   }
 
   return (
-    <div
-      className={styles.modalContainer}
-      style={{ display: isOpen ? 'flex' : 'none' }}
-      onClick={closeModal}
-    >
-      <div
-        className={styles.modalContent}
-        style={{ maxWidth: `${maxWidth}px` }}
-      >
-        {children}
+    <div className={styles.modalContainer} onClick={handleOverlayClick}>
+      <div className={styles.modalContent}>
+        <header className={styles.modalHeader}>
+          <h2>{title}</h2>
+          {showCloseButton && (
+            <button onClick={onClose} className={styles.closeButton}>
+              <FiX />
+            </button>
+          )}
+        </header>
+        <div className={styles.modalBody}>{children}</div>
       </div>
     </div>
   );

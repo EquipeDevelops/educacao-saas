@@ -10,4 +10,9 @@ router.get("/stats", gestorDashboardController.getStats);
 
 router.get("/charts", gestorDashboardController.getChartData);
 
+router.get(
+  "/charts/desempenho-turma/:turmaId",
+  gestorDashboardController.getDesempenhoPorMateria
+);
+
 export const gestorDashboardRoutes = router;

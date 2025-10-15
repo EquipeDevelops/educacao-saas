@@ -1,37 +1,73 @@
-import { Response } from "express";
+import { Request, Response, NextFunction } from "express";
 import { AuthenticatedRequest } from "../../middlewares/auth";
 import { gestorDashboardService } from "./gestorDashboard.service";
+import { PeriodoAvaliacao } from "@prisma/client";
 
 export const gestorDashboardController = {
-  /**
-   * Controller para buscar estatísticas gerais do dashboard.
-   */
-  getStats: async (req: AuthenticatedRequest, res: Response) => {
+  getHorarios: async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const stats = await gestorDashboardService.getStats(req.user);
-      res.status(200).json(stats);
-    } catch (error: any) {
-      console.error("[CONTROLLER ERROR] getStats:", error);
-      res.status(500).json({
-        message: "Erro ao buscar estatísticas do dashboard.",
-        error: error.message,
-      });
+      const authReq = req as AuthenticatedRequest;
+      const horarios = await gestorDashboardService.getHorarios(authReq.user);
+      res.json(horarios);
+    } catch (error) {
+      next(error);
+    }
+  },
+  getEventos: async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const authReq = req as AuthenticatedRequest;
+      const eventos = await gestorDashboardService.getEventos(authReq.user);
+      res.json(eventos);
+    } catch (error) {
+      next(error);
     }
   },
 
-  /**
-   * Controller para buscar dados dos gráficos do dashboard.
-   */
-  getChartData: async (req: AuthenticatedRequest, res: Response) => {
+  getStats: async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const chartData = await gestorDashboardService.getChartData(req.user);
-      res.status(200).json(chartData);
-    } catch (error: any) {
-      console.error("[CONTROLLER ERROR] getChartData:", error);
-      res.status(500).json({
-        message: "Erro ao buscar dados para os gráficos.",
-        error: error.message,
-      });
+      const authReq = req as AuthenticatedRequest;
+      const stats = await gestorDashboardService.getStats(authReq.user);
+      res.json(stats);
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  getChartData: async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const authReq = req as AuthenticatedRequest;
+      const ano = req.query.ano ? parseInt(req.query.ano as string) : undefined;
+      const periodo = req.query.periodo as PeriodoAvaliacao | undefined;
+
+      const chartData = await gestorDashboardService.getChartData(
+        authReq.user,
+        { ano, periodo }
+      );
+      res.json(chartData);
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  getDesempenhoPorMateria: async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const authReq = req as AuthenticatedRequest;
+      const { turmaId } = req.params;
+      const ano = req.query.ano ? parseInt(req.query.ano as string) : undefined;
+      const periodo = req.query.periodo as PeriodoAvaliacao | undefined;
+
+      const chartData = await gestorDashboardService.getDesempenhoPorMateria(
+        authReq.user,
+        turmaId,
+        { ano, periodo }
+      );
+      res.json(chartData);
+    } catch (error) {
+      next(error);
     }
   },
 };

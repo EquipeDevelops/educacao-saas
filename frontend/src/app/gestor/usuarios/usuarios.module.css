@@ -1,18 +1,314 @@
 .container {
-  padding: 1rem 2rem;
+  padding: 2rem;
+  font-family: "Inter", sans-serif;
+  color: var(--cor-texto);
+  background-color: var(--cor-fundo);
+  min-height: 100vh;
 }
 
 .header {
+  display: flex;
+  justify-content: between;
+  align-items: center;
   margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 1rem;
 }
 
 .header h1 {
-  font-size: 1.8rem;
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--cor-texto-destaque);
+  margin: 0;
 }
 
-.header p {
+.actions {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.button,
+.buttonPrimary {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  border: none;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  font-size: 0.9rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.button {
+  background-color: var(--cor-fundo-card);
+  color: var(--cor-primaria);
+  border: 1px solid var(--cor-borda);
+}
+
+.button:hover {
+  background-color: var(--cor-primaria-light);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.buttonPrimary {
+  background: linear-gradient(
+    135deg,
+    var(--cor-primaria),
+    var(--cor-primaria-dark)
+  );
+  color: white;
+}
+
+.buttonPrimary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+}
+
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding: 1rem;
+  background: var(--cor-fundo-card);
+  border-radius: 12px;
+  border: 1px solid var(--cor-borda);
+}
+
+.searchContainer {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background-color: var(--cor-fundo);
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  border: 1px solid var(--cor-borda);
+  width: 100%;
+  max-width: 400px;
+  transition: all 0.3s ease;
+}
+
+.searchContainer:focus-within {
+  border-color: var(--cor-primaria);
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+.searchContainer input {
+  border: none;
+  outline: none;
+  background: transparent;
+  flex: 1;
+  font-size: 0.9rem;
+  color: var(--cor-texto);
+}
+
+.searchContainer svg {
   color: var(--cor-subtexto);
-  margin-top: 0.25rem;
+}
+
+.bulkActionsContainer {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.bulkActionsContainer span {
+  font-weight: 600;
+  color: var(--cor-texto-destaque);
+  font-size: 0.9rem;
+}
+
+.bulkActionsContainer button {
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  border: 1px solid var(--cor-borda);
+  background: var(--cor-fundo);
+  color: var(--cor-texto);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.85rem;
+}
+
+.bulkActionsContainer button:hover {
+  background: var(--cor-primaria-light);
+  border-color: var(--cor-primaria);
+}
+
+.bulkDeleteButton {
+  background: var(--cor-perigo-light) !important;
+  color: var(--cor-perigo-dark) !important;
+  border-color: var(--cor-perigo-light) !important;
+}
+
+.bulkDeleteButton:hover {
+  background: var(--cor-perigo-dark) !important;
+  color: white !important;
+}
+
+.tableContainer {
+  background-color: var(--cor-fundo-card);
+  border-radius: 12px;
+  border: 1px solid var(--cor-borda);
+  overflow: hidden;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  overflow-x: auto;
+}
+
+.userTable {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 800px;
+}
+
+.userTable th,
+.userTable td {
+  padding: 1rem;
+  text-align: left;
+  font-size: 0.9rem;
+  border-bottom: 1px solid var(--cor-borda);
+}
+
+.userTable th {
+  color: var(--cor-subtexto);
+  text-transform: uppercase;
+  font-weight: 600;
+  font-size: 0.75rem;
+  letter-spacing: 0.5px;
+  background-color: var(--cor-fundo-card);
+  position: sticky;
+  top: 0;
+}
+
+.thCheckbox,
+.tdCheckbox {
+  width: 40px;
+  text-align: center;
+}
+
+.userTable tbody tr {
+  transition: all 0.2s ease;
+}
+
+.userTable tbody tr:hover {
+  background-color: var(--cor-primaria-light);
+  transform: scale(1.01);
+}
+
+.userTable tbody tr.selectedRow {
+  background-color: var(--cor-primaria-light);
+  border-left: 3px solid var(--cor-primaria);
+}
+
+.emptyRow {
+  text-align: center;
+  color: var(--cor-subtexto);
+  padding: 3rem;
+  font-style: italic;
+}
+
+.roleTag {
+  padding: 0.375rem 0.75rem;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.professor {
+  background: linear-gradient(135deg, #fff4e0, #ffe4b3);
+  color: #d97706;
+  border: 1px solid #ffd89e;
+}
+
+.aluno {
+  background: linear-gradient(135deg, #e0ffe0, #c2f0c2);
+  color: #059669;
+  border: 1px solid #9ae6b4;
+}
+
+.statusActive,
+.statusInactive {
+  padding: 0.375rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-align: center;
+  display: inline-block;
+  min-width: 80px;
+}
+
+.statusActive {
+  background: linear-gradient(135deg, var(--cor-sucesso-light), #c6f6d5);
+  color: var(--cor-sucesso-dark);
+  border: 1px solid #9ae6b4;
+}
+
+.statusInactive {
+  background: linear-gradient(135deg, #f7fafc, #edf2f7);
+  color: #718096;
+  border: 1px solid #e2e8f0;
+}
+
+.actionButtons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.editButton,
+.deleteButton {
+  padding: 0.5rem;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 1rem;
+  border: none;
+  width: 36px;
+  height: 36px;
+}
+
+.editButton {
+  background: linear-gradient(135deg, var(--cor-primaria-light), #e0f0ff);
+  color: var(--cor-primaria);
+  border: 1px solid var(--cor-primaria-light);
+}
+
+.editButton:hover {
+  background: linear-gradient(
+    135deg,
+    var(--cor-primaria),
+    var(--cor-primaria-dark)
+  );
+  color: white;
+  transform: scale(1.1);
+}
+
+.deleteButton {
+  background: linear-gradient(135deg, var(--cor-perigo-light), #fed7d7);
+  color: var(--cor-perigo);
+  border: 1px solid var(--cor-perigo-light);
+}
+
+.deleteButton:hover {
+  background: linear-gradient(
+    135deg,
+    var(--cor-perigo),
+    var(--cor-perigo-dark)
+  );
+  color: white;
+  transform: scale(1.1);
 }
 
 .feedback {
@@ -20,237 +316,70 @@
   border-radius: 8px;
   margin-bottom: 1.5rem;
   font-weight: 500;
-  text-align: center;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .error {
-  color: var(--cor-perigo-dark);
   background-color: var(--cor-perigo-light);
+  color: var(--cor-perigo-dark);
   border: 1px solid var(--cor-perigo);
 }
 
 .success {
-  color: var(--cor-sucesso-dark);
   background-color: var(--cor-sucesso-light);
+  color: var(--cor-sucesso-dark);
   border: 1px solid var(--cor-sucesso);
 }
 
-.formSection {
-  margin-bottom: 3rem;
-}
-
-.formSection h2 {
-  font-size: 1.4rem;
-  margin-bottom: 1rem;
-  font-weight: 600;
-}
-
-.form {
-  background-color: var(--cor-fundo-card);
-  padding: 2rem;
-  border-radius: 12px;
-  border: 1px solid var(--cor-borda);
-  max-width: 800px;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1.5rem;
-}
-
-.fullWidth {
-  grid-column: 1 / -1;
-}
-
-.label {
+.modalForm {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  font-weight: 500;
-  font-size: 0.9rem;
+  gap: 1rem;
 }
 
-.button {
-  grid-column: 1 / -1;
-  background-color: var(--cor-primaria);
-  justify-self: start;
-  width: auto;
-}
-
-.button:hover {
-  background-color: var(--cor-primaria-hover);
-}
-
-.tableContainer {
-  background-color: var(--cor-fundo-card);
-  border: 1px solid var(--cor-borda);
-  border-radius: 12px;
-  overflow: hidden;
-}
-
-.tableHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1rem 1.5rem;
-  border-bottom: 1px solid var(--cor-borda);
-}
-
-.tableContainer h2 {
-  font-size: 1.4rem;
-  margin: 0;
+.modalForm label {
   font-weight: 600;
+  color: var(--cor-texto-destaque);
+  font-size: 0.9rem;
+  margin-bottom: 0.25rem;
 }
 
-.bulkActionsContainer {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  background-color: var(--cor-primaria-light);
-  padding: 0.5rem 1rem;
+.modalForm input,
+.modalForm select {
+  padding: 0.75rem;
+  border: 1px solid var(--cor-borda);
   border-radius: 8px;
-}
-
-.bulkActionsContainer span {
   font-size: 0.9rem;
-  font-weight: 500;
-  color: var(--cor-primaria-dark);
+  transition: all 0.2s ease;
+  background: var(--cor-fundo);
 }
 
-.bulkActionsContainer button {
-  background: none;
-  border: 1px solid var(--cor-primaria-dark);
-  color: var(--cor-primaria-dark);
-  padding: 0.4rem 0.8rem;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: 600;
+.modalForm input:focus,
+.modalForm select:focus {
+  outline: none;
+  border-color: var(--cor-primaria);
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
 }
 
-.bulkActionsContainer button:hover {
-  background-color: var(--cor-primaria-dark);
-  color: white;
-}
-
-.bulkDeleteButton {
-  border-color: var(--cor-perigo) !important;
-  color: var(--cor-perigo) !important;
-}
-
-.bulkDeleteButton:hover {
-  background-color: var(--cor-perigo) !important;
-  color: white !important;
-}
-
-.table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.th,
-.td {
-  padding: 1rem 1.5rem;
-  text-align: left;
-  border-bottom: 1px solid var(--cor-borda);
-}
-
-.thCheckbox,
-.tdCheckbox {
-  width: 1%;
-  padding-left: 1.5rem;
-}
-
-.th {
+.modalForm input:disabled {
+  background-color: var(--cor-borda);
   color: var(--cor-subtexto);
-  text-transform: uppercase;
-  font-size: 0.75rem;
-  font-weight: 600;
+  cursor: not-allowed;
 }
 
-.table tbody tr:hover {
-  background-color: #f9fafb;
-}
-
-.table tbody tr:last-child .td {
-  border-bottom: none;
-}
-
-.selectedRow {
-  background-color: var(--cor-primaria-light) !important;
-}
-
-.statusActive,
-.statusInactive {
-  padding: 0.2rem 0.6rem;
-  border-radius: 12px;
-  font-size: 0.8rem;
-  font-weight: bold;
-}
-
-.statusActive {
-  color: var(--cor-sucesso-dark);
-  background-color: var(--cor-sucesso-light);
-}
-
-.statusInactive {
-  color: #555;
-  background-color: #eee;
-}
-
-.actions {
+.checkboxContainer {
   display: flex;
+  align-items: center;
   gap: 0.5rem;
+  margin-top: 0.5rem;
 }
 
-.editButton,
-.deleteButton {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0.5rem;
+.checkboxContainer input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
   border-radius: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background-color 0.2s;
-  font-size: 1rem;
-}
-
-.editButton {
-  color: var(--cor-primaria-dark);
-}
-.editButton:hover {
-  background-color: var(--cor-primaria-light);
-}
-
-.deleteButton {
-  color: var(--cor-perigo-dark);
-}
-.deleteButton:hover {
-  background-color: var(--cor-perigo-light);
-}
-
-.modalOverlay {
-  position: fixed;
-  inset: 0;
-  background-color: rgba(0, 0, 0, 0.6);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 100;
-}
-
-.modalContent {
-  background-color: white;
-  padding: 2rem;
-  border-radius: 12px;
-  width: 100%;
-  max-width: 500px;
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-.modalContent h2 {
-  margin: 0;
 }
 
 .modalActions {
@@ -258,6 +387,8 @@
   justify-content: flex-end;
   gap: 1rem;
   margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--cor-borda);
 }
 
 .cancelButton,
@@ -266,16 +397,68 @@
   border-radius: 8px;
   font-weight: 600;
   cursor: pointer;
-  border: 1px solid transparent;
+  border: none;
+  transition: all 0.3s ease;
+  min-width: 100px;
 }
 
 .cancelButton {
-  background-color: #e9ecef;
-  color: var(--cor-texto-destaque);
-  border-color: var(--cor-borda);
+  background-color: var(--cor-fundo);
+  color: var(--cor-texto);
+  border: 1px solid var(--cor-borda);
+}
+
+.cancelButton:hover {
+  background-color: var(--cor-borda);
 }
 
 .saveButton {
-  background-color: var(--cor-primaria);
+  background: linear-gradient(
+    135deg,
+    var(--cor-primaria),
+    var(--cor-primaria-dark)
+  );
   color: white;
+}
+
+.saveButton:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 1rem;
+  }
+
+  .header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .header h1 {
+    font-size: 1.5rem;
+  }
+
+  .toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .searchContainer {
+    max-width: none;
+  }
+
+  .bulkActionsContainer {
+    justify-content: center;
+  }
+
+  .modalActions {
+    flex-direction: column;
+  }
+
+  .cancelButton,
+  .saveButton {
+    width: 100%;
+  }
 }

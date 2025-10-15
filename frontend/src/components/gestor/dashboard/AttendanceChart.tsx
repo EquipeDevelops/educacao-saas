@@ -7,10 +7,42 @@ import {
   Tooltip,
   ResponsiveContainer,
   CartesianGrid,
+  Legend,
 } from "recharts";
 import styles from "./Charts.module.css";
 
-export default function AttendanceChart({ data }) {
+interface AttendanceData {
+  nomeTurma: string;
+  presenca: number;
+  justificadas: number;
+  naoJustificadas: number;
+}
+
+interface AttendanceChartProps {
+  data: AttendanceData[];
+}
+
+const CustomTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className={styles.customTooltip}>
+        <p className={styles.tooltipLabel}>{label}</p>
+        <p style={{ color: "#22c55e" }}>{`Presença: ${payload[0].value.toFixed(
+          1
+        )}%`}</p>
+        <p
+          style={{ color: "#f59e0b" }}
+        >{`Faltas Justificadas: ${payload[1].value.toFixed(1)}%`}</p>
+        <p
+          style={{ color: "#ef4444" }}
+        >{`Faltas Não Justificadas: ${payload[2].value.toFixed(1)}%`}</p>
+      </div>
+    );
+  }
+  return null;
+};
+
+export default function AttendanceChart({ data }: AttendanceChartProps) {
   if (!data || data.length === 0) {
     return (
       <div className={styles.chartCard}>
@@ -32,6 +64,7 @@ export default function AttendanceChart({ data }) {
         <BarChart
           data={data}
           margin={{ top: 5, right: 20, left: -10, bottom: 5 }}
+          stackOffset="expand"
         >
           <CartesianGrid strokeDasharray="3 3" vertical={false} />
           <XAxis
@@ -41,16 +74,29 @@ export default function AttendanceChart({ data }) {
             axisLine={false}
           />
           <YAxis
-            domain={[0, 100]}
-            unit="%"
+            tickFormatter={(value) => `${value * 100}%`}
             fontSize={12}
             tickLine={false}
             axisLine={false}
           />
-          <Tooltip cursor={{ fill: "rgba(209, 250, 229, 0.5)" }} />
+          <Tooltip
+            content={<CustomTooltip />}
+            cursor={{ fill: "rgba(243, 244, 246, 0.5)" }}
+          />
+          <Legend wrapperStyle={{ fontSize: "14px" }} />
+
+          <Bar dataKey="presenca" stackId="a" fill="#22c55e" name="Presença" />
           <Bar
-            dataKey="presencaPercentual"
-            fill="var(--cor-secundaria)"
+            dataKey="justificadas"
+            stackId="a"
+            fill="#f59e0b"
+            name="Faltas Justificadas"
+          />
+          <Bar
+            dataKey="naoJustificadas"
+            stackId="a"
+            fill="#ef4444"
+            name="Faltas Não Justificadas"
             radius={[4, 4, 0, 0]}
           />
         </BarChart>
