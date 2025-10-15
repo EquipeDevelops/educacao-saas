@@ -3,24 +3,33 @@ import { AuthenticatedRequest } from "../../middlewares/auth";
 import { gestorDashboardService } from "./gestorDashboard.service";
 
 export const gestorDashboardController = {
-  getHorarios: async (req: AuthenticatedRequest, res: Response) => {
+  /**
+   * Controller para buscar estatísticas gerais do dashboard.
+   */
+  getStats: async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const horarios = await gestorDashboardService.getHorarios(req.user);
-      res.status(200).json(horarios);
+      const stats = await gestorDashboardService.getStats(req.user);
+      res.status(200).json(stats);
     } catch (error: any) {
+      console.error("[CONTROLLER ERROR] getStats:", error);
       res.status(500).json({
-        message: "Erro ao buscar horários.",
+        message: "Erro ao buscar estatísticas do dashboard.",
         error: error.message,
       });
     }
   },
-  getEventos: async (req: AuthenticatedRequest, res: Response) => {
+
+  /**
+   * Controller para buscar dados dos gráficos do dashboard.
+   */
+  getChartData: async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const eventos = await gestorDashboardService.getEventos(req.user);
-      res.status(200).json(eventos);
+      const chartData = await gestorDashboardService.getChartData(req.user);
+      res.status(200).json(chartData);
     } catch (error: any) {
+      console.error("[CONTROLLER ERROR] getChartData:", error);
       res.status(500).json({
-        message: "Erro ao buscar eventos.",
+        message: "Erro ao buscar dados para os gráficos.",
         error: error.message,
       });
     }

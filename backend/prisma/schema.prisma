@@ -547,6 +547,7 @@ enum TipoEvento {
   RECUPERACAO
   FERIADO
   EVENTO_ESCOLAR
+  PROVA
   OUTRO
 }
 

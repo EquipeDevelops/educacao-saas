@@ -1,29 +1,30 @@
 .calendar {
-  background: #fff;
-  border-radius: 8px;
-  padding: 20px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  border: 1px solid #e2e8f0;
+  background: var(--cor-fundo-card);
+  border-radius: var(--raio-borda-lg);
+  padding: var(--esp-6);
+  box-shadow: var(--sombra-md);
+  border: 1px solid var(--cor-borda);
 }
 
 .header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: var(--esp-6);
 }
 
 .header h2 {
   margin: 0;
   font-size: 1.25rem;
-  font-weight: 600;
+  font-weight: var(--peso-fonte-bold);
   text-transform: capitalize;
+  color: var(--cor-texto-principal);
 }
 
 .header button {
   background: none;
   border: 1px solid transparent;
-  border-radius: 50%;
+  border-radius: var(--raio-borda-full);
   width: 36px;
   height: 36px;
   display: flex;
@@ -31,33 +32,33 @@
   justify-content: center;
   font-size: 1.5rem;
   cursor: pointer;
-  color: #4a5568;
+  color: var(--cor-texto-secundario);
   transition: background-color 0.2s, border-color 0.2s;
 }
 .header button:hover {
-  background-color: #f7fafc;
-  border-color: #e2e8f0;
+  background-color: var(--cor-primaria-light);
+  color: var(--cor-primaria);
 }
 
 .daysOfWeek,
 .grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 5px;
+  gap: var(--esp-2);
 }
 
 .daysOfWeek div {
   text-align: center;
-  font-weight: bold;
-  color: #718096;
+  font-weight: var(--peso-fonte-bold);
+  color: var(--cor-texto-secundario);
   font-size: 0.8rem;
-  padding-bottom: 8px;
+  padding-bottom: var(--esp-2);
 }
 
 .day {
-  border: 1px solid #edf2f7;
-  border-radius: 6px;
-  padding: 8px;
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio-borda-md);
+  padding: var(--esp-2);
   min-height: 120px;
   cursor: pointer;
   transition: background-color 0.2s, box-shadow 0.2s;
@@ -66,45 +67,45 @@
 }
 
 .day:hover {
-  background-color: #f7fafc;
-  box-shadow: 0 0 0 2px #cbd5e0;
+  background-color: #fcfdff;
+  box-shadow: 0 0 0 2px var(--cor-primaria);
+  z-index: 10;
 }
 
 .day span {
-  font-weight: 500;
+  font-weight: var(--peso-fonte-medio);
   align-self: flex-start;
-  margin-bottom: 4px;
+  margin-bottom: var(--esp-2);
 }
 
 .otherMonth {
-  color: #a0aec0;
-  background-color: #fdfdff;
+  color: #cccccc;
+  background-color: #fcfcfc;
 }
 
 .today span {
-  background-color: #4299e1;
-  color: #fff;
-  border-radius: 50%;
-  width: 24px;
-  height: 24px;
+  background-color: var(--cor-primaria);
+  color: var(--cor-texto-branco);
+  border-radius: var(--raio-borda-full);
+  width: 28px;
+  height: 28px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-weight: bold;
+  font-weight: var(--peso-fonte-bold);
 }
 
 .events {
-  margin-top: 5px;
+  margin-top: var(--esp-1);
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--esp-1);
 }
 
 .event {
   font-size: 0.8rem;
-  padding: 4px 6px;
-  border-radius: 4px;
-  margin-bottom: 2px;
+  padding: var(--esp-1) var(--esp-2);
+  border-radius: var(--raio-borda-sm);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -113,19 +114,20 @@
 }
 .event:hover {
   transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--sombra-md);
+  z-index: 20;
 }
 
 .aula {
-  background-color: #e0e7ff;
-  color: #4338ca;
-  border-left: 3px solid #6366f1;
+  background-color: var(--cor-primaria-light);
+  color: var(--cor-primaria-hover);
+  border-left: 3px solid var(--cor-primaria);
 }
 .PROVA,
 .RECUPERACAO {
-  background-color: #fee2e2;
-  color: #b91c1c;
-  border-left: 3px solid #ef4444;
+  background-color: var(--cor-perigo-light);
+  color: var(--cor-perigo);
+  border-left: 3px solid var(--cor-perigo);
 }
 .REUNIAO {
   background-color: #f3e8ff;

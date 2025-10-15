@@ -6,7 +6,8 @@ const router = Router();
 
 router.use(protect, authorize("GESTOR"));
 
-router.get("/horarios", gestorDashboardController.getHorarios);
-router.get("/eventos", gestorDashboardController.getEventos);
+router.get("/stats", gestorDashboardController.getStats);
+
+router.get("/charts", gestorDashboardController.getChartData);
 
 export const gestorDashboardRoutes = router;

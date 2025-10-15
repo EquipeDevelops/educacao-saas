@@ -12,7 +12,6 @@ import { materiaRoutes } from "../modules/materia/materia.routes";
 import { professorRoutes } from "../modules/professor/professor.routes";
 import { alunoRoutes } from "../modules/aluno/aluno.routes";
 import { superAdminRoutes } from "../modules/superadmin/superadmin.routes";
-import { gestorDashboardRoutes } from "@/modules/gestorDashboard/gestorDashboard.routes";
 import { componenteCurricularRoutes } from "../modules/componenteCurricular/componenteCurricular.routes";
 import { horarioRoutes } from "../modules/horarioAula/horarioAula.routes";
 import { conquistasPorUnidadeRoutes } from "../modules/conquistasPorUnidade/conquistasPorUnidade.routes";
@@ -27,6 +26,7 @@ import { respostaRoutes } from "../modules/respostaSubmissao/respostaSubmissao.r
 import { avaliacaoRoutes } from "../modules/avaliacaoParcial/avaliacaoParcial.routes";
 import { registroFaltaRoutes } from "../modules/registroFalta/registroFalta.routes";
 import { professorDashboardRoutes } from "../modules/professorDashboard/professorDashboard.routes";
+import { gestorDashboardRoutes } from "../modules/gestorDashboard/gestorDashboard.routes";
 
 // Importação das rotas de Engajamento e Comunicação
 import { conquistaRoutes } from "../modules/conquista/conquista.routes";

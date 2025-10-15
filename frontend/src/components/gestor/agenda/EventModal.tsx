@@ -30,32 +30,53 @@ const TIPOS_DE_EVENTO = [
   "OUTRO",
 ];
 
+const getInitialFormData = (startDate = new Date()) => {
+  const endDate = new Date(startDate.getTime() + 60 * 60 * 1000);
+  return {
+    id: null,
+    titulo: "",
+    tipo: "PROVA",
+    turmaId: "",
+    data_inicio: startDate.toISOString().slice(0, 16),
+    data_fim: endDate.toISOString().slice(0, 16),
+    descricao: "",
+    dia_semana: DIAS_DA_SEMANA[startDate.getDay() - 1] || "SEGUNDA",
+    hora_inicio: startDate.toTimeString().slice(0, 5),
+    hora_fim: endDate.toTimeString().slice(0, 5),
+    componenteCurricularId: "",
+    local: "",
+  };
+};
+
 export default function EventModal({ evento, turmas, onClose, onSave }) {
   const [activeTab, setActiveTab] = useState("evento");
-  const [formData, setFormData] = useState<any>({});
+  const [formData, setFormData] = useState<any>(getInitialFormData());
   const [componentes, setComponentes] = useState<Componente[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const inicio = evento?.start ? new Date(evento.start) : new Date();
-    const fim = evento?.end
-      ? new Date(evento.end)
-      : new Date(inicio.getTime() + 60 * 60 * 1000);
+    if (evento) {
+      const isEditing = !!evento.id && evento.raw?.type !== "aula";
+      const startDate = evento.start ? new Date(evento.start) : new Date();
+      const endDate = evento.end
+        ? new Date(evento.end)
+        : new Date(startDate.getTime() + 60 * 60 * 1000);
 
-    setFormData({
-      id: evento?.id || null,
-      titulo: evento?.title || "",
-      tipo: evento?.raw?.tipo || "PROVA",
-      turmaId: evento?.raw?.turmaId || "",
-      data_inicio: inicio.toISOString().slice(0, 16),
-      data_fim: fim.toISOString().slice(0, 16),
-      descricao: evento?.raw?.descricao || "",
-      dia_semana: DIAS_DA_SEMANA[inicio.getDay() - 1] || "SEGUNDA",
-      hora_inicio: inicio.toTimeString().slice(0, 5),
-      hora_fim: fim.toTimeString().slice(0, 5),
-      componenteCurricularId: "",
-      local: "",
-    });
+      if (isEditing) {
+        setFormData({
+          id: evento.id,
+          titulo: evento.title || "",
+          tipo: evento.raw?.tipo || "PROVA",
+          turmaId: evento.raw?.turmaId || "",
+          data_inicio: startDate.toISOString().slice(0, 16),
+          data_fim: endDate.toISOString().slice(0, 16),
+          descricao: evento.raw?.descricao || "",
+          ...getInitialFormData(startDate),
+        });
+      } else {
+        setFormData(getInitialFormData(startDate));
+      }
+    }
   }, [evento]);
 
   useEffect(() => {
@@ -67,13 +88,11 @@ export default function EventModal({ evento, turmas, onClose, onSave }) {
           if (res.data.length > 0) {
             setFormData((prev) => ({
               ...prev,
-              componenteCurricularId: res.data[0].id,
+              componenteCurricularId:
+                prev.componenteCurricularId || res.data[0].id,
             }));
           } else {
-            setFormData((prev) => ({
-              ...prev,
-              componenteCurricularId: "",
-            }));
+            setFormData((prev) => ({ ...prev, componenteCurricularId: "" }));
           }
         });
     } else {
@@ -89,24 +108,27 @@ export default function EventModal({ evento, turmas, onClose, onSave }) {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError(null);
-    let payload = {};
-    let promise;
 
     try {
       if (activeTab === "evento") {
-        payload = {
+        const payload: any = {
           titulo: formData.titulo,
           descricao: formData.descricao,
           data_inicio: new Date(formData.data_inicio).toISOString(),
           data_fim: new Date(formData.data_fim).toISOString(),
           tipo: formData.tipo,
-          turmaId: formData.turmaId || null,
         };
-        promise = formData.id
+        if (formData.turmaId) {
+          payload.turmaId = formData.turmaId;
+        }
+
+        const promise = formData.id
           ? api.put(`/eventos/${formData.id}`, payload)
           : api.post("/eventos", payload);
+
+        await promise;
       } else {
-        payload = {
+        const payload = {
           dia_semana: formData.dia_semana,
           hora_inicio: formData.hora_inicio,
           hora_fim: formData.hora_fim,
@@ -114,13 +136,16 @@ export default function EventModal({ evento, turmas, onClose, onSave }) {
           turmaId: formData.turmaId,
           componenteCurricularId: formData.componenteCurricularId,
         };
-        promise = api.post("/horarios", payload);
+        await api.post("/horarios", payload);
       }
 
-      await promise;
       onSave();
     } catch (err: any) {
-      setError(err.response?.data?.message || `Erro ao salvar ${activeTab}.`);
+      const errorMessage =
+        err.response?.data?.errors?.[0]?.message ||
+        err.response?.data?.message ||
+        `Erro ao salvar ${activeTab}.`;
+      setError(errorMessage);
     }
   };
 
