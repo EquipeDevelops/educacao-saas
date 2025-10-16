@@ -1,0 +1,72 @@
+.container {
+  margin-top: 3rem;
+}
+.container h2 {
+  font-size: 1.2rem;
+}
+.container p {
+  color: var(--cor-subtexto);
+  margin-top: 0;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+.dayColumn {
+  background-color: var(--cor-fundo-card);
+  border-radius: 8px;
+  border: 1px solid var(--cor-borda);
+}
+.dayHeader {
+  text-align: center;
+  padding: 0.75rem;
+  border-bottom: 1px solid var(--cor-borda);
+  font-weight: 500;
+  text-transform: capitalize;
+}
+.dayHeader span {
+  display: block;
+  font-size: 1.2rem;
+  margin-top: 0.25rem;
+}
+.eventsList {
+  padding: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.eventoCard {
+  padding: 0.75rem;
+  border-radius: 6px;
+}
+.eventoTitle {
+  font-size: 0.9rem;
+  font-weight: 500;
+  margin: 0;
+}
+.eventoCard small {
+  font-size: 0.8rem;
+  margin: 2px 0;
+  display: block;
+}
+.eventoCard span {
+  font-size: 0.75rem;
+  font-weight: bold;
+}
+
+.aula {
+  background-color: #dbeafe;
+  color: #1e40af;
+}
+.prova {
+  background-color: #fee2e2;
+  color: #7f1d1d;
+}
+.revisao {
+  background-color: #f3e8ff;
+  color: #581c87;
+}

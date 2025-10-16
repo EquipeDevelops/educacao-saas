@@ -1,0 +1,110 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1010;
+}
+
+.modal {
+  background-color: white;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 500px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--cor-borda);
+}
+.header h2 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+.closeButton {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: var(--cor-subtexto);
+  display: flex;
+}
+
+.content {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.infoRow {
+  display: flex;
+  gap: 1rem;
+}
+
+.infoIcon {
+  color: var(--cor-primaria);
+  flex-shrink: 0;
+  margin-top: 4px;
+}
+
+.infoLabel {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--cor-subtexto);
+  display: block;
+}
+
+.infoValue {
+  margin: 0.25rem 0 0;
+  color: var(--cor-texto-destaque);
+  line-height: 1.5;
+}
+
+.footer {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid var(--cor-borda);
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+}
+
+.editButton,
+.deleteButton {
+  padding: 0.6rem 1.2rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid var(--cor-borda);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s;
+}
+
+.editButton {
+  background-color: var(--cor-primaria);
+  color: white;
+  border-color: var(--cor-primaria);
+}
+.editButton:hover {
+  background-color: var(--cor-primaria-hover);
+}
+
+.deleteButton {
+  background-color: transparent;
+  color: var(--cor-perigo);
+  border: none;
+  margin-right: auto;
+}
+
+.deleteButton:hover {
+  background-color: var(--cor-perigo-light);
+  color: var(--cor-perigo-dark);
+}

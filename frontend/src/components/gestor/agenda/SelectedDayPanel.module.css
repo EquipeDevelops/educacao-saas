@@ -1,0 +1,144 @@
+.panel {
+  background-color: #fdfdff;
+  border-left: 1px solid var(--cor-borda);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.header {
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--cor-borda);
+  position: relative;
+}
+
+.weekday {
+  color: var(--cor-subtexto);
+  font-weight: 500;
+  text-transform: capitalize;
+  margin: 0;
+}
+
+.dateTitle {
+  font-size: 1.5rem;
+  margin: 0.25rem 0 0;
+  color: var(--cor-texto-destaque);
+}
+
+.closeButton {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: none;
+  border: none;
+  font-size: 1.75rem;
+  cursor: pointer;
+  color: var(--cor-subtexto);
+  transition: color 0.2s;
+}
+.closeButton:hover {
+  color: var(--cor-texto-destaque);
+}
+
+.content {
+  padding: 1.5rem;
+  overflow-y: auto;
+  flex-grow: 1;
+}
+
+.eventGroup h4 {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  color: var(--cor-subtexto);
+  margin: 0 0 1rem 0;
+  letter-spacing: 0.5px;
+}
+
+.eventGroup:not(:last-child) {
+  margin-bottom: 2rem;
+}
+
+.eventItem {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem;
+  border-radius: 8px;
+  margin-bottom: 0.5rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  border-left-width: 4px;
+  border-left-style: solid;
+}
+
+.eventItem:hover {
+  background-color: var(--cor-fundo);
+}
+
+.eventIcon {
+  color: currentColor;
+}
+
+.eventInfo {
+  flex-grow: 1;
+  overflow: hidden;
+}
+
+.eventTitle {
+  font-weight: 600;
+  margin: 0;
+  color: var(--cor-texto-destaque);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.eventTime {
+  font-size: 0.8rem;
+  color: var(--cor-subtexto);
+  margin-top: 2px;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.noEvents {
+  text-align: center;
+  color: var(--cor-subtexto);
+  padding: 3rem 0;
+}
+.noEvents p {
+  margin-top: 1rem;
+}
+
+.AULA {
+  background-color: #e3f2fd;
+  color: #1565c0;
+  border-left-color: #2196f3;
+}
+.PROVA {
+  background-color: #fce4ec;
+  color: #c2185b;
+  border-left-color: #e91e63;
+}
+.RECUPERACAO {
+  background-color: #f3e5f5;
+  color: #7b1fa2;
+  border-left-color: #9c27b0;
+}
+.REUNIAO {
+  background-color: #fff3e0;
+  color: #e65100;
+  border-left-color: #ff9800;
+}
+.EVENTO_ESCOLAR {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+  border-left-color: #4caf50;
+}
+.FERIADO,
+.OUTRO {
+  background-color: #f5f5f5;
+  color: #616161;
+  border-left-color: #9e9e9e;
+}

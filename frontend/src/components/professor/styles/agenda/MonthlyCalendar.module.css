@@ -1,0 +1,142 @@
+.calendarContainer {
+  background-color: var(--cor-fundo-card);
+  border: 1px solid var(--cor-borda);
+  border-radius: 12px;
+  padding: 1.5rem;
+}
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+.header h3 {
+  text-transform: capitalize;
+  margin: 0;
+}
+.header button {
+  background: none;
+  border: 1px solid var(--cor-borda);
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  cursor: pointer;
+  margin-left: 0.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.header button:hover {
+  background-color: #f0f0f0;
+}
+
+.daysOfWeek,
+.grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  text-align: center;
+}
+.daysOfWeek {
+  font-size: 0.8rem;
+  color: var(--cor-subtexto);
+  text-transform: uppercase;
+  margin-bottom: 0.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--cor-borda);
+}
+
+.grid {
+  gap: 4px;
+}
+.day {
+  padding: 0.5rem;
+  border-radius: 8px;
+  cursor: pointer;
+  min-height: 80px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: background-color 0.2s;
+}
+.day:hover {
+  background-color: #f0f0f0;
+}
+.day span {
+  font-weight: 500;
+}
+
+.today span {
+  background-color: var(--cor-primaria-light);
+  color: var(--cor-primaria-dark);
+  font-weight: bold;
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.selected {
+  background-color: var(--cor-primaria-dark) !important;
+  color: white;
+}
+.selected span {
+  color: white !important;
+  background-color: transparent !important;
+}
+
+.dots {
+  display: flex;
+  justify-content: center;
+  gap: 3px;
+  margin-top: 5px;
+  height: 6px;
+}
+.eventDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--cor-borda);
+  font-size: 0.8rem;
+}
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.aulas,
+.aula {
+  background-color: #60a5fa;
+}
+.provas,
+.prova,
+.trabalho {
+  background-color: #f87171;
+}
+.recuperacoes,
+.recuperacao {
+  background-color: #facc15;
+}
+.reunioes,
+.reuniao,
+.revisao,
+.evento_escolar {
+  background-color: #a78bfa;
+}
+.default {
+  background-color: var(--cor-cinza);
+}

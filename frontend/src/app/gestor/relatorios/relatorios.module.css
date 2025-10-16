@@ -1,0 +1,215 @@
+.container {
+  padding: var(--esp-8);
+}
+
+.header {
+  margin-bottom: var(--esp-8);
+}
+
+.header h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--cor-texto-principal);
+  margin: 0;
+}
+.header p {
+  font-size: 1rem;
+  color: var(--cor-texto-secundario);
+  margin-top: var(--esp-2);
+}
+
+.tabs {
+  display: flex;
+  border-bottom: 2px solid var(--cor-borda);
+  margin-bottom: var(--esp-8);
+}
+
+.tab,
+.tabAtiva {
+  padding: var(--esp-3) var(--esp-6);
+  border: none;
+  background-color: transparent;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--cor-texto-secundario);
+  margin-bottom: -2px;
+  border-bottom: 2px solid transparent;
+}
+
+.tab:hover {
+  color: var(--cor-texto-principal);
+}
+
+.tabAtiva {
+  color: var(--cor-primaria);
+  border-bottom: 2px solid var(--cor-primaria);
+}
+
+.filterCard {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--esp-6);
+  padding: var(--esp-6);
+  background-color: var(--cor-fundo-card);
+  border-radius: var(--raio-borda-lg);
+  margin-bottom: var(--esp-8);
+  border: 1px solid var(--cor-borda);
+}
+
+.filterGroup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--esp-2);
+}
+.filterGroup label {
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+.filterGroup select,
+.filterGroup input {
+  padding: var(--esp-2) var(--esp-3);
+  border-radius: var(--raio-borda-md);
+  border: 1px solid var(--cor-borda);
+  background-color: var(--cor-fundo);
+  min-width: 200px;
+}
+
+.filterCard button {
+  padding: var(--esp-2) var(--esp-6);
+  background-color: var(--cor-primaria);
+  color: white;
+  border: none;
+  border-radius: var(--raio-borda-md);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.filterCard button:hover {
+  background-color: var(--cor-primaria-hover);
+}
+.filterCard button:disabled {
+  background-color: var(--cor-desabilitado);
+  cursor: not-allowed;
+}
+
+.resultsContainer {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+  gap: var(--esp-6);
+}
+.boletimCard {
+  background-color: var(--cor-fundo-card);
+  border-radius: var(--raio-borda-lg);
+  border: 1px solid var(--cor-borda);
+  overflow: hidden;
+}
+.boletimHeader {
+  padding: var(--esp-4);
+  background-color: var(--cor-fundo-hover);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.boletimHeader h2 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+.boletimHeader span {
+  font-size: 0.875rem;
+  color: var(--cor-texto-secundario);
+  font-weight: 500;
+}
+.boletimTable {
+  width: 100%;
+  border-collapse: collapse;
+}
+.boletimTable th,
+.boletimTable td {
+  padding: var(--esp-3) var(--esp-4);
+  text-align: left;
+  border-bottom: 1px solid var(--cor-borda);
+}
+.boletimTable th {
+  font-weight: 600;
+  color: var(--cor-texto-secundario);
+}
+.boletimTable tr:last-child td {
+  border-bottom: none;
+}
+
+.tableContainer {
+  background-color: var(--cor-fundo-card);
+  border-radius: var(--raio-borda-lg);
+  padding: var(--esp-6);
+  border: 1px solid var(--cor-borda);
+}
+
+.tableHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--esp-6);
+}
+
+.tableHeader h3 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.exportButton {
+  display: flex;
+  align-items: center;
+  gap: var(--esp-2);
+  padding: var(--esp-2) var(--esp-4);
+  background-color: var(--cor-sucesso);
+  color: white;
+  border: none;
+  border-radius: var(--raio-borda-md);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.exportButton:hover {
+  background-color: #15803d;
+}
+
+.frequenciaTable {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.frequenciaTable th,
+.frequenciaTable td {
+  padding: var(--esp-4);
+  text-align: left;
+  border-bottom: 1px solid var(--cor-borda);
+}
+
+.frequenciaTable th {
+  background-color: var(--cor-fundo-hover);
+}
+
+.frequenciaTable tbody tr:hover {
+  background-color: var(--cor-fundo-hover);
+}
+
+.notaBaixa {
+  font-weight: 700;
+  color: var(--cor-erro);
+}
+.notaAlta {
+  font-weight: 700;
+  color: var(--cor-sucesso);
+}
+
+.emptyState {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: var(--esp-10);
+  background-color: var(--cor-fundo-card);
+  border-radius: var(--raio-borda-lg);
+  color: var(--cor-texto-secundario);
+}

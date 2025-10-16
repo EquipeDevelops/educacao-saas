@@ -1,0 +1,19 @@
+.container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--cor-perido-light);
+  width: 100%;
+  min-height: 50px;
+  padding: 20px 10px;
+  border-radius: 10px;
+  gap: 10px;
+  & svg {
+    color: var(--cor-perigo);
+    font-size: 1.3rem;
+    font-weight: 500;
+  }
+  & p {
+    color: var(--cor-perigo);
+  }
+}

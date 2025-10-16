@@ -1,0 +1,141 @@
+.container {
+  padding: 1.5rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.header {
+  margin-bottom: 2.5rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--cor-borda);
+}
+.header h1 {
+  font-size: 2rem;
+  color: var(--cor-texto-destaque);
+}
+.header p {
+  color: var(--cor-subtexto);
+  margin-top: 0.5rem;
+  font-size: 1.1rem;
+}
+
+.error {
+  color: var(--cor-perigo-dark);
+  font-weight: 500;
+}
+
+.gridMaterias {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+}
+
+.materiaCard {
+  background-color: var(--cor-fundo-card);
+  border: 1px solid var(--cor-borda);
+  border-radius: 12px;
+  overflow: hidden;
+  transition: all 0.2s ease-in-out;
+}
+.materiaCard:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
+}
+
+.materiaHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  background-color: #fcfcfc;
+  border-bottom: 1px solid var(--cor-borda);
+}
+.materiaHeader h2 {
+  font-size: 1.3rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.mediaGeral {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  color: white;
+}
+.mediaGeral span {
+  font-size: 0.8rem;
+  opacity: 0.9;
+}
+.mediaGeral strong {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.periodosContainer {
+  padding: 1.5rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+}
+
+.periodo {
+  background-color: #f9f9f9;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.periodoTitle {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 1rem;
+  font-weight: 600;
+  padding-bottom: 0.75rem;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid var(--cor-borda);
+  gap: 0.5rem;
+}
+
+.mediaPeriodo {
+  font-size: 0.9rem;
+  font-weight: 700;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  color: white;
+}
+
+.avaliacoesList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.avaliacoesList li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.9rem;
+  text-transform: capitalize;
+}
+.avaliacoesList li span {
+  color: var(--cor-subtexto);
+}
+.avaliacoesList li strong {
+  font-weight: 600;
+}
+
+.mediaAlta {
+  background-color: var(--cor-sucesso-dark);
+}
+.mediaMedia {
+  background-color: #f59e0b;
+}
+.mediaBaixa {
+  background-color: var(--cor-perigo-dark);
+}

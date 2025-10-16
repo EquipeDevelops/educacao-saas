@@ -1,0 +1,306 @@
+.container {
+  padding: 2rem;
+  font-family: "Inter", system-ui, sans-serif;
+  color: var(--cor-texto);
+  background-color: #f9fafb;
+  min-height: 100vh;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.header h1 {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--cor-texto-destaque);
+  margin: 0;
+}
+
+.actions {
+  display: flex;
+  gap: 1rem;
+}
+
+.button,
+.buttonPrimary {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.7rem 1.4rem;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s ease;
+  font-size: 0.9rem;
+}
+
+.button {
+  background-color: var(--cor-fundo-card);
+  color: var(--cor-texto-destaque);
+  border: 1px solid var(--cor-borda);
+}
+
+.button:hover {
+  background-color: #f0f0f0;
+  border-color: #ccc;
+  transform: translateY(-1px);
+}
+
+.buttonPrimary {
+  background: linear-gradient(
+    145deg,
+    var(--cor-primaria),
+    var(--cor-primaria-dark)
+  );
+  color: white;
+  box-shadow: 0 2px 5px rgba(0, 83, 224, 0.2);
+}
+
+.buttonPrimary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0, 83, 224, 0.3);
+}
+
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+}
+
+.searchContainer {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background-color: var(--cor-fundo-card);
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  border: 1px solid var(--cor-borda);
+  width: 100%;
+  max-width: 400px;
+}
+
+.searchContainer:focus-within {
+  border-color: var(--cor-primaria);
+  box-shadow: 0 0 0 3px rgba(0, 112, 243, 0.1);
+}
+
+.searchContainer input {
+  border: none;
+  outline: none;
+  background: transparent;
+  flex: 1;
+}
+
+.filters {
+  display: flex;
+  gap: 1rem;
+}
+.filters select {
+  padding: 0.75rem;
+  border-radius: 8px;
+  border: 1px solid var(--cor-borda);
+  background-color: var(--cor-fundo-card);
+}
+
+.bulkActionsContainer {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background-color: var(--cor-primaria-light);
+  padding: 0.75rem 1.5rem;
+  border-radius: 12px;
+  margin-bottom: 1.5rem;
+  width: 100%;
+}
+
+.bulkActionsContainer span {
+  font-weight: 600;
+  color: var(--cor-primaria-dark);
+}
+
+.bulkActionsContainer button {
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  border: 1px solid var(--cor-primaria);
+  background: white;
+  color: var(--cor-primaria-dark);
+  cursor: pointer;
+}
+
+.bulkDeleteButton {
+  background: var(--cor-perigo-light) !important;
+  color: var(--cor-perigo-dark) !important;
+  border-color: var(--cor-perigo-light) !important;
+}
+
+.tableContainer {
+  background-color: var(--cor-fundo-card);
+  border-radius: 12px;
+  border: 1px solid var(--cor-borda);
+  overflow: hidden;
+}
+
+.userTable {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.userTable th,
+.userTable td {
+  padding: 1rem 1.5rem;
+  text-align: left;
+  border-bottom: 1px solid var(--cor-borda);
+}
+
+.userTable th {
+  background-color: #f9fafb;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  color: var(--cor-subtexto);
+}
+.userTable tbody tr:last-child td {
+  border-bottom: none;
+}
+.userTable tbody tr:hover {
+  background-color: #f5f5f5;
+}
+.userTable tbody tr.selectedRow {
+  background-color: var(--cor-primaria-light);
+}
+
+.thCheckbox,
+.tdCheckbox {
+  width: 1%;
+}
+
+.roleTag {
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+}
+.professor {
+  background: #fff4e0;
+  color: #d97706;
+}
+.aluno {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.statusActive,
+.statusInactive {
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  display: inline-block;
+}
+.statusActive {
+  background-color: var(--cor-sucesso-light);
+  color: var(--cor-sucesso-dark);
+}
+.statusInactive {
+  background-color: #e9ecef;
+  color: #495057;
+}
+
+.actionButtons {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.editButton,
+.deleteButton {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #a5a5a5;
+  color: #064ad1;
+  border: none;
+  transition: all 0.2s ease;
+}
+
+.editButton:hover {
+  background-color: var(--cor-primaria-light);
+  color: var(--cor-primaria-dark);
+}
+
+.deleteButton:hover {
+  background-color: var(--cor-perigo-light);
+  color: var(--cor-perigo-dark);
+}
+
+.editButton .icon,
+.deleteButton .icon {
+  width: 18px;
+  height: 18px;
+  color: black;
+  background-color: black;
+}
+
+.emptyRow td {
+  text-align: center;
+  padding: 3rem;
+  color: var(--cor-subtexto);
+}
+
+.modalForm {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+.label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.label input,
+.label select {
+  padding: 0.75rem;
+  border: 1px solid var(--cor-borda);
+  border-radius: 8px;
+}
+.modalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+.cancelButton,
+.saveButton {
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+}
+.cancelButton {
+  background-color: #e9ecef;
+  color: var(--cor-texto);
+}
+.saveButton {
+  background-color: var(--cor-primaria);
+  color: white;
+}
+.checkboxContainer {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}

@@ -1,0 +1,96 @@
+.widget {
+  background-color: var(--cor-fundo-card);
+  padding: 1.5rem;
+  border-radius: 12px;
+  border: 1px solid var(--cor-borda);
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.title {
+  font-size: 1.2rem;
+  margin: 0;
+  color: var(--cor-texto-destaque);
+}
+
+.geralSection {
+  background-color: var(--cor-primaria-light);
+  text-align: center;
+  padding: 1.5rem;
+  border-radius: 8px;
+}
+
+.geralSection p {
+  margin: 0;
+  font-weight: 500;
+  color: var(--cor-primaria-dark);
+}
+
+.geralMedia {
+  font-size: 2.5rem;
+  color: var(--cor-primaria-dark);
+  margin: 0.5rem 0;
+}
+
+.geralSection span {
+  font-size: 0.9rem;
+  color: var(--cor-primaria);
+}
+
+.porTurmaSection p {
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: var(--cor-texto-destaque);
+}
+
+.turmaRow {
+  display: grid;
+  grid-template-columns: 1fr 2fr auto;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.9rem;
+  color: var(--cor-subtexto);
+}
+
+.turmaMedia {
+  font-weight: bold;
+  color: var(--cor-texto-destaque);
+}
+
+.progressBarContainer {
+  width: 100%;
+  height: 8px;
+  background-color: #e9ecef;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progressBar {
+  height: 100%;
+  border-radius: 4px;
+}
+
+.taxaConclusao {
+  text-align: center;
+  border-top: 1px solid var(--cor-borda);
+  padding-top: 1.5rem;
+}
+
+.taxaConclusao p {
+  margin: 0;
+  font-weight: 500;
+  color: var(--cor-texto-destaque);
+}
+
+.taxaConclusao h3 {
+  font-size: 1.8rem;
+  color: var(--cor-primaria-dark);
+  margin: 0.5rem 0;
+}
+
+.taxaConclusao span {
+  font-size: 0.9rem;
+  color: var(--cor-subtexto);
+}

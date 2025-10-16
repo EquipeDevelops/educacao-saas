@@ -1,0 +1,115 @@
+.panel {
+  background-color: var(--cor-primaria-dark);
+  color: white;
+  padding: 1.5rem;
+  border-radius: 12px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+.panel h4 {
+  color: #a5b4fc;
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+.dateString {
+  color: white;
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 500;
+}
+.dayOfWeek {
+  font-size: 1rem;
+  font-weight: normal;
+  color: #c7d2fe;
+  margin: 0;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.content {
+  flex-grow: 1;
+  margin-top: 1rem;
+}
+
+.noEvents {
+  text-align: center;
+  padding: 3rem 0;
+  color: #a5b4fc;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+.noEvents svg {
+  font-size: 2.5rem;
+}
+.noEvents p {
+  color: #a5b4fc;
+  font-size: 1rem;
+  margin-top: 0.5rem;
+}
+
+.eventsList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.eventItem {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.iconWrapper {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+
+.eventInfo {
+  display: flex;
+  flex-direction: column;
+}
+
+.eventTitle {
+  font-weight: 500;
+}
+
+.eventInfo small {
+  font-size: 0.8rem;
+  color: #c7d2fe;
+}
+
+/* Cores dos ícones */
+.aula {
+  background-color: #60a5fa;
+  color: white;
+}
+.prova {
+  background-color: #f87171;
+  color: white;
+}
+.recuperacao {
+  background-color: #facc15;
+  color: white;
+}
+.reuniao {
+  background-color: #a78bfa;
+  color: white;
+}
+.default {
+  background-color: var(--cor-cinza);
+  color: white;
+}

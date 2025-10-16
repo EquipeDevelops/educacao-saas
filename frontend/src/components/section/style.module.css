@@ -1,0 +1,11 @@
+.container {
+  display: flex;
+  justify-content: center;
+  padding: 2rem;
+  width: 100%;
+  & .childrenContainer {
+    width: 100%;
+    max-width: 1400px;
+    box-sizing: border-box; 
+  }
+}

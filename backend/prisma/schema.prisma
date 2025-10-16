@@ -1,0 +1,610 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+enum PeriodoAvaliacao {
+  PRIMEIRO_BIMESTRE
+  SEGUNDO_BIMESTRE
+  TERCEIRO_BIMESTRE
+  QUARTO_BIMESTRE
+  RECUPERACAO_FINAL
+}
+
+enum TipoDeAvaliacao {
+  PROVA
+  TRABALHO
+  ATIVIDADE_EM_SALA
+  PARTICIPACAO
+  OUTRO
+}
+
+enum PapelUsuario {
+  ADMINISTRADOR
+  GESTOR
+  PROFESSOR
+  ALUNO
+}
+
+model Instituicao {
+  id                 String               @id @default(auto()) @map("_id") @db.ObjectId
+  nome               String
+  cidade             String
+  estado             String
+  cep                String
+  logradouro         String?
+  bairro             String?
+  metadados          Json?
+  criado_em          DateTime             @default(now())
+  atualizado_em      DateTime             @updatedAt
+  unidades_escolares Unidades_Escolares[]
+  usuarios           Usuarios[]
+  conquistas         Conquistas[]
+
+  @@map("instituicoes")
+}
+
+model Unidades_Escolares {
+  id                   String                 @id @default(auto()) @map("_id") @db.ObjectId
+  instituicao          Instituicao            @relation(fields: [instituicaoId], references: [id])
+  instituicaoId        String                 @db.ObjectId
+  nome                 String
+  cidade               String
+  estado               String
+  cep                  String
+  logradouro           String?
+  bairro               String?
+  criado_em            DateTime               @default(now())
+  atualizado_em        DateTime               @updatedAt
+  usuarios             Usuarios[]
+  materias             Materias[]
+  turmas               Turmas[]
+  tarefas              Tarefas[]
+  questoes             Questoes[]
+  submissoes           Submissoes[]
+  horarios             HorarioAula[]
+  comentarios          ComentarioTarefa[]
+  conversas            Conversa[]
+  conquistas_disponiveis ConquistasPorUnidade[]
+  EventosCalendario    EventosCalendario[]
+
+  @@map("unidades_escolares")
+  @@index([instituicaoId])
+  AuditLog AuditLog[]
+}
+
+model Usuarios {
+  id                     String               @id @default(auto()) @map("_id") @db.ObjectId
+  nome                   String
+  email                  String               @unique
+  senha_hash             String?
+  papel                  PapelUsuario
+  status                 Boolean              @default(true)
+  criado_em              DateTime             @default(now())
+  atualizado_em          DateTime             @updatedAt
+  instituicaoId          String?              @db.ObjectId
+  unidadeEscolarId       String?              @db.ObjectId
+  instituicao            Instituicao?         @relation(fields: [instituicaoId], references: [id])
+  unidade_escolar        Unidades_Escolares?  @relation(fields: [unidadeEscolarId], references: [id])
+  perfil_aluno           Usuarios_aluno?
+  perfil_professor       Usuarios_professor?
+  conversas_participadas Participante[]
+  mensagens_enviadas     Mensagem[]
+  comentarios_feitos     ComentarioTarefa[]
+  mensagens_forum_enviadas Mensagens_Forum[]
+  topicos_forum_criados    Topico_Forum[]
+  arquivos_enviados        Arquivos[]
+  passwordResetToken     String?
+  passwordResetExpires   DateTime?
+  data_nascimento        DateTime?            @db.Date
+  cpf_criptografado      Bytes?
+  metadados              Json?
+  EventosCalendario      EventosCalendario[]
+
+  @@map("usuarios")
+  @@index([instituicaoId])
+  @@index([unidadeEscolarId])
+}
+
+model Usuarios_aluno {
+  id                   String                @id @default(auto()) @map("_id") @db.ObjectId
+  usuario              Usuarios              @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  usuarioId            String                @unique @db.ObjectId
+  numero_matricula     String                @unique
+  email_responsavel    String?
+  matriculas           Matriculas[]
+  submissoes           Submissoes[]
+  conquistas_recebidas Conquistas_Usuarios[]
+
+  @@map("perfis_alunos")
+}
+
+model Usuarios_professor {
+  id                     String                 @id @default(auto()) @map("_id") @db.ObjectId
+  usuario                Usuarios               @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  usuarioId              String                 @unique @db.ObjectId
+  titulacao              String?
+  area_especializacao    String?
+  componentes_lecionados ComponenteCurricular[]
+
+  @@map("perfis_professores")
+}
+
+enum Turno {
+  MATUTINO
+  VESPERTINO
+  NOTURNO
+  INTEGRAL
+}
+
+model Turmas {
+  id                       String                 @id @default(auto()) @map("_id") @db.ObjectId
+  nome                     String
+  serie                    String
+  turno                    Turno
+  unidade_escolar          Unidades_Escolares     @relation(fields: [unidadeEscolarId], references: [id])
+  unidadeEscolarId         String                 @db.ObjectId
+  componentes_curriculares ComponenteCurricular[]
+  matriculas               Matriculas[]
+  horarios                 HorarioAula[]
+  EventosCalendario        EventosCalendario[]
+
+  @@map("turmas")
+  @@index([unidadeEscolarId])
+}
+
+model Materias {
+  id                       String                 @id @default(auto()) @map("_id") @db.ObjectId
+  nome                     String
+  codigo                   String?
+  unidadeEscolar           Unidades_Escolares     @relation(fields: [unidadeEscolarId], references: [id])
+  unidadeEscolarId         String                 @db.ObjectId
+  componentes_curriculares ComponenteCurricular[]
+
+  @@map("materias")
+  @@unique([unidadeEscolarId, nome])
+  @@index([unidadeEscolarId])
+}
+
+model Conquistas {
+  id                    String                 @id @default(auto()) @map("_id") @db.ObjectId
+  instituicao           Instituicao            @relation(fields: [instituicaoId], references: [id])
+  instituicaoId         String                 @db.ObjectId
+  codigo                String                 @unique
+  titulo                String
+  descricao             String?
+  criterios             Json?
+  criado_em             DateTime               @default(now())
+  atualizado_em         DateTime               @updatedAt
+  unidades_disponiveis  ConquistasPorUnidade[]
+  conquistas_atribuidas Conquistas_Usuarios[]
+
+  @@map("conquistas")
+  @@index([instituicaoId])
+}
+
+model ConquistasPorUnidade {
+  id               String             @id @default(auto()) @map("_id") @db.ObjectId
+  conquistaId      String             @db.ObjectId
+  unidadeEscolarId String             @db.ObjectId
+  conquista        Conquistas         @relation(fields: [conquistaId], references: [id])
+  unidadeEscolar   Unidades_Escolares @relation(fields: [unidadeEscolarId], references: [id])
+
+  @@unique([conquistaId, unidadeEscolarId])
+  @@map("conquistas_por_unidade")
+}
+
+model Conquistas_Usuarios {
+  id            String         @id @default(auto()) @map("_id") @db.ObjectId
+  concedido_em  DateTime       @default(now())
+  metadados     Json?
+  conquista     Conquistas     @relation(fields: [conquistaId], references: [id])
+  conquistaId   String         @db.ObjectId
+  aluno_perfil  Usuarios_aluno @relation(fields: [alunoPerfilId], references: [id])
+  alunoPerfilId String         @db.ObjectId
+
+  @@map("conquistas_usuarios")
+  @@index([conquistaId])
+  @@index([alunoPerfilId])
+}
+
+enum StatusMatricula {
+  ATIVA
+  TRANCADA
+  CONCLUIDA
+  CANCELADA
+}
+
+model Matriculas {
+  id                  String             @id @default(auto()) @map("_id") @db.ObjectId
+  data_matricula      DateTime           @default(now())
+  status              StatusMatricula    @default(ATIVA)
+  ano_letivo          Int
+  avaliacoes_parciais AvaliacaoParcial[]
+  registros_falta     RegistroFalta[]
+  aluno               Usuarios_aluno     @relation(fields: [alunoId], references: [id])
+  alunoId             String             @db.ObjectId
+  turma               Turmas             @relation(fields: [turmaId], references: [id])
+  turmaId             String             @db.ObjectId
+  criado_em           DateTime           @default(now()) @map("criado_em")
+  atualizado_em       DateTime           @updatedAt @map("atualizado_em")
+
+  @@map("matriculas")
+  @@index([alunoId, ano_letivo])
+}
+
+model ComponenteCurricular {
+  id                  String               @id @default(auto()) @map("_id") @db.ObjectId
+  ano_letivo          Int
+  carga_horaria       Int?
+  turma               Turmas               @relation(fields: [turmaId], references: [id])
+  turmaId             String               @db.ObjectId
+  materia             Materias             @relation(fields: [materiaId], references: [id])
+  materiaId           String               @db.ObjectId
+  professor           Usuarios_professor   @relation(fields: [professorId], references: [id])
+  professorId         String               @db.ObjectId
+  avaliacoes_parciais AvaliacaoParcial[]
+  Tarefas             Tarefas[]
+  HorarioAula         HorarioAula[]
+
+  @@map("componentes_curriculares")
+  @@unique([turmaId, materiaId, ano_letivo])
+  @@index([professorId])
+}
+
+model AvaliacaoParcial {
+  id                     String               @id @default(auto()) @map("_id") @db.ObjectId
+  nota                   Float
+  periodo                PeriodoAvaliacao
+  tipo                   TipoDeAvaliacao
+  data                   DateTime             @default(now())
+  matricula              Matriculas           @relation(fields: [matriculaId], references: [id])
+  matriculaId            String               @db.ObjectId
+  componenteCurricular   ComponenteCurricular @relation(fields: [componenteCurricularId], references: [id])
+  componenteCurricularId String               @db.ObjectId
+
+  @@map("avaliacoes_parciais")
+  @@index([matriculaId])
+  @@index([componenteCurricularId])
+}
+
+model RegistroFalta {
+  id          String     @id @default(auto()) @map("_id") @db.ObjectId
+  data        DateTime   @db.Date
+  justificada Boolean    @default(false)
+  observacao  String?
+  matricula   Matriculas @relation(fields: [matriculaId], references: [id])
+  matriculaId String     @db.ObjectId
+
+  @@map("registros_falta")
+  @@index([matriculaId])
+}
+
+enum TipoTarefa {
+  PROVA
+  TRABALHO
+  QUESTIONARIO
+  LICAO_DE_CASA
+}
+
+model Tarefas {
+  id                     String               @id @default(auto()) @map("_id") @db.ObjectId
+  titulo                 String
+  descricao              String?
+  pontos                 Int?
+  data_publicacao        DateTime             @default(now())
+  data_entrega           DateTime
+  publicado              Boolean              @default(false)
+  tipo                   TipoTarefa           @default(QUESTIONARIO)
+  criado_em              DateTime             @default(now())
+  atualizado_em          DateTime             @updatedAt
+  unidadeEscolar         Unidades_Escolares   @relation(fields: [unidadeEscolarId], references: [id])
+  unidadeEscolarId       String               @db.ObjectId
+  componenteCurricular   ComponenteCurricular @relation(fields: [componenteCurricularId], references: [id])
+  componenteCurricularId String               @db.ObjectId
+  questoes               Questoes[]
+  submissoes             Submissoes[]
+  ComentarioTarefa       ComentarioTarefa[]
+
+  @@map("tarefas")
+  @@index([unidadeEscolarId])
+  @@index([componenteCurricularId])
+}
+
+enum TipoQuestao {
+  MULTIPLA_ESCOLHA
+  DISCURSIVA
+  VERDADEIRO_FALSO
+  ASSOCIACAO_DE_COLUNAS
+}
+
+model Questoes {
+  id                      String                    @id @default(auto()) @map("_id") @db.ObjectId
+  sequencia               Int
+  tipo                    TipoQuestao
+  titulo                  String
+  enunciado               String
+  payload                 Json?
+  pontos                  Int
+  criado_em               DateTime                  @default(now())
+  atualizado_em           DateTime                  @updatedAt
+  tarefa                  Tarefas                   @relation(fields: [tarefaId], references: [id], onDelete: Cascade)
+  tarefaId                String                    @db.ObjectId
+  unidadeEscolar          Unidades_Escolares        @relation(fields: [unidadeEscolarId], references: [id])
+  unidadeEscolarId        String                    @db.ObjectId
+  opcoes_multipla_escolha Opcoes_Multipla_Escolha[]
+  respostas_submissao     Respostas_Submissao[]
+
+  @@map("questoes")
+  @@index([tarefaId])
+  @@index([unidadeEscolarId])
+}
+
+enum StatusSubmissao {
+  NAO_INICIADA
+  EM_ANDAMENTO
+  ENVIADA
+  AVALIADA
+  ENVIADA_COM_ATRASO
+}
+
+model Submissoes {
+  id               String              @id @default(auto()) @map("_id") @db.ObjectId
+  enviado_em       DateTime            @default(now())
+  status           StatusSubmissao     @default(NAO_INICIADA)
+  nota_total       Float?
+  feedback         String?
+  metadados        Json?
+  criado_em        DateTime            @default(now())
+  atualizado_em    DateTime            @updatedAt
+  unidadeEscolar   Unidades_Escolares  @relation(fields: [unidadeEscolarId], references: [id])
+  unidadeEscolarId String              @db.ObjectId
+  tarefa           Tarefas             @relation(fields: [tarefaId], references: [id], onDelete: Cascade)
+  tarefaId         String              @db.ObjectId
+  aluno            Usuarios_aluno      @relation(fields: [alunoId], references: [id])
+  alunoId          String              @db.ObjectId
+  respostas        Respostas_Submissao[]
+
+  @@map("submissoes")
+  @@index([tarefaId, alunoId], name: "idx_tarefa_aluno")
+}
+
+model Opcoes_Multipla_Escolha {
+  id        String                @id @default(auto()) @map("_id") @db.ObjectId
+  texto     String
+  correta   Boolean               @default(false)
+  sequencia Int
+  criado_em DateTime              @default(now())
+  questao   Questoes              @relation(fields: [questaoId], references: [id], onDelete: Cascade)
+  questaoId String                @db.ObjectId
+  respostas Respostas_Submissao[]
+
+  @@map("opcoes_multipla_escolha")
+  @@index([questaoId])
+}
+
+model Respostas_Submissao {
+  id                String                   @id @default(auto()) @map("_id") @db.ObjectId
+  resposta_texto    String?
+  nota              Float?
+  avaliado_em       DateTime?
+  feedback          String?
+  criado_em         DateTime                 @default(now())
+  atualizado_em     DateTime                 @updatedAt
+  opcaoEscolhida   Opcoes_Multipla_Escolha? @relation(fields: [opcaoEscolhidaId], references: [id])
+  opcaoEscolhidaId String?                  @db.ObjectId
+  questao           Questoes                 @relation(fields: [questaoId], references: [id], onDelete: Cascade)
+  questaoId         String                   @db.ObjectId
+  submissao         Submissoes               @relation(fields: [submissaoId], references: [id])
+  submissaoId       String                   @db.ObjectId
+
+  @@unique([questaoId, submissaoId])
+  @@map("respostas_submissao")
+  @@index([questaoId])
+  @@index([submissaoId])
+}
+
+model Conversa {
+  id               String           @id @default(auto()) @map("_id") @db.ObjectId
+  criado_em        DateTime         @default(now())
+  atualizado_em    DateTime         @updatedAt
+  unidadeEscolar   Unidades_Escolares? @relation(fields: [unidadeEscolarId], references: [id])
+  unidadeEscolarId String?          @db.ObjectId
+  participantes    Participante[]
+  mensagens        Mensagem[]
+
+  @@map("conversas")
+  @@index([unidadeEscolarId])
+}
+
+model Participante {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  conversa      Conversa @relation(fields: [conversaId], references: [id])
+  conversaId    String   @db.ObjectId
+  usuario       Usuarios @relation(fields: [usuarioId], references: [id])
+  usuarioId     String   @db.ObjectId
+  adicionado_em DateTime @default(now())
+
+  @@unique([conversaId, usuarioId])
+  @@map("participantes_conversa")
+}
+
+model Mensagem {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  conteudo   String
+  criado_em  DateTime @default(now())
+  lida_em    DateTime?
+  conversa   Conversa @relation(fields: [conversaId], references: [id])
+  conversaId String   @db.ObjectId
+  autor      Usuarios @relation(fields: [autorId], references: [id])
+  autorId    String   @db.ObjectId
+
+  @@map("mensagens_chat")
+  @@index([conversaId])
+  @@index([autorId])
+}
+
+enum AcaoAudit {
+  CREATE
+  UPDATE
+  DELETE
+  LOGIN_SUCCESS
+  LOGIN_FAILURE
+  PASSWORD_RESET_REQUEST
+  PASSWORD_RESET_SUCCESS
+  FILE_UPLOAD
+  FILE_DELETE
+  BULK_IMPORT
+  BULK_DELETE
+}
+
+enum DiaDaSemana {
+  DOMINGO
+  SEGUNDA
+  TERCA
+  QUARTA
+  QUINTA
+  SEXTA
+  SABADO
+}
+
+model HorarioAula {
+  id                     String               @id @default(auto()) @map("_id") @db.ObjectId
+  dia_semana             DiaDaSemana
+  hora_inicio            String
+  hora_fim               String
+  local                  String?
+  unidadeEscolar         Unidades_Escolares   @relation(fields: [unidadeEscolarId], references: [id])
+  unidadeEscolarId       String               @db.ObjectId
+  turma                  Turmas               @relation(fields: [turmaId], references: [id])
+  turmaId                String               @db.ObjectId
+  componenteCurricular   ComponenteCurricular @relation(fields: [componenteCurricularId], references: [id])
+  componenteCurricularId String               @db.ObjectId
+  criado_em              DateTime             @default(now())
+  atualizado_em          DateTime             @updatedAt
+
+  @@map("horarios_aula")
+  @@index([unidadeEscolarId])
+  @@index([turmaId])
+  @@index([componenteCurricularId])
+}
+
+model ComentarioTarefa {
+  id              String             @id @default(auto()) @map("_id") @db.ObjectId
+  conteudo        String
+  criado_em       DateTime           @default(now())
+  atualizado_em   DateTime           @updatedAt
+  tarefa          Tarefas            @relation(fields: [tarefaId], references: [id], onDelete: Cascade)
+  tarefaId        String             @db.ObjectId
+  autor           Usuarios           @relation(fields: [autorId], references: [id])
+  autorId         String             @db.ObjectId
+  unidadeEscolar  Unidades_Escolares @relation(fields: [unidadeEscolarId], references: [id])
+  unidadeEscolarId String             @db.ObjectId
+  comentarioPai   ComentarioTarefa?  @relation("RespostasComentario", fields: [comentarioPaiId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  comentarioPaiId String?            @db.ObjectId
+  respostas       ComentarioTarefa[] @relation("RespostasComentario")
+
+  @@map("comentarios_tarefa")
+  @@index([tarefaId])
+  @@index([autorId])
+}
+
+model Topico_Forum {
+  id            String            @id @default(auto()) @map("_id") @db.ObjectId
+  titulo        String
+  corpo         String
+  criado_em     DateTime          @default(now())
+  atualizado_em DateTime          @updatedAt
+  instituicaoId String            @db.ObjectId
+  criado_por    Usuarios          @relation(fields: [usuarioId], references: [id])
+  usuarioId     String            @db.ObjectId
+  mensagens     Mensagens_Forum[]
+
+  @@map("topicos_forum")
+}
+
+model Mensagens_Forum {
+  id            String       @id @default(auto()) @map("_id") @db.ObjectId
+  corpo         String
+  criado_em     DateTime     @default(now())
+  instituicaoId String       @db.ObjectId
+  topico        Topico_Forum @relation(fields: [topicoId], references: [id])
+  topicoId      String       @db.ObjectId
+  autor         Usuarios     @relation(fields: [usuarioId], references: [id])
+  usuarioId     String       @db.ObjectId
+
+  @@map("mensagens_forum")
+  @@index([topicoId])
+  @@index([usuarioId])
+}
+
+model Arquivos {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  chave         String   @unique
+  nome          String
+  tipo_conteudo String
+  tamanho       Int
+  metadados     Json?
+  criado_em     DateTime @default(now())
+  instituicaoId String   @db.ObjectId
+  usuario       Usuarios @relation(fields: [usuarioId], references: [id])
+  usuarioId     String   @db.ObjectId
+
+  @@map("arquivos")
+}
+
+enum TipoEvento {
+  REUNIAO
+  RECUPERACAO
+  FERIADO
+  EVENTO_ESCOLAR
+  PROVA
+  OUTRO
+}
+
+model EventosCalendario {
+  id               String             @id @default(auto()) @map("_id") @db.ObjectId
+  titulo           String
+  descricao        String?
+  tipo             TipoEvento
+  data_inicio      DateTime
+  data_fim         DateTime
+  dia_inteiro      Boolean            @default(false)
+  unidadeEscolar   Unidades_Escolares @relation(fields: [unidadeEscolarId], references: [id])
+  unidadeEscolarId String             @db.ObjectId
+  criadoPor        Usuarios           @relation(fields: [criadoPorId], references: [id])
+  criadoPorId      String             @db.ObjectId
+  turma            Turmas?            @relation(fields: [turmaId], references: [id])
+  turmaId          String?            @db.ObjectId
+  criado_em        DateTime           @default(now())
+  atualizado_em    DateTime           @updatedAt
+
+  @@map("eventos_calendario")
+  @@index([unidadeEscolarId, data_inicio])
+}
+
+model AuditLog {
+  id        String    @id @default(auto()) @map("_id") @db.ObjectId
+  timestamp DateTime  @default(now())
+  acao      AcaoAudit
+  entidade  String // Ex: "Turma", "Usuario", "Materia"
+  entidadeId String?   // ID do objeto que foi modificado
+  detalhes  Json // O que mudou, quem criou, etc.
+  
+  // Quem realizou a ação
+  autorId   String    @db.ObjectId
+  autorNome String
+  
+  // Contexto da Unidade Escolar
+  unidadeEscolarId String @db.ObjectId
+  unidadeEscolar Unidades_Escolares @relation(fields: [unidadeEscolarId], references: [id])
+
+  @@map("audit_logs")
+  @@index([unidadeEscolarId, timestamp])
+  @@index([autorId])
+  @@index([entidade])
+}
