@@ -1,0 +1,65 @@
+.sidebar {
+  width: 260px;
+  background-color: var(--cor-fundo-card);
+  border-right: 1px solid var(--cor-borda);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 1.5rem 1rem;
+}
+
+.logo {
+  font-size: 1.5rem;
+  font-weight: bold;
+  text-align: center;
+  padding: 1rem;
+  background-color: var(--cor-primaria-light);
+  color: var(--cor-primaria-dark);
+  border-radius: 8px;
+  margin-bottom: 2rem;
+}
+
+.nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.navLink {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.8rem 1.2rem;
+  border-radius: 8px;
+  color: var(--cor-subtexto);
+  text-decoration: none;
+  transition: all 0.2s ease-in-out;
+  font-weight: 500;
+}
+
+.navLink:hover {
+  background-color: #f3f4f6;
+  color: var(--cor-texto-destaque);
+}
+
+.activeLink {
+  background-color: var(--cor-primaria-light);
+  color: var(--cor-primaria-dark);
+  font-weight: 600;
+}
+
+.icon {
+  font-size: 1.2rem;
+}
+
+.logoutButton {
+  margin-top: 1rem;
+  background-color: var(--cor-perigo-light);
+  color: var(--cor-perigo-dark);
+  font-weight: 600;
+}
+
+.logoutButton:hover {
+  background-color: var(--cor-perigo);
+  color: white;
+}

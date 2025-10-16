@@ -1,0 +1,254 @@
+.container {
+  padding: 2rem;
+  background-color: #f9fafb;
+  min-height: 100vh;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 2rem;
+}
+
+.header h1 {
+  font-size: 1.8rem;
+  color: var(--cor-texto-destaque);
+}
+
+.header p {
+  color: var(--cor-subtexto);
+  margin-top: 0.25rem;
+}
+
+.primaryButton {
+  background: linear-gradient(
+    145deg,
+    var(--cor-primaria),
+    var(--cor-primaria-dark)
+  );
+  color: white;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 2px 5px rgba(0, 83, 224, 0.2);
+  transition: all 0.2s ease;
+}
+
+.primaryButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0, 83, 224, 0.3);
+}
+
+.toolbar {
+  margin-bottom: 2rem;
+}
+
+.searchContainer {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background-color: var(--cor-fundo-card);
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  border: 1px solid var(--cor-borda);
+  max-width: 400px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+.searchContainer input {
+  border: none;
+  outline: none;
+  background: transparent;
+  width: 100%;
+  color: var(--cor-texto);
+  font-size: 0.9rem;
+}
+.searchContainer svg {
+  color: var(--cor-subtexto);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+.card {
+  background-color: var(--cor-fundo-card);
+  border: 1px solid var(--cor-borda);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease-in-out;
+}
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08);
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 1rem 1.5rem 0;
+}
+
+.cardIcon {
+  background-color: var(--cor-primaria-light);
+  color: var(--cor-primaria-dark);
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+}
+
+.cardActions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.editButton,
+.deleteButton {
+  border: none !important;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.editButton {
+  background-color: #0070f3 !important;
+}
+
+.deleteButton {
+  background-color: #dc2626 !important;
+}
+
+.editButton svg,
+.deleteButton svg {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+  stroke-width: 2 !important;
+  fill: none !important;
+  width: 16px !important;
+  height: 16px !important;
+  display: block !important;
+  transition: all 0.2s;
+}
+
+.editButton svg *,
+.deleteButton svg * {
+  stroke: #ffffff !important;
+  fill: none !important;
+}
+
+.editButton:hover {
+  background-color: #0059c9 !important;
+  transform: scale(1.04);
+}
+
+.deleteButton:hover {
+  background-color: #b91c1c !important;
+  transform: scale(1.04);
+}
+
+.editButton:hover svg,
+.deleteButton:hover svg {
+  transform: scale(1.12);
+}
+
+.cardBody {
+  padding: 1rem 1.5rem;
+  flex-grow: 1;
+}
+
+.cardTitle {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin: 0;
+  color: var(--cor-texto-destaque);
+}
+
+.cardCode {
+  font-size: 0.8rem;
+  color: var(--cor-subtexto);
+  background-color: #f9fafb;
+  padding: 2px 8px;
+  border-radius: 4px;
+  display: inline-block;
+  margin-top: 0.5rem;
+}
+
+.cardFooter {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid var(--cor-borda);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--cor-subtexto);
+}
+
+.modalForm {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.label input,
+.label select {
+  padding: 0.75rem;
+  border: 1px solid var(--cor-borda);
+  border-radius: 8px;
+  font-size: 1rem;
+  background-color: var(--cor-fundo);
+}
+
+.modalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.cancelButton,
+.saveButton {
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+.cancelButton {
+  background-color: #e9ecef;
+  color: var(--cor-texto-destaque);
+  border-color: var(--cor-borda);
+}
+
+.saveButton {
+  background-color: var(--cor-primaria);
+  color: white;
+}

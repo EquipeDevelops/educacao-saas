@@ -6,7 +6,7 @@ export const paramsSchema = z.object({
   id: z.string({ required_error: "O ID do componente é obrigatório." }),
 });
 
-export const createComponenteSchema = z.object({
+export const createComponenteCurricularSchema = z.object({
   body: z.object({
     turmaId: z.string({ required_error: "O ID da turma é obrigatório." }),
     materiaId: z.string({ required_error: "O ID da matéria é obrigatório." }),
@@ -17,7 +17,8 @@ export const createComponenteSchema = z.object({
       .number({ required_error: "O ano letivo é obrigatório." })
       .int()
       .min(currentYear - 10, "Ano letivo inválido.")
-      .max(currentYear + 10, "Ano letivo inválido."),
+      .max(currentYear + 10, "Ano letivo inválido.")
+      .default(currentYear),
     carga_horaria: z
       .number()
       .int()
@@ -26,9 +27,8 @@ export const createComponenteSchema = z.object({
   }),
 });
 
-export const updateComponenteSchema = z.object({
+export const updateComponenteCurricularSchema = z.object({
   body: z.object({
-    // Apenas o professor e a carga horária podem ser alterados em um componente existente
     professorId: z.string().optional(),
     carga_horaria: z
       .number()
@@ -47,10 +47,14 @@ export const findAllComponentesSchema = z.object({
   }),
 });
 
-export type CreateComponenteInput = z.infer<
-  typeof createComponenteSchema
+export type CreateComponenteCurricularInput = z.infer<
+  typeof createComponenteCurricularSchema
 >["body"];
-export type UpdateComponenteInput = z.infer<typeof updateComponenteSchema>;
+
+export type UpdateComponenteInput = z.infer<
+  typeof updateComponenteCurricularSchema
+>;
+
 export type FindAllComponentesInput = z.infer<
   typeof findAllComponentesSchema
 >["query"];

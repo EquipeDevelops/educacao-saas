@@ -1,0 +1,125 @@
+.container {
+  padding: 2rem;
+  background-color: #f9fafb;
+}
+
+.header {
+  margin-bottom: 2rem;
+}
+
+.header h1 {
+  font-size: 1.8rem;
+  color: var(--cor-texto-destaque);
+}
+.header p {
+  color: var(--cor-subtexto);
+  margin-top: 0.25rem;
+}
+
+.filtersContainer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  align-items: flex-end;
+  background-color: var(--cor-fundo-card);
+  padding: 1.5rem;
+  border-radius: 12px;
+  border: 1px solid var(--cor-borda);
+  margin-bottom: 2rem;
+}
+
+.filterGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.filterGroup label {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--cor-texto-destaque);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.filterGroup input,
+.filterGroup select {
+  padding: 0.6rem;
+  border-radius: 8px;
+  border: 1px solid var(--cor-borda);
+}
+
+.filterButton {
+  background-color: var(--cor-primaria);
+  color: white;
+  padding: 0.6rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.logsList {
+  background-color: var(--cor-fundo-card);
+  border: 1px solid var(--cor-borda);
+  border-radius: 12px;
+  padding: 1rem;
+  min-height: 400px;
+}
+
+.logItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1.25rem 1rem;
+  border-bottom: 1px solid var(--cor-borda);
+}
+.logItem:last-child {
+  border-bottom: none;
+}
+
+.icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  color: white;
+  flex-shrink: 0;
+  font-size: 1.2rem;
+}
+
+.create {
+  background-color: var(--cor-sucesso);
+}
+.update {
+  background-color: var(--cor-aviso);
+}
+.delete {
+  background-color: var(--cor-perigo);
+}
+
+.logContent {
+  flex-grow: 1;
+}
+
+.logText {
+  margin: 0;
+  color: var(--cor-texto);
+}
+.logText strong {
+  color: var(--cor-texto-destaque);
+}
+
+.logTimestamp {
+  font-size: 0.8rem;
+  color: var(--cor-subtexto);
+  margin-top: 4px;
+  display: block;
+}
+
+.emptyState {
+  text-align: center;
+  padding: 3rem;
+  color: var(--cor-subtexto);
+}

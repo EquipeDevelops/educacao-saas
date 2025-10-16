@@ -74,6 +74,7 @@ model Unidades_Escolares {
 
   @@map("unidades_escolares")
   @@index([instituicaoId])
+  AuditLog AuditLog[]
 }
 
 model Usuarios {
@@ -447,6 +448,20 @@ model Mensagem {
   @@index([autorId])
 }
 
+enum AcaoAudit {
+  CREATE
+  UPDATE
+  DELETE
+  LOGIN_SUCCESS
+  LOGIN_FAILURE
+  PASSWORD_RESET_REQUEST
+  PASSWORD_RESET_SUCCESS
+  FILE_UPLOAD
+  FILE_DELETE
+  BULK_IMPORT
+  BULK_DELETE
+}
+
 enum DiaDaSemana {
   DOMINGO
   SEGUNDA
@@ -547,6 +562,7 @@ enum TipoEvento {
   RECUPERACAO
   FERIADO
   EVENTO_ESCOLAR
+  PROVA
   OUTRO
 }
 
@@ -571,4 +587,24 @@ model EventosCalendario {
   @@index([unidadeEscolarId, data_inicio])
 }
 
-// import { VscMortarBoard } from 'react-icons/vsc'
+model AuditLog {
+  id        String    @id @default(auto()) @map("_id") @db.ObjectId
+  timestamp DateTime  @default(now())
+  acao      AcaoAudit
+  entidade  String // Ex: "Turma", "Usuario", "Materia"
+  entidadeId String?   // ID do objeto que foi modificado
+  detalhes  Json // O que mudou, quem criou, etc.
+  
+  // Quem realizou a ação
+  autorId   String    @db.ObjectId
+  autorNome String
+  
+  // Contexto da Unidade Escolar
+  unidadeEscolarId String @db.ObjectId
+  unidadeEscolar Unidades_Escolares @relation(fields: [unidadeEscolarId], references: [id])
+
+  @@map("audit_logs")
+  @@index([unidadeEscolarId, timestamp])
+  @@index([autorId])
+  @@index([entidade])
+}

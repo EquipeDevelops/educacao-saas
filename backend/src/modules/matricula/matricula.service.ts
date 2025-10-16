@@ -101,6 +101,10 @@ export async function findAll(
     }
   }
 
+  if (filters.turmaId) {
+    where.turmaId = filters.turmaId;
+  }
+
   if (filters.ano_letivo) where.ano_letivo = Number(filters.ano_letivo);
   if (filters.status) where.status = filters.status;
 
@@ -109,6 +113,7 @@ export async function findAll(
     include: fullInclude,
   });
 }
+
 export async function findById(id: string, user: AuthenticatedRequest["user"]) {
   return prisma.matriculas.findFirst({
     where: {

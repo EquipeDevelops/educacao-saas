@@ -20,16 +20,12 @@ export const protect = async (
   next: NextFunction
 ) => {
   console.log("\n--- [AUTH MIDDLEWARE] Iniciando middleware 'protect' ---");
-  console.log(
-    "[AUTH MIDDLEWARE] Verificando JWT_SECRET:",
-    process.env.JWT_SECRET
-  );
 
   let token;
 
   if (
     req.headers.authorization &&
-    req.headers.authorization.startsWith("Bearer")
+    req.headers.authorization.startsWith("Bearer ")
   ) {
     token = req.headers.authorization.split(" ")[1];
   }
@@ -76,9 +72,7 @@ export const protect = async (
     );
     next();
   } catch (error) {
-    console.error("--- [ERRO NO AUTH MIDDLEWARE] ---");
-    console.error(error);
-    console.error("---------------------------------");
+    console.error("--- [ERRO NO AUTH MIDDLEWARE] ---", error);
     return res.status(401).json({ message: "Token inválido ou expirado." });
   }
 };
@@ -87,7 +81,7 @@ export const authorize = (...roles: PapelUsuario[]) => {
   return (req: Request, res: Response, next: NextFunction) => {
     const user = (req as AuthenticatedRequest).user;
 
-    if (!roles.includes(user.papel)) {
+    if (!user || !roles.includes(user.papel)) {
       return res.status(403).json({
         message: `Acesso negado. Apenas usuários com os seguintes papéis são permitidos: ${roles.join(
           ", "

@@ -1,0 +1,133 @@
+.container {
+  padding: 2rem;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 2rem;
+}
+
+.header h1 {
+  font-size: 1.8rem;
+}
+
+.header p {
+  color: var(--cor-subtexto);
+  margin-top: 0.25rem;
+}
+
+.primaryButton {
+  background-color: var(--cor-primaria);
+  color: white;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+}
+
+.primaryButton:hover {
+  background-color: var(--cor-primaria-hover);
+}
+
+.toolbar {
+  margin-bottom: 2rem;
+}
+
+.searchContainer {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background-color: var(--cor-fundo-card);
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  border: 1px solid var(--cor-borda);
+  max-width: 400px;
+}
+.searchContainer input {
+  border: none;
+  outline: none;
+  background: transparent;
+  width: 100%;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.feedback {
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  font-weight: 500;
+  text-align: center;
+}
+
+.error {
+  color: var(--cor-perigo-dark);
+  background-color: var(--cor-perigo-light);
+  border: 1px solid var(--cor-perigo);
+}
+
+.success {
+  color: var(--cor-sucesso-dark);
+  background-color: var(--cor-sucesso-light);
+  border: 1px solid var(--cor-sucesso);
+}
+
+.modalForm {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.label input,
+.label select {
+  padding: 0.75rem;
+  border: 1px solid var(--cor-borda);
+  border-radius: 8px;
+  font-size: 1rem;
+  background-color: var(--cor-fundo);
+}
+
+.modalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.cancelButton,
+.saveButton {
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+.cancelButton {
+  background-color: #e9ecef;
+  color: var(--cor-texto-destaque);
+  border-color: var(--cor-borda);
+}
+
+.saveButton {
+  background-color: var(--cor-primaria);
+  color: white;
+}

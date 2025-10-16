@@ -1,85 +1,90 @@
-import { Response } from "express";
-import { horarioService } from "./horarioAula.service";
+import { Response, NextFunction } from "express";
+import HorarioAulaService from "./horarioAula.service";
 import { AuthenticatedRequest } from "../../middlewares/auth";
-import { FindAllHorariosInput } from "./horarioAula.validator";
 
-export const horarioController = {
-  create: async (req: AuthenticatedRequest, res: Response) => {
-    try {
-      const { unidadeEscolarId } = req.user;
-      if (!unidadeEscolarId) {
-        return res
-          .status(403)
-          .json({ message: "Usuário não vinculado a um colégio." });
-      }
-      const horario = await horarioService.create(req.body, unidadeEscolarId);
-      return res.status(201).json(horario);
-    } catch (error: any) {
-      if (error.message.includes("Conflito de horário")) {
-        return res.status(409).json({ message: error.message });
-      }
-      return res.status(400).json({ message: error.message });
+const create = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const {
+      turmaId,
+      componenteCurricularId,
+      horarioInicio,
+      horarioFim,
+      diaSemana,
+    } = req.body;
+
+    const novoHorario = await HorarioAulaService.createHorarioAula(
+      turmaId,
+      componenteCurricularId,
+      horarioInicio,
+      horarioFim,
+      diaSemana
+    );
+    res.status(201).json(novoHorario);
+  } catch (error) {
+    next(error);
+  }
+};
+
+const deleteHorarioAula = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { id } = req.params;
+    await HorarioAulaService.deleteHorarioAula(id);
+    res.status(204).send();
+  } catch (error) {
+    next(error);
+  }
+};
+
+const getHorariosByTurma = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { turmaId } = req.params;
+    const horarios = await HorarioAulaService.getHorariosByTurma(turmaId);
+    res.status(200).json(horarios);
+  } catch (error) {
+    next(error);
+  }
+};
+
+const getHorariosAsEventos = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { mes } = req.query as { mes?: string };
+    const { unidadeEscolarId } = req.user;
+
+    if (!unidadeEscolarId) {
+      return res.status(400).json({
+        message: "Usuário não está associado a uma unidade escolar.",
+      });
     }
-  },
 
-  findAll: async (req: AuthenticatedRequest, res: Response) => {
-    try {
-      const horarios = await horarioService.findAll(
-        req.user,
-        req.query as FindAllHorariosInput
-      );
-      return res.status(200).json(horarios);
-    } catch (error: any) {
-      return res.status(500).json({ message: "Erro ao buscar horários." });
-    }
-  },
+    const eventos = await HorarioAulaService.getHorariosAsEventos(
+      unidadeEscolarId,
+      mes
+    );
+    res.status(200).json(eventos);
+  } catch (error) {
+    next(error);
+  }
+};
 
-  findById: async (req: AuthenticatedRequest, res: Response) => {
-    try {
-      const { id } = req.params;
-      const { unidadeEscolarId } = req.user;
-      if (!unidadeEscolarId)
-        return res.status(404).json({ message: "Horário não encontrado." });
-
-      const horario = await horarioService.findById(id, unidadeEscolarId);
-      if (!horario)
-        return res.status(404).json({ message: "Horário não encontrado." });
-
-      return res.status(200).json(horario);
-    } catch (error: any) {
-      return res.status(500).json({ message: "Erro ao buscar horário." });
-    }
-  },
-
-  update: async (req: AuthenticatedRequest, res: Response) => {
-    try {
-      const { id } = req.params;
-      const { unidadeEscolarId } = req.user;
-      if (!unidadeEscolarId)
-        return res.status(403).json({ message: "Ação não permitida." });
-
-      const horario = await horarioService.update(
-        id,
-        req.body,
-        unidadeEscolarId
-      );
-      return res.status(200).json(horario);
-    } catch (error: any) {
-      return res.status(400).json({ message: error.message });
-    }
-  },
-
-  remove: async (req: AuthenticatedRequest, res: Response) => {
-    try {
-      const { id } = req.params;
-      const { unidadeEscolarId } = req.user;
-      if (!unidadeEscolarId)
-        return res.status(403).json({ message: "Ação não permitida." });
-
-      await horarioService.remove(id, unidadeEscolarId);
-      return res.status(204).send();
-    } catch (error: any) {
-      return res.status(404).json({ message: error.message });
-    }
-  },
+export default {
+  create,
+  deleteHorarioAula,
+  getHorariosByTurma,
+  getHorariosAsEventos,
 };
