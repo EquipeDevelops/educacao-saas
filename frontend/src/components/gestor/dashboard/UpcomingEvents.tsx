@@ -1,18 +1,29 @@
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { FiCalendar, FiClock } from "react-icons/fi";
+import {
+  FiCalendar,
+  FiClock,
+  FiBookOpen,
+  FiUsers,
+  FiStar,
+  FiBriefcase,
+  FiAlertCircle,
+} from "react-icons/fi";
 import styles from "./UpcomingEvents.module.css";
 
 const EventIcon = ({ tipo }) => {
   const iconMap = {
-    PROVA: "📝",
-    RECUPERACAO: "📚",
-    REUNIAO: "👥",
-    EVENTO_ESCOLAR: "🎉",
-    FERIADO: "🏖️",
-    OUTRO: "📌",
+    PROVA: <FiStar />,
+    RECUPERACAO: <FiBookOpen />,
+    REUNIAO: <FiUsers />,
+    EVENTO_ESCOLAR: <FiBriefcase />,
+    FERIADO: <FiCalendar />,
+    OUTRO: <FiAlertCircle />,
   };
-  return <span className={styles.eventIcon}>{iconMap[tipo] || "📌"}</span>;
+
+  return (
+    <div className={styles.eventIcon}>{iconMap[tipo] || <FiAlertCircle />}</div>
+  );
 };
 
 export default function UpcomingEvents({ events }) {

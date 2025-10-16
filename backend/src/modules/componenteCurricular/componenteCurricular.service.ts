@@ -39,6 +39,26 @@ const findAll = (unidadeEscolarId: string) => {
   });
 };
 
+const findAllByTurma = (turmaId: string) => {
+  console.log(
+    `[LOG] Buscando componentes curriculares para a turmaId: ${turmaId}`
+  );
+
+  return prisma.componenteCurricular.findMany({
+    where: {
+      turmaId,
+    },
+    include: {
+      materia: true,
+      professor: {
+        include: {
+          usuario: true,
+        },
+      },
+    },
+  });
+};
+
 const findById = (id: string, unidadeEscolarId: string) => {
   return prisma.componenteCurricular.findFirst({
     where: {
@@ -135,4 +155,5 @@ export const componenteCurricularService = {
   findById,
   update,
   remove,
+  findAllByTurma,
 };

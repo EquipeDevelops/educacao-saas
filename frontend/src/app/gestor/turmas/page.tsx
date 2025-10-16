@@ -1,15 +1,22 @@
 "use client";
 
-import { useState, useEffect, FormEvent } from "react";
+import { useState, useEffect, FormEvent, useMemo } from "react";
 import { api } from "@/services/api";
 import styles from "./turmas.module.css";
-import { FiEdit, FiTrash2, FiPlus } from "react-icons/fi";
+import { FiEdit, FiTrash2, FiPlus, FiSearch } from "react-icons/fi";
+import TurmaCard from "@/components/gestor/turmas/TurmaCard";
+import Loading from "@/components/loading/Loading";
+import Modal from "@/components/modal/Modal";
 
 type Turma = {
   id: string;
   nome: string;
   serie: string;
   turno: "MATUTINO" | "VESPERTINO" | "NOTURNO" | "INTEGRAL";
+  _count: {
+    matriculas: number;
+    componentes_curriculares: number;
+  };
 };
 
 const initialState = {
@@ -27,17 +34,7 @@ export default function GestaoTurmasPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTurma, setEditingTurma] = useState<Turma | null>(null);
   const [formState, setFormState] = useState(initialState);
-
-  const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
-    const { name, value } = e.target;
-    if (editingTurma) {
-      setEditingTurma({ ...editingTurma, [name]: value });
-    } else {
-      setFormState((prevState) => ({ ...prevState, [name]: value }));
-    }
-  };
+  const [searchTerm, setSearchTerm] = useState("");
 
   async function fetchTurmas() {
     try {
@@ -56,14 +53,23 @@ export default function GestaoTurmasPage() {
     fetchTurmas();
   }, []);
 
+  const filteredTurmas = useMemo(() => {
+    return turmas.filter(
+      (turma) =>
+        turma.serie.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        turma.nome.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [turmas, searchTerm]);
+
   const openModal = (turma: Turma | null = null) => {
     setError(null);
     setSuccess(null);
     if (turma) {
       setEditingTurma(turma);
+      setFormState(turma);
     } else {
-      setFormState(initialState);
       setEditingTurma(null);
+      setFormState(initialState);
     }
     setIsModalOpen(true);
   };
@@ -71,7 +77,6 @@ export default function GestaoTurmasPage() {
   const closeModal = () => {
     setIsModalOpen(false);
     setEditingTurma(null);
-    setFormState(initialState);
   };
 
   async function handleSubmit(event: FormEvent) {
@@ -79,13 +84,11 @@ export default function GestaoTurmasPage() {
     setError(null);
     setSuccess(null);
 
-    const data = editingTurma
-      ? {
-          nome: editingTurma.nome,
-          serie: editingTurma.serie,
-          turno: editingTurma.turno,
-        }
-      : formState;
+    const data = {
+      nome: formState.nome,
+      serie: formState.serie,
+      turno: formState.turno,
+    };
 
     try {
       if (editingTurma) {
@@ -102,24 +105,6 @@ export default function GestaoTurmasPage() {
     }
   }
 
-  async function handleDelete(turma: Turma) {
-    if (
-      window.confirm(
-        `Tem certeza que deseja excluir a turma "${turma.serie} - ${turma.nome}"?`
-      )
-    ) {
-      setError(null);
-      setSuccess(null);
-      try {
-        await api.delete(`/turmas/${turma.id}`);
-        setSuccess(`Turma "${turma.nome}" excluída com sucesso!`);
-        await fetchTurmas();
-      } catch (err: any) {
-        setError(err.response?.data?.message || "Erro ao excluir a turma.");
-      }
-    }
-  }
-
   return (
     <div className={styles.container}>
       {error && (
@@ -132,108 +117,98 @@ export default function GestaoTurmasPage() {
       <header className={styles.header}>
         <div>
           <h1>Gerenciamento de Turmas</h1>
-          <p>Crie, edite e organize as turmas da sua unidade escolar.</p>
+          <p>Crie, edite e visualize as turmas da sua unidade escolar.</p>
         </div>
         <button className={styles.primaryButton} onClick={() => openModal()}>
           <FiPlus /> Nova Turma
         </button>
       </header>
 
-      <section className={styles.tableContainer}>
-        {isLoading ? (
-          <p>Carregando...</p>
-        ) : (
-          <table className={styles.table}>
-            <thead>
-              <tr>
-                <th className={styles.th}>Série/Ano</th>
-                <th className={styles.th}>Nome da Turma</th>
-                <th className={styles.th}>Turno</th>
-                <th className={styles.th}>Ações</th>
-              </tr>
-            </thead>
-            <tbody>
-              {turmas.map((turma) => (
-                <tr key={turma.id}>
-                  <td className={styles.td}>{turma.serie}</td>
-                  <td className={styles.td}>{turma.nome}</td>
-                  <td className={styles.td}>{turma.turno}</td>
-                  <td className={styles.td}>
-                    <div className={styles.actions}>
-                      <button
-                        className={styles.editButton}
-                        onClick={() => openModal(turma)}
-                      >
-                        <FiEdit />
-                      </button>
-                      <button
-                        className={styles.deleteButton}
-                        onClick={() => handleDelete(turma)}
-                      >
-                        <FiTrash2 />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </section>
+      <div className={styles.toolbar}>
+        <div className={styles.searchContainer}>
+          <FiSearch />
+          <input
+            type="text"
+            placeholder="Buscar por série ou nome..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+      </div>
+
+      {isLoading ? (
+        <Loading />
+      ) : (
+        <div className={styles.grid}>
+          {filteredTurmas.map((turma) => (
+            <TurmaCard key={turma.id} turma={turma} />
+          ))}
+        </div>
+      )}
 
       {isModalOpen && (
-        <div className={styles.modalOverlay}>
-          <div className={styles.modalContent}>
-            <h2>{editingTurma ? "Editar Turma" : "Criar Nova Turma"}</h2>
-            <form onSubmit={handleSubmit}>
-              <label className={styles.label}>
-                Série/Ano:
-                <input
-                  name="serie"
-                  value={editingTurma ? editingTurma.serie : formState.serie}
-                  onChange={handleInputChange}
-                  placeholder="Ex: 9º Ano, 3º Ano, 1º Período"
-                  required
-                />
-              </label>
-              <label className={styles.label}>
-                Nome da Turma:
-                <input
-                  name="nome"
-                  value={editingTurma ? editingTurma.nome : formState.nome}
-                  onChange={handleInputChange}
-                  placeholder="Ex: A, B, Manhã"
-                  required
-                />
-              </label>
-              <label className={styles.label}>
-                Turno:
-                <select
-                  name="turno"
-                  value={editingTurma ? editingTurma.turno : formState.turno}
-                  onChange={handleInputChange}
-                >
-                  <option value="MATUTINO">Matutino</option>
-                  <option value="VESPERTINO">Vespertino</option>
-                  <option value="NOTURNO">Noturno</option>
-                  <option value="INTEGRAL">Integral</option>
-                </select>
-              </label>
-              <div className={styles.modalActions}>
-                <button
-                  type="button"
-                  className={styles.cancelButton}
-                  onClick={closeModal}
-                >
-                  Cancelar
-                </button>
-                <button type="submit" className={styles.saveButton}>
-                  Salvar
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+        <Modal
+          isOpen={isModalOpen}
+          onClose={closeModal}
+          title={editingTurma ? "Editar Turma" : "Criar Nova Turma"}
+        >
+          <form onSubmit={handleSubmit} className={styles.modalForm}>
+            <label className={styles.label}>
+              Série/Ano:
+              <input
+                name="serie"
+                value={formState.serie}
+                onChange={(e) =>
+                  setFormState({ ...formState, serie: e.target.value })
+                }
+                placeholder="Ex: 9º Ano, 3º Ano, 1º Período"
+                required
+              />
+            </label>
+            <label className={styles.label}>
+              Nome da Turma:
+              <input
+                name="nome"
+                value={formState.nome}
+                onChange={(e) =>
+                  setFormState({ ...formState, nome: e.target.value })
+                }
+                placeholder="Ex: A, B, Manhã"
+                required
+              />
+            </label>
+            <label className={styles.label}>
+              Turno:
+              <select
+                name="turno"
+                value={formState.turno}
+                onChange={(e) =>
+                  setFormState({
+                    ...formState,
+                    turno: e.target.value as Turma["turno"],
+                  })
+                }
+              >
+                <option value="MATUTINO">Matutino</option>
+                <option value="VESPERTINO">Vespertino</option>
+                <option value="NOTURNO">Noturno</option>
+                <option value="INTEGRAL">Integral</option>
+              </select>
+            </label>
+            <div className={styles.modalActions}>
+              <button
+                type="button"
+                className={styles.cancelButton}
+                onClick={closeModal}
+              >
+                Cancelar
+              </button>
+              <button type="submit" className={styles.saveButton}>
+                Salvar
+              </button>
+            </div>
+          </form>
+        </Modal>
       )}
     </div>
   );

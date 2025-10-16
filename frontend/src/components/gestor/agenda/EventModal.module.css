@@ -52,6 +52,8 @@
   gap: 0.5rem;
   color: var(--cor-subtexto);
   background-color: transparent;
+  border: none;
+  cursor: pointer;
 }
 .tabs .activeTab {
   background-color: white;
@@ -90,9 +92,22 @@
   gap: 1rem;
 }
 
+.deleteButton,
+.saveButton {
+  padding: 0.6rem 1.2rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 .deleteButton {
   background: none;
   color: var(--cor-perigo);
+  border: none;
   margin-right: auto;
 }
 .deleteButton:hover {
@@ -101,6 +116,8 @@
 
 .saveButton {
   background-color: var(--cor-primaria);
+  color: white;
+  border-color: var(--cor-primaria);
 }
 .saveButton:hover {
   background-color: var(--cor-primaria-hover);

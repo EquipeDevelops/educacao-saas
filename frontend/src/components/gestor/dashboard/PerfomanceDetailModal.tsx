@@ -1,5 +1,4 @@
 "use client";
-
 import React from "react";
 import {
   BarChart,
@@ -43,7 +42,6 @@ const PerformanceDetailModal: React.FC<PerformanceDetailModalProps> = ({
       title={`Desempenho Detalhado - ${turmaNome}`}
     >
       <div style={{ width: "600px", height: "400px" }}>
-        {" "}
         {isLoading ? (
           <Loading />
         ) : !data || data.length === 0 ? (
@@ -57,15 +55,19 @@ const PerformanceDetailModal: React.FC<PerformanceDetailModalProps> = ({
             <BarChart
               data={data}
               layout="vertical"
-              margin={{ top: 5, right: 30, left: 30, bottom: 5 }}
+              margin={{ top: 10, right: 30, left: 40, bottom: 10 }}
             >
-              <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+              <CartesianGrid
+                strokeDasharray="3 3"
+                horizontal={false}
+                stroke="#f3f4f6"
+              />
               <XAxis type="number" domain={[0, 10]} />
-              <YAxis dataKey="nomeMateria" type="category" width={80} />
-              <Tooltip cursor={{ fill: "rgba(239, 246, 255, 0.5)" }} />
+              <YAxis dataKey="nomeMateria" type="category" width={100} />
+              <Tooltip cursor={{ fill: "rgba(239, 246, 255, 0.6)" }} />
               <Bar
                 dataKey="mediaNota"
-                fill="#8884d8"
+                fill="#2563eb"
                 radius={[0, 4, 4, 0]}
                 name="Média"
                 barSize={30}

@@ -18,6 +18,14 @@ router.get(
   eventosController.findAll
 );
 
+// Nova rota para buscar eventos por mês (com ou sem horários de aula)
+router.get(
+  "/mes",
+  protect,
+  authorize("GESTOR", "PROFESSOR", "ALUNO"),
+  eventosController.findAllByMonth
+);
+
 router.post(
   "/",
   protect,

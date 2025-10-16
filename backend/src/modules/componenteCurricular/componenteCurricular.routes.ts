@@ -50,4 +50,5 @@ router.get(
   componenteCurricularController.findById
 );
 
+router.get("/turma/:turmaId", componenteCurricularController.findAllByTurma);
 export const componenteCurricularRoutes = router;

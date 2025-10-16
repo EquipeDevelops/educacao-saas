@@ -1,0 +1,107 @@
+.container {
+  padding: 2rem;
+  font-family: "Inter", system-ui, sans-serif;
+  background-color: var(--cor-fundo);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.header h1 {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 1.8rem;
+  color: var(--cor-texto-destaque);
+}
+
+.headerActions {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.toggleLabel {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  padding: 0.6rem 1rem;
+  background-color: var(--cor-fundo-card);
+  border: 1px solid var(--cor-borda);
+  border-radius: 8px;
+  font-size: 0.9rem;
+  color: var(--cor-texto);
+  transition: background-color 0.2s;
+}
+
+.toggleLabel:hover {
+  background-color: #f0f0f0;
+}
+
+.toggleCheckbox {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: var(--cor-primaria);
+}
+
+.primaryButton {
+  padding: 0.7rem 1.4rem;
+  background: linear-gradient(
+    145deg,
+    var(--cor-primaria),
+    var(--cor-primaria-dark)
+  );
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 5px rgba(0, 83, 224, 0.2);
+}
+
+.primaryButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0, 83, 224, 0.3);
+}
+
+.loading {
+  text-align: center;
+  padding: 4rem;
+  font-size: 1.1rem;
+  color: var(--cor-subtexto);
+}
+
+.layoutGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  flex-grow: 1;
+  min-height: 0;
+}
+
+.calendarWrapper {
+  grid-column: 1 / -1;
+  min-width: 0;
+}
+
+.panelActive {
+  grid-template-columns: 1fr 380px;
+}
+
+.panelWrapper {
+  height: 100%;
+  min-height: 0;
+}

@@ -47,7 +47,11 @@ export default function ClassPerformanceChart({
           data={data}
           margin={{ top: 5, right: 20, left: -10, bottom: 5 }}
         >
-          <CartesianGrid strokeDasharray="3 3" vertical={false} />
+          <CartesianGrid
+            strokeDasharray="3 3"
+            vertical={false}
+            stroke="#f3f4f6"
+          />
           <XAxis
             dataKey="nomeTurma"
             fontSize={12}
@@ -60,11 +64,10 @@ export default function ClassPerformanceChart({
             axisLine={false}
             domain={[0, 10]}
           />
-          <Tooltip cursor={{ fill: "rgba(239, 246, 255, 0.5)" }} />
-
+          <Tooltip cursor={{ fill: "rgba(239, 246, 255, 0.6)" }} />
           <Bar
             dataKey="mediaNota"
-            fill="#8884d8"
+            fill="#2563eb"
             radius={[4, 4, 0, 0]}
             name="Média da Turma"
             cursor="pointer"

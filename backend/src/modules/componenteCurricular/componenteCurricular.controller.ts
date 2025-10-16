@@ -1,7 +1,7 @@
 import { Response, NextFunction } from "express";
 import { componenteCurricularService } from "./componenteCurricular.service";
 import { AuthenticatedRequest } from "../../middlewares/auth";
-import { CreateComponenteCurricularInput } from "./componenteCurricular.validator"; // Import com nome corrigido
+import { CreateComponenteCurricularInput } from "./componenteCurricular.validator";
 
 export const componenteCurricularController = {
   create: async (
@@ -30,6 +30,27 @@ export const componenteCurricularController = {
       const { unidadeEscolarId } = req.user;
       const componentes = await componenteCurricularService.findAll(
         unidadeEscolarId
+      );
+      return res.status(200).json(componentes);
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  findAllByTurma: async (
+    req: AuthenticatedRequest,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const { turmaId } = req.params;
+      if (!turmaId) {
+        return res
+          .status(400)
+          .json({ message: "O ID da turma é obrigatório." });
+      }
+      const componentes = await componenteCurricularService.findAllByTurma(
+        turmaId
       );
       return res.status(200).json(componentes);
     } catch (error) {

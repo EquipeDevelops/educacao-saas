@@ -23,8 +23,18 @@ export const eventosController = {
 
   findAllByMonth: async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const { mes } = req.query as { mes: string };
-      const eventos = await eventosService.findAllByMonth(mes, req.user);
+      const { mes, incluirHorarios } = req.query as {
+        mes: string;
+        incluirHorarios?: string;
+      };
+
+      const incluir = incluirHorarios === "true";
+
+      const eventos = await eventosService.findAllByMonthWithHorarios(
+        mes,
+        req.user,
+        incluir
+      );
       res.status(200).json(eventos);
     } catch (error: any) {
       res.status(500).json({ message: "Erro ao buscar eventos." });
@@ -39,6 +49,7 @@ export const eventosController = {
       res.status(403).json({ message: error.message });
     }
   },
+
   update: async (req: AuthenticatedRequest, res: Response) => {
     try {
       const eventoAtualizado = await eventosService.update(

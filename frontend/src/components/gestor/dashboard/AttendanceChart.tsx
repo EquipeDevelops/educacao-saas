@@ -27,7 +27,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
     return (
       <div className={styles.customTooltip}>
         <p className={styles.tooltipLabel}>{label}</p>
-        <p style={{ color: "#22c55e" }}>{`Presença: ${payload[0].value.toFixed(
+        <p style={{ color: "#16a34a" }}>{`Presença: ${payload[0].value.toFixed(
           1
         )}%`}</p>
         <p
@@ -66,7 +66,11 @@ export default function AttendanceChart({ data }: AttendanceChartProps) {
           margin={{ top: 5, right: 20, left: -10, bottom: 5 }}
           stackOffset="expand"
         >
-          <CartesianGrid strokeDasharray="3 3" vertical={false} />
+          <CartesianGrid
+            strokeDasharray="3 3"
+            vertical={false}
+            stroke="#f3f4f6"
+          />
           <XAxis
             dataKey="nomeTurma"
             fontSize={12}
@@ -81,15 +85,14 @@ export default function AttendanceChart({ data }: AttendanceChartProps) {
           />
           <Tooltip
             content={<CustomTooltip />}
-            cursor={{ fill: "rgba(243, 244, 246, 0.5)" }}
+            cursor={{ fill: "rgba(243, 244, 246, 0.6)" }}
           />
-          <Legend wrapperStyle={{ fontSize: "14px" }} />
-
-          <Bar dataKey="presenca" stackId="a" fill="#22c55e" name="Presença" />
+          <Legend wrapperStyle={{ fontSize: "13px" }} />
+          <Bar dataKey="presenca" stackId="a" fill="#3b82f6" name="Presença" />
           <Bar
             dataKey="justificadas"
             stackId="a"
-            fill="#f59e0b"
+            fill="#facc15"
             name="Faltas Justificadas"
           />
           <Bar

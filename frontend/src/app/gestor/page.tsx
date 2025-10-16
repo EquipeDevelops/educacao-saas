@@ -153,10 +153,12 @@ export default function GestorHomePage() {
   return (
     <div className={styles.container}>
       <header className={styles.header}>
-        <h1>Dashboard do Gestor</h1>
-        <p>
-          Visão geral e atalhos para as principais funcionalidades do sistema.
-        </p>
+        <div>
+          <h1>Dashboard do Gestor</h1>
+          <p>
+            Visão geral e atalhos para as principais funcionalidades do sistema.
+          </p>
+        </div>
       </header>
 
       <section className={styles.statsGrid}>
@@ -249,6 +251,7 @@ export default function GestorHomePage() {
             </Link>
           </div>
         </section>
+
         <section>
           <UpcomingEvents events={events} />
         </section>

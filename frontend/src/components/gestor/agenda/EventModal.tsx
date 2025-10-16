@@ -48,7 +48,7 @@ const getInitialFormData = (startDate = new Date()) => {
   };
 };
 
-export default function EventModal({ evento, turmas, onClose, onSave }) {
+export default function EventModal({ evento, turmas, onClose, onSave }: any) {
   const [activeTab, setActiveTab] = useState("evento");
   const [formData, setFormData] = useState<any>(getInitialFormData());
   const [componentes, setComponentes] = useState<Componente[]>([]);
@@ -56,7 +56,7 @@ export default function EventModal({ evento, turmas, onClose, onSave }) {
 
   useEffect(() => {
     if (evento) {
-      const isEditing = !!evento.id && evento.raw?.type !== "aula";
+      const isEditing = !!evento.id && evento.raw?.type !== "AULA";
       const startDate = evento.start ? new Date(evento.start) : new Date();
       const endDate = evento.end
         ? new Date(evento.end)
@@ -82,17 +82,20 @@ export default function EventModal({ evento, turmas, onClose, onSave }) {
   useEffect(() => {
     if (formData.turmaId) {
       api
-        .get(`/componentes-curriculares?turmaId=${formData.turmaId}`)
+        .get(`/componentes-curriculares/turma/${formData.turmaId}`)
         .then((res) => {
           setComponentes(res.data);
           if (res.data.length > 0) {
-            setFormData((prev) => ({
+            setFormData((prev: any) => ({
               ...prev,
               componenteCurricularId:
                 prev.componenteCurricularId || res.data[0].id,
             }));
           } else {
-            setFormData((prev) => ({ ...prev, componenteCurricularId: "" }));
+            setFormData((prev: any) => ({
+              ...prev,
+              componenteCurricularId: "",
+            }));
           }
         });
     } else {
@@ -100,9 +103,9 @@ export default function EventModal({ evento, turmas, onClose, onSave }) {
     }
   }, [formData.turmaId]);
 
-  const handleChange = (e) => {
+  const handleChange = (e: any) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData((prev: any) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e: FormEvent) => {
@@ -128,6 +131,10 @@ export default function EventModal({ evento, turmas, onClose, onSave }) {
 
         await promise;
       } else {
+        if (!formData.turmaId || !formData.componenteCurricularId) {
+          setError("Turma e Matéria/Professor são obrigatórios.");
+          return;
+        }
         const payload = {
           dia_semana: formData.dia_semana,
           hora_inicio: formData.hora_inicio,
@@ -136,7 +143,7 @@ export default function EventModal({ evento, turmas, onClose, onSave }) {
           turmaId: formData.turmaId,
           componenteCurricularId: formData.componenteCurricularId,
         };
-        await api.post("/horarios", payload);
+        await api.post("/horarios-aula", payload);
       }
 
       onSave();
@@ -281,7 +288,7 @@ export default function EventModal({ evento, turmas, onClose, onSave }) {
                     </option>
                   ))
                 ) : (
-                  <option>Nenhuma matéria/professor para esta turma</option>
+                  <option>Nenhuma matéria vinculada a esta turma</option>
                 )}
               </select>
               <div className={styles.grid2}>

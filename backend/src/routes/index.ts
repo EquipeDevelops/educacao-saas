@@ -11,7 +11,7 @@ import { professorRoutes } from "../modules/professor/professor.routes";
 import { alunoRoutes } from "../modules/aluno/aluno.routes";
 import { superAdminRoutes } from "../modules/superadmin/superadmin.routes";
 import { componenteCurricularRoutes } from "../modules/componenteCurricular/componenteCurricular.routes";
-import { horarioRoutes } from "../modules/horarioAula/horarioAula.routes";
+import horarioRoutes from "../modules/horarioAula/horarioAula.routes";
 import { conquistasPorUnidadeRoutes } from "../modules/conquistasPorUnidade/conquistasPorUnidade.routes";
 
 import { matriculaRoutes } from "../modules/matricula/matricula.routes";
@@ -32,6 +32,7 @@ import { comentarioRoutes } from "../modules/comentarioTarefa/comentarioTarefa.r
 import { conversaRoutes } from "../modules/conversa/conversa.routes";
 import { eventoRoutes } from "../modules/eventos/eventos.routes";
 import { geradorProvaIARoutes } from "../modules/geradorProvaIA/geradorProvaIA.routes";
+import { auditLogRoutes } from "../modules/auditLog/auditLog.routes";
 
 const mainRouter = Router();
 
@@ -46,7 +47,7 @@ mainRouter.use("/materias", materiaRoutes);
 mainRouter.use("/professores", professorRoutes);
 mainRouter.use("/alunos", alunoRoutes);
 mainRouter.use("/componentes-curriculares", componenteCurricularRoutes);
-mainRouter.use("/horarios", horarioRoutes);
+mainRouter.use("/horarios-aula", horarioRoutes);
 
 mainRouter.use("/matriculas", matriculaRoutes);
 mainRouter.use("/tarefas", tarefaRoutes);
@@ -68,5 +69,6 @@ mainRouter.use("/gerador-prova-ia", geradorProvaIARoutes);
 mainRouter.use("/professor/dashboard", professorDashboardRoutes);
 mainRouter.use("/gestor/dashboard", gestorDashboardRoutes);
 mainRouter.use("/gestor/relatorios", relatoriosRoutes);
+mainRouter.use("/audit-logs", auditLogRoutes);
 
 export default mainRouter;

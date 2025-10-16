@@ -1,9 +1,19 @@
 "use client";
 
-import { useState, useEffect, FormEvent, ChangeEvent } from "react";
+import { useState, useEffect, FormEvent, ChangeEvent, useMemo } from "react";
 import { api } from "@/services/api";
 import styles from "./matriculas.module.css";
-import { FiUserPlus, FiTrash2, FiEdit3 } from "react-icons/fi";
+import {
+  FiUserPlus,
+  FiTrash2,
+  FiEdit3,
+  FiSearch,
+  FiMoreVertical,
+} from "react-icons/fi";
+import Modal from "@/components/modal/Modal";
+import Loading from "@/components/loading/Loading";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 type Aluno = { id: string; usuario: { nome: string } };
 type Turma = { id: string; nome: string; serie: string };
@@ -11,7 +21,7 @@ type Matricula = {
   id: string;
   ano_letivo: number;
   status: "ATIVA" | "TRANCADA" | "CONCLUIDA" | "CANCELADA";
-  aluno: { usuario: { nome: string } };
+  aluno: { id: string; usuario: { nome: string } };
   turma: { nome: string; serie: string };
 };
 
@@ -21,7 +31,6 @@ const statusOptions: Matricula["status"][] = [
   "CONCLUIDA",
   "CANCELADA",
 ];
-
 const initialState = {
   alunoId: "",
   turmaId: "",
@@ -34,11 +43,9 @@ export default function GestaoMatriculasPage() {
   const [turmas, setTurmas] = useState<Turma[]>([]);
 
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
-
   const [formState, setFormState] = useState(initialState);
 
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingMatricula, setEditingMatricula] = useState<Matricula | null>(
     null
@@ -46,11 +53,12 @@ export default function GestaoMatriculasPage() {
   const [newStatus, setNewStatus] = useState<Matricula["status"]>("ATIVA");
 
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filtroTurma, setFiltroTurma] = useState("TODAS");
 
   async function fetchData() {
+    setIsLoading(true);
     try {
-      setIsLoading(true);
-      setError(null);
       const [resMatriculas, resAlunos, resTurmas] = await Promise.all([
         api.get("/matriculas"),
         api.get("/alunos"),
@@ -60,13 +68,8 @@ export default function GestaoMatriculasPage() {
       setMatriculas(resMatriculas.data);
       setAlunos(resAlunos.data);
       setTurmas(resTurmas.data);
-
-      if (resAlunos.data.length > 0)
-        setFormState((prev) => ({ ...prev, alunoId: resAlunos.data[0].id }));
-      if (resTurmas.data.length > 0)
-        setFormState((prev) => ({ ...prev, turmaId: resTurmas.data[0].id }));
     } catch (err) {
-      setError("Falha ao carregar os dados necessários para esta página.");
+      toast.error("Falha ao carregar os dados da página.");
     } finally {
       setIsLoading(false);
     }
@@ -76,8 +79,29 @@ export default function GestaoMatriculasPage() {
     fetchData();
   }, []);
 
+  const alunosDisponiveis = useMemo(() => {
+    const alunosMatriculadosIds = new Set(
+      matriculas
+        .filter(
+          (m) => m.ano_letivo === formState.ano_letivo && m.status === "ATIVA"
+        )
+        .map((m) => m.aluno.id)
+    );
+    return alunos.filter((aluno) => !alunosMatriculadosIds.has(aluno.id));
+  }, [alunos, matriculas, formState.ano_letivo]);
+
+  const matriculasFiltradas = useMemo(() => {
+    return matriculas.filter((m) => {
+      const searchMatch = m.aluno.usuario.nome
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase());
+      const turmaMatch = filtroTurma === "TODAS" || m.turma.id === filtroTurma;
+      return searchMatch && turmaMatch;
+    });
+  }, [matriculas, searchTerm, filtroTurma]);
+
   const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+    e: ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
     setFormState((prevState) => ({
@@ -86,24 +110,14 @@ export default function GestaoMatriculasPage() {
     }));
   };
 
-  async function handleSubmit(event: FormEvent) {
-    event.preventDefault();
-    setError(null);
-    setSuccess(null);
-
-    if (!formState.alunoId || !formState.turmaId) {
-      setError("Aluno e Turma são obrigatórios para criar a matrícula.");
-      return;
-    }
-
-    try {
-      await api.post("/matriculas", formState);
-      setSuccess("Matrícula criada com sucesso!");
-      await fetchData();
-    } catch (err: any) {
-      setError(err.response?.data?.message || "Erro ao criar a matrícula.");
-    }
-  }
+  const openCreateModal = () => {
+    setFormState({
+      ...initialState,
+      alunoId: alunosDisponiveis[0]?.id || "",
+      turmaId: turmas[0]?.id || "",
+    });
+    setIsCreateModalOpen(true);
+  };
 
   const openEditModal = (matricula: Matricula) => {
     setEditingMatricula(matricula);
@@ -111,100 +125,180 @@ export default function GestaoMatriculasPage() {
     setIsEditModalOpen(true);
   };
 
+  const closeModal = () => {
+    setIsCreateModalOpen(false);
+    setIsEditModalOpen(false);
+  };
+
+  async function handleSubmit(event: FormEvent) {
+    event.preventDefault();
+    if (!formState.alunoId || !formState.turmaId) {
+      toast.error("Aluno e Turma são obrigatórios.");
+      return;
+    }
+
+    const toastId = toast.loading("Realizando matrícula...");
+    try {
+      await api.post("/matriculas", formState);
+      toast.update(toastId, {
+        render: "Matrícula criada com sucesso!",
+        type: "success",
+        isLoading: false,
+        autoClose: 3000,
+      });
+      closeModal();
+      await fetchData();
+    } catch (err: any) {
+      const message =
+        err.response?.data?.message || "Erro ao criar a matrícula.";
+      toast.update(toastId, {
+        render: message,
+        type: "error",
+        isLoading: false,
+        autoClose: 5000,
+      });
+    }
+  }
+
   async function handleUpdateStatus(event: FormEvent) {
     event.preventDefault();
     if (!editingMatricula) return;
 
-    setError(null);
-    setSuccess(null);
-
+    const toastId = toast.loading("Atualizando status...");
     try {
       await api.patch(`/matriculas/${editingMatricula.id}/status`, {
         status: newStatus,
       });
-      setSuccess("Status da matrícula atualizado com sucesso!");
-      setIsEditModalOpen(false);
-      setEditingMatricula(null);
+      toast.update(toastId, {
+        render: "Status atualizado com sucesso!",
+        type: "success",
+        isLoading: false,
+        autoClose: 3000,
+      });
+      closeModal();
       await fetchData();
     } catch (err: any) {
-      setError(err.response?.data?.message || "Erro ao atualizar o status.");
+      const message =
+        err.response?.data?.message || "Erro ao atualizar o status.";
+      toast.update(toastId, {
+        render: message,
+        type: "error",
+        isLoading: false,
+        autoClose: 5000,
+      });
     }
   }
 
-  const handleSelectAll = (e: ChangeEvent<HTMLInputElement>) => {
-    if (e.target.checked) {
-      setSelectedIds(matriculas.map((m) => m.id));
-    } else {
-      setSelectedIds([]);
-    }
-  };
-
-  const handleSelectOne = (id: string) => {
-    setSelectedIds((prev) =>
-      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
-    );
-  };
-
-  const handleBulkDelete = async () => {
-    if (
-      window.confirm(
-        `Tem certeza que deseja excluir ${selectedIds.length} matrícula(s) selecionada(s)?`
-      )
-    ) {
-      setError(null);
-      setSuccess(null);
-
-      const promises = selectedIds.map((id) => api.delete(`/matriculas/${id}`));
-
-      try {
-        await Promise.all(promises);
-        setSuccess(
-          `${selectedIds.length} matrícula(s) foram excluídas com sucesso.`
-        );
-        setSelectedIds([]);
-        await fetchData();
-      } catch (err: any) {
-        setError(
-          err.response?.data?.message || `Erro ao executar a exclusão em massa.`
-        );
-      }
-    }
-  };
+  if (isLoading) {
+    return <Loading />;
+  }
 
   return (
     <div className={styles.container}>
-      {error && (
-        <div className={`${styles.feedback} ${styles.error}`}>{error}</div>
-      )}
-      {success && (
-        <div className={`${styles.feedback} ${styles.success}`}>{success}</div>
-      )}
-
+      <ToastContainer position="top-right" autoClose={3000} />
       <header className={styles.header}>
         <div>
           <h1>Gerenciamento de Matrículas</h1>
           <p>Matricule alunos nas turmas e gerencie seus status.</p>
         </div>
+        <button className={styles.primaryButton} onClick={openCreateModal}>
+          <FiUserPlus /> Nova Matrícula
+        </button>
       </header>
 
-      <section className={styles.formSection}>
-        <h2>
-          <FiUserPlus /> Nova Matrícula
-        </h2>
-        <form onSubmit={handleSubmit} className={styles.form}>
+      <div className={styles.toolbar}>
+        <div className={styles.searchContainer}>
+          <FiSearch />
+          <input
+            type="text"
+            placeholder="Buscar por nome do aluno..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+        <div className={styles.filterGroup}>
+          <label>Filtrar por Turma:</label>
+          <select
+            value={filtroTurma}
+            onChange={(e) => setFiltroTurma(e.target.value)}
+          >
+            <option value="TODAS">Todas as Turmas</option>
+            {turmas.map((turma) => (
+              <option key={turma.id} value={turma.id}>
+                {turma.serie} - {turma.nome}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      <div className={styles.listContainer}>
+        {matriculasFiltradas.length > 0 ? (
+          matriculasFiltradas.map((matricula) => (
+            <div key={matricula.id} className={styles.listItem}>
+              <div className={styles.avatar}>
+                {matricula.aluno.usuario.nome.substring(0, 2).toUpperCase()}
+              </div>
+              <div className={styles.info}>
+                <p className={styles.alunoName}>
+                  {matricula.aluno.usuario.nome}
+                </p>
+                <p className={styles.turmaInfo}>
+                  {matricula.turma.serie} - {matricula.turma.nome}
+                </p>
+              </div>
+              <div className={styles.anoLetivo}>
+                <span>Ano Letivo</span>
+                <p>{matricula.ano_letivo}</p>
+              </div>
+              <div className={styles.status}>
+                <span>Status</span>
+                <p>
+                  <span
+                    className={`${styles.statusBadge} ${
+                      styles["status" + matricula.status]
+                    }`}
+                  >
+                    {matricula.status}
+                  </span>
+                </p>
+              </div>
+              <div className={styles.actions}>
+                <button onClick={() => openEditModal(matricula)}>
+                  <FiEdit3 /> Editar Status
+                </button>
+              </div>
+            </div>
+          ))
+        ) : (
+          <div className={styles.emptyState}>
+            Nenhuma matrícula encontrada para os filtros aplicados.
+          </div>
+        )}
+      </div>
+
+      <Modal
+        isOpen={isCreateModalOpen}
+        onClose={closeModal}
+        title="Realizar Nova Matrícula"
+      >
+        <form onSubmit={handleSubmit} className={styles.modalForm}>
           <label className={styles.label}>
             Aluno:
             <select
               name="alunoId"
               value={formState.alunoId}
               onChange={handleInputChange}
-              className={styles.select}
             >
-              {alunos.map((aluno) => (
-                <option key={aluno.id} value={aluno.id}>
-                  {aluno.usuario.nome}
-                </option>
-              ))}
+              {alunosDisponiveis.length > 0 ? (
+                alunosDisponiveis.map((aluno) => (
+                  <option key={aluno.id} value={aluno.id}>
+                    {aluno.usuario.nome}
+                  </option>
+                ))
+              ) : (
+                <option disabled>Nenhum aluno disponível para matrícula</option>
+              )}
             </select>
           </label>
           <label className={styles.label}>
@@ -213,7 +307,6 @@ export default function GestaoMatriculasPage() {
               name="turmaId"
               value={formState.turmaId}
               onChange={handleInputChange}
-              className={styles.select}
             >
               {turmas.map((turma) => (
                 <option key={turma.id} value={turma.id}>
@@ -229,104 +322,30 @@ export default function GestaoMatriculasPage() {
               name="ano_letivo"
               value={formState.ano_letivo}
               onChange={handleInputChange}
-              className={styles.input}
             />
           </label>
-
-          <button type="submit" className={`${styles.button} btn`}>
-            Matricular Aluno
-          </button>
+          <div className={styles.modalActions}>
+            <button
+              type="button"
+              className={styles.cancelButton}
+              onClick={closeModal}
+            >
+              Cancelar
+            </button>
+            <button type="submit" className={styles.saveButton}>
+              Matricular
+            </button>
+          </div>
         </form>
-      </section>
-
-      <section className={styles.tableContainer}>
-        <div className={styles.tableHeader}>
-          <h2>Matrículas Ativas</h2>
-          {selectedIds.length > 0 && (
-            <div className={styles.bulkActionsContainer}>
-              <span>{selectedIds.length} selecionada(s)</span>
-              <button
-                className={styles.bulkDeleteButton}
-                onClick={handleBulkDelete}
-              >
-                Excluir
-              </button>
-            </div>
-          )}
-        </div>
-        {isLoading ? (
-          <p className={styles.loading}>Carregando...</p>
-        ) : (
-          <table className={styles.table}>
-            <thead>
-              <tr>
-                <th className={styles.thCheckbox}>
-                  <input
-                    type="checkbox"
-                    onChange={handleSelectAll}
-                    checked={
-                      selectedIds.length === matriculas.length &&
-                      matriculas.length > 0
-                    }
-                  />
-                </th>
-                <th className={styles.th}>Aluno</th>
-                <th className={styles.th}>Turma</th>
-                <th className={styles.th}>Ano Letivo</th>
-                <th className={styles.th}>Status</th>
-                <th className={styles.th}>Ações</th>
-              </tr>
-            </thead>
-            <tbody>
-              {matriculas.map((matricula) => (
-                <tr
-                  key={matricula.id}
-                  className={
-                    selectedIds.includes(matricula.id) ? styles.selectedRow : ""
-                  }
-                >
-                  <td className={styles.tdCheckbox}>
-                    <input
-                      type="checkbox"
-                      checked={selectedIds.includes(matricula.id)}
-                      onChange={() => handleSelectOne(matricula.id)}
-                    />
-                  </td>
-                  <td className={styles.td}>{matricula.aluno.usuario.nome}</td>
-                  <td className={styles.td}>
-                    {matricula.turma.serie} - {matricula.turma.nome}
-                  </td>
-                  <td className={styles.td}>{matricula.ano_letivo}</td>
-                  <td className={styles.td}>
-                    <span
-                      className={`${styles.statusBadge} ${
-                        styles["status" + matricula.status]
-                      }`}
-                    >
-                      {matricula.status}
-                    </span>
-                  </td>
-                  <td className={styles.td}>
-                    <div className={styles.actions}>
-                      <button
-                        className={styles.editButton}
-                        onClick={() => openEditModal(matricula)}
-                      >
-                        <FiEdit3 />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </section>
+      </Modal>
 
       {isEditModalOpen && editingMatricula && (
-        <div className={styles.modalOverlay}>
-          <div className={styles.modalContent}>
-            <h2>Alterar Status da Matrícula</h2>
+        <Modal
+          isOpen={isEditModalOpen}
+          onClose={closeModal}
+          title="Alterar Status da Matrícula"
+        >
+          <div className={styles.editInfo}>
             <p>
               <strong>Aluno:</strong> {editingMatricula.aluno.usuario.nome}
             </p>
@@ -334,38 +353,37 @@ export default function GestaoMatriculasPage() {
               <strong>Turma:</strong> {editingMatricula.turma.serie} -{" "}
               {editingMatricula.turma.nome}
             </p>
-            <form onSubmit={handleUpdateStatus}>
-              <label className={styles.label}>
-                Novo Status:
-                <select
-                  value={newStatus}
-                  onChange={(e) =>
-                    setNewStatus(e.target.value as Matricula["status"])
-                  }
-                  className={styles.select}
-                >
-                  {statusOptions.map((status) => (
-                    <option key={status} value={status}>
-                      {status}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <div className={styles.modalActions}>
-                <button
-                  type="button"
-                  className={styles.cancelButton}
-                  onClick={() => setIsEditModalOpen(false)}
-                >
-                  Cancelar
-                </button>
-                <button type="submit" className={styles.saveButton}>
-                  Salvar Alteração
-                </button>
-              </div>
-            </form>
           </div>
-        </div>
+          <form onSubmit={handleUpdateStatus} className={styles.modalForm}>
+            <label className={styles.label}>
+              Novo Status:
+              <select
+                value={newStatus}
+                onChange={(e) =>
+                  setNewStatus(e.target.value as Matricula["status"])
+                }
+              >
+                {statusOptions.map((status) => (
+                  <option key={status} value={status}>
+                    {status}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <div className={styles.modalActions}>
+              <button
+                type="button"
+                className={styles.cancelButton}
+                onClick={closeModal}
+              >
+                Cancelar
+              </button>
+              <button type="submit" className={styles.saveButton}>
+                Salvar Alteração
+              </button>
+            </div>
+          </form>
+        </Modal>
       )}
     </div>
   );

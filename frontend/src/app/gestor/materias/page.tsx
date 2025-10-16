@@ -1,14 +1,28 @@
 "use client";
 
-import { useState, useEffect, FormEvent, ChangeEvent } from "react";
+import { useState, useEffect, FormEvent, ChangeEvent, useMemo } from "react";
 import { api } from "@/services/api";
 import styles from "./materias.module.css";
-import { FiEdit, FiTrash2, FiPlus, FiBookOpen } from "react-icons/fi";
+import {
+  FiEdit,
+  FiTrash2,
+  FiPlus,
+  FiBookOpen,
+  FiSearch,
+  FiLink,
+} from "react-icons/fi";
+import Modal from "@/components/modal/Modal";
+import Loading from "@/components/loading/Loading";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 type Materia = {
   id: string;
   nome: string;
   codigo?: string;
+  _count: {
+    componentes_curriculares: number;
+  };
 };
 
 const initialState = {
@@ -19,32 +33,18 @@ const initialState = {
 export default function GestaoMateriasPage() {
   const [materias, setMaterias] = useState<Materia[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingMateria, setEditingMateria] = useState<Materia | null>(null);
   const [formState, setFormState] = useState(initialState);
 
-  const [selectedMateriaIds, setSelectedMateriaIds] = useState<string[]>([]);
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    if (editingMateria) {
-      setEditingMateria({ ...editingMateria, [name]: value });
-    } else {
-      setFormState((prevState) => ({ ...prevState, [name]: value }));
-    }
-  };
-
   async function fetchMaterias() {
     try {
-      setIsLoading(true);
-      setError(null);
       const response = await api.get("/materias");
       setMaterias(response.data);
     } catch (err) {
-      setError("Falha ao carregar as matérias.");
+      toast.error("Falha ao carregar as matérias.");
     } finally {
       setIsLoading(false);
     }
@@ -54,50 +54,70 @@ export default function GestaoMateriasPage() {
     fetchMaterias();
   }, []);
 
+  const filteredMaterias = useMemo(
+    () =>
+      materias.filter(
+        (m) =>
+          m.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          m.codigo?.toLowerCase().includes(searchTerm.toLowerCase())
+      ),
+    [materias, searchTerm]
+  );
+
   const openModal = (materia: Materia | null = null) => {
-    setError(null);
-    setSuccess(null);
     if (materia) {
       setEditingMateria(materia);
+      setFormState({ nome: materia.nome, codigo: materia.codigo || "" });
     } else {
-      setFormState(initialState);
       setEditingMateria(null);
+      setFormState(initialState);
     }
     setIsModalOpen(true);
   };
 
   const closeModal = () => {
     setIsModalOpen(false);
-    setEditingMateria(null);
-    setFormState(initialState);
   };
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
-    setError(null);
-    setSuccess(null);
-
-    const data = editingMateria
-      ? { nome: editingMateria.nome, codigo: editingMateria.codigo }
-      : formState;
-
-    if (!data.nome.trim()) {
-      setError("O nome da matéria é obrigatório.");
+    if (!formState.nome.trim()) {
+      toast.error("O nome da matéria é obrigatório.");
       return;
     }
 
+    const toastId = toast.loading(
+      editingMateria ? "Atualizando..." : "Criando..."
+    );
     try {
       if (editingMateria) {
-        await api.put(`/materias/${editingMateria.id}`, data);
-        setSuccess(`Matéria "${data.nome}" atualizada com sucesso!`);
+        await api.put(`/materias/${editingMateria.id}`, formState);
+        toast.update(toastId, {
+          render: "Matéria atualizada com sucesso!",
+          type: "success",
+          isLoading: false,
+          autoClose: 3000,
+        });
       } else {
-        await api.post("/materias", data);
-        setSuccess(`Matéria "${data.nome}" criada com sucesso!`);
+        await api.post("/materias", formState);
+        toast.update(toastId, {
+          render: "Matéria criada com sucesso!",
+          type: "success",
+          isLoading: false,
+          autoClose: 3000,
+        });
       }
       closeModal();
       await fetchMaterias();
     } catch (err: any) {
-      setError(err.response?.data?.message || "Erro ao salvar a matéria.");
+      const message =
+        err.response?.data?.message || "Erro ao salvar a matéria.";
+      toast.update(toastId, {
+        render: message,
+        type: "error",
+        isLoading: false,
+        autoClose: 5000,
+      });
     }
   }
 
@@ -107,202 +127,142 @@ export default function GestaoMateriasPage() {
         `Tem certeza que deseja excluir a matéria "${materia.nome}"?`
       )
     ) {
-      setError(null);
-      setSuccess(null);
+      const toastId = toast.loading("Excluindo...");
       try {
         await api.delete(`/materias/${materia.id}`);
-        setSuccess(`Matéria "${materia.nome}" excluída com sucesso!`);
+        toast.update(toastId, {
+          render: "Matéria excluída com sucesso!",
+          type: "info",
+          isLoading: false,
+          autoClose: 3000,
+        });
         await fetchMaterias();
       } catch (err: any) {
-        setError(err.response?.data?.message || "Erro ao excluir a matéria.");
+        const message =
+          err.response?.data?.message || "Erro ao excluir a matéria.";
+        toast.update(toastId, {
+          render: message,
+          type: "error",
+          isLoading: false,
+          autoClose: 5000,
+        });
       }
     }
   }
 
-  const handleSelectAll = (e: ChangeEvent<HTMLInputElement>) => {
-    if (e.target.checked) {
-      setSelectedMateriaIds(materias.map((m) => m.id));
-    } else {
-      setSelectedMateriaIds([]);
-    }
-  };
-
-  const handleSelectOne = (materiaId: string) => {
-    setSelectedMateriaIds((prev) =>
-      prev.includes(materiaId)
-        ? prev.filter((id) => id !== materiaId)
-        : [...prev, materiaId]
-    );
-  };
-
-  const handleBulkDelete = async () => {
-    if (
-      window.confirm(
-        `Tem certeza que deseja excluir ${selectedMateriaIds.length} matéria(s) selecionada(s)?`
-      )
-    ) {
-      setError(null);
-      setSuccess(null);
-
-      const promises = selectedMateriaIds.map((id) =>
-        api.delete(`/materias/${id}`)
-      );
-
-      try {
-        await Promise.all(promises);
-        setSuccess(
-          `${selectedMateriaIds.length} matéria(s) foram excluídas com sucesso.`
-        );
-        setSelectedMateriaIds([]);
-        await fetchMaterias();
-      } catch (err: any) {
-        setError(
-          err.response?.data?.message || `Erro ao executar a exclusão em massa.`
-        );
-      }
-    }
-  };
+  if (isLoading) {
+    return <Loading />;
+  }
 
   return (
     <div className={styles.container}>
-      {error && (
-        <div className={`${styles.feedback} ${styles.error}`}>{error}</div>
-      )}
-      {success && (
-        <div className={`${styles.feedback} ${styles.success}`}>{success}</div>
-      )}
-
+      <ToastContainer position="top-right" autoClose={3000} />
       <header className={styles.header}>
         <div>
           <h1>Gerenciamento de Matérias</h1>
-          <p>Adicione e organize as disciplinas oferecidas pela sua escola.</p>
+          <p>
+            Adicione, edite e organize as disciplinas oferecidas pela sua
+            escola.
+          </p>
         </div>
         <button className={styles.primaryButton} onClick={() => openModal()}>
           <FiPlus /> Nova Matéria
         </button>
       </header>
 
-      <section className={styles.tableContainer}>
-        <div className={styles.tableHeader}>
-          <h2>Matérias Cadastradas</h2>
-          {selectedMateriaIds.length > 0 && (
-            <div className={styles.bulkActionsContainer}>
-              <span>{selectedMateriaIds.length} selecionada(s)</span>
-              <button
-                className={styles.bulkDeleteButton}
-                onClick={handleBulkDelete}
-              >
-                Excluir Selecionadas
-              </button>
-            </div>
-          )}
+      <div className={styles.toolbar}>
+        <div className={styles.searchContainer}>
+          <FiSearch />
+          <input
+            type="text"
+            placeholder="Buscar por nome ou código..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
         </div>
-        {isLoading ? (
-          <p className={styles.loading}>Carregando...</p>
-        ) : (
-          <table className={styles.table}>
-            <thead>
-              <tr>
-                <th className={styles.thCheckbox}>
-                  <input
-                    type="checkbox"
-                    onChange={handleSelectAll}
-                    checked={
-                      selectedMateriaIds.length === materias.length &&
-                      materias.length > 0
-                    }
-                  />
-                </th>
-                <th className={styles.th}>Nome da Matéria</th>
-                <th className={styles.th}>Código</th>
-                <th className={styles.th}>Ações</th>
-              </tr>
-            </thead>
-            <tbody>
-              {materias.map((materia) => (
-                <tr
-                  key={materia.id}
-                  className={
-                    selectedMateriaIds.includes(materia.id)
-                      ? styles.selectedRow
-                      : ""
-                  }
-                >
-                  <td className={styles.tdCheckbox}>
-                    <input
-                      type="checkbox"
-                      checked={selectedMateriaIds.includes(materia.id)}
-                      onChange={() => handleSelectOne(materia.id)}
-                    />
-                  </td>
-                  <td className={styles.td}>{materia.nome}</td>
-                  <td className={styles.td}>{materia.codigo || "N/A"}</td>
-                  <td className={styles.td}>
-                    <div className={styles.actions}>
-                      <button
-                        className={styles.editButton}
-                        onClick={() => openModal(materia)}
-                      >
-                        <FiEdit />
-                      </button>
-                      <button
-                        className={styles.deleteButton}
-                        onClick={() => handleDelete(materia)}
-                      >
-                        <FiTrash2 />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </section>
+      </div>
 
-      {isModalOpen && (
-        <div className={styles.modalOverlay}>
-          <div className={styles.modalContent}>
-            <h2>{editingMateria ? "Editar Matéria" : "Criar Nova Matéria"}</h2>
-            <form onSubmit={handleSubmit}>
-              <label className={styles.label}>
-                Nome da Matéria:
-                <input
-                  name="nome"
-                  value={editingMateria ? editingMateria.nome : formState.nome}
-                  onChange={handleInputChange}
-                  placeholder="Ex: Matemática, Língua Portuguesa"
-                  required
-                />
-              </label>
-              <label className={styles.label}>
-                Código (Opcional):
-                <input
-                  name="codigo"
-                  value={
-                    editingMateria
-                      ? editingMateria.codigo || ""
-                      : formState.codigo
-                  }
-                  onChange={handleInputChange}
-                  placeholder="Ex: MAT, LP"
-                />
-              </label>
-              <div className={styles.modalActions}>
+      <div className={styles.grid}>
+        {filteredMaterias.map((materia) => (
+          <div key={materia.id} className={styles.card}>
+            <div className={styles.cardHeader}>
+              <div className={styles.cardIcon}>
+                <FiBookOpen />
+              </div>
+              <div className={styles.cardActions}>
                 <button
-                  type="button"
-                  className={styles.cancelButton}
-                  onClick={closeModal}
+                  onClick={() => openModal(materia)}
+                  title="Editar Matéria"
                 >
-                  Cancelar
+                  <FiEdit size={16} />
                 </button>
-                <button type="submit" className={styles.saveButton}>
-                  Salvar
+                <button
+                  onClick={() => handleDelete(materia)}
+                  className={styles.deleteButton}
+                  title="Excluir Matéria"
+                >
+                  <FiTrash2 size={16} />
                 </button>
               </div>
-            </form>
+            </div>
+            <div className={styles.cardBody}>
+              <h3 className={styles.cardTitle}>{materia.nome}</h3>
+              <p className={styles.cardCode}>
+                {materia.codigo || "Sem código"}
+              </p>
+            </div>
+            <div className={styles.cardFooter}>
+              <FiLink size={14} />
+              <span>{materia._count.componentes_curriculares} Vínculos</span>
+            </div>
           </div>
-        </div>
+        ))}
+      </div>
+
+      {isModalOpen && (
+        <Modal
+          isOpen={isModalOpen}
+          onClose={closeModal}
+          title={editingMateria ? "Editar Matéria" : "Criar Nova Matéria"}
+        >
+          <form onSubmit={handleSubmit} className={styles.modalForm}>
+            <label className={styles.label}>
+              Nome da Matéria:
+              <input
+                name="nome"
+                value={formState.nome}
+                onChange={(e) =>
+                  setFormState({ ...formState, nome: e.target.value })
+                }
+                placeholder="Ex: Matemática, Língua Portuguesa"
+                required
+              />
+            </label>
+            <label className={styles.label}>
+              Código (Opcional):
+              <input
+                name="codigo"
+                value={formState.codigo}
+                onChange={(e) =>
+                  setFormState({ ...formState, codigo: e.target.value })
+                }
+                placeholder="Ex: MAT, LP"
+              />
+            </label>
+            <div className={styles.modalActions}>
+              <button
+                type="button"
+                className={styles.cancelButton}
+                onClick={closeModal}
+              >
+                Cancelar
+              </button>
+              <button type="submit" className={styles.saveButton}>
+                Salvar
+              </button>
+            </div>
+          </form>
+        </Modal>
       )}
     </div>
   );

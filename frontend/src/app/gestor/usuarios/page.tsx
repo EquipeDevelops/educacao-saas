@@ -7,6 +7,8 @@ import Loading from "@/components/loading/Loading";
 import Modal from "@/components/modal/Modal";
 import ImportarAlunosModal from "@/components/gestor/usuarios/ImportarAlunosModal";
 import { FiPlus, FiSearch, FiUpload, FiEdit, FiTrash2 } from "react-icons/fi";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 type PapelUsuario = "PROFESSOR" | "ALUNO";
 
@@ -32,9 +34,9 @@ const initialState = {
 export default function GestorUsuariosPage() {
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
   const [filtro, setFiltro] = useState("");
+  const [filtroPapel, setFiltroPapel] = useState("TODOS");
+  const [filtroStatus, setFiltroStatus] = useState("TODOS");
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -49,7 +51,7 @@ export default function GestorUsuariosPage() {
     api
       .get("/usuarios")
       .then((response) => setUsuarios(response.data))
-      .catch(() => setError("Falha ao carregar os usuários."))
+      .catch(() => toast.error("Falha ao carregar os usuários."))
       .finally(() => setIsLoading(false));
   };
 
@@ -69,7 +71,6 @@ export default function GestorUsuariosPage() {
   ) => {
     if (!editingUser) return;
     const { name, value, type } = e.target;
-
     const isCheckbox = type === "checkbox";
     const finalValue = isCheckbox
       ? (e.target as HTMLInputElement).checked
@@ -98,24 +99,20 @@ export default function GestorUsuariosPage() {
   const closeModal = () => {
     setIsCreateModalOpen(false);
     setIsEditModalOpen(false);
-    setError(null);
-    setSuccess(null);
   };
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
-    setError(null);
-    setSuccess(null);
-
     const payload: any = {
       nome: formState.nome,
       email: formState.email,
       senha: formState.senha,
       papel: formState.papel,
     };
+
     if (formState.papel === "ALUNO") {
       if (!formState.numero_matricula) {
-        setError("O número de matrícula é obrigatório para alunos.");
+        toast.error("O número de matrícula é obrigatório para alunos.");
         return;
       }
       payload.perfil_aluno = { numero_matricula: formState.numero_matricula };
@@ -125,21 +122,31 @@ export default function GestorUsuariosPage() {
       };
     }
 
+    const toastId = toast.loading("Criando usuário...");
     try {
       await api.post("/usuarios", payload);
-      setSuccess(`Usuário "${formState.nome}" criado com sucesso!`);
+      toast.update(toastId, {
+        render: `Usuário "${formState.nome}" criado com sucesso!`,
+        type: "success",
+        isLoading: false,
+        autoClose: 3000,
+      });
       closeModal();
       fetchUsuarios();
     } catch (err: any) {
-      setError(err.response?.data?.message || "Erro ao criar o usuário.");
+      const message = err.response?.data?.message || "Erro ao criar o usuário.";
+      toast.update(toastId, {
+        render: message,
+        type: "error",
+        isLoading: false,
+        autoClose: 5000,
+      });
     }
   }
 
   async function handleUpdate(event: FormEvent) {
     event.preventDefault();
     if (!editingUser) return;
-    setError(null);
-    setSuccess(null);
 
     const payload = {
       nome: editingUser.nome,
@@ -149,13 +156,26 @@ export default function GestorUsuariosPage() {
       },
     };
 
+    const toastId = toast.loading("Atualizando usuário...");
     try {
-      await api.patch(`/usuarios/${editingUser.id}`, payload);
-      setSuccess("Usuário atualizado com sucesso!");
+      await api.put(`/usuarios/${editingUser.id}`, payload);
+      toast.update(toastId, {
+        render: "Usuário atualizado com sucesso!",
+        type: "success",
+        isLoading: false,
+        autoClose: 3000,
+      });
       closeModal();
       fetchUsuarios();
     } catch (err: any) {
-      setError(err.response?.data?.message || "Erro ao atualizar o usuário.");
+      const message =
+        err.response?.data?.message || "Erro ao atualizar o usuário.";
+      toast.update(toastId, {
+        render: message,
+        type: "error",
+        isLoading: false,
+        autoClose: 5000,
+      });
     }
   }
 
@@ -165,18 +185,33 @@ export default function GestorUsuariosPage() {
         `Tem certeza que deseja excluir o usuário "${user.nome}"? Esta ação é irreversível.`
       )
     ) {
+      const toastId = toast.loading("Excluindo usuário...");
       try {
         await api.delete(`/usuarios/${user.id}`);
-        setSuccess(`Usuário "${user.nome}" excluído com sucesso!`);
+        toast.update(toastId, {
+          render: `Usuário "${user.nome}" excluído!`,
+          type: "info",
+          isLoading: false,
+          autoClose: 3000,
+        });
         fetchUsuarios();
       } catch (err: any) {
-        setError(err.response?.data?.message || "Erro ao excluir o usuário.");
+        const message =
+          err.response?.data?.message || "Erro ao excluir o usuário.";
+        toast.update(toastId, {
+          render: message,
+          type: "error",
+          isLoading: false,
+          autoClose: 5000,
+        });
       }
     }
   }
 
   const handleSelectAll = (e: ChangeEvent<HTMLInputElement>) => {
-    setSelectedUserIds(e.target.checked ? usuarios.map((u) => u.id) : []);
+    setSelectedUserIds(
+      e.target.checked ? usuariosFiltrados.map((u) => u.id) : []
+    );
   };
 
   const handleSelectOne = (userId: string) => {
@@ -190,16 +225,17 @@ export default function GestorUsuariosPage() {
   const handleBulkAction = async (
     action: "activate" | "deactivate" | "delete"
   ) => {
-    const actionText = {
+    const actionTextMap = {
       activate: "ativar",
       deactivate: "desativar",
       delete: "excluir",
-    }[action];
+    };
     if (
       window.confirm(
-        `Tem certeza que deseja ${actionText} ${selectedUserIds.length} usuário(s) selecionado(s)?`
+        `Tem certeza que deseja ${actionTextMap[action]} ${selectedUserIds.length} usuário(s) selecionado(s)?`
       )
     ) {
+      const toastId = toast.loading("Processando ação em massa...");
       const promises = selectedUserIds.map((id) => {
         if (action === "delete") return api.delete(`/usuarios/${id}`);
         return api.patch(`/usuarios/${id}`, { status: action === "activate" });
@@ -207,27 +243,36 @@ export default function GestorUsuariosPage() {
 
       try {
         await Promise.all(promises);
-        setSuccess(
-          `${selectedUserIds.length} usuário(s) foram processados com sucesso.`
-        );
+        toast.update(toastId, {
+          render: "Ação em massa concluída com sucesso!",
+          type: "success",
+          isLoading: false,
+          autoClose: 3000,
+        });
         setSelectedUserIds([]);
         fetchUsuarios();
       } catch (err: any) {
-        setError(
-          err.response?.data?.message || `Erro ao executar ação em massa.`
-        );
+        const message =
+          err.response?.data?.message || "Erro ao executar ação em massa.";
+        toast.update(toastId, {
+          render: message,
+          type: "error",
+          isLoading: false,
+          autoClose: 5000,
+        });
       }
     }
   };
 
   const usuariosFiltrados = useMemo(() => {
-    if (!filtro) return usuarios;
     return usuarios.filter(
       (user) =>
-        user.nome.toLowerCase().includes(filtro.toLowerCase()) ||
-        user.email.toLowerCase().includes(filtro.toLowerCase())
+        (user.nome.toLowerCase().includes(filtro.toLowerCase()) ||
+          user.email.toLowerCase().includes(filtro.toLowerCase())) &&
+        (filtroPapel === "TODOS" || user.papel === filtroPapel) &&
+        (filtroStatus === "TODOS" || String(user.status) === filtroStatus)
     );
-  }, [usuarios, filtro]);
+  }, [usuarios, filtro, filtroPapel, filtroStatus]);
 
   if (isLoading) {
     return <Loading />;
@@ -235,13 +280,7 @@ export default function GestorUsuariosPage() {
 
   return (
     <div className={styles.container}>
-      {error && (
-        <div className={`${styles.feedback} ${styles.error}`}>{error}</div>
-      )}
-      {success && (
-        <div className={`${styles.feedback} ${styles.success}`}>{success}</div>
-      )}
-
+      <ToastContainer position="top-right" autoClose={3000} />
       <header className={styles.header}>
         <h1>Gerenciamento de Usuários</h1>
         <div className={styles.actions}>
@@ -249,19 +288,17 @@ export default function GestorUsuariosPage() {
             onClick={() => setIsImportModalOpen(true)}
             className={styles.button}
           >
-            <FiUpload />
-            Importar Alunos
+            <FiUpload className={styles.iconInline} /> Importar Alunos
           </button>
           <button onClick={openCreateModal} className={styles.buttonPrimary}>
-            <FiPlus />
-            Novo Usuário
+            <FiPlus className={styles.iconInline} /> Novo Usuário
           </button>
         </div>
       </header>
 
       <div className={styles.toolbar}>
         <div className={styles.searchContainer}>
-          <FiSearch />
+          <FiSearch className={styles.iconInline} />
           <input
             type="text"
             placeholder="Buscar por nome ou e-mail..."
@@ -269,22 +306,41 @@ export default function GestorUsuariosPage() {
             onChange={(e) => setFiltro(e.target.value)}
           />
         </div>
-        {selectedUserIds.length > 0 && (
-          <div className={styles.bulkActionsContainer}>
-            <span>{selectedUserIds.length} selecionado(s)</span>
-            <button onClick={() => handleBulkAction("activate")}>Ativar</button>
-            <button onClick={() => handleBulkAction("deactivate")}>
-              Desativar
-            </button>
-            <button
-              className={styles.bulkDeleteButton}
-              onClick={() => handleBulkAction("delete")}
-            >
-              Excluir
-            </button>
-          </div>
-        )}
+        <div className={styles.filters}>
+          <select
+            value={filtroPapel}
+            onChange={(e) => setFiltroPapel(e.target.value)}
+          >
+            <option value="TODOS">Todos os Papéis</option>
+            <option value="PROFESSOR">Professores</option>
+            <option value="ALUNO">Alunos</option>
+          </select>
+          <select
+            value={filtroStatus}
+            onChange={(e) => setFiltroStatus(e.target.value)}
+          >
+            <option value="TODOS">Todos os Status</option>
+            <option value="true">Ativos</option>
+            <option value="false">Inativos</option>
+          </select>
+        </div>
       </div>
+
+      {selectedUserIds.length > 0 && (
+        <div className={styles.bulkActionsContainer}>
+          <span>{selectedUserIds.length} selecionado(s)</span>
+          <button onClick={() => handleBulkAction("activate")}>Ativar</button>
+          <button onClick={() => handleBulkAction("deactivate")}>
+            Desativar
+          </button>
+          <button
+            className={styles.bulkDeleteButton}
+            onClick={() => handleBulkAction("delete")}
+          >
+            Excluir
+          </button>
+        </div>
+      )}
 
       <div className={styles.tableContainer}>
         <table className={styles.userTable}>
@@ -295,8 +351,8 @@ export default function GestorUsuariosPage() {
                   type="checkbox"
                   onChange={handleSelectAll}
                   checked={
-                    selectedUserIds.length === usuarios.length &&
-                    usuarios.length > 0
+                    selectedUserIds.length === usuariosFiltrados.length &&
+                    usuariosFiltrados.length > 0
                   }
                 />
               </th>
@@ -349,14 +405,16 @@ export default function GestorUsuariosPage() {
                     <button
                       onClick={() => openEditModal(user)}
                       className={styles.editButton}
+                      title="Editar"
                     >
-                      <FiEdit />
+                      <FiEdit className={styles.icon} />
                     </button>
                     <button
                       onClick={() => handleDelete(user)}
                       className={styles.deleteButton}
+                      title="Excluir"
                     >
-                      <FiTrash2 />
+                      <FiTrash2 className={styles.icon} />
                     </button>
                   </td>
                 </tr>
@@ -364,7 +422,7 @@ export default function GestorUsuariosPage() {
             ) : (
               <tr>
                 <td colSpan={6} className={styles.emptyRow}>
-                  Nenhum usuário encontrado.
+                  Nenhum usuário encontrado com os filtros aplicados.
                 </td>
               </tr>
             )}
@@ -378,14 +436,14 @@ export default function GestorUsuariosPage() {
         title="Criar Novo Usuário"
       >
         <form onSubmit={handleSubmit} className={styles.modalForm}>
-          <label>Nome Completo*</label>
+          <label className={styles.label}>Nome Completo*</label>
           <input
             name="nome"
             value={formState.nome}
             onChange={handleInputChange}
             required
           />
-          <label>Email*</label>
+          <label className={styles.label}>Email*</label>
           <input
             type="email"
             name="email"
@@ -393,7 +451,7 @@ export default function GestorUsuariosPage() {
             onChange={handleInputChange}
             required
           />
-          <label>Senha Provisória*</label>
+          <label className={styles.label}>Senha Provisória*</label>
           <input
             type="password"
             name="senha"
@@ -401,7 +459,7 @@ export default function GestorUsuariosPage() {
             onChange={handleInputChange}
             required
           />
-          <label>Papel*</label>
+          <label className={styles.label}>Papel*</label>
           <select
             name="papel"
             value={formState.papel}
@@ -412,7 +470,7 @@ export default function GestorUsuariosPage() {
           </select>
           {formState.papel === "ALUNO" && (
             <>
-              <label>Número de Matrícula*</label>
+              <label className={styles.label}>Número de Matrícula*</label>
               <input
                 name="numero_matricula"
                 value={formState.numero_matricula}
@@ -423,7 +481,7 @@ export default function GestorUsuariosPage() {
           )}
           {formState.papel === "PROFESSOR" && (
             <>
-              <label>Titulação</label>
+              <label className={styles.label}>Titulação</label>
               <input
                 name="titulacao"
                 value={formState.titulacao}
@@ -454,18 +512,18 @@ export default function GestorUsuariosPage() {
           title={`Editar Usuário: ${editingUser.nome}`}
         >
           <form onSubmit={handleUpdate} className={styles.modalForm}>
-            <label>Nome Completo*</label>
+            <label className={styles.label}>Nome Completo*</label>
             <input
               name="nome"
               value={editingUser.nome}
               onChange={handleEditInputChange}
               required
             />
-            <label>Email</label>
+            <label className={styles.label}>Email</label>
             <input type="email" value={editingUser.email} disabled />
             {editingUser.papel === "PROFESSOR" && (
               <>
-                <label>Titulação</label>
+                <label className={styles.label}>Titulação</label>
                 <input
                   name="titulacao"
                   value={editingUser.perfil_professor?.titulacao || ""}

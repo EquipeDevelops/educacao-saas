@@ -12,11 +12,13 @@ import {
   isSameDay,
   addMonths,
   subMonths,
+  startOfDay,
+  endOfDay,
 } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import styles from "./CustomCalendar.module.css";
 
-const CustomCalendar = ({ events, onDayClick, onEventClick }) => {
+const CustomCalendar = ({ events, onDayClick, onEventClick }: any) => {
   const [currentMonth, setCurrentMonth] = useState(new Date());
 
   const firstDay = startOfWeek(startOfMonth(currentMonth));
@@ -50,14 +52,19 @@ const CustomCalendar = ({ events, onDayClick, onEventClick }) => {
             <span>{format(day, "d")}</span>
             <div className={styles.events}>
               {events
-                .filter((event) => isSameDay(new Date(event.start), day))
-                .map((event) => (
+                .filter((event: any) => {
+                  const eventStart = startOfDay(new Date(event.start));
+                  const eventEnd = endOfDay(new Date(event.end));
+                  const currentDay = startOfDay(day);
+                  return currentDay >= eventStart && currentDay <= eventEnd;
+                })
+                .map((event: any) => (
                   <div
                     key={event.id}
                     className={`${styles.event} ${
                       styles[event.raw?.type] || styles[event.raw?.tipo] || ""
                     }`}
-                    onClick={(e) => {
+                    onClick={(e: any) => {
                       e.stopPropagation();
                       onEventClick(event);
                     }}

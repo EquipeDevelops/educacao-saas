@@ -19,6 +19,9 @@ const findAll = (unidadeEscolarId: string) => {
       id: true,
       nome: true,
       codigo: true,
+      _count: {
+        select: { componentes_curriculares: true },
+      },
     },
     orderBy: {
       nome: "asc",

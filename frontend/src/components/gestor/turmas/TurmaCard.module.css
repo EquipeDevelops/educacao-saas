@@ -1,0 +1,90 @@
+/* components/gestor/turmas/TurmaCard.module.css */
+.card {
+  background-color: var(--cor-fundo-card);
+  border: 1px solid var(--cor-borda);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease-in-out;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.07);
+  border-color: var(--cor-primaria);
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 1.5rem;
+}
+
+.serie {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0;
+  color: var(--cor-texto-destaque);
+}
+
+.nome {
+  font-size: 1rem;
+  color: var(--cor-subtexto);
+  margin: 0.25rem 0 0;
+}
+
+.turno {
+  background-color: var(--cor-primaria-light);
+  color: var(--cor-primaria-dark);
+  padding: 0.3rem 0.8rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.stats {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid var(--cor-borda);
+  border-bottom: 1px solid var(--cor-borda);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  flex-grow: 1;
+}
+
+.statItem {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--cor-texto);
+  font-size: 0.9rem;
+}
+
+.statItem svg {
+  color: var(--cor-primaria);
+}
+
+.detailsButton {
+  background-color: transparent;
+  color: var(--cor-primaria);
+  border: none;
+  padding: 1rem;
+  text-align: center;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.2s ease-in-out;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.detailsButton:hover {
+  background-color: var(--cor-primaria);
+  color: white;
+  border-bottom-left-radius: 11px;
+  border-bottom-right-radius: 11px;
+}

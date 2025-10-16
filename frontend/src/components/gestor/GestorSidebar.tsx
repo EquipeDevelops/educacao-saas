@@ -14,6 +14,8 @@ import {
   FiAward,
   FiSend,
   FiFileText,
+  FiCalendar,
+  FiList,
 } from "react-icons/fi";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -25,9 +27,11 @@ const navLinks = [
   { href: "/gestor/vinculos", text: "Vínculos", icon: <FiLink /> },
   { href: "/gestor/matriculas", text: "Matrículas", icon: <FiUserCheck /> },
   { href: "/gestor/horarios", text: "Horários", icon: <FiClock /> },
+  { href: "/gestor/calendario", text: "Calendario", icon: <FiCalendar /> },
   { href: "/gestor/conquistas", text: "Conquistas", icon: <FiAward /> },
   { href: "/gestor/comunicados", text: "Comunicados", icon: <FiSend /> },
   { href: "/gestor/relatorios", text: "Relatórios", icon: <FiFileText /> },
+  { href: "/gestor/auditoria", text: "Auditoria", icon: <FiList /> },
 ];
 
 export default function GestorSidebar() {
