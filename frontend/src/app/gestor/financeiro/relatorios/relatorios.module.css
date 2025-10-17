@@ -1,0 +1,177 @@
+.container {
+  padding: 2rem;
+}
+
+.header {
+  margin-bottom: 2rem;
+}
+
+.header h1 {
+  font-size: 1.8rem;
+}
+
+.header p {
+  color: var(--cor-subtexto);
+  margin-top: 0.25rem;
+}
+
+.filterCard {
+  display: flex;
+  align-items: flex-end;
+  gap: 1.5rem;
+  padding: 1.5rem;
+  background-color: var(--cor-fundo-card);
+  border-radius: 12px;
+  margin-bottom: 2rem;
+  border: 1px solid var(--cor-borda);
+}
+
+.filterGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.filterGroup label {
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.filterGroup input {
+  padding: 0.6rem;
+  border-radius: 8px;
+  border: 1px solid var(--cor-borda);
+  min-width: 200px;
+}
+
+.filterCard button {
+  padding: 0.6rem 1.5rem;
+  background-color: var(--cor-primaria);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.filterCard button:disabled {
+  background-color: var(--cor-desabilitado);
+  cursor: not-allowed;
+}
+
+.resultsContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.summaryGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+}
+
+.chartsGrid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 1.5rem;
+  align-items: flex-start;
+}
+
+.chartCard {
+  background-color: var(--cor-fundo-card);
+  border: 1px solid var(--cor-borda);
+  border-radius: 12px;
+  padding: 1.5rem;
+  height: 400px;
+  display: flex;
+  flex-direction: column;
+}
+
+.chartCard h3 {
+  margin-top: 0;
+  margin-bottom: 2rem;
+  font-size: 1.2rem;
+  text-align: center;
+}
+
+.tableContainer {
+  background-color: var(--cor-fundo-card);
+  border-radius: 12px;
+  border: 1px solid var(--cor-borda);
+  overflow: hidden;
+}
+
+.tableHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--cor-borda);
+}
+
+.tableHeader h3 {
+  margin: 0;
+}
+
+.exportButton {
+  background-color: #16a34a;
+  color: white;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.2rem;
+  border-radius: 8px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th,
+.table td {
+  padding: 1rem 1.5rem;
+  text-align: left;
+  border-bottom: 1px solid var(--cor-borda);
+}
+
+.table th {
+  background-color: #f9fafb;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  color: var(--cor-subtexto);
+}
+
+.table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.receita {
+  color: var(--cor-sucesso-dark);
+  font-weight: 500;
+}
+.despesa {
+  color: var(--cor-perigo-dark);
+  font-weight: 500;
+}
+
+.emptyState {
+  text-align: center;
+  padding: 3rem;
+  color: var(--cor-subtexto);
+  background-color: var(--cor-fundo-card);
+  border-radius: 12px;
+}
+
+.customTooltip {
+  background-color: rgba(255, 255, 255, 0.9);
+  border: 1px solid var(--cor-borda);
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}

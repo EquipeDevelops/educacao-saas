@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { api } from "@/services/api";
 import Link from "next/link";
 import styles from "./home.module.css";
@@ -16,13 +16,21 @@ import {
   FiUserPlus,
   FiPlusSquare,
   FiLink,
+  FiTrendingUp,
+  FiTrendingDown,
+  FiDollarSign,
 } from "react-icons/fi";
 import Loading from "@/components/loading/Loading";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 interface DashboardStats {
   totalAlunos: number;
   totalProfessores: number;
   totalTurmas: number;
+  receitaMes: number;
+  despesaMes: number;
+  inadimplencia: number;
 }
 
 interface Evento {
@@ -48,7 +56,11 @@ interface DesempenhoMateria {
   mediaNota: number;
 }
 
-const anosDisponiveis = [2025, 2024, 2023];
+const anosDisponiveis = [
+  new Date().getFullYear(),
+  new Date().getFullYear() - 1,
+  new Date().getFullYear() - 2,
+];
 const periodosDisponiveis = [
   { value: "TODOS", label: "Ano Inteiro" },
   { value: "PRIMEIRO_BIMESTRE", label: "1º Bimestre" },
@@ -91,7 +103,7 @@ export default function GestorHomePage() {
       .then((response) => {
         setChartData(response.data);
       })
-      .catch(console.error)
+      .catch(() => toast.error("Erro ao carregar dados dos gráficos."))
       .finally(() => setIsLoadingCharts(false));
   };
 
@@ -108,7 +120,7 @@ export default function GestorHomePage() {
         setEvents(eventsRes.data);
         setChartData(chartsRes.data);
       })
-      .catch(console.error)
+      .catch(() => toast.error("Erro ao carregar dados do dashboard."))
       .finally(() => setIsLoading(false));
   }, []);
 
@@ -116,7 +128,7 @@ export default function GestorHomePage() {
     if (!isLoading) {
       fetchChartData(anoSelecionado, periodoSelecionado);
     }
-  }, [anoSelecionado, periodoSelecionado]);
+  }, [anoSelecionado, periodoSelecionado, isLoading]);
 
   const handlePerformanceBarClick = (turmaId: string, nomeTurma: string) => {
     setSelectedTurma({ id: turmaId, nome: nomeTurma });
@@ -136,7 +148,7 @@ export default function GestorHomePage() {
       .then((response) => {
         setDetailData(response.data);
       })
-      .catch(console.error)
+      .catch(() => toast.error("Erro ao carregar detalhes da turma."))
       .finally(() => setIsLoadingDetail(false));
   };
 
@@ -152,6 +164,7 @@ export default function GestorHomePage() {
 
   return (
     <div className={styles.container}>
+      <ToastContainer position="top-right" />
       <header className={styles.header}>
         <div>
           <h1>Dashboard do Gestor</h1>
@@ -172,12 +185,40 @@ export default function GestorHomePage() {
           icon={<FiBriefcase />}
           label="Total de Professores"
           value={stats?.totalProfessores ?? 0}
-          color="green"
+          color="blue"
         />
         <StatCard
           icon={<FiHome />}
           label="Total de Turmas"
           value={stats?.totalTurmas ?? 0}
+          color="blue"
+        />
+
+        <StatCard
+          icon={<FiTrendingUp />}
+          label="Receita do Mês"
+          value={(stats?.receitaMes ?? 0).toLocaleString("pt-BR", {
+            style: "currency",
+            currency: "BRL",
+          })}
+          color="green"
+        />
+        <StatCard
+          icon={<FiTrendingDown />}
+          label="Despesa do Mês"
+          value={(stats?.despesaMes ?? 0).toLocaleString("pt-BR", {
+            style: "currency",
+            currency: "BRL",
+          })}
+          color="orange"
+        />
+        <StatCard
+          icon={<FiDollarSign />}
+          label="Inadimplência"
+          value={(stats?.inadimplencia ?? 0).toLocaleString("pt-BR", {
+            style: "currency",
+            currency: "BRL",
+          })}
           color="orange"
         />
       </section>

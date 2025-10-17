@@ -7,6 +7,18 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum StatusPagamento {
+  PENDENTE
+  PAGO
+  ATRASADO
+  CANCELADO
+}
+
+enum TipoTransacao {
+  RECEITA
+  DESPESA
+}
+
 enum PeriodoAvaliacao {
   PRIMEIRO_BIMESTRE
   SEGUNDO_BIMESTRE
@@ -28,6 +40,11 @@ enum PapelUsuario {
   GESTOR
   PROFESSOR
   ALUNO
+}
+
+enum StatusTransacao {
+  PENDENTE
+  PAGO
 }
 
 model Instituicao {
@@ -75,6 +92,10 @@ model Unidades_Escolares {
   @@map("unidades_escolares")
   @@index([instituicaoId])
   AuditLog AuditLog[]
+  Transacao Transacao[]
+  Plano Plano[]
+  Mensalidade Mensalidade[]
+  CategoriaTransacao CategoriaTransacao[]
 }
 
 model Usuarios {
@@ -235,6 +256,7 @@ model Matriculas {
 
   @@map("matriculas")
   @@index([alunoId, ano_letivo])
+  mensalidade Mensalidade[]
 }
 
 model ComponenteCurricular {
@@ -591,15 +613,15 @@ model AuditLog {
   id        String    @id @default(auto()) @map("_id") @db.ObjectId
   timestamp DateTime  @default(now())
   acao      AcaoAudit
-  entidade  String // Ex: "Turma", "Usuario", "Materia"
-  entidadeId String?   // ID do objeto que foi modificado
-  detalhes  Json // O que mudou, quem criou, etc.
+  entidade  String 
+  entidadeId String?   
+  detalhes  Json 
   
-  // Quem realizou a ação
+  
   autorId   String    @db.ObjectId
   autorNome String
   
-  // Contexto da Unidade Escolar
+  
   unidadeEscolarId String @db.ObjectId
   unidadeEscolar Unidades_Escolares @relation(fields: [unidadeEscolarId], references: [id])
 
@@ -607,4 +629,81 @@ model AuditLog {
   @@index([unidadeEscolarId, timestamp])
   @@index([autorId])
   @@index([entidade])
+}
+
+model Plano {
+  id               String        @id @default(auto()) @map("_id") @db.ObjectId
+  nome             String
+  descricao        String?
+  valor            Float
+  criado_em        DateTime      @default(now())
+  atualizado_em    DateTime      @updatedAt
+  unidadeEscolarId String        @db.ObjectId
+  unidadeEscolar   Unidades_Escolares @relation(fields: [unidadeEscolarId], references: [id])
+  mensalidades     Mensalidade[]
+
+  @@map("planos")
+}
+
+model Mensalidade {
+  id               String          @id @default(auto()) @map("_id") @db.ObjectId
+  matriculaId      String          @db.ObjectId
+  matricula        Matriculas      @relation(fields: [matriculaId], references: [id])
+  planoId          String          @db.ObjectId
+  plano            Plano           @relation(fields: [planoId], references: [id])
+  ano              Int
+  mes              Int // Representa o mês, de 1 (Janeiro) a 12 (Dezembro)
+  valor            Float
+  dataVencimento   DateTime
+  status           StatusPagamento @default(PENDENTE)
+  dataPagamento    DateTime?
+  unidadeEscolarId String          @db.ObjectId
+  unidadeEscolar   Unidades_Escolares @relation(fields: [unidadeEscolarId], references: [id])
+  pagamentos       Pagamento[]
+
+  @@unique([matriculaId, ano, mes])
+  @@map("mensalidades")
+}
+
+model Transacao {
+  id               String            @id @default(auto()) @map("_id") @db.ObjectId
+  descricao        String
+  valor            Float
+  tipo             TipoTransacao
+  data             DateTime
+  status           StatusTransacao   @default(PENDENTE) // NOVO CAMPO
+  fornecedor       String?           // NOVO CAMPO (para quem foi pago/de quem recebeu)
+  unidadeEscolarId String            @db.ObjectId
+  unidadeEscolar   Unidades_Escolares @relation(fields: [unidadeEscolarId], references: [id])
+  pagamentos       Pagamento[]
+  categoriaId      String?           @db.ObjectId      // NOVO CAMPO
+  categoria        CategoriaTransacao? @relation(fields: [categoriaId], references: [id]) // NOVA RELAÇÃO
+
+  @@map("transacoes")
+}
+
+model Pagamento {
+  id            String      @id @default(auto()) @map("_id") @db.ObjectId
+  mensalidadeId String?     @db.ObjectId
+  mensalidade   Mensalidade? @relation(fields: [mensalidadeId], references: [id])
+  transacaoId   String?     @db.ObjectId
+  transacao     Transacao?  @relation(fields: [transacaoId], references: [id])
+  valorPago     Float
+  dataPagamento DateTime
+  metodo        String // Ex: "Cartão de Crédito", "Boleto", "PIX"
+  gatewayId     String?     // ID simulado da transação no gateway de pagamento
+
+  @@map("pagamentos")
+}
+
+model CategoriaTransacao {
+  id               String      @id @default(auto()) @map("_id") @db.ObjectId
+  nome             String
+  tipo             TipoTransacao // RECEITA ou DESPESA
+  unidadeEscolarId String      @db.ObjectId
+  unidadeEscolar   Unidades_Escolares @relation(fields: [unidadeEscolarId], references: [id])
+  transacoes       Transacao[]
+
+  @@unique([nome, unidadeEscolarId])
+  @@map("categorias_transacao")
 }

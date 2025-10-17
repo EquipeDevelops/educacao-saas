@@ -25,7 +25,7 @@ import { registroFaltaRoutes } from "../modules/registroFalta/registroFalta.rout
 import { professorDashboardRoutes } from "../modules/professorDashboard/professorDashboard.routes";
 import { gestorDashboardRoutes } from "../modules/gestorDashboard/gestorDashboard.routes";
 import { relatoriosRoutes } from "../modules/relatorios/relatorios.routes";
-
+import { financeiroRoutes } from "../modules/financeiro/financeiro.routes";
 import { conquistaRoutes } from "../modules/conquista/conquista.routes";
 import { conquistaUsuarioRoutes } from "../modules/conquistaUsuario/conquistaUsuario.routes";
 import { comentarioRoutes } from "../modules/comentarioTarefa/comentarioTarefa.routes";
@@ -33,6 +33,7 @@ import { conversaRoutes } from "../modules/conversa/conversa.routes";
 import { eventoRoutes } from "../modules/eventos/eventos.routes";
 import { geradorProvaIARoutes } from "../modules/geradorProvaIA/geradorProvaIA.routes";
 import { auditLogRoutes } from "../modules/auditLog/auditLog.routes";
+import { categoriaTransacaoRoutes } from "../modules/categoriaTransacao/categoriaTransacao.routes";
 
 const protectedRouter = Router();
 
@@ -67,6 +68,8 @@ protectedRouter.use("/gerador-prova-ia", geradorProvaIARoutes);
 protectedRouter.use("/professor/dashboard", professorDashboardRoutes);
 protectedRouter.use("/gestor/dashboard", gestorDashboardRoutes);
 protectedRouter.use("/gestor/relatorios", relatoriosRoutes);
+protectedRouter.use("/financeiro", financeiroRoutes);
 protectedRouter.use("/audit-logs", auditLogRoutes);
+protectedRouter.use("/categorias-transacao", categoriaTransacaoRoutes);
 
 export { authRoutes, protectedRouter };

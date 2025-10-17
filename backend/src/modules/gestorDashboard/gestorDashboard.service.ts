@@ -1,6 +1,6 @@
 import prisma from "../../utils/prisma";
 import { AuthenticatedRequest } from "../../middlewares/auth";
-import { PeriodoAvaliacao, Usuarios } from "@prisma/client";
+import { PeriodoAvaliacao, Usuarios, StatusPagamento } from "@prisma/client";
 
 type UserPayload = Omit<Usuarios, "senha_hash">;
 
@@ -37,19 +37,62 @@ async function getStats(user: UserPayload) {
   if (!user.unidadeEscolarId) {
     throw new Error("Usuário não vinculado a uma unidade escolar.");
   }
-  const [totalAlunos, totalProfessores, totalTurmas] =
-    await prisma.$transaction([
-      prisma.usuarios_aluno.count({
-        where: { usuario: { unidadeEscolarId: user.unidadeEscolarId } },
-      }),
-      prisma.usuarios_professor.count({
-        where: { usuario: { unidadeEscolarId: user.unidadeEscolarId } },
-      }),
-      prisma.turmas.count({
-        where: { unidadeEscolarId: user.unidadeEscolarId },
-      }),
-    ]);
-  return { totalAlunos, totalProfessores, totalTurmas };
+
+  const hoje = new Date();
+  const primeiroDiaMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+  const ultimoDiaMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0);
+
+  const [
+    totalAlunos,
+    totalProfessores,
+    totalTurmas,
+    receitas,
+    despesas,
+    inadimplencia,
+  ] = await prisma.$transaction([
+    prisma.usuarios_aluno.count({
+      where: { usuario: { unidadeEscolarId: user.unidadeEscolarId } },
+    }),
+    prisma.usuarios_professor.count({
+      where: { usuario: { unidadeEscolarId: user.unidadeEscolarId } },
+    }),
+    prisma.turmas.count({
+      where: { unidadeEscolarId: user.unidadeEscolarId },
+    }),
+    prisma.transacao.aggregate({
+      _sum: { valor: true },
+      where: {
+        unidadeEscolarId: user.unidadeEscolarId,
+        tipo: "RECEITA",
+        data: { gte: primeiroDiaMes, lte: ultimoDiaMes },
+      },
+    }),
+    prisma.transacao.aggregate({
+      _sum: { valor: true },
+      where: {
+        unidadeEscolarId: user.unidadeEscolarId,
+        tipo: "DESPESA",
+        data: { gte: primeiroDiaMes, lte: ultimoDiaMes },
+      },
+    }),
+    prisma.mensalidade.aggregate({
+      _sum: { valor: true },
+      where: {
+        unidadeEscolarId: user.unidadeEscolarId,
+        status: { in: [StatusPagamento.PENDENTE, StatusPagamento.ATRASADO] },
+        dataVencimento: { lt: new Date() },
+      },
+    }),
+  ]);
+
+  return {
+    totalAlunos,
+    totalProfessores,
+    totalTurmas,
+    receitaMes: receitas._sum.valor || 0,
+    despesaMes: despesas._sum.valor || 0,
+    inadimplencia: inadimplencia._sum.valor || 0,
+  };
 }
 
 interface ChartDataFilters {
@@ -230,6 +273,7 @@ async function getChartData(user: UserPayload, filters: ChartDataFilters) {
 
   return { desempenhoTurmas, frequenciaTurmas };
 }
+
 async function getDesempenhoPorMateria(
   user: UserPayload,
   turmaId: string,

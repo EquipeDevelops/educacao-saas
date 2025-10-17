@@ -16,6 +16,7 @@ import {
   FiFileText,
   FiCalendar,
   FiList,
+  FiDollarSign,
 } from "react-icons/fi";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -31,6 +32,7 @@ const navLinks = [
   { href: "/gestor/conquistas", text: "Conquistas", icon: <FiAward /> },
   { href: "/gestor/comunicados", text: "Comunicados", icon: <FiSend /> },
   { href: "/gestor/relatorios", text: "Relatórios", icon: <FiFileText /> },
+  { href: "/gestor/financeiro", text: "Financeiro", icon: <FiDollarSign /> },
   { href: "/gestor/auditoria", text: "Auditoria", icon: <FiList /> },
 ];
 

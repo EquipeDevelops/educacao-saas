@@ -1,0 +1,163 @@
+.container {
+  padding: 2rem;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 2rem;
+}
+
+.header h1 {
+  font-size: 1.8rem;
+}
+
+.header p {
+  color: var(--cor-subtexto);
+  margin-top: 0.25rem;
+}
+
+.primaryButton {
+  background-color: var(--cor-primaria);
+  color: white;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+}
+
+.filtersContainer {
+  background-color: var(--cor-fundo-card);
+  padding: 1.5rem;
+  border-radius: 12px;
+  border: 1px solid var(--cor-borda);
+  margin-bottom: 2rem;
+  display: flex;
+  gap: 1.5rem;
+  align-items: flex-end;
+}
+
+.filterGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.filterGroup label {
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.filterGroup select,
+.filterGroup input {
+  padding: 0.6rem;
+  border-radius: 8px;
+  border: 1px solid var(--cor-borda);
+  min-width: 180px;
+}
+
+.tableContainer {
+  background-color: var(--cor-fundo-card);
+  border-radius: 12px;
+  border: 1px solid var(--cor-borda);
+  overflow: hidden;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th,
+.table td {
+  padding: 1rem 1.5rem;
+  text-align: left;
+  border-bottom: 1px solid var(--cor-borda);
+}
+
+.table th {
+  background-color: #f9fafb;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  color: var(--cor-subtexto);
+}
+
+.statusBadge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: bold;
+  text-transform: capitalize;
+}
+
+.statusPENDENTE {
+  color: #a16207;
+  background-color: #fef9c3;
+}
+
+.statusPAGO {
+  color: #166534;
+  background-color: #dcfce7;
+}
+
+.statusATRASADO {
+  color: #991b1b;
+  background-color: #fee2e2;
+}
+
+.actionButton {
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  font-size: 0.85rem;
+  border: 1px solid;
+}
+
+.pagarButton {
+  background-color: var(--cor-sucesso-light);
+  color: var(--cor-sucesso-dark);
+  border-color: var(--cor-sucesso);
+}
+
+.comprovanteButton {
+  background-color: var(--cor-fundo);
+  color: var(--cor-texto);
+  border-color: var(--cor-borda);
+}
+
+.modalForm {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.modalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.cancelButton,
+.saveButton {
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+}
+
+.cancelButton {
+  background-color: #e9ecef;
+}
+
+.saveButton {
+  background-color: var(--cor-primaria);
+  color: white;
+}

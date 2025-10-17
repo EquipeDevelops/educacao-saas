@@ -1,0 +1,117 @@
+.container {
+  padding: 2rem;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 2rem;
+}
+
+.header h1 {
+  font-size: 1.8rem;
+}
+
+.header p {
+  color: var(--cor-subtexto);
+  margin-top: 0.25rem;
+}
+
+.primaryButton {
+  background-color: var(--cor-primaria);
+  color: white;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+}
+
+.tableContainer {
+  background-color: var(--cor-fundo-card);
+  border-radius: 12px;
+  border: 1px solid var(--cor-borda);
+  overflow: hidden;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th,
+.table td {
+  padding: 1rem 1.5rem;
+  text-align: left;
+  border-bottom: 1px solid var(--cor-borda);
+}
+
+.table th {
+  background-color: #f9fafb;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  color: var(--cor-subtexto);
+}
+
+.table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.tipoReceita {
+  color: var(--cor-sucesso-dark);
+  font-weight: 700;
+}
+.tipoDespesa {
+  color: var(--cor-perigo-dark);
+  font-weight: 700;
+}
+
+.modalForm {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  width: 500px;
+}
+
+.label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.label.fullWidth {
+  grid-column: 1 / -1;
+}
+
+.modalActions {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--cor-borda);
+}
+
+.cancelButton,
+.saveButton {
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+}
+
+.cancelButton {
+  background-color: #e9ecef;
+}
+
+.saveButton {
+  background-color: var(--cor-primaria);
+  color: white;
+}

@@ -1,0 +1,128 @@
+.container {
+  padding: 2rem;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 2rem;
+}
+
+.header h1 {
+  font-size: 1.8rem;
+}
+
+.header p {
+  color: var(--cor-subtexto);
+  margin-top: 0.25rem;
+}
+
+.primaryButton {
+  background-color: var(--cor-primaria);
+  color: white;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.card {
+  background-color: var(--cor-fundo-card);
+  border: 1px solid var(--cor-borda);
+  border-radius: 12px;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+}
+
+.cardTitle {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.cardActions button {
+  background: none;
+  border: 1px solid var(--cor-borda);
+  border-radius: 6px;
+  padding: 0.5rem;
+  cursor: pointer;
+  margin-left: 0.5rem;
+}
+
+.cardBody {
+  flex-grow: 1;
+}
+
+.cardDescription {
+  color: var(--cor-subtexto);
+  font-size: 0.9rem;
+  margin-bottom: 1.5rem;
+}
+
+.cardValor {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--cor-primaria-dark);
+}
+
+.cardValor span {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--cor-subtexto);
+}
+
+.modalForm {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.modalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.cancelButton,
+.saveButton {
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+}
+
+.cancelButton {
+  background-color: #e9ecef;
+}
+
+.saveButton {
+  background-color: var(--cor-primaria);
+  color: white;
+}

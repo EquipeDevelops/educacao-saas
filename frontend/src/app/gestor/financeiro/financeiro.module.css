@@ -1,0 +1,73 @@
+.container {
+  padding: 2rem;
+  font-family: "Inter", system-ui, sans-serif;
+}
+
+.header {
+  margin-bottom: 2.5rem;
+}
+
+.header h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.header p {
+  font-size: 1rem;
+  color: #6b7280;
+  margin-top: 0.25rem;
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 3rem;
+}
+
+.sectionTitle {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.shortcutsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1.5rem;
+}
+
+.shortcutCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  background-color: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  font-weight: 600;
+  color: #374151;
+  transition: all 0.2s ease-in-out;
+  text-align: center;
+  text-decoration: none;
+}
+
+.shortcutCard svg {
+  font-size: 2.5rem;
+  color: var(--cor-primaria);
+  margin-bottom: 0.5rem;
+}
+
+.shortcutCard:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 6px 12px rgba(37, 99, 235, 0.1);
+  border-color: #a5b4fc;
+  color: var(--cor-primaria);
+}
