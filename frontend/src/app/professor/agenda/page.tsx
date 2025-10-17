@@ -63,7 +63,7 @@ export default function AgendaPage() {
           .padStart(2, "0")}`;
 
         const [horariosRes, tarefasRes, eventosRes] = await Promise.all([
-          api.get("/horarios"),
+          api.get("/horarios-aula/eventos"),
           api.get("/tarefas"),
           api.get(`/eventos?mes=${mesQuery}`),
         ]);

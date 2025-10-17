@@ -1,5 +1,5 @@
 import express, { Application, Request, Response, NextFunction } from "express";
-import mainRouter from "./routes";
+import { authRoutes, protectedRouter } from "./routes";
 import { errorHandler } from "./middlewares/error";
 import cors from "cors";
 import { protect } from "./middlewares/auth";
@@ -21,9 +21,9 @@ app.get("/", (req: Request, res: Response) => {
   res.send("API da Plataforma Educacional está no ar!");
 });
 
-app.use("/api/auth", mainRouter);
+app.use("/api/auth", authRoutes);
 
-app.use("/api", protect, prismaContextMiddleware, mainRouter);
+app.use("/api", protect, prismaContextMiddleware, protectedRouter);
 
 app.use(errorHandler);
 

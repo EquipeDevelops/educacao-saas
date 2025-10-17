@@ -34,41 +34,39 @@ import { eventoRoutes } from "../modules/eventos/eventos.routes";
 import { geradorProvaIARoutes } from "../modules/geradorProvaIA/geradorProvaIA.routes";
 import { auditLogRoutes } from "../modules/auditLog/auditLog.routes";
 
-const mainRouter = Router();
+const protectedRouter = Router();
 
-mainRouter.use("/auth", authRoutes);
+protectedRouter.use("/super-admin", superAdminRoutes);
+protectedRouter.use("/instituicoes", instituicaoRoutes);
+protectedRouter.use("/unidades-escolares", unidadeEscolarRoutes);
+protectedRouter.use("/usuarios", usuarioRoutes);
+protectedRouter.use("/turmas", turmaRoutes);
+protectedRouter.use("/materias", materiaRoutes);
+protectedRouter.use("/professores", professorRoutes);
+protectedRouter.use("/alunos", alunoRoutes);
+protectedRouter.use("/componentes-curriculares", componenteCurricularRoutes);
+protectedRouter.use("/horarios-aula", horarioRoutes);
 
-mainRouter.use("/super-admin", superAdminRoutes);
-mainRouter.use("/instituicoes", instituicaoRoutes);
-mainRouter.use("/unidades-escolares", unidadeEscolarRoutes);
-mainRouter.use("/usuarios", usuarioRoutes);
-mainRouter.use("/turmas", turmaRoutes);
-mainRouter.use("/materias", materiaRoutes);
-mainRouter.use("/professores", professorRoutes);
-mainRouter.use("/alunos", alunoRoutes);
-mainRouter.use("/componentes-curriculares", componenteCurricularRoutes);
-mainRouter.use("/horarios-aula", horarioRoutes);
+protectedRouter.use("/matriculas", matriculaRoutes);
+protectedRouter.use("/tarefas", tarefaRoutes);
+protectedRouter.use("/questoes", questaoRoutes);
+protectedRouter.use("/opcoes", opcaoRoutes);
+protectedRouter.use("/submissoes", submissaoRoutes);
+protectedRouter.use("/respostas", respostaRoutes);
+protectedRouter.use("/avaliacoes", avaliacaoRoutes);
+protectedRouter.use("/faltas", registroFaltaRoutes);
 
-mainRouter.use("/matriculas", matriculaRoutes);
-mainRouter.use("/tarefas", tarefaRoutes);
-mainRouter.use("/questoes", questaoRoutes);
-mainRouter.use("/opcoes", opcaoRoutes);
-mainRouter.use("/submissoes", submissaoRoutes);
-mainRouter.use("/respostas", respostaRoutes);
-mainRouter.use("/avaliacoes", avaliacaoRoutes);
-mainRouter.use("/faltas", registroFaltaRoutes);
+protectedRouter.use("/conquistas", conquistaRoutes);
+protectedRouter.use("/conquistas-por-unidade", conquistasPorUnidadeRoutes);
+protectedRouter.use("/conquistas-usuarios", conquistaUsuarioRoutes);
+protectedRouter.use("/comentarios-tarefa", comentarioRoutes);
+protectedRouter.use("/conversas", conversaRoutes);
+protectedRouter.use("/eventos", eventoRoutes);
+protectedRouter.use("/gerador-prova-ia", geradorProvaIARoutes);
 
-mainRouter.use("/conquistas", conquistaRoutes);
-mainRouter.use("/conquistas-por-unidade", conquistasPorUnidadeRoutes);
-mainRouter.use("/conquistas-usuarios", conquistaUsuarioRoutes);
-mainRouter.use("/comentarios-tarefa", comentarioRoutes);
-mainRouter.use("/conversas", conversaRoutes);
-mainRouter.use("/eventos", eventoRoutes);
-mainRouter.use("/gerador-prova-ia", geradorProvaIARoutes);
+protectedRouter.use("/professor/dashboard", professorDashboardRoutes);
+protectedRouter.use("/gestor/dashboard", gestorDashboardRoutes);
+protectedRouter.use("/gestor/relatorios", relatoriosRoutes);
+protectedRouter.use("/audit-logs", auditLogRoutes);
 
-mainRouter.use("/professor/dashboard", professorDashboardRoutes);
-mainRouter.use("/gestor/dashboard", gestorDashboardRoutes);
-mainRouter.use("/gestor/relatorios", relatoriosRoutes);
-mainRouter.use("/audit-logs", auditLogRoutes);
-
-export default mainRouter;
+export { authRoutes, protectedRouter };
