@@ -112,4 +112,34 @@ export async function findById(id: string, usuarioId: string) {
   });
 }
 
-export const conversaService = { findOrCreate, findAllForUser, findById };
+export async function remove(conversaId: string, usuarioId: string) {
+  const participante = await prisma.participante.findFirst({
+    where: {
+      conversaId,
+      usuarioId,
+    },
+  });
+
+  if (!participante) {
+    throw new Error("Você não tem permissão para excluir esta conversa.");
+  }
+
+  return prisma.$transaction(async (tx) => {
+    await tx.mensagem.deleteMany({
+      where: { conversaId },
+    });
+    await tx.participante.deleteMany({
+      where: { conversaId },
+    });
+    await tx.conversa.delete({
+      where: { id: conversaId },
+    });
+  });
+}
+
+export const conversaService = {
+  findOrCreate,
+  findAllForUser,
+  findById,
+  remove,
+};

@@ -1,0 +1,137 @@
+.pageContainer {
+  padding: 2rem;
+  font-family: var(--fonte-principal);
+  background-color: #f4f7f9;
+  min-height: 100vh;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.header {
+  background-color: white;
+  padding: 2rem;
+  border-radius: 12px;
+  margin-bottom: 2rem;
+  border: 1px solid var(--cor-borda);
+}
+
+.header h1 {
+  font-size: 2rem;
+  margin: 0.5rem 0;
+}
+
+.backButton {
+  background: none;
+  border: none;
+  color: var(--cor-primaria);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  margin-bottom: 1rem;
+}
+
+.subHeader {
+  display: flex;
+  justify-content: space-between;
+  color: var(--cor-subtexto);
+  font-weight: 500;
+  margin-top: 0.5rem;
+}
+
+.description {
+  margin-top: 1rem;
+  color: var(--cor-texto);
+  line-height: 1.6;
+}
+
+.questoesContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.questaoCard {
+  background-color: white;
+  border: 1px solid var(--cor-borda);
+  border-radius: 12px;
+  padding: 1.5rem 2rem;
+}
+
+.questaoHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--cor-borda);
+  padding-bottom: 1rem;
+  margin-bottom: 1rem;
+}
+
+.questaoHeader h3 {
+  font-size: 1.2rem;
+  margin: 0;
+  font-weight: 600;
+}
+
+.questaoHeader span {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--cor-primaria);
+  background-color: var(--cor-primaria-light);
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--raio-borda-full);
+}
+
+.questaoTitulo {
+  font-size: 1.1rem;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+}
+
+.questaoEnunciado {
+  color: var(--cor-subtexto);
+  line-height: 1.6;
+  margin-bottom: 1.5rem;
+}
+
+.respostaDiscursiva p {
+  font-weight: 500;
+  color: var(--cor-subtexto);
+  font-size: 0.9rem;
+  margin-bottom: 0.75rem;
+}
+
+.linhaResposta {
+  width: 100%;
+  height: 1.5rem;
+  border-bottom: 1px solid #ccc;
+  margin-top: 1rem;
+}
+
+.optionsList {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  list-style: none;
+  padding: 0;
+  margin-top: 1.5rem;
+}
+
+.optionItem {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.optionMarker {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid var(--cor-borda);
+  flex-shrink: 0;
+}
+
+.optionItem label {
+  font-size: 1rem;
+}

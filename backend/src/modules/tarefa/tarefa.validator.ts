@@ -16,7 +16,10 @@ export const createTarefaSchema = z.object({
       .min(3, "O título deve ter no mínimo 3 caracteres."),
     descricao: z.string().optional(),
     pontos: z
-      .number()
+      .number({
+        required_error: "Os pontos devem ser um número.",
+        invalid_type_error: "Os pontos devem ser um número.",
+      })
       .int()
       .positive("Os pontos devem ser um número positivo.")
       .optional(),
@@ -27,7 +30,16 @@ export const createTarefaSchema = z.object({
     componenteCurricularId: z.string({
       required_error: "O ID do componente curricular é obrigatório.",
     }),
+    metadata: z
+      .object({
+        tipoTrabalho: z.string().optional(),
+        permiteAnexos: z.boolean().optional(),
+        requisitos: z.array(z.string()).optional(),
+      })
+      .optional(),
   }),
+  params: z.object({}).optional(),
+  query: z.object({}).optional(),
 });
 
 export const updateTarefaSchema = z.object({
@@ -37,6 +49,7 @@ export const updateTarefaSchema = z.object({
     pontos: z.number().int().positive().optional(),
     data_entrega: z.string().datetime().optional(),
     tipo: z.nativeEnum(TipoTarefa).optional(),
+    metadata: z.record(z.any()).optional(),
   }),
   params: paramsSchema,
 });

@@ -139,4 +139,73 @@ export const geradorProvaIAService = {
     const pdfBytes = await pdfDoc.save();
     return pdfBytes;
   },
+
+  async gerarQuestoes(prompt: string): Promise<any> {
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-pro" });
+
+    const fullPrompt = `
+      Você é um assistente especialista em criar avaliações educacionais.
+      Sua tarefa é gerar uma lista de questões com base na solicitação do usuário.
+      Sua resposta DEVE ser um objeto JSON contendo uma única chave "questoes", que é um array de objetos. Cada objeto no array representa uma única questão e deve seguir esta estrutura estrita:
+      {
+        "sequencia": 1,
+        "tipo": "MULTIPLA_ESCOLHA",
+        "titulo": "Qual é a capital do Brasil?",
+        "enunciado": "Selecione a capital correta do Brasil entre as opções abaixo.",
+        "pontos": 1,
+        "opcoes_multipla_escolha": [
+          { "texto": "São Paulo", "correta": false, "sequencia": 1 },
+          { "texto": "Rio de Janeiro", "correta": false, "sequencia": 2 },
+          { "texto": "Brasília", "correta": true, "sequencia": 3 },
+          { "texto": "Belo Horizonte", "correta": false, "sequencia": 4 }
+        ]
+      }
+      ou para questões discursivas:
+      {
+        "sequencia": 2,
+        "tipo": "DISCURSIVA",
+        "titulo": "Descreva o processo de fotossíntese.",
+        "enunciado": "",
+        "pontos": 2
+      }
+
+      REGRAS IMPORTANTES:
+      1. A resposta final deve ser APENAS o objeto JSON, sem nenhum texto adicional, explicações ou blocos de código markdown como \`\`\`json.
+      2. Para questões do tipo "MULTIPLA_ESCOLHA", a chave "opcoes_multipla_escolha" é OBRIGATÓRIA e deve conter pelo menos duas opções. Exatamente UMA dessas opções deve ter "correta" como true.
+      3. Para questões do tipo "DISCURSIVA", a chave "opcoes_multipla_escolha" NÃO DEVE estar presente.
+      4. As sequências das questões e das opções devem começar em 1 e ser incrementais.
+      5. Gere um número razoável de questões (entre 3 a 5) com base no prompt.
+
+      Solicitação do usuário: "${prompt}"
+    `;
+
+    console.log("[IA Service] Gerando questões com o prompt...");
+    const result = await model.generateContent(fullPrompt);
+    const responseText = result.response.text();
+    console.log("[IA Service] Resposta bruta da IA recebida para questões.");
+
+    try {
+      const cleanedResponse = responseText
+        .trim()
+        .replace(/^```json\s*|```$/g, "");
+      const generatedData = JSON.parse(cleanedResponse);
+
+      if (generatedData.questoes && Array.isArray(generatedData.questoes)) {
+        return generatedData.questoes;
+      } else if (Array.isArray(generatedData)) {
+        return generatedData;
+      }
+
+      throw new Error("Formato JSON da IA inesperado.");
+    } catch (error) {
+      console.error(
+        "[IA Service] Erro ao fazer o parse do JSON das questões da IA. Resposta recebida:",
+        responseText,
+        error
+      );
+      throw new Error(
+        "Não foi possível gerar as questões no formato esperado. Tente novamente com um prompt diferente."
+      );
+    }
+  },
 };

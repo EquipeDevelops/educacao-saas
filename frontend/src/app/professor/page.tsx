@@ -61,7 +61,7 @@ export default function ProfessorHomePage() {
           conversasRes,
         ] = await Promise.all([
           api.get("/professor/dashboard/home-stats"),
-          api.get("/horarios-aula/eventos"),
+          api.get("/horarios-aula/meus-horarios"),
           api.get("/professor/dashboard/atividades-pendentes"),
           api.get("/professor/dashboard/desempenho-turmas"),
           api.get("/conversas"),

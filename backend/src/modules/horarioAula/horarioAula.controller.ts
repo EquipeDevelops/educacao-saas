@@ -82,9 +82,31 @@ const getHorariosAsEventos = async (
   }
 };
 
+const getMeusHorarios = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { perfilId } = req.user;
+    if (!perfilId) {
+      return res
+        .status(400)
+        .json({ message: "Perfil de professor não encontrado." });
+    }
+    const horarios = await HorarioAulaService.getHorariosByProfessorId(
+      perfilId
+    );
+    res.status(200).json(horarios);
+  } catch (error) {
+    next(error);
+  }
+};
+
 export default {
   create,
   deleteHorarioAula,
   getHorariosByTurma,
   getHorariosAsEventos,
+  getMeusHorarios,
 };

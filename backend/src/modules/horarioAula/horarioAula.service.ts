@@ -3,6 +3,30 @@ import { AppError } from "../../errors/AppError";
 import { DiaDaSemana } from "@prisma/client";
 
 class HorarioAulaService {
+  async getHorariosByProfessorId(professorId: string) {
+    const horarios = await prisma.horarioAula.findMany({
+      where: {
+        componenteCurricular: {
+          professorId: professorId,
+        },
+      },
+      include: {
+        componenteCurricular: {
+          include: {
+            materia: true,
+            professor: {
+              include: {
+                usuario: true,
+              },
+            },
+            turma: true,
+          },
+        },
+      },
+    });
+    return horarios;
+  }
+
   async createHorarioAula(
     turmaId: string,
     componenteCurricularId: string,
@@ -10,7 +34,6 @@ class HorarioAulaService {
     horarioFim: string,
     diaSemana: string
   ) {
-    // Buscar a turma para obter o unidadeEscolarId
     const turma = await prisma.turmas.findUnique({
       where: { id: turmaId },
       select: { unidadeEscolarId: true },
@@ -33,7 +56,6 @@ class HorarioAulaService {
     }
     const professorId = componenteCurricular.professorId;
 
-    // Converter para o enum correto
     const diaSemanaEnum = diaSemana as DiaDaSemana;
 
     const isHorarioOcupadoParaTurma = await prisma.horarioAula.findFirst({
@@ -137,7 +159,6 @@ class HorarioAulaService {
       },
     });
 
-    // Transformar horários em eventos recorrentes
     const eventos = this.transformarHorariosEmEventos(horarios, mes);
     return eventos;
   }
@@ -145,7 +166,6 @@ class HorarioAulaService {
   private transformarHorariosEmEventos(horarios: any[], mes?: string) {
     const eventos: any[] = [];
 
-    // Define o range de datas (mês atual ou especificado)
     const hoje = new Date();
     let dataInicio: Date;
     let dataFim: Date;
@@ -155,12 +175,10 @@ class HorarioAulaService {
       dataInicio = new Date(ano, mesNum - 1, 1);
       dataFim = new Date(ano, mesNum, 0);
     } else {
-      // Mês atual
       dataInicio = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
       dataFim = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0);
     }
 
-    // Mapeamento de dias da semana para números (domingo = 0)
     const diasSemanaMap: { [key: string]: number } = {
       DOMINGO: 0,
       SEGUNDA: 1,
@@ -174,7 +192,6 @@ class HorarioAulaService {
     horarios.forEach((horario) => {
       const diaSemanaNum = diasSemanaMap[horario.dia_semana];
 
-      // Percorrer todas as datas do período e adicionar evento para cada ocorrência
       for (
         let data = new Date(dataInicio);
         data <= dataFim;

@@ -14,6 +14,13 @@ router.delete(
 );
 
 router.get(
+  "/meus-horarios",
+  protect,
+  authorize("PROFESSOR"),
+  horarioController.getMeusHorarios
+);
+
+router.get(
   "/turma/:turmaId",
   protect,
   authorize("GESTOR"),

@@ -331,6 +331,7 @@ model Tarefas {
   questoes               Questoes[]
   submissoes             Submissoes[]
   ComentarioTarefa       ComentarioTarefa[]
+  metadata               Json?               
 
   @@map("tarefas")
   @@index([unidadeEscolarId])

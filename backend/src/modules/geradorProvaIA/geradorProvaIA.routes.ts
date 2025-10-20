@@ -20,4 +20,12 @@ router.post(
   geradorProvaIAController.create
 );
 
+router.post(
+  "/gerar-questoes",
+  protect,
+  authorize("PROFESSOR"),
+  validate(gerarProvaSchema),
+  geradorProvaIAController.gerarQuestoes
+);
+
 export const geradorProvaIARoutes = router;

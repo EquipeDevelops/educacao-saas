@@ -25,6 +25,12 @@ router.get(
   conversaController.findById
 );
 
+router.delete(
+  "/:id",
+  validate(z.object({ params: paramsSchema })),
+  conversaController.remove
+);
+
 router.post(
   "/:conversaId/mensagens",
   validate(createMensagemSchema),

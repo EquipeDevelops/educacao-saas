@@ -1,5 +1,6 @@
 import { Prisma, PrismaClient } from "@prisma/client";
 import { CreateComponenteCurricularInput } from "./componenteCurricular.validator";
+import { AuthenticatedRequest } from "../../middlewares/auth";
 
 const prisma = new PrismaClient();
 
@@ -15,13 +16,17 @@ const create = (
   });
 };
 
-const findAll = (unidadeEscolarId: string) => {
-  return prisma.componenteCurricular.findMany({
-    where: {
-      turma: {
-        unidadeEscolarId,
-      },
+const findAll = (user: AuthenticatedRequest["user"]) => {
+  const where: Prisma.ComponenteCurricularWhereInput = {
+    turma: {
+      unidadeEscolarId: user.unidadeEscolarId,
     },
+  };
+  if (user.papel === "PROFESSOR") {
+    where.professorId = user.perfilId!;
+  }
+  return prisma.componenteCurricular.findMany({
+    where,
     include: {
       turma: true,
       materia: true,

@@ -4,15 +4,10 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/services/api";
 import styles from "./nova-prova.module.css";
-import { FiInfo, FiSave, FiSend, FiX, FiCpu } from "react-icons/fi";
+import { FiInfo, FiSave, FiSend, FiX, FiCpu, FiEye } from "react-icons/fi";
 import QuestoesBuilder from "@/components/professor/atividades/QuestoesBuilder";
 import { Questao } from "@/types/tarefas";
-
-export type Componente = {
-  id: string;
-  materia: { nome: string };
-  turma: { serie: string; nome: string };
-};
+import { Componente } from "../../atividades/nova/page";
 
 export default function NovaProvaPage() {
   const router = useRouter();
@@ -39,6 +34,18 @@ export default function NovaProvaPage() {
     });
   }, []);
 
+  const handlePreview = () => {
+    const previewData = {
+      titulo,
+      descricao,
+      pontos,
+      questoes,
+      componente: componentes.find((c) => c.id === componenteId),
+    };
+    sessionStorage.setItem("provaPreviewData", JSON.stringify(previewData));
+    window.open("/professor/provas/visualizar", "_blank");
+  };
+
   const handleSaveProva = async (publicado: boolean) => {
     if (!titulo || !componenteId || !dataEntrega) {
       alert("Título, Turma e Data de Entrega são obrigatórios.");
@@ -52,11 +59,14 @@ export default function NovaProvaPage() {
         data_entrega: new Date(dataEntrega).toISOString(),
         pontos: Number(pontos),
         componenteCurricularId: componenteId,
-        publicado,
         tipo: "PROVA",
       };
       const tarefaResponse = await api.post("/tarefas", tarefaPayload);
       const tarefaId = tarefaResponse.data.id;
+
+      if (publicado) {
+        await api.patch(`/tarefas/${tarefaId}/publish`, { publicado: true });
+      }
 
       for (const questao of questoes) {
         const { opcoes_multipla_escolha, ...restOfQuestao } = questao;
@@ -80,7 +90,7 @@ export default function NovaProvaPage() {
     }
   };
 
-  const handleGerarProvaComIA = async () => {
+  const handleGerarQuestoesComIA = async () => {
     if (!promptIA) {
       setErroIA("Por favor, descreva o que você precisa na prova.");
       return;
@@ -89,28 +99,15 @@ export default function NovaProvaPage() {
     setErroIA(null);
 
     try {
-      const response = await api.post(
-        "/gerador-prova-ia",
-        { prompt: promptIA },
-        { responseType: "blob" }
-      );
-
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement("a");
-      link.href = url;
-      link.setAttribute("download", `prova-ia-${Date.now()}.pdf`);
-      document.body.appendChild(link);
-      link.click();
-
-      link.parentNode?.removeChild(link);
-      window.URL.revokeObjectURL(url);
-
+      const response = await api.post("/gerador-prova-ia/gerar-questoes", {
+        prompt: promptIA,
+      });
+      setQuestoes(response.data);
       setIsIAModalOpen(false);
       setPromptIA("");
     } catch (err: any) {
       const message =
-        err.response?.data?.message ||
-        "Ocorreu um erro ao gerar a prova em PDF.";
+        err.response?.data?.message || "Ocorreu um erro ao gerar as questões.";
       setErroIA(message);
       console.error(err);
     } finally {
@@ -132,7 +129,7 @@ export default function NovaProvaPage() {
             <button
               type="button"
               onClick={() => setIsIAModalOpen(true)}
-              className={styles.saveButton}
+              className={styles.actionButton}
             >
               <FiCpu /> Gerar com IA
             </button>
@@ -170,6 +167,35 @@ export default function NovaProvaPage() {
                 </select>
               </div>
             </div>
+            <div className={styles.field}>
+              <label htmlFor="descricao">Descrição</label>
+              <textarea
+                id="descricao"
+                value={descricao}
+                onChange={(e) => setDescricao(e.target.value)}
+                rows={3}
+              ></textarea>
+            </div>
+            <div className={styles.grid2cols}>
+              <div className={styles.field}>
+                <label htmlFor="dataEntrega">Data de Entrega *</label>
+                <input
+                  type="datetime-local"
+                  id="dataEntrega"
+                  value={dataEntrega}
+                  onChange={(e) => setDataEntrega(e.target.value)}
+                />
+              </div>
+              <div className={styles.field}>
+                <label htmlFor="pontos">Pontuação Total</label>
+                <input
+                  type="number"
+                  id="pontos"
+                  value={pontos}
+                  onChange={(e) => setPontos(Number(e.target.value))}
+                />
+              </div>
+            </div>
           </section>
 
           <QuestoesBuilder questoes={questoes} setQuestoes={setQuestoes} />
@@ -191,6 +217,13 @@ export default function NovaProvaPage() {
             </button>
             <button
               type="button"
+              onClick={handlePreview}
+              className={styles.previewButton}
+            >
+              <FiEye /> Visualizar
+            </button>
+            <button
+              type="button"
               onClick={() => handleSaveProva(true)}
               className={styles.publishButton}
             >
@@ -203,16 +236,16 @@ export default function NovaProvaPage() {
       {isIAModalOpen && (
         <div className={styles.overlay}>
           <div className={styles.modal}>
-            <h2>Gerar Prova com Inteligência Artificial</h2>
+            <h2>Gerar Questões com Inteligência Artificial</h2>
             <p>
-              Descreva o conteúdo da prova. A IA irá criar um arquivo PDF pronto
-              para imprimir.
+              Descreva o conteúdo da prova. A IA irá criar as questões e
+              adicioná-las ao formulário abaixo para você revisar.
             </p>
             <textarea
               value={promptIA}
               onChange={(e) => setPromptIA(e.target.value)}
               rows={6}
-              placeholder="Ex: Crie uma prova com 5 questões de múltipla escolha sobre o ciclo da água para o 4º ano."
+              placeholder="Ex: Crie 3 questões de múltipla escolha e 2 discursivas sobre a Revolução Francesa para o 8º ano."
               className={styles.modalTextarea}
             />
             {erroIA && <p className={styles.modalError}>{erroIA}</p>}
@@ -224,11 +257,11 @@ export default function NovaProvaPage() {
                 Cancelar
               </button>
               <button
-                onClick={handleGerarProvaComIA}
+                onClick={handleGerarQuestoesComIA}
                 disabled={isGerando}
                 className={styles.publishButton}
               >
-                {isGerando ? "Gerando PDF..." : "Gerar Prova em PDF"}
+                {isGerando ? "Gerando..." : "Gerar Questões"}
               </button>
             </div>
           </div>

@@ -49,4 +49,15 @@ export const conversaController = {
       return res.status(500).json({ message: "Erro ao buscar conversa." });
     }
   },
+
+  remove: async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const { id } = req.params;
+      const { id: usuarioId } = req.user;
+      await conversaService.remove(id, usuarioId);
+      return res.status(204).send();
+    } catch (error: any) {
+      return res.status(403).json({ message: error.message });
+    }
+  },
 };

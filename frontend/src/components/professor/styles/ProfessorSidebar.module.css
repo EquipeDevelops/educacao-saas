@@ -1,53 +1,97 @@
 .sidebar {
   width: 260px;
-  background-color: var(--cor-primaria-dark);
-  color: #ecf0f1;
+  background-color: #1b2e86;
+  border-right: 1px solid var(--cor-borda);
   display: flex;
   flex-direction: column;
+  justify-content: space-between;
   padding: 1.5rem 1rem;
-  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
 .logo {
   font-size: 1.5rem;
-  font-weight: bold;
+  font-weight: 700;
   text-align: center;
   padding: 1rem;
-  background-color: rgba(255, 255, 255, 0.1);
+  background: linear-gradient(
+    135deg,
+    var(--cor-primaria),
+    var(--cor-primaria-dark)
+  );
+  color: white;
   border-radius: 8px;
   margin-bottom: 2rem;
-  color: white;
 }
 
 .nav {
   display: flex;
   flex-direction: column;
+  gap: 1.5rem;
+}
+
+.navSection {
+  display: flex;
+  flex-direction: column;
   gap: 0.5rem;
+}
+
+.navCategory {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: rgb(175, 175, 175);
+  text-transform: uppercase;
+  padding: 0 1rem;
+  margin-bottom: 0.25rem;
 }
 
 .navLink {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  padding: 0.9rem 1.5rem;
+  gap: 0.85rem;
+  padding: 0.75rem 1rem;
   border-radius: 8px;
-  color: var(--cor-icons);
+  color: rgb(255, 255, 255);
   text-decoration: none;
   transition: all 0.2s ease-in-out;
   font-weight: 500;
+  border-left: 3px solid transparent;
+  width: 100%;
+  background: none;
+  cursor: pointer;
+  font-family: var(--fonte-principal);
+  font-size: 0.95rem;
 }
 
 .navLink:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-  color: #ffffff;
+  background-color: #f3f4f6;
+  color: var(--cor-texto-destaque);
 }
 
 .activeLink {
-  background-color: #092984;
-  color: #ffffff;
+  background-color: var(--cor-primaria-light);
+  color: var(--cor-primaria-dark);
   font-weight: 600;
+  border-left: 3px solid var(--cor-primaria);
 }
 
 .icon {
   font-size: 1.2rem;
+}
+
+.sidebarFooter {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--cor-borda);
+}
+
+.logoutButton {
+  composes: navLink;
+}
+
+.logoutButton:hover {
+  background-color: var(--cor-perigo-light);
+  color: var(--cor-perigo-dark);
 }

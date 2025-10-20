@@ -27,10 +27,7 @@ export const componenteCurricularController = {
     next: NextFunction
   ) => {
     try {
-      const { unidadeEscolarId } = req.user;
-      const componentes = await componenteCurricularService.findAll(
-        unidadeEscolarId
-      );
+      const componentes = await componenteCurricularService.findAll(req.user);
       return res.status(200).json(componentes);
     } catch (error) {
       next(error);

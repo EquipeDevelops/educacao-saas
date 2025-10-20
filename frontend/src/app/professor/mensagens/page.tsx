@@ -5,15 +5,16 @@ import { api } from "@/services/api";
 import { useAuth } from "@/contexts/AuthContext";
 import styles from "./mensagens.module.css";
 import {
-  FiMessageSquare,
-  FiSend,
-  FiSearch,
-  FiPhone,
-  FiVideo,
-  FiMoreVertical,
-  FiPlus,
-  FiPaperclip,
-} from "react-icons/fi";
+  MessageSquare,
+  Send,
+  Search,
+  Phone,
+  Video,
+  MoreVertical,
+  SquarePen,
+  Paperclip,
+  Trash2,
+} from "lucide-react";
 import NovaConversaModal from "@/components/professor/NovaConversaModal";
 
 type User = {
@@ -137,6 +138,26 @@ export default function MensagensPage() {
     }
   };
 
+  const handleDeleteConversation = async () => {
+    if (!selectedConversa) return;
+
+    if (
+      window.confirm(
+        "Tem certeza que deseja excluir esta conversa? Esta ação não pode ser desfeita."
+      )
+    ) {
+      try {
+        const deletedId = selectedConversa.id;
+        await api.delete(`/conversas/${deletedId}`);
+
+        setConversas((prev) => prev.filter((c) => c.id !== deletedId));
+        setSelectedConversa(null);
+      } catch (err) {
+        setError("Erro ao excluir a conversa.");
+      }
+    }
+  };
+
   const getOtherParticipant = (conversa: Conversa) => {
     return conversa.participantes.find((p) => p.usuario.id !== user?.id)
       ?.usuario;
@@ -194,13 +215,13 @@ export default function MensagensPage() {
                   onClick={() => setIsModalOpen(true)}
                   className={styles.newMessageButton}
                 >
-                  <FiPlus />
+                  <SquarePen size={18} />
                 </button>
               </div>
               <p>Converse com alunos, professores e coordenadores</p>
             </header>
             <div className={styles.searchContainer}>
-              <FiSearch />
+              <Search size={18} />
               <input
                 type="text"
                 placeholder="Buscar conversas..."
@@ -289,13 +310,16 @@ export default function MensagensPage() {
                   </div>
                   <div className={styles.chatActions}>
                     <button>
-                      <FiPhone />
+                      <Phone size={20} />
                     </button>
                     <button>
-                      <FiVideo />
+                      <Video size={20} />
+                    </button>
+                    <button onClick={handleDeleteConversation}>
+                      <Trash2 size={20} />
                     </button>
                     <button>
-                      <FiMoreVertical />
+                      <MoreVertical size={20} />
                     </button>
                   </div>
                 </header>
@@ -323,7 +347,7 @@ export default function MensagensPage() {
                 </div>
                 <footer className={styles.chatFooter}>
                   <button className={styles.attachButton}>
-                    <FiPaperclip />
+                    <Paperclip size={20} />
                   </button>
                   <div className={styles.inputWrapper}>
                     <input
@@ -340,13 +364,13 @@ export default function MensagensPage() {
                     onClick={handleSendMessage}
                     className={styles.sendButton}
                   >
-                    <FiSend />
+                    <Send size={20} />
                   </button>
                 </footer>
               </>
             ) : (
               <div className={styles.noChatSelected}>
-                <FiMessageSquare />
+                <MessageSquare />
                 <p>Selecione uma conversa para começar</p>
               </div>
             )}

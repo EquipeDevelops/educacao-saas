@@ -63,7 +63,7 @@ export default function AgendaPage() {
           .padStart(2, "0")}`;
 
         const [horariosRes, tarefasRes, eventosRes] = await Promise.all([
-          api.get("/horarios-aula/eventos"),
+          api.get("/horarios-aula/meus-horarios"),
           api.get("/tarefas"),
           api.get(`/eventos?mes=${mesQuery}`),
         ]);
@@ -93,7 +93,7 @@ export default function AgendaPage() {
                 date: date,
                 type: "Aula",
                 title: horario.componenteCurricular.materia.nome,
-                turma: `${horario.turma.serie} ${horario.turma.nome}`,
+                turma: `${horario.componenteCurricular.turma.serie} ${horario.componenteCurricular.turma.nome}`,
                 time: `${horario.hora_inicio} - ${horario.hora_fim}`,
                 sala: horario.local || "Sala a definir",
               });
