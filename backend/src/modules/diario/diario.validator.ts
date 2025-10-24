@@ -13,7 +13,7 @@ const dateString = z
     return selected <= today;
   }, "A data não pode estar no futuro.");
 
-export const createDiarioSchema = {
+export const createDiarioSchema = z.object({
   body: z.object({
     data: dateString,
     componenteCurricularId: z
@@ -36,31 +36,31 @@ export const createDiarioSchema = {
       .max(500, "As observações podem ter no máximo 500 caracteres.")
       .optional(),
   }),
-};
+});
 
-export const listRegistrosSchema = {
+export const listRegistrosSchema = z.object({
   query: z.object({
     componenteCurricularId: z
       .string({ required_error: "Informe o componente curricular." })
       .min(1),
   }),
-};
+});
 
-export const listAlunosSchema = {
+export const listAlunosSchema = z.object({
   params: z.object({
     componenteId: z
       .string({ required_error: "Informe o componente curricular." })
       .min(1),
   }),
-};
+});
 
-export const getRegistroSchema = {
+export const getRegistroSchema = z.object({
   params: z.object({
     id: z.string({ required_error: "Informe o diário." }).min(1),
   }),
-};
+});
 
-export const atualizarPresencasSchema = {
+export const atualizarPresencasSchema = z.object({
   params: z.object({
     id: z.string({ required_error: "Informe o diário." }).min(1),
   }),
@@ -80,12 +80,12 @@ export const atualizarPresencasSchema = {
       )
       .min(1, "Informe ao menos um aluno."),
   }),
-};
+});
 
-export const objetivosBnccSchema = {
+export const objetivosBnccSchema = z.object({
   query: z.object({
     componenteId: z
       .string({ required_error: "Informe o componente curricular." })
       .min(1),
   }),
-};
+});
