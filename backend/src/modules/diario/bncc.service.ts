@@ -590,46 +590,57 @@ function inferirEtapas(
   const explicitoFundamental = /(fundamental|fund\.|ef)/.test(texto);
   const explicitoMedio = /(medio|ensino medio|\bem\b)/.test(texto);
 
+  const push = (etapa: EtapaApi) => {
+    if (!ordem.includes(etapa)) {
+      ordem.push(etapa);
+    }
+  };
+
   if (explicitoFundamental) {
-    ordem.push("fundamental");
+    push("fundamental");
   }
 
   if (explicitoMedio) {
-    ordem.push("medio");
+    push("medio");
   }
 
   if (numero !== undefined) {
-    if (numero >= 4 && numero <= 9) {
-      ordem.push("fundamental");
-    }
-
-    if (numero >= 1 && numero <= 3) {
-      if (explicitoMedio) {
-        ordem.push("medio");
+    if (numero >= 6 && numero <= 9) {
+      push("fundamental");
+    } else if (numero >= 4 && numero <= 5) {
+      push("fundamental");
+    } else if (numero >= 1 && numero <= 3) {
+      if (explicitoFundamental) {
+        push("fundamental");
       } else {
-        ordem.push("fundamental");
-        ordem.push("medio");
+        push("medio");
       }
-    }
-
-    if (numero > 9) {
-      ordem.push("medio");
+    } else if (numero > 9) {
+      push("medio");
     }
   }
 
   if (config?.preferencia) {
-    ordem.push(config.preferencia);
+    push(config.preferencia);
   }
 
   if (!ordem.includes("medio")) {
-    ordem.push("medio");
+    push("medio");
   }
 
   if (!ordem.includes("fundamental")) {
-    ordem.push("fundamental");
+    push("fundamental");
   }
 
-  return ordem.filter((etapa, index) => ordem.indexOf(etapa) === index);
+  return ordem;
+}
+
+function inferirEtapaPrincipal(
+  serie?: string | null,
+  config?: DisciplinaConfig
+): EtapaApi | undefined {
+  const [primeira] = inferirEtapas(serie, config);
+  return primeira;
 }
 
 type TentativaApi = {
@@ -719,6 +730,13 @@ function construirTentativasApi(
     });
 
   return Array.from(unico.values());
+}
+
+function etapaApiParaSigla(
+  etapa?: EtapaApi
+): "EM" | "EF" | undefined {
+  if (!etapa) return undefined;
+  return etapa === "medio" ? "EM" : "EF";
 }
 
 const DEFAULT_HEADERS = {
@@ -872,6 +890,33 @@ function filtrarPorDisciplina(
   });
 }
 
+function filtrarPorEtapa(
+  objetivos: BnccObjetivo[],
+  etapa?: "EM" | "EF"
+) {
+  if (!etapa || !objetivos.length) {
+    return objetivos;
+  }
+
+  const prefixo = etapa.toUpperCase();
+
+  return objetivos.filter((objetivo) => {
+    const codigo = objetivo.codigo.trim().toUpperCase();
+    if (codigo.startsWith(prefixo)) {
+      return true;
+    }
+
+    if (objetivo.etapa) {
+      const etapaNormalizada = objetivo.etapa.trim().toUpperCase();
+      if (etapaNormalizada.startsWith(prefixo)) {
+        return true;
+      }
+    }
+
+    return false;
+  });
+}
+
 type ResultadoApi = {
   objetivos: BnccObjetivo[];
   etapa?: "EM" | "EF";
@@ -883,6 +928,8 @@ async function buscarNaApi(
   contexto?: BnccBuscaContexto
 ): Promise<ResultadoApi> {
   const tentativas = construirTentativasApi(disciplina, config, contexto);
+  const etapaPrincipal = inferirEtapaPrincipal(contexto?.serie, config);
+  const etapaPreferidaSigla = etapaApiParaSigla(etapaPrincipal);
 
   for (const tentativa of tentativas) {
     try {
@@ -895,7 +942,12 @@ async function buscarNaApi(
           config
         );
         if (filtrados.length) {
-          return { objetivos: filtrados, etapa: tentativa.etapa };
+          const etapaResposta =
+            tentativa.etapa ?? etapaPreferidaSigla ?? undefined;
+          const porEtapa = filtrarPorEtapa(filtrados, etapaResposta);
+          if (porEtapa.length) {
+            return { objetivos: porEtapa, etapa: etapaResposta };
+          }
         }
       }
     } catch (error) {
@@ -946,6 +998,8 @@ export async function obterObjetivosBnccPorDisciplina(
   }
 
   const config = obterConfigDisciplina(disciplina);
+  const etapaPrincipal = inferirEtapaPrincipal(contexto?.serie, config);
+  const etapaSiglaPreferida = etapaApiParaSigla(etapaPrincipal);
   const resultadoApi = await buscarNaApi(disciplina, config, contexto);
   if (resultadoApi.objetivos.length > 0) {
     const combinados = new Map<string, BnccObjetivo>();
@@ -969,13 +1023,16 @@ export async function obterObjetivosBnccPorDisciplina(
     return cacheEntry!.objetivos;
   }
 
-  const fallback = filtrarFallbackPorDisciplina(disciplina, config).map(
-    ({ codigo, descricao, etapa, area }) => ({
-      codigo,
-      descricao,
-      etapa,
-      area,
-    })
+  const fallback = filtrarPorEtapa(
+    filtrarFallbackPorDisciplina(disciplina, config).map(
+      ({ codigo, descricao, etapa, area }) => ({
+        codigo,
+        descricao,
+        etapa,
+        area,
+      })
+    ),
+    etapaSiglaPreferida
   );
 
   if (fallback.length > 0) {
@@ -988,12 +1045,15 @@ export async function obterObjetivosBnccPorDisciplina(
     return objetivosOrdenados;
   }
 
-  const generico = bnccFallback.map(({ codigo, descricao, etapa, area }) => ({
-    codigo,
-    descricao,
-    etapa,
-    area,
-  }));
+  const generico = filtrarPorEtapa(
+    bnccFallback.map(({ codigo, descricao, etapa, area }) => ({
+      codigo,
+      descricao,
+      etapa,
+      area,
+    })),
+    etapaSiglaPreferida
+  );
 
   const objetivosOrdenados = ordenarObjetivos(generico);
   disciplinaCache.set(cacheKey, {
