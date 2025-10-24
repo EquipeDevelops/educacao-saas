@@ -15,6 +15,7 @@ type DisciplinaConfig = {
   area?: string;
   aliases?: string[];
   preferencia?: EtapaApi;
+  keywords?: string[];
   slugs: Partial<Record<EtapaApi, string>>;
 };
 
@@ -44,64 +45,76 @@ const disciplinaMap: Record<string, DisciplinaConfig> = {
     slugs: { medio: "matematica_medio", fundamental: "matematica" },
     area: "MATEMATICA",
     preferencia: "medio",
+    keywords: ["mat", "matematica", "matemat", "matematica basica"],
   },
   fisica: {
     slugs: { medio: "ciencias_natureza" },
     area: "CIENCIAS_DA_NATUREZA",
     aliases: ["ciencias da natureza", "ciencias da natureza e suas tecnologias"],
+    keywords: ["fis", "fisica", "fisico"],
     preferencia: "medio",
   },
   quimica: {
     slugs: { medio: "ciencias_natureza" },
     area: "CIENCIAS_DA_NATUREZA",
     aliases: ["ciencias da natureza", "ciencias da natureza e suas tecnologias"],
+    keywords: ["quim", "quimica"],
     preferencia: "medio",
   },
   biologia: {
     slugs: { medio: "ciencias_natureza" },
     area: "CIENCIAS_DA_NATUREZA",
     aliases: ["ciencias da natureza", "ciencias da natureza e suas tecnologias"],
+    keywords: ["bio", "biologia", "biolog"],
     preferencia: "medio",
   },
   "ciencias da natureza": {
     slugs: { medio: "ciencias_natureza" },
     area: "CIENCIAS_DA_NATUREZA",
     aliases: ["ciencias da natureza e suas tecnologias"],
+    keywords: ["natureza", "ciencias natureza"],
     preferencia: "medio",
   },
   ciencias: {
     slugs: { fundamental: "ciencias" },
     area: "CIENCIAS_DA_NATUREZA",
+    keywords: ["ciencias", "ciencia"],
     preferencia: "fundamental",
   },
   geografia: {
     slugs: { fundamental: "geografia", medio: "ciencias_humanas" },
     area: "CIENCIAS_HUMANAS",
+    keywords: ["geo", "geografia"],
   },
   historia: {
     slugs: { fundamental: "historia", medio: "ciencias_humanas" },
     area: "CIENCIAS_HUMANAS",
+    keywords: ["hist", "historia", "hist"],
   },
   filosofia: {
     slugs: { medio: "ciencias_humanas" },
     area: "CIENCIAS_HUMANAS",
+    keywords: ["filo", "filosofia"],
     preferencia: "medio",
   },
   sociologia: {
     slugs: { medio: "ciencias_humanas" },
     area: "CIENCIAS_HUMANAS",
+    keywords: ["socio", "sociologia"],
     preferencia: "medio",
   },
   "ciencias humanas": {
     slugs: { medio: "ciencias_humanas" },
     area: "CIENCIAS_HUMANAS",
     aliases: ["ciencias humanas e sociais aplicadas"],
+    keywords: ["humanas", "ciencias humanas"],
     preferencia: "medio",
   },
   linguagens: {
     slugs: { medio: "linguagens" },
     area: "LINGUAGENS",
     aliases: ["linguagens e suas tecnologias", "linguagem"],
+    keywords: ["linguagens", "linguagem"],
     preferencia: "medio",
   },
   "lingua portuguesa": {
@@ -113,41 +126,49 @@ const disciplinaMap: Record<string, DisciplinaConfig> = {
       "lingua portuguesa e literatura",
       "literatura",
     ],
+    keywords: ["port", "portugues", "lp", "lingua portuguesa", "lingua portuguesa literatura"],
   },
   portugues: {
     slugs: { medio: "lingua_portuguesa_medio", fundamental: "lingua_portuguesa" },
     area: "LINGUAGENS",
     aliases: ["lingua portuguesa"],
+    keywords: ["port", "portugues", "lp"],
   },
   "lingua inglesa": {
     slugs: { fundamental: "lingua_inglesa" },
     area: "LINGUAGENS",
     aliases: ["ingles", "inglesa"],
+    keywords: ["ingles", "inglesa", "li", "lingua inglesa"],
   },
   ingles: {
     slugs: { fundamental: "lingua_inglesa" },
     area: "LINGUAGENS",
     aliases: ["lingua inglesa"],
+    keywords: ["ingles", "inglesa"],
   },
   arte: {
     slugs: { fundamental: "arte" },
     area: "LINGUAGENS",
     aliases: ["artes"],
+    keywords: ["art", "arte", "artes"],
     preferencia: "fundamental",
   },
   "educacao fisica": {
     slugs: { fundamental: "educacao_fisica" },
     area: "LINGUAGENS",
+    keywords: ["ed fis", "educacao fisica", "ef"],
     preferencia: "fundamental",
   },
   "ensino religioso": {
     slugs: { fundamental: "ensino_religioso" },
     area: "CIENCIAS_HUMANAS",
+    keywords: ["religioso", "religiao"],
     preferencia: "fundamental",
   },
   computacao: {
     slugs: { fundamental: "computacao", medio: "computacao_medio" },
     area: "TECNOLOGIA",
+    keywords: ["comp", "computacao", "informatica", "ti"],
   },
 };
 
@@ -159,19 +180,104 @@ function normalizarNomeDisciplina(nome: string) {
   return removerAcentos(nome).trim().toLowerCase();
 }
 
+function variacoesConfig(key: string, config: DisciplinaConfig) {
+  const conjunto = new Set<string>();
+  conjunto.add(normalizarNomeDisciplina(key));
+  config.aliases?.forEach((alias) =>
+    conjunto.add(normalizarNomeDisciplina(alias))
+  );
+  config.keywords?.forEach((keyword) =>
+    conjunto.add(normalizarNomeDisciplina(keyword))
+  );
+  return Array.from(conjunto);
+}
+
+function pontuarConfigPorNome(
+  nomeNormalizado: string,
+  variacoes: string[]
+) {
+  if (!variacoes.length) return 0;
+
+  const tokensNome = nomeNormalizado
+    .split(/[^a-z0-9]+/)
+    .filter(Boolean);
+  const conjuntoTokens = new Set(tokensNome);
+  const nomeSemEspaco = nomeNormalizado.replace(/\s+/g, "");
+
+  let melhorPontuacao = 0;
+
+  variacoes.forEach((variacao) => {
+    if (!variacao) return;
+    const normalizado = variacao;
+    if (nomeNormalizado === normalizado) {
+      melhorPontuacao = Math.max(melhorPontuacao, 1000);
+      return;
+    }
+
+    if (nomeNormalizado.includes(normalizado)) {
+      melhorPontuacao = Math.max(melhorPontuacao, normalizado.length * 4);
+    }
+
+    const tokensVariacao = normalizado.split(/[^a-z0-9]+/).filter(Boolean);
+    if (!tokensVariacao.length) return;
+
+    const tokensCorrespondentes = tokensVariacao.filter((token) =>
+      conjuntoTokens.has(token)
+    );
+
+    if (tokensCorrespondentes.length === tokensVariacao.length) {
+      melhorPontuacao = Math.max(
+        melhorPontuacao,
+        tokensCorrespondentes.length * 50
+      );
+    } else if (tokensCorrespondentes.length > 0) {
+      melhorPontuacao = Math.max(
+        melhorPontuacao,
+        tokensCorrespondentes.length * 10
+      );
+    }
+
+    const variacaoSemEspaco = normalizado.replace(/\s+/g, "");
+    if (
+      variacaoSemEspaco.length >= 3 &&
+      nomeSemEspaco.includes(variacaoSemEspaco)
+    ) {
+      melhorPontuacao = Math.max(
+        melhorPontuacao,
+        variacaoSemEspaco.length * 3
+      );
+    }
+  });
+
+  return melhorPontuacao;
+}
+
 function obterConfigDisciplina(nome: string): DisciplinaConfig | undefined {
   const normalizado = normalizarNomeDisciplina(nome);
   if (disciplinaMap[normalizado]) {
     return disciplinaMap[normalizado];
   }
 
-  const aliasMatch = Object.entries(disciplinaMap).find(([, config]) =>
-    config.aliases?.some(
-      (alias) => normalizarNomeDisciplina(alias) === normalizado
-    )
+  const entradaDireta = Object.entries(disciplinaMap).find(([chave]) =>
+    normalizado.includes(chave)
+  );
+  if (entradaDireta) {
+    return entradaDireta[1];
+  }
+
+  const variacoesPontuadas = Object.entries(disciplinaMap).map(
+    ([chave, config]) => {
+      const variacoes = variacoesConfig(chave, config);
+      const pontuacao = pontuarConfigPorNome(normalizado, variacoes);
+      return { chave, config, pontuacao };
+    }
   );
 
-  return aliasMatch?.[1];
+  const melhor = variacoesPontuadas
+    .filter((entrada) => entrada.pontuacao > 0)
+    .sort((a, b) => b.pontuacao - a.pontuacao)[0];
+
+  return melhor?.config;
 }
 
 function nomesRelacionados(nome: string, config?: DisciplinaConfig) {
@@ -179,6 +285,9 @@ function nomesRelacionados(nome: string, config?: DisciplinaConfig) {
   const relacionados = new Set<string>([base]);
   config?.aliases?.forEach((alias) => {
     relacionados.add(normalizarNomeDisciplina(alias));
+  });
+  config?.keywords?.forEach((keyword) => {
+    relacionados.add(normalizarNomeDisciplina(keyword));
   });
   return relacionados;
 }
@@ -349,27 +458,35 @@ function inferirEtapas(
 ): EtapaApi[] {
   const ordem: EtapaApi[] = [];
   const texto = serie ? normalizarNomeDisciplina(serie) : "";
+  const numero = extrairNumeroSerie(serie);
 
-  if (/(fundamental|fund\.|ef)/.test(texto)) {
+  const explicitoFundamental = /(fundamental|fund\.|ef)/.test(texto);
+  const explicitoMedio = /(medio|ensino medio|\bem\b)/.test(texto);
+
+  if (explicitoFundamental) {
     ordem.push("fundamental");
   }
 
-  if (/(medio|ensino medio)/.test(texto) || /(\b|\D)em(\b|\D)/.test(texto)) {
+  if (explicitoMedio) {
     ordem.push("medio");
   }
 
-  const numero = extrairNumeroSerie(serie);
   if (numero !== undefined) {
-    if (numero >= 6) {
+    if (numero >= 4 && numero <= 9) {
       ordem.push("fundamental");
-    } else if (numero <= 3) {
-      if (/(medio|ensino medio)/.test(texto) || /(\b|\D)em(\b|\D)/.test(texto)) {
+    }
+
+    if (numero >= 1 && numero <= 3) {
+      if (explicitoMedio) {
         ordem.push("medio");
-      } else if (config?.preferencia) {
-        ordem.push(config.preferencia);
       } else {
         ordem.push("fundamental");
+        ordem.push("medio");
       }
+    }
+
+    if (numero > 9) {
+      ordem.push("medio");
     }
   }
 

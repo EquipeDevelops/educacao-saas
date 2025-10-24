@@ -10,11 +10,17 @@ const prisma = new PrismaClient();
 
 type UsuarioAutenticado = AuthenticatedRequest["user"];
 
+type DiarioObjetivoInput = {
+  codigo: string;
+  descricao: string;
+  etapa?: string | null;
+  area?: string | null;
+};
+
 type CreateDiarioInput = {
   data: string;
   componenteCurricularId: string;
-  objetivoCodigo: string;
-  objetivoDescricao: string;
+  objetivos: DiarioObjetivoInput[];
   tema: string;
   atividade: string;
   observacoes?: string;
@@ -41,6 +47,7 @@ type FrequenciaResumoAluno = {
     data: string;
     situacao: SituacaoPresenca;
     objetivoCodigo: string;
+    objetivos: DiarioObjetivoInput[];
   }[];
 };
 
@@ -57,6 +64,7 @@ type FrequenciaDetalhadaResposta = {
     data: string;
     objetivoCodigo: string;
     objetivoDescricao: string;
+    objetivos: DiarioObjetivoInput[];
     tema: string;
     atividade: string;
     presencas: {
@@ -79,6 +87,44 @@ function ensureProfessor(user: UsuarioAutenticado) {
   if (!user?.perfilId || user.papel !== "PROFESSOR") {
     throw new Error("Apenas professores podem acessar o diário de aula.");
   }
+}
+
+function mapearObjetivosRegistro(
+  registro:
+    | {
+        objetivoCodigo: string | null;
+        objetivoDescricao: string | null;
+        objetivos?: { codigo: string; descricao: string; etapa?: string | null; area?: string | null }[];
+      }
+    | null
+    | undefined
+): DiarioObjetivoInput[] {
+  if (!registro) return [];
+
+  const mapa = new Map<string, DiarioObjetivoInput>();
+
+  if (registro.objetivoCodigo && registro.objetivoDescricao) {
+    mapa.set(registro.objetivoCodigo, {
+      codigo: registro.objetivoCodigo,
+      descricao: registro.objetivoDescricao,
+    });
+  }
+
+  registro.objetivos?.forEach((objetivo) => {
+    if (!objetivo.codigo || !objetivo.descricao) return;
+    const codigo = objetivo.codigo.trim();
+    if (!codigo) return;
+    if (!mapa.has(codigo)) {
+      mapa.set(codigo, {
+        codigo,
+        descricao: objetivo.descricao,
+        etapa: objetivo.etapa ?? null,
+        area: objetivo.area ?? null,
+      });
+    }
+  });
+
+  return Array.from(mapa.values());
 }
 
 async function obterComponenteDoProfessor(
@@ -265,7 +311,7 @@ export async function listarRegistros(
       professorId: user.perfilId!,
       unidadeEscolarId: user.unidadeEscolarId!,
     },
-    include: { registros_presenca: true },
+    include: { registros_presenca: true, objetivos: true },
     orderBy: { data: "desc" },
   });
 
@@ -286,6 +332,7 @@ export async function listarRegistros(
       data: registro.data.toISOString(),
       objetivoCodigo: registro.objetivoCodigo,
       objetivoDescricao: registro.objetivoDescricao,
+      objetivos: mapearObjetivosRegistro(registro),
       tema: registro.tema,
       atividade: registro.atividade,
       resumoPresencas: resumo,
@@ -312,6 +359,7 @@ export async function obterRegistro(
           turma: { select: { id: true, nome: true, serie: true } },
         },
       },
+      objetivos: true,
       registros_presenca: {
         include: {
           matricula: {
@@ -335,6 +383,7 @@ export async function obterRegistro(
     data: registro.data.toISOString(),
     objetivoCodigo: registro.objetivoCodigo,
     objetivoDescricao: registro.objetivoDescricao,
+    objetivos: mapearObjetivosRegistro(registro),
     tema: registro.tema,
     atividade: registro.atividade,
     componenteCurricular: registro.componenteCurricular,
@@ -357,20 +406,65 @@ export async function criarRegistro(
     user
   );
 
+  const objetivosSelecionados = (input.objetivos || [])
+    .map((objetivo) => ({
+      codigo: objetivo.codigo?.trim(),
+      descricao: objetivo.descricao?.trim(),
+      etapa: objetivo.etapa ?? null,
+      area: objetivo.area ?? null,
+    }))
+    .filter(
+      (objetivo): objetivo is DiarioObjetivoInput & {
+        etapa: string | null;
+        area: string | null;
+      } => Boolean(objetivo.codigo && objetivo.descricao)
+    );
+
+  const mapaObjetivos = new Map<string, DiarioObjetivoInput>();
+  objetivosSelecionados.forEach((objetivo) => {
+    if (!objetivo.codigo) return;
+    if (!mapaObjetivos.has(objetivo.codigo)) {
+      mapaObjetivos.set(objetivo.codigo, objetivo);
+    }
+  });
+
+  const objetivos = Array.from(mapaObjetivos.values());
+
+  if (!objetivos.length) {
+    throw new Error(
+      "Selecione ao menos um objetivo de aprendizagem da BNCC para registrar a aula."
+    );
+  }
+
+  const principal = objetivos[0];
   const dataRegistro = new Date(`${input.data}T03:00:00.000Z`);
 
-  const registro = await prisma.diarioAula.create({
-    data: {
-      data: dataRegistro,
-      objetivoCodigo: input.objetivoCodigo,
-      objetivoDescricao: input.objetivoDescricao,
-      tema: input.tema,
-      atividade: input.atividade,
-      observacoes: input.observacoes,
-      professorId: user.perfilId!,
-      componenteCurricularId: componente.id,
-      unidadeEscolarId: componente.turma.unidadeEscolarId,
-    },
+  const registro = await prisma.$transaction(async (tx) => {
+    const criado = await tx.diarioAula.create({
+      data: {
+        data: dataRegistro,
+        objetivoCodigo: principal.codigo,
+        objetivoDescricao: principal.descricao,
+        tema: input.tema,
+        atividade: input.atividade,
+        observacoes: input.observacoes,
+        professorId: user.perfilId!,
+        componenteCurricularId: componente.id,
+        unidadeEscolarId: componente.turma.unidadeEscolarId,
+      },
+    });
+
+    await tx.diarioAulaObjetivo.createMany({
+      data: objetivos.map((objetivo) => ({
+        diarioAulaId: criado.id,
+        codigo: objetivo.codigo,
+        descricao: objetivo.descricao,
+        etapa: objetivo.etapa ?? undefined,
+        area: objetivo.area ?? undefined,
+      })),
+    });
+
+    return criado;
   });
 
   return registro;
@@ -468,6 +562,7 @@ export async function listarFrequenciasDetalhadas(
           },
         },
       },
+      objetivos: true,
     },
     orderBy: { data: "desc" },
   });
@@ -500,6 +595,7 @@ export async function listarFrequenciasDetalhadas(
   });
 
   const aulas = diarios.map((registro) => {
+    const objetivosAula = mapearObjetivosRegistro(registro);
     const resumo = registro.registros_presenca.reduce(
       (acc, presenca) => {
         if (presenca.situacao === SituacaoPresenca.PRESENTE) acc.presentes += 1;
@@ -513,7 +609,6 @@ export async function listarFrequenciasDetalhadas(
 
     registro.registros_presenca.forEach((presenca) => {
       const matriculaId = presenca.matriculaId;
-      const statusMatricula = presenca.matricula.status;
       const atual = alunoMap.get(matriculaId)!;
       atual.totalRegistradoParaAluno += 1;
       if (presenca.situacao === SituacaoPresenca.PRESENTE) {
@@ -531,6 +626,7 @@ export async function listarFrequenciasDetalhadas(
         data: registro.data.toISOString(),
         situacao: presenca.situacao,
         objetivoCodigo: registro.objetivoCodigo,
+        objetivos: objetivosAula,
       });
     });
 
@@ -539,6 +635,7 @@ export async function listarFrequenciasDetalhadas(
       data: registro.data.toISOString(),
       objetivoCodigo: registro.objetivoCodigo,
       objetivoDescricao: registro.objetivoDescricao,
+      objetivos: objetivosAula,
       tema: registro.tema,
       atividade: registro.atividade,
       presencas: registro.registros_presenca.map((presenca) => ({

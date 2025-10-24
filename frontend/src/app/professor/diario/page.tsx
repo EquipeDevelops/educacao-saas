@@ -48,6 +48,7 @@ type DiarioResumo = {
   data: string;
   objetivoCodigo: string;
   objetivoDescricao: string;
+  objetivos: ObjetivoDiario[];
   tema: string;
   atividade: string;
   resumoPresencas: {
@@ -74,6 +75,10 @@ type ObjetivoBncc = {
   area?: string | null;
 };
 
+type ObjetivoDiario = ObjetivoBncc & {
+  principal?: boolean;
+};
+
 type FrequenciaAlunoResumo = {
   matriculaId: string;
   aluno: string;
@@ -89,6 +94,7 @@ type FrequenciaAlunoResumo = {
     data: string;
     situacao: SituacaoPresenca;
     objetivoCodigo: string;
+    objetivos: ObjetivoDiario[];
   }[];
 };
 
@@ -97,6 +103,7 @@ type FrequenciaAulaCompleta = {
   data: string;
   objetivoCodigo: string;
   objetivoDescricao: string;
+  objetivos: ObjetivoDiario[];
   tema: string;
   atividade: string;
   presencas: {
@@ -188,9 +195,12 @@ export default function DiarioProfessorPage() {
   const [dataAula, setDataAula] = useState(
     new Date().toISOString().split("T")[0]
   );
-  const [objetivoSelecionado, setObjetivoSelecionado] = useState<string>("");
+  const [objetivosSelecionados, setObjetivosSelecionados] = useState<string[]>(
+    []
+  );
   const [tema, setTema] = useState("");
   const [atividade, setAtividade] = useState("");
+  const [buscaObjetivo, setBuscaObjetivo] = useState("");
 
   const [carregandoTurmas, setCarregandoTurmas] = useState(true);
   const [carregandoAlunos, setCarregandoAlunos] = useState(false);
@@ -333,6 +343,8 @@ export default function DiarioProfessorPage() {
     setRegistroExpandido(null);
     setResumoFrequencias(null);
     setModalFrequenciasAberto(false);
+    setObjetivosSelecionados([]);
+    setBuscaObjetivo("");
   }, [turmaSelecionada]);
 
   useEffect(() => {
@@ -341,10 +353,57 @@ export default function DiarioProfessorPage() {
     }
   }, [alunos, diarioAtual]);
 
-  const objetivoAtual = useMemo(
-    () => objetivos.find((objetivo) => objetivo.codigo === objetivoSelecionado),
-    [objetivoSelecionado, objetivos]
+  useEffect(() => {
+    setObjetivosSelecionados((selecionados) =>
+      selecionados.filter((codigo) =>
+        objetivos.some((objetivo) => objetivo.codigo === codigo)
+      )
+    );
+  }, [objetivos]);
+
+  const objetivosSelecionadosDetalhes = useMemo(
+    () =>
+      objetivos.filter((objetivo) =>
+        objetivosSelecionados.includes(objetivo.codigo)
+      ),
+    [objetivosSelecionados, objetivos]
   );
+
+  const objetivosFiltrados = useMemo(() => {
+    const termo = buscaObjetivo.trim().toLowerCase();
+    if (!termo) return objetivos;
+    return objetivos.filter(
+      (objetivo) =>
+        objetivo.codigo.toLowerCase().includes(termo) ||
+        objetivo.descricao.toLowerCase().includes(termo)
+    );
+  }, [buscaObjetivo, objetivos]);
+
+  const objetivoPrincipal = useMemo(
+    () => objetivosSelecionadosDetalhes[0] ?? null,
+    [objetivosSelecionadosDetalhes]
+  );
+
+  const alternarObjetivo = useCallback((codigo: string) => {
+    setObjetivosSelecionados((atual) => {
+      if (atual.includes(codigo)) {
+        return atual.filter((item) => item !== codigo);
+      }
+      return [...atual, codigo];
+    });
+  }, []);
+
+  const limparObjetivosSelecionados = useCallback(() => {
+    setObjetivosSelecionados([]);
+  }, []);
+
+  const selecionarObjetivosFiltrados = useCallback(() => {
+    setObjetivosSelecionados((atual) => {
+      const conjunto = new Set<string>(atual);
+      objetivosFiltrados.forEach((objetivo) => conjunto.add(objetivo.codigo));
+      return Array.from(conjunto);
+    });
+  }, [objetivosFiltrados]);
 
   const podeSalvarFrequencia = useMemo(
     () => Boolean(diarioAtual && alunos.length),
@@ -357,8 +416,8 @@ export default function DiarioProfessorPage() {
       toast.error("Selecione a turma para registrar a aula.");
       return;
     }
-    if (!objetivoSelecionado || !objetivoAtual) {
-      toast.error("Escolha o objetivo de aprendizagem da BNCC.");
+    if (!objetivosSelecionadosDetalhes.length) {
+      toast.error("Escolha ao menos um objetivo de aprendizagem da BNCC.");
       return;
     }
     if (!tema.trim() || !atividade.trim()) {
@@ -366,19 +425,25 @@ export default function DiarioProfessorPage() {
       return;
     }
 
+    const objetivosPayload = objetivosSelecionadosDetalhes.map((objetivo) => ({
+      codigo: objetivo.codigo,
+      descricao: objetivo.descricao,
+      etapa: objetivo.etapa ?? null,
+      area: objetivo.area ?? null,
+    }));
+
     setSalvandoRegistro(true);
     try {
       const resposta = await api.post("/professor/diario/registros", {
         data: dataAula,
         componenteCurricularId: turmaSelecionada,
-        objetivoCodigo: objetivoAtual.codigo,
-        objetivoDescricao: objetivoAtual.descricao,
+        objetivos: objetivosPayload,
         tema: tema.trim(),
         atividade: atividade.trim(),
       });
 
       toast.success("Aula registrada com sucesso. Agora registre a frequência.");
-      setObjetivoSelecionado("");
+      setObjetivosSelecionados([]);
       setTema("");
       setAtividade("");
 
@@ -504,15 +569,27 @@ export default function DiarioProfessorPage() {
     setTema(ultimaAulaRegistrada.tema);
     setAtividade(ultimaAulaRegistrada.atividade);
 
-    if (
-      objetivos.some(
-        (objetivo) => objetivo.codigo === ultimaAulaRegistrada.objetivoCodigo
-      )
-    ) {
-      setObjetivoSelecionado(ultimaAulaRegistrada.objetivoCodigo);
+    const codigosDisponiveis = new Set(
+      objetivos.map((objetivo) => objetivo.codigo)
+    );
+    const codigosUltimaAula = (ultimaAulaRegistrada.objetivos || [])
+      .map((objetivo) => objetivo.codigo)
+      .filter(Boolean);
+
+    const reaproveitaveis = codigosUltimaAula.filter((codigo) =>
+      codigosDisponiveis.has(codigo)
+    );
+
+    if (reaproveitaveis.length) {
+      setObjetivosSelecionados(reaproveitaveis);
+      if (reaproveitaveis.length < codigosUltimaAula.length) {
+        toast.warn(
+          "Alguns objetivos da aula anterior não estão disponíveis nesta turma."
+        );
+      }
     } else {
       toast.warn(
-        "O objetivo utilizado na última aula não está disponível na lista atual."
+        "Os objetivos da aula anterior não estão disponíveis na lista atual."
       );
     }
   };
@@ -697,31 +774,111 @@ export default function DiarioProfessorPage() {
             </div>
 
             <div className={styles.formGroup}>
-              <label htmlFor="objetivo">
-                <FiBookOpen /> Objetivo de aprendizagem (BNCC)
+              <label htmlFor="objetivoBusca">
+                <FiBookOpen /> Objetivos de aprendizagem (BNCC)
               </label>
-              <select
-                id="objetivo"
-                value={objetivoSelecionado}
-                onChange={(event) => setObjetivoSelecionado(event.target.value)}
-                disabled={carregandoObjetivos}
-              >
-                <option value="">
-                  {carregandoObjetivos
-                    ? "Carregando objetivos..."
-                    : "Selecione o objetivo"}
-                </option>
-                {objetivos.map((objetivo) => (
-                  <option key={objetivo.codigo} value={objetivo.codigo}>
-                    {objetivo.codigo} • {objetivo.descricao}
-                  </option>
-                ))}
-              </select>
-              {objetivoAtual?.area && (
-                <span className={styles.helperText}>
-                  Área: {objetivoAtual.area} — Etapa: {objetivoAtual.etapa || "EM"}
-                </span>
-              )}
+              <div className={styles.objectiveSelector}>
+                <div className={styles.objectiveToolbar}>
+                  <input
+                    id="objetivoBusca"
+                    type="text"
+                    value={buscaObjetivo}
+                    onChange={(event) => setBuscaObjetivo(event.target.value)}
+                    placeholder="Pesquisar por código ou habilidade"
+                    disabled={carregandoObjetivos}
+                  />
+                  <div className={styles.objectiveToolbarButtons}>
+                    <button
+                      type="button"
+                      className={styles.secondaryButton}
+                      onClick={selecionarObjetivosFiltrados}
+                      disabled={carregandoObjetivos || objetivosFiltrados.length === 0}
+                    >
+                      Selecionar visíveis
+                    </button>
+                    <button
+                      type="button"
+                      className={styles.ghostButton}
+                      onClick={limparObjetivosSelecionados}
+                      disabled={!objetivosSelecionados.length}
+                    >
+                      Limpar
+                    </button>
+                  </div>
+                </div>
+                <div
+                  className={styles.objectiveList}
+                  role="listbox"
+                  aria-multiselectable="true"
+                  aria-busy={carregandoObjetivos}
+                >
+                  {carregandoObjetivos ? (
+                    <p className={styles.helperText}>Carregando objetivos...</p>
+                  ) : objetivosFiltrados.length === 0 ? (
+                    <p className={styles.helperText}>
+                      Nenhum objetivo encontrado para o filtro informado.
+                    </p>
+                  ) : (
+                    objetivosFiltrados.map((objetivo) => {
+                      const selecionado = objetivosSelecionados.includes(
+                        objetivo.codigo
+                      );
+                      return (
+                        <label
+                          key={objetivo.codigo}
+                          className={`${styles.objectiveItem} ${
+                            selecionado ? styles.objectiveItemSelected : ""
+                          }`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={selecionado}
+                            onChange={() => alternarObjetivo(objetivo.codigo)}
+                          />
+                          <span>
+                            <strong>{objetivo.codigo}</strong>
+                            <small>{objetivo.descricao}</small>
+                          </span>
+                        </label>
+                      );
+                    })
+                  )}
+                </div>
+                {objetivosSelecionadosDetalhes.length > 0 && (
+                  <div className={styles.selectedObjectives}>
+                    {objetivosSelecionadosDetalhes.map((objetivo) => (
+                      <span
+                        key={objetivo.codigo}
+                        className={styles.objectiveChip}
+                      >
+                        {objetivo.codigo}
+                        <button
+                          type="button"
+                          onClick={() => alternarObjetivo(objetivo.codigo)}
+                          aria-label={`Remover ${objetivo.codigo}`}
+                        >
+                          <FiX />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <span className={styles.helperText}>
+                {objetivosSelecionadosDetalhes.length > 0
+                  ? [
+                      `${objetivosSelecionadosDetalhes.length} objetivo(s) selecionado(s).`,
+                      objetivoPrincipal?.area
+                        ? `Área principal: ${objetivoPrincipal.area}`
+                        : null,
+                      objetivoPrincipal
+                        ? `Etapa: ${objetivoPrincipal.etapa || "EM"}`
+                        : null,
+                    ]
+                      .filter(Boolean)
+                      .join(" ")
+                  : "Escolha um ou mais objetivos alinhados à disciplina. Use a busca para localizar códigos ou descrições específicas."}
+              </span>
             </div>
 
             <div className={styles.formGroup}>
@@ -812,7 +969,21 @@ export default function DiarioProfessorPage() {
                     <div className={styles.diarioHeader}>
                       <div>
                         <strong>{formatarDataISO(registro.data)}</strong>
-                        <p>{registro.objetivoCodigo}</p>
+                        <div className={styles.objectiveChipRow}>
+                          {registro.objetivos.slice(0, 4).map((objetivo) => (
+                            <span
+                              key={objetivo.codigo}
+                              className={styles.objectiveChip}
+                            >
+                              {objetivo.codigo}
+                            </span>
+                          ))}
+                          {registro.objetivos.length > 4 && (
+                            <span className={styles.moreChip}>
+                              +{registro.objetivos.length - 4}
+                            </span>
+                          )}
+                        </div>
                       </div>
                       <div className={styles.diarioActions}>
                         <button
@@ -834,9 +1005,22 @@ export default function DiarioProfessorPage() {
                         </button>
                       </div>
                     </div>
-                    <p>
-                      <strong>Objetivo:</strong> {registro.objetivoDescricao}
-                    </p>
+                    <div className={styles.objectiveDescriptionBlock}>
+                      <strong>Objetivos selecionados:</strong>
+                      {registro.objetivos.length > 0 ? (
+                        <ul>
+                          {registro.objetivos.map((objetivo) => (
+                            <li key={`${registro.id}-${objetivo.codigo}`}>
+                              <strong>{objetivo.codigo}:</strong> {objetivo.descricao}
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <span className={styles.helperText}>
+                          Nenhum objetivo registrado para esta aula.
+                        </span>
+                      )}
+                    </div>
                     <p>
                       <strong>Tema:</strong> {registro.tema}
                     </p>
@@ -919,8 +1103,30 @@ export default function DiarioProfessorPage() {
           ) : (
             <>
               <div className={styles.alertMessage}>
-                <strong>{formatarDataISO(diarioAtual.data)}</strong> — {" "}
-                {diarioAtual.objetivoCodigo} — {diarioAtual.objetivoDescricao}
+                <div className={styles.alertHeader}>
+                  <strong>{formatarDataISO(diarioAtual.data)}</strong>
+                  <div className={styles.objectiveChipRow}>
+                    {diarioAtual.objetivos.slice(0, 5).map((objetivo) => (
+                      <span key={objetivo.codigo} className={styles.objectiveChip}>
+                        {objetivo.codigo}
+                      </span>
+                    ))}
+                    {diarioAtual.objetivos.length > 5 && (
+                      <span className={styles.moreChip}>
+                        +{diarioAtual.objetivos.length - 5}
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <p>
+                  {diarioAtual.objetivoDescricao}
+                  {diarioAtual.objetivos.length > 1 && (
+                    <span>
+                      {" "}• +{diarioAtual.objetivos.length - 1} habilidade(s)
+                      adicional(is)
+                    </span>
+                  )}
+                </p>
               </div>
 
               <div className={styles.tableWrapper}>
@@ -1113,7 +1319,18 @@ export default function DiarioProfessorPage() {
                         {resumoFrequencias.aulas.map((aula) => (
                           <tr key={aula.id}>
                             <td>{formatarDataISO(aula.data)}</td>
-                            <td>{aula.objetivoCodigo}</td>
+                            <td>
+                              <div className={styles.objectiveChipRow}>
+                                {aula.objetivos.map((objetivo) => (
+                                  <span
+                                    key={`${aula.id}-${objetivo.codigo}`}
+                                    className={styles.objectiveChip}
+                                  >
+                                    {objetivo.codigo}
+                                  </span>
+                                ))}
+                              </div>
+                            </td>
                             <td>{aula.resumoPresencas.presentes}</td>
                             <td>{aula.resumoPresencas.faltas}</td>
                             <td>{aula.resumoPresencas.faltasJustificadas}</td>

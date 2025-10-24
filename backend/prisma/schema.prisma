@@ -332,6 +332,7 @@ model DiarioAula {
   componenteCurricularId  String                 @db.ObjectId
   unidadeEscolar          Unidades_Escolares     @relation(fields: [unidadeEscolarId], references: [id])
   unidadeEscolarId        String                 @db.ObjectId
+  objetivos               DiarioAulaObjetivo[]
   registros_presenca      DiarioAulaPresenca[]
 
   @@map("diarios_aula")
@@ -354,6 +355,20 @@ model DiarioAulaPresenca {
   @@index([matriculaId])
   @@index([diarioAulaId])
   @@unique([diarioAulaId, matriculaId])
+}
+
+model DiarioAulaObjetivo {
+  id           String     @id @default(auto()) @map("_id") @db.ObjectId
+  codigo       String
+  descricao    String
+  etapa        String?
+  area         String?
+  diarioAula   DiarioAula @relation(fields: [diarioAulaId], references: [id], onDelete: Cascade)
+  diarioAulaId String     @db.ObjectId
+
+  @@map("diarios_aula_objetivos")
+  @@index([diarioAulaId])
+  @@unique([diarioAulaId, codigo])
 }
 
 enum TipoTarefa {

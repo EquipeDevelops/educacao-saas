@@ -19,12 +19,30 @@ export const createDiarioSchema = z.object({
     componenteCurricularId: z
       .string({ required_error: "O componente curricular é obrigatório." })
       .min(1, "Selecione uma turma."),
-    objetivoCodigo: z
-      .string({ required_error: "O código BNCC é obrigatório." })
-      .min(3, "Informe o código BNCC."),
-    objetivoDescricao: z
-      .string({ required_error: "A descrição do objetivo é obrigatória." })
-      .min(10, "A descrição deve conter pelo menos 10 caracteres."),
+    objetivos: z
+      .array(
+        z.object({
+          codigo: z
+            .string({ required_error: "Informe o código BNCC." })
+            .min(3, "Informe o código BNCC."),
+          descricao: z
+            .string({ required_error: "Descreva a habilidade BNCC." })
+            .min(10, "A descrição deve conter pelo menos 10 caracteres."),
+          etapa: z
+            .string()
+            .trim()
+            .max(10, "A etapa deve ter até 10 caracteres.")
+            .optional()
+            .nullable(),
+          area: z
+            .string()
+            .trim()
+            .max(80, "A área deve ter até 80 caracteres.")
+            .optional()
+            .nullable(),
+        })
+      )
+      .min(1, "Selecione ao menos um objetivo da BNCC."),
     tema: z
       .string({ required_error: "O tema ou saber é obrigatório." })
       .min(3, "Descreva o tema desenvolvido."),
