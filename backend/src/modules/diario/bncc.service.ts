@@ -917,6 +917,31 @@ function filtrarPorEtapa(
   });
 }
 
+function inferirSiglaSerie(serie?: string | null): "EM" | "EF" | undefined {
+  const numero = extrairNumeroSerie(serie);
+  if (numero === undefined) {
+    return undefined;
+  }
+
+  if (numero >= 6 && numero <= 9) {
+    return "EF";
+  }
+
+  if (numero >= 4 && numero <= 5) {
+    return "EF";
+  }
+
+  if (numero >= 1 && numero <= 3) {
+    return "EM";
+  }
+
+  if (numero > 9) {
+    return "EM";
+  }
+
+  return undefined;
+}
+
 type ResultadoApi = {
   objetivos: BnccObjetivo[];
   etapa?: "EM" | "EF";
@@ -930,6 +955,7 @@ async function buscarNaApi(
   const tentativas = construirTentativasApi(disciplina, config, contexto);
   const etapaPrincipal = inferirEtapaPrincipal(contexto?.serie, config);
   const etapaPreferidaSigla = etapaApiParaSigla(etapaPrincipal);
+  const siglaSeriePreferida = inferirSiglaSerie(contexto?.serie);
 
   for (const tentativa of tentativas) {
     try {
@@ -944,9 +970,10 @@ async function buscarNaApi(
         if (filtrados.length) {
           const etapaResposta =
             tentativa.etapa ?? etapaPreferidaSigla ?? undefined;
-          const porEtapa = filtrarPorEtapa(filtrados, etapaResposta);
+          const etapaFiltrada = siglaSeriePreferida ?? etapaResposta;
+          const porEtapa = filtrarPorEtapa(filtrados, etapaFiltrada);
           if (porEtapa.length) {
-            return { objetivos: porEtapa, etapa: etapaResposta };
+            return { objetivos: porEtapa, etapa: etapaFiltrada };
           }
         }
       }
@@ -1000,6 +1027,8 @@ export async function obterObjetivosBnccPorDisciplina(
   const config = obterConfigDisciplina(disciplina);
   const etapaPrincipal = inferirEtapaPrincipal(contexto?.serie, config);
   const etapaSiglaPreferida = etapaApiParaSigla(etapaPrincipal);
+  const siglaDerivadaDaSerie = inferirSiglaSerie(contexto?.serie);
+  const siglaParaFallback = siglaDerivadaDaSerie ?? etapaSiglaPreferida;
   const resultadoApi = await buscarNaApi(disciplina, config, contexto);
   if (resultadoApi.objetivos.length > 0) {
     const combinados = new Map<string, BnccObjetivo>();
@@ -1032,7 +1061,7 @@ export async function obterObjetivosBnccPorDisciplina(
         area,
       })
     ),
-    etapaSiglaPreferida
+    siglaParaFallback
   );
 
   if (fallback.length > 0) {
@@ -1052,7 +1081,7 @@ export async function obterObjetivosBnccPorDisciplina(
       etapa,
       area,
     })),
-    etapaSiglaPreferida
+    siglaParaFallback
   );
 
   const objetivosOrdenados = ordenarObjetivos(generico);
