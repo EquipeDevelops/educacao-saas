@@ -15,6 +15,10 @@ import {
   FiCopy,
   FiCheckSquare,
   FiMinusCircle,
+  FiClock,
+  FiTrendingUp,
+  FiUserCheck,
+  FiUserX,
 } from "react-icons/fi";
 
 import { useAuth } from "@/contexts/AuthContext";
@@ -219,6 +223,51 @@ export default function DiarioProfessorPage() {
     () => turmas.find((turma) => turma.componenteId === turmaSelecionada),
     [turmas, turmaSelecionada]
   );
+
+  const resumoModalFrequencias = useMemo(() => {
+    if (!resumoFrequencias) return null;
+
+    const totais = resumoFrequencias.aulas.reduce(
+      (acc, aula) => {
+        acc.presentes += aula.resumoPresencas.presentes;
+        acc.faltas += aula.resumoPresencas.faltas;
+        acc.faltasJustificadas += aula.resumoPresencas.faltasJustificadas;
+        return acc;
+      },
+      { presentes: 0, faltas: 0, faltasJustificadas: 0 }
+    );
+
+    const mediaPresenca = resumoFrequencias.alunos.length
+      ? resumoFrequencias.alunos.reduce(
+          (acc, aluno) => acc + aluno.percentualPresenca,
+          0
+        ) / resumoFrequencias.alunos.length
+      : 0;
+
+    const ativos = resumoFrequencias.alunos.filter(
+      (aluno) => aluno.statusMatricula === "ATIVA"
+    ).length;
+    const inativos = resumoFrequencias.alunos.length - ativos;
+
+    const ultimaData = resumoFrequencias.aulas.reduce<string | null>(
+      (maisRecente, aula) => {
+        if (!maisRecente) return aula.data;
+        return new Date(aula.data).getTime() >
+          new Date(maisRecente).getTime()
+          ? aula.data
+          : maisRecente;
+      },
+      null
+    );
+
+    return {
+      totais,
+      mediaPresenca,
+      ativos,
+      inativos,
+      ultimaData,
+    };
+  }, [resumoFrequencias]);
 
   const ultimaAulaRegistrada = useMemo(
     () => (registros.length ? registros[0] : null),
@@ -1232,128 +1281,198 @@ export default function DiarioProfessorPage() {
               <FiX />
             </button>
 
-            <h3>
-              Frequência geral — {resumoFrequencias?.componente.nomeTurma || ""}
-            </h3>
-            {resumoFrequencias?.componente.materia && (
-              <p className={styles.modalSubtitle}>
-                Disciplina: {resumoFrequencias.componente.materia}
-              </p>
-            )}
+            <div className={styles.modalHeader}>
+              <div className={styles.modalHeaderTop}>
+                <div>
+                  <span className={styles.modalEyebrow}>Frequência geral</span>
+                  <h3 className={styles.modalTitle}>
+                    {resumoFrequencias?.componente.nomeTurma || ""}
+                  </h3>
+                  {resumoFrequencias?.componente.materia && (
+                    <p className={styles.modalSubtitle}>
+                      Disciplina: {resumoFrequencias.componente.materia}
+                    </p>
+                  )}
+                </div>
 
-            {carregandoResumoFrequencias ? (
-              <p>Carregando consolidado...</p>
-            ) : !resumoFrequencias || resumoFrequencias.totalAulas === 0 ? (
-              <div className={styles.emptyState}>
-                <p>Nenhuma aula registrada para esta turma até o momento.</p>
-                <span>
-                  Registre uma aula para visualizar o acompanhamento de frequências.
-                </span>
+                <div className={styles.modalHeaderChips}>
+                  <span className={styles.modalChip}>
+                    <FiCalendar /> {resumoFrequencias?.totalAulas || 0} aulas
+                  </span>
+                  {resumoModalFrequencias?.ultimaData && (
+                    <span className={styles.modalChip}>
+                      <FiClock /> Última aula: {" "}
+                      {formatarDataISO(resumoModalFrequencias.ultimaData)}
+                    </span>
+                  )}
+                </div>
               </div>
-            ) : (
-              <div className={styles.modalGrid}>
-                <section className={styles.modalSection}>
-                  <h4>Resumo por aluno</h4>
-                  <div className={styles.tableWrapper}>
-                    <table className={styles.modalTable}>
-                      <thead>
-                        <tr>
-                          <th>Aluno</th>
-                          <th>Status</th>
-                          <th>Presenças</th>
-                          <th>Faltas</th>
-                          <th>Faltas just.</th>
-                          <th>% Presença</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {resumoFrequencias.alunos.map((aluno) => (
-                          <tr key={aluno.matriculaId}>
-                            <td>{aluno.aluno}</td>
-                            <td>
-                              <span
-                                className={`${styles.statusBadge} ${
-                                  aluno.statusMatricula === "ATIVA"
-                                    ? styles.statusAtiva
-                                    : styles.statusInativa
-                                }`}
-                              >
-                                {statusLabels[aluno.statusMatricula] ||
-                                  aluno.statusMatricula}
-                              </span>
-                            </td>
-                            <td>{aluno.presentes}</td>
-                            <td>{aluno.faltas}</td>
-                            <td>{aluno.faltasJustificadas}</td>
-                            <td>
-                              <span className={styles.percentBadge}>
-                                {aluno.percentualPresenca.toLocaleString("pt-BR", {
-                                  minimumFractionDigits: 0,
-                                  maximumFractionDigits: 2,
-                                })}
-                                %
-                              </span>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </section>
 
-                <section className={styles.modalSection}>
-                  <h4>Frequência por aula ({resumoFrequencias.totalAulas})</h4>
-                  <div className={styles.tableWrapper}>
-                    <table className={styles.modalTable}>
-                      <thead>
-                        <tr>
-                          <th>Data</th>
-                          <th>Objetivo</th>
-                          <th>Presentes</th>
-                          <th>Faltas</th>
-                          <th>Faltas just.</th>
-                          <th>Ações</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {resumoFrequencias.aulas.map((aula) => (
-                          <tr key={aula.id}>
-                            <td>{formatarDataISO(aula.data)}</td>
-                            <td>
-                              <div className={styles.objectiveChipRow}>
-                                {aula.objetivos.map((objetivo) => (
-                                  <span
-                                    key={`${aula.id}-${objetivo.codigo}`}
-                                    className={styles.objectiveChip}
-                                  >
-                                    {objetivo.codigo}
-                                  </span>
-                                ))}
-                              </div>
-                            </td>
-                            <td>{aula.resumoPresencas.presentes}</td>
-                            <td>{aula.resumoPresencas.faltas}</td>
-                            <td>{aula.resumoPresencas.faltasJustificadas}</td>
-                            <td>
-                              <button
-                                type="button"
-                                className={styles.smallButton}
-                                onClick={() => {
-                                  fecharModalFrequencias();
-                                  selecionarDiario(aula.id, true);
-                                }}
-                              >
-                                <FiBookOpen /> Abrir
-                              </button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+              {resumoModalFrequencias && (
+                <div className={styles.modalSummaryCards}>
+                  <div className={styles.summaryCard}>
+                    <span className={styles.summaryLabel}>
+                      <FiUsers /> Alunos acompanhados
+                    </span>
+                    <strong className={styles.summaryValue}>
+                      {resumoFrequencias?.alunos.length || 0}
+                    </strong>
+                    <p className={styles.summaryCaption}>
+                      <FiUserCheck /> {resumoModalFrequencias.ativos} ativos ·{" "}
+                      <FiUserX /> {resumoModalFrequencias.inativos} inativos
+                    </p>
                   </div>
-                </section>
-              </div>
-            )}
+
+                  <div className={styles.summaryCard}>
+                    <span className={styles.summaryLabel}>
+                      <FiCheckSquare /> Presenças registradas
+                    </span>
+                    <strong className={styles.summaryValue}>
+                      {resumoModalFrequencias.totais.presentes}
+                    </strong>
+                    <p className={styles.summaryCaption}>
+                      {resumoModalFrequencias.totais.faltas} faltas ·{" "}
+                      {resumoModalFrequencias.totais.faltasJustificadas} justificadas
+                    </p>
+                  </div>
+
+                  <div className={styles.summaryCard}>
+                    <span className={styles.summaryLabel}>
+                      <FiTrendingUp /> Média de presença
+                    </span>
+                    <strong className={styles.summaryValue}>
+                      {resumoModalFrequencias.mediaPresenca.toLocaleString(
+                        "pt-BR",
+                        {
+                          minimumFractionDigits: 0,
+                          maximumFractionDigits: 1,
+                        }
+                      )}
+                      %
+                    </strong>
+                    <p className={styles.summaryCaption}>
+                      Baseado em {resumoFrequencias?.alunos.length || 0} alunos
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className={styles.modalBody}>
+              {carregandoResumoFrequencias ? (
+                <p>Carregando consolidado...</p>
+              ) : !resumoFrequencias || resumoFrequencias.totalAulas === 0 ? (
+                <div className={styles.emptyState}>
+                  <p>Nenhuma aula registrada para esta turma até o momento.</p>
+                  <span>
+                    Registre uma aula para visualizar o acompanhamento de frequências.
+                  </span>
+                </div>
+              ) : (
+                <div className={styles.modalGrid}>
+                  <section className={styles.modalSection}>
+                    <h4>Resumo por aluno</h4>
+                    <div className={styles.modalTableWrapper}>
+                      <table className={styles.modalTable}>
+                        <thead>
+                          <tr>
+                            <th>Aluno</th>
+                            <th>Status</th>
+                            <th>Presenças</th>
+                            <th>Faltas</th>
+                            <th>Faltas just.</th>
+                            <th>% Presença</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {resumoFrequencias.alunos.map((aluno) => (
+                            <tr key={aluno.matriculaId}>
+                              <td>{aluno.aluno}</td>
+                              <td>
+                                <span
+                                  className={`${styles.statusBadge} ${
+                                    aluno.statusMatricula === "ATIVA"
+                                      ? styles.statusAtiva
+                                      : styles.statusInativa
+                                  }`}
+                                >
+                                  {statusLabels[aluno.statusMatricula] ||
+                                    aluno.statusMatricula}
+                                </span>
+                              </td>
+                              <td>{aluno.presentes}</td>
+                              <td>{aluno.faltas}</td>
+                              <td>{aluno.faltasJustificadas}</td>
+                              <td>
+                                <span className={styles.percentBadge}>
+                                  {aluno.percentualPresenca.toLocaleString("pt-BR", {
+                                    minimumFractionDigits: 0,
+                                    maximumFractionDigits: 2,
+                                  })}
+                                  %
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </section>
+
+                  <section className={styles.modalSection}>
+                    <h4>Frequência por aula ({resumoFrequencias.totalAulas})</h4>
+                    <div className={styles.modalTableWrapper}>
+                      <table className={styles.modalTable}>
+                        <thead>
+                          <tr>
+                            <th>Data</th>
+                            <th>Objetivo</th>
+                            <th>Presentes</th>
+                            <th>Faltas</th>
+                            <th>Faltas just.</th>
+                            <th>Ações</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {resumoFrequencias.aulas.map((aula) => (
+                            <tr key={aula.id}>
+                              <td>{formatarDataISO(aula.data)}</td>
+                              <td>
+                                <div className={styles.objectiveChipRow}>
+                                  {aula.objetivos.map((objetivo) => (
+                                    <span
+                                      key={`${aula.id}-${objetivo.codigo}`}
+                                      className={styles.objectiveChip}
+                                    >
+                                      {objetivo.codigo}
+                                    </span>
+                                  ))}
+                                </div>
+                              </td>
+                              <td>{aula.resumoPresencas.presentes}</td>
+                              <td>{aula.resumoPresencas.faltas}</td>
+                              <td>{aula.resumoPresencas.faltasJustificadas}</td>
+                              <td>
+                                <button
+                                  type="button"
+                                  className={styles.smallButton}
+                                  onClick={() => {
+                                    fecharModalFrequencias();
+                                    selecionarDiario(aula.id, true);
+                                  }}
+                                >
+                                  <FiBookOpen /> Abrir
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </section>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}

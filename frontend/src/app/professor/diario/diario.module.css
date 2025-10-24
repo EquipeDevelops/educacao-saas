@@ -607,7 +607,8 @@
 .modalOverlay {
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, 0.35);
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(4px);
   display: flex;
   justify-content: center;
   align-items: flex-start;
@@ -620,28 +621,138 @@
   position: relative;
   background: #ffffff;
   border-radius: 20px;
-  padding: 2rem;
   width: min(1080px, 100%);
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
-  box-shadow: 0 25px 60px rgba(15, 23, 42, 0.2);
+  overflow: hidden;
+  box-shadow: 0 30px 70px rgba(15, 23, 42, 0.25);
 }
 
 .modalCloseButton {
   position: absolute;
   top: 1rem;
   right: 1rem;
-  background: transparent;
+  background: rgba(15, 23, 42, 0.25);
   border: none;
-  color: #6b7280;
-  font-size: 1.25rem;
+  color: #ffffff;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  font-size: 1.1rem;
   cursor: pointer;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.modalCloseButton:hover {
+  background: rgba(15, 23, 42, 0.35);
+  transform: scale(1.02);
+}
+
+.modalHeader {
+  position: relative;
+  padding: 2.5rem 2rem 2rem;
+  background: linear-gradient(135deg, #1d4ed8, #4338ca);
+  color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+}
+
+.modalHeaderTop {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1.5rem;
+}
+
+.modalEyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.75rem;
+  font-weight: 600;
+  display: block;
+  margin-bottom: 0.35rem;
+  opacity: 0.85;
+}
+
+.modalTitle {
+  margin: 0;
+  font-size: 1.75rem;
+  font-weight: 700;
 }
 
 .modalSubtitle {
-  color: #4b5563;
-  margin-top: -0.75rem;
+  color: rgba(255, 255, 255, 0.86);
+  margin-top: 0.5rem;
+}
+
+.modalHeaderChips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.modalChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.85rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.22);
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #ffffff;
+  backdrop-filter: blur(2px);
+}
+
+.modalSummaryCards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.summaryCard {
+  background: rgba(15, 23, 42, 0.15);
+  border-radius: 16px;
+  padding: 1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+.summaryLabel {
+  font-size: 0.85rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  opacity: 0.9;
+}
+
+.summaryValue {
+  font-size: 1.65rem;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.summaryCaption {
+  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  opacity: 0.85;
+}
+
+.modalBody {
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
 }
 
 .modalGrid {
@@ -668,6 +779,16 @@
   color: #1f2937;
 }
 
+.modalTableWrapper {
+  background: #ffffff;
+  border-radius: 16px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+  overflow: hidden;
+  max-height: 360px;
+  overflow-y: auto;
+}
+
 .modalTable {
   width: 100%;
   border-collapse: collapse;
@@ -683,6 +804,43 @@
 
 .modalTable thead {
   background: #f3f4f6;
+}
+
+.modalTable tbody tr:nth-child(even) {
+  background: #f9fafb;
+}
+
+.modalTableWrapper::-webkit-scrollbar {
+  width: 8px;
+}
+
+.modalTableWrapper::-webkit-scrollbar-thumb {
+  background: #cbd5f5;
+  border-radius: 999px;
+}
+
+@media (max-width: 900px) {
+  .modalSummaryCards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .modalHeader {
+    padding: 2.25rem 1.5rem 1.5rem;
+  }
+
+  .modalBody {
+    padding: 1.5rem;
+  }
+
+  .modalSummaryCards {
+    grid-template-columns: 1fr;
+  }
+
+  .modalHeaderChips {
+    width: 100%;
+  }
 }
 
 .percentBadge {

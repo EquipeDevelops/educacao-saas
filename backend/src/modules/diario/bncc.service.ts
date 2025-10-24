@@ -33,7 +33,7 @@ type CacheEntry = {
   atualizadoEm: number;
 };
 
-const CACHE_TTL_MS = 1000 * 60 * 15; // 15 minutos para revalidar fallback
+const CACHE_TTL_MS = 1000 * 60 * 5; // 5 minutos para revalidar entradas de cache
 
 const disciplinaCache = new Map<string, CacheEntry>();
 
@@ -566,6 +566,12 @@ function construirTentativasApi(
         etapa: etapaPadrao,
         etapaApi: etapa,
       });
+
+      tentativas.push({
+        url: `${base}/${prefixo}/${slug}/`,
+        etapa: etapaPadrao,
+        etapaApi: etapa,
+      });
     }
 
     tentativas.push({
@@ -576,11 +582,13 @@ function construirTentativasApi(
   });
 
   const unico = new Map<string, TentativaApi>();
-  tentativas.forEach((tentativa) => {
-    if (!unico.has(tentativa.url)) {
-      unico.set(tentativa.url, tentativa);
-    }
-  });
+  tentativas
+    .filter((tentativa) => !tentativa.url.includes("undefined"))
+    .forEach((tentativa) => {
+      if (!unico.has(tentativa.url)) {
+        unico.set(tentativa.url, tentativa);
+      }
+    });
 
   return Array.from(unico.values());
 }
@@ -795,14 +803,15 @@ export async function obterObjetivosBnccPorDisciplina(
 ): Promise<BnccObjetivo[]> {
   const cacheKey = gerarChaveCache(disciplina, contexto);
   const cacheEntry = disciplinaCache.get(cacheKey);
-  if (cacheEntry) {
-    const expirouFallback =
-      cacheEntry.origem === "fallback" &&
-      Date.now() - cacheEntry.atualizadoEm > CACHE_TTL_MS;
+  const cacheValidoApi =
+    cacheEntry?.origem === "api" &&
+    Date.now() - cacheEntry.atualizadoEm < CACHE_TTL_MS;
+  const cacheValidoFallback =
+    cacheEntry?.origem === "fallback" &&
+    Date.now() - cacheEntry.atualizadoEm < CACHE_TTL_MS;
 
-    if (!expirouFallback) {
-      return cacheEntry.objetivos;
-    }
+  if (cacheValidoApi) {
+    return cacheEntry!.objetivos;
   }
 
   const config = obterConfigDisciplina(disciplina);
@@ -815,6 +824,10 @@ export async function obterObjetivosBnccPorDisciplina(
       atualizadoEm: Date.now(),
     });
     return objetivosOrdenados;
+  }
+
+  if (cacheValidoFallback) {
+    return cacheEntry!.objetivos;
   }
 
   const fallback = filtrarFallbackPorDisciplina(disciplina, config).map(
