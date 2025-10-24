@@ -9,17 +9,21 @@ export type BnccObjetivo = {
   area?: string;
 };
 
+type EtapaApi = "medio" | "fundamental";
+
 type DisciplinaConfig = {
-  componente?: string;
-  etapa?: string;
-  busca?: string;
   area?: string;
   aliases?: string[];
+  preferencia?: EtapaApi;
+  slugs: Partial<Record<EtapaApi, string>>;
+};
+
+export type BnccBuscaContexto = {
+  serie?: string | null;
 };
 
 const DEFAULT_API_URL =
-  process.env.BNCC_API_URL ??
-  "https://cientificar1992.pythonanywhere.com/visualizarBncc";
+  process.env.BNCC_API_URL ?? "https://cientificar1992.pythonanywhere.com";
 
 const disciplinaCache = new Map<string, BnccObjetivo[]>();
 
@@ -36,49 +40,123 @@ bnccFallback.forEach((item) => {
 });
 
 const disciplinaMap: Record<string, DisciplinaConfig> = {
-  matemática: { componente: "MATEMÁTICA", etapa: "EM", area: "MATEMATICA" },
-  matematica: { componente: "MATEMÁTICA", etapa: "EM", area: "MATEMATICA" },
-  física: { busca: "Física", etapa: "EM", area: "CIENCIAS_DA_NATUREZA" },
-  fisica: { busca: "Física", etapa: "EM", area: "CIENCIAS_DA_NATUREZA", aliases: ["ciências da natureza"] },
-  química: { busca: "Química", etapa: "EM", area: "CIENCIAS_DA_NATUREZA" },
-  quimica: { busca: "Química", etapa: "EM", area: "CIENCIAS_DA_NATUREZA" },
-  biologia: { busca: "Biologia", etapa: "EM", area: "CIENCIAS_DA_NATUREZA" },
-  "língua portuguesa": {
-    busca: "Língua Portuguesa",
-    etapa: "EM",
-    area: "LINGUAGENS",
-    aliases: ["linguagens", "português"],
+  matematica: {
+    slugs: { medio: "matematica_medio", fundamental: "matematica" },
+    area: "MATEMATICA",
+    preferencia: "medio",
   },
-  artes: { busca: "Artes", etapa: "EM", area: "LINGUAGENS" },
-  "educação física": {
-    busca: "Educação Física",
-    etapa: "EM",
-    area: "LINGUAGENS",
+  fisica: {
+    slugs: { medio: "ciencias_natureza" },
+    area: "CIENCIAS_DA_NATUREZA",
+    aliases: ["ciencias da natureza", "ciencias da natureza e suas tecnologias"],
+    preferencia: "medio",
   },
-  história: {
-    busca: "História",
-    etapa: "EM",
+  quimica: {
+    slugs: { medio: "ciencias_natureza" },
+    area: "CIENCIAS_DA_NATUREZA",
+    aliases: ["ciencias da natureza", "ciencias da natureza e suas tecnologias"],
+    preferencia: "medio",
+  },
+  biologia: {
+    slugs: { medio: "ciencias_natureza" },
+    area: "CIENCIAS_DA_NATUREZA",
+    aliases: ["ciencias da natureza", "ciencias da natureza e suas tecnologias"],
+    preferencia: "medio",
+  },
+  "ciencias da natureza": {
+    slugs: { medio: "ciencias_natureza" },
+    area: "CIENCIAS_DA_NATUREZA",
+    aliases: ["ciencias da natureza e suas tecnologias"],
+    preferencia: "medio",
+  },
+  ciencias: {
+    slugs: { fundamental: "ciencias" },
+    area: "CIENCIAS_DA_NATUREZA",
+    preferencia: "fundamental",
+  },
+  geografia: {
+    slugs: { fundamental: "geografia", medio: "ciencias_humanas" },
     area: "CIENCIAS_HUMANAS",
-    aliases: ["ciências humanas"],
   },
   historia: {
-    busca: "História",
-    etapa: "EM",
+    slugs: { fundamental: "historia", medio: "ciencias_humanas" },
     area: "CIENCIAS_HUMANAS",
   },
-  geografia: { busca: "Geografia", etapa: "EM", area: "CIENCIAS_HUMANAS" },
-  filosofia: { busca: "Filosofia", etapa: "EM", area: "CIENCIAS_HUMANAS" },
-  sociologia: { busca: "Sociologia", etapa: "EM", area: "CIENCIAS_HUMANAS" },
-  inglês: {
-    busca: "Inglês",
-    etapa: "EM",
+  filosofia: {
+    slugs: { medio: "ciencias_humanas" },
+    area: "CIENCIAS_HUMANAS",
+    preferencia: "medio",
+  },
+  sociologia: {
+    slugs: { medio: "ciencias_humanas" },
+    area: "CIENCIAS_HUMANAS",
+    preferencia: "medio",
+  },
+  "ciencias humanas": {
+    slugs: { medio: "ciencias_humanas" },
+    area: "CIENCIAS_HUMANAS",
+    aliases: ["ciencias humanas e sociais aplicadas"],
+    preferencia: "medio",
+  },
+  linguagens: {
+    slugs: { medio: "linguagens" },
     area: "LINGUAGENS",
-    aliases: ["língua inglesa"],
+    aliases: ["linguagens e suas tecnologias", "linguagem"],
+    preferencia: "medio",
+  },
+  "lingua portuguesa": {
+    slugs: { medio: "lingua_portuguesa_medio", fundamental: "lingua_portuguesa" },
+    area: "LINGUAGENS",
+    aliases: [
+      "portugues",
+      "portuguesa",
+      "lingua portuguesa e literatura",
+      "literatura",
+    ],
+  },
+  portugues: {
+    slugs: { medio: "lingua_portuguesa_medio", fundamental: "lingua_portuguesa" },
+    area: "LINGUAGENS",
+    aliases: ["lingua portuguesa"],
+  },
+  "lingua inglesa": {
+    slugs: { fundamental: "lingua_inglesa" },
+    area: "LINGUAGENS",
+    aliases: ["ingles", "inglesa"],
+  },
+  ingles: {
+    slugs: { fundamental: "lingua_inglesa" },
+    area: "LINGUAGENS",
+    aliases: ["lingua inglesa"],
+  },
+  arte: {
+    slugs: { fundamental: "arte" },
+    area: "LINGUAGENS",
+    aliases: ["artes"],
+    preferencia: "fundamental",
+  },
+  "educacao fisica": {
+    slugs: { fundamental: "educacao_fisica" },
+    area: "LINGUAGENS",
+    preferencia: "fundamental",
+  },
+  "ensino religioso": {
+    slugs: { fundamental: "ensino_religioso" },
+    area: "CIENCIAS_HUMANAS",
+    preferencia: "fundamental",
+  },
+  computacao: {
+    slugs: { fundamental: "computacao", medio: "computacao_medio" },
+    area: "TECNOLOGIA",
   },
 };
 
+function removerAcentos(valor: string) {
+  return valor.normalize("NFD").replace(/[̀-ͯ]/g, "");
+}
+
 function normalizarNomeDisciplina(nome: string) {
-  return nome.trim().toLowerCase();
+  return removerAcentos(nome).trim().toLowerCase();
 }
 
 function obterConfigDisciplina(nome: string): DisciplinaConfig | undefined {
@@ -87,7 +165,7 @@ function obterConfigDisciplina(nome: string): DisciplinaConfig | undefined {
     return disciplinaMap[normalizado];
   }
 
-  const aliasMatch = Object.entries(disciplinaMap).find(([_, config]) =>
+  const aliasMatch = Object.entries(disciplinaMap).find(([, config]) =>
     config.aliases?.some(
       (alias) => normalizarNomeDisciplina(alias) === normalizado
     )
@@ -96,11 +174,20 @@ function obterConfigDisciplina(nome: string): DisciplinaConfig | undefined {
   return aliasMatch?.[1];
 }
 
-function filtrarFallbackPorDisciplina(nome: string) {
-  const normalizado = normalizarNomeDisciplina(nome);
+function nomesRelacionados(nome: string, config?: DisciplinaConfig) {
+  const base = normalizarNomeDisciplina(nome);
+  const relacionados = new Set<string>([base]);
+  config?.aliases?.forEach((alias) => {
+    relacionados.add(normalizarNomeDisciplina(alias));
+  });
+  return relacionados;
+}
+
+function filtrarFallbackPorDisciplina(nome: string, config?: DisciplinaConfig) {
+  const relacionados = nomesRelacionados(nome, config);
   return bnccFallback.filter((item) =>
-    item.componentes.some(
-      (disciplina) => normalizarNomeDisciplina(disciplina) === normalizado
+    item.componentes.some((disciplina) =>
+      relacionados.has(normalizarNomeDisciplina(disciplina))
     )
   );
 }
@@ -121,6 +208,7 @@ function extrairColecao(payload: unknown): any[] {
     "items",
     "objetivos",
     "habilidadesBncc",
+    "dados",
   ];
 
   for (const key of candidates) {
@@ -135,12 +223,14 @@ function extrairColecao(payload: unknown): any[] {
 
 function extrairObjetivos(
   payload: unknown,
-  config?: DisciplinaConfig
+  config?: DisciplinaConfig,
+  etapaPadrao?: "EM" | "EF"
 ): BnccObjetivo[] {
   const collection = extrairColecao(payload);
 
+  const etapaFallback =
+    etapaPadrao ?? (config?.preferencia === "fundamental" ? "EF" : "EM");
   const areaPadrao = config?.area;
-  const etapaPadrao = config?.etapa ?? "EM";
 
   const objetivos = collection
     .map((item) => {
@@ -162,13 +252,16 @@ function extrairObjetivos(
       if (!codigo || !descricao) return null;
 
       const etapa =
-        (item as any).etapa || (item as any).etapa_ensino || etapaPadrao;
+        (item as any).etapa ||
+        (item as any).etapa_ensino ||
+        (item as any).etapaEnsino ||
+        etapaFallback;
       const area = (item as any).area || (item as any).areaConhecimento;
 
       return {
         codigo: String(codigo).trim(),
         descricao: String(descricao).trim(),
-        etapa: etapa ? String(etapa).trim() : etapaPadrao,
+        etapa: etapa ? String(etapa).trim() : etapaFallback,
         area: area ? String(area).trim() : areaPadrao,
       } satisfies BnccObjetivo;
     })
@@ -184,33 +277,186 @@ function extrairObjetivos(
   return Array.from(visto.values());
 }
 
+function extrairNumeroSerie(serie?: string | null) {
+  if (!serie) return undefined;
+  const normalizado = normalizarNomeDisciplina(serie);
+
+  const extenso: Record<string, number> = {
+    primeiro: 1,
+    primeira: 1,
+    segundo: 2,
+    segunda: 2,
+    terceiro: 3,
+    terceira: 3,
+    quarto: 4,
+    quarta: 4,
+    quinto: 5,
+    quinta: 5,
+    sexto: 6,
+    sexta: 6,
+    setimo: 7,
+    setima: 7,
+    oitavo: 8,
+    oitava: 8,
+    nono: 9,
+    nona: 9,
+  };
+
+  for (const [palavra, numero] of Object.entries(extenso)) {
+    if (normalizado.includes(palavra)) {
+      return numero;
+    }
+  }
+
+  const match = normalizado.match(/(\d{1,2})/);
+  if (match) {
+    return Number.parseInt(match[1], 10);
+  }
+
+  return undefined;
+}
+
+function inferirAnoSlug(serie?: string | null, etapa?: EtapaApi) {
+  const numero = extrairNumeroSerie(serie);
+  if (!numero) return undefined;
+
+  const mapa: Record<number, string> = {
+    1: "primeiro",
+    2: "segundo",
+    3: "terceiro",
+    4: "quarto",
+    5: "quinto",
+    6: "sexto",
+    7: "setimo",
+    8: "oitavo",
+    9: "nono",
+  };
+
+  if (etapa === "medio" && numero > 3) {
+    return undefined;
+  }
+
+  if (etapa === "fundamental" && numero > 9) {
+    return undefined;
+  }
+
+  return mapa[numero];
+}
+
+function inferirEtapas(
+  serie?: string | null,
+  config?: DisciplinaConfig
+): EtapaApi[] {
+  const ordem: EtapaApi[] = [];
+  const texto = serie ? normalizarNomeDisciplina(serie) : "";
+
+  if (/(fundamental|fund\.|ef)/.test(texto)) {
+    ordem.push("fundamental");
+  }
+
+  if (/(medio|ensino medio)/.test(texto) || /(\b|\D)em(\b|\D)/.test(texto)) {
+    ordem.push("medio");
+  }
+
+  const numero = extrairNumeroSerie(serie);
+  if (numero !== undefined) {
+    if (numero >= 6) {
+      ordem.push("fundamental");
+    } else if (numero <= 3) {
+      if (/(medio|ensino medio)/.test(texto) || /(\b|\D)em(\b|\D)/.test(texto)) {
+        ordem.push("medio");
+      } else if (config?.preferencia) {
+        ordem.push(config.preferencia);
+      } else {
+        ordem.push("fundamental");
+      }
+    }
+  }
+
+  if (config?.preferencia) {
+    ordem.push(config.preferencia);
+  }
+
+  if (!ordem.includes("medio")) {
+    ordem.push("medio");
+  }
+
+  if (!ordem.includes("fundamental")) {
+    ordem.push("fundamental");
+  }
+
+  return ordem.filter((etapa, index) => ordem.indexOf(etapa) === index);
+}
+
+type TentativaApi = {
+  url: string;
+  etapa?: "EM" | "EF";
+  etapaApi?: EtapaApi;
+};
+
 function construirTentativasApi(
   disciplina: string,
-  config?: DisciplinaConfig
-): string[] {
+  config: DisciplinaConfig | undefined,
+  contexto?: BnccBuscaContexto
+): TentativaApi[] {
   const base = DEFAULT_API_URL.replace(/\/$/, "");
-  const slug = encodeURIComponent(
-    disciplina
-      .normalize("NFD")
-      .replace(/[^\w\s]/g, "")
-      .replace(/\s+/g, "-")
-      .toLowerCase()
-  );
-  const encoded = encodeURIComponent(disciplina);
-  const tentativaBusca = config?.busca
-    ? encodeURIComponent(config.busca)
-    : encoded;
+  const tentativas: TentativaApi[] = [];
+  const etapas = inferirEtapas(contexto?.serie, config);
 
-  return [
-    `${base}/disciplinas/${slug}/`,
-    `${base}/componentes/${slug}/`,
-    `${base}/?disciplina=${encoded}`,
-    `${base}/?componente=${encoded}`,
-    `${base}/buscar/?termo=${tentativaBusca}`,
-    `${base}/${slug}/`,
-    `${base}/habilidades/`,
-    `${base}/`,
-  ];
+  etapas.forEach((etapa) => {
+    const slug = config?.slugs?.[etapa];
+    const prefixo = etapa === "medio" ? "bncc_medio" : "bncc_fundamental";
+    const etapaPadrao = etapa === "medio" ? "EM" : "EF";
+    const anoSlug = inferirAnoSlug(contexto?.serie, etapa);
+
+    if (slug) {
+      if (anoSlug) {
+        tentativas.push({
+          url: `${base}/${prefixo}/disciplina/${slug}/${anoSlug}/info_habilidades/`,
+          etapa: etapaPadrao,
+          etapaApi: etapa,
+        });
+        tentativas.push({
+          url: `${base}/${prefixo}/disciplina/${slug}/${anoSlug}/`,
+          etapa: etapaPadrao,
+          etapaApi: etapa,
+        });
+      }
+
+      tentativas.push({
+        url: `${base}/${prefixo}/disciplina/${slug}/info_habilidades/`,
+        etapa: etapaPadrao,
+        etapaApi: etapa,
+      });
+
+      tentativas.push({
+        url: `${base}/${prefixo}/disciplina/${slug}/`,
+        etapa: etapaPadrao,
+        etapaApi: etapa,
+      });
+
+      tentativas.push({
+        url: `${base}/${prefixo}/${slug}/info_habilidades/`,
+        etapa: etapaPadrao,
+        etapaApi: etapa,
+      });
+    }
+
+    tentativas.push({
+      url: `${base}/${prefixo}/`,
+      etapa: etapaPadrao,
+      etapaApi: etapa,
+    });
+  });
+
+  const unico = new Map<string, TentativaApi>();
+  tentativas.forEach((tentativa) => {
+    if (!unico.has(tentativa.url)) {
+      unico.set(tentativa.url, tentativa);
+    }
+  });
+
+  return Array.from(unico.values());
 }
 
 async function requisitar(url: string): Promise<unknown> {
@@ -264,7 +510,7 @@ function filtrarPorDisciplina(
 ) {
   if (!objetivos.length) return objetivos;
 
-  const normalizado = normalizarNomeDisciplina(disciplina);
+  const nomesValidos = nomesRelacionados(disciplina, config);
   const areaEsperada = config?.area;
 
   return objetivos.filter((objetivo) => {
@@ -272,68 +518,94 @@ function filtrarPorDisciplina(
     const disciplinasConhecidas = codigoParaDisciplinas.get(codigoNormalizado);
 
     const pertenceAoFallback = disciplinasConhecidas
-      ? disciplinasConhecidas.has(normalizado)
-      : true;
-
-    const areaCompativel = areaEsperada
-      ? objetivo.area?.toUpperCase() === areaEsperada
+      ? Array.from(nomesValidos).some((nome) => disciplinasConhecidas.has(nome))
       : true;
 
     if (!pertenceAoFallback) {
       return false;
     }
 
-    if (!areaCompativel) {
-      return false;
+    if (areaEsperada && objetivo.area) {
+      const areaNormalizada = removerAcentos(objetivo.area)
+        .toUpperCase()
+        .replace(/\s+/g, "_");
+      if (
+        areaNormalizada !== areaEsperada &&
+        !areaNormalizada.includes(areaEsperada)
+      ) {
+        return false;
+      }
     }
 
     return true;
   });
 }
 
+type ResultadoApi = {
+  objetivos: BnccObjetivo[];
+  etapa?: "EM" | "EF";
+};
+
 async function buscarNaApi(
   disciplina: string,
-  config?: DisciplinaConfig
-): Promise<BnccObjetivo[]> {
-  const tentativas = construirTentativasApi(disciplina, config);
+  config: DisciplinaConfig | undefined,
+  contexto?: BnccBuscaContexto
+): Promise<ResultadoApi> {
+  const tentativas = construirTentativasApi(disciplina, config, contexto);
 
-  for (const url of tentativas) {
+  for (const tentativa of tentativas) {
     try {
-      const payload = await requisitar(url);
-      const objetivos = extrairObjetivos(payload, config);
+      const payload = await requisitar(tentativa.url);
+      const objetivos = extrairObjetivos(payload, config, tentativa.etapa);
       if (objetivos.length) {
-        const filtrados = filtrarPorDisciplina(objetivos, disciplina, config);
+        const filtrados = filtrarPorDisciplina(
+          objetivos,
+          disciplina,
+          config
+        );
         if (filtrados.length) {
-          return filtrados;
+          return { objetivos: filtrados, etapa: tentativa.etapa };
         }
       }
     } catch (error) {
       console.warn(
-        `Falha ao consultar a API da BNCC (${url}):`,
+        `Falha ao consultar a API da BNCC (${tentativa.url}):`,
         (error as Error).message
       );
     }
   }
 
-  return [];
+  return { objetivos: [] };
+}
+
+function gerarChaveCache(
+  disciplina: string,
+  contexto?: BnccBuscaContexto
+): string {
+  const disciplinaNormalizada = normalizarNomeDisciplina(disciplina);
+  const serieNormalizada = contexto?.serie
+    ? normalizarNomeDisciplina(contexto.serie)
+    : "sem-serie";
+  return `${disciplinaNormalizada}|${serieNormalizada}`;
 }
 
 export async function obterObjetivosBnccPorDisciplina(
-  disciplina: string
+  disciplina: string,
+  contexto?: BnccBuscaContexto
 ): Promise<BnccObjetivo[]> {
-  const normalizado = normalizarNomeDisciplina(disciplina);
-  if (disciplinaCache.has(normalizado)) {
-    return disciplinaCache.get(normalizado)!;
+  const cacheKey = gerarChaveCache(disciplina, contexto);
+  if (disciplinaCache.has(cacheKey)) {
+    return disciplinaCache.get(cacheKey)!;
   }
 
   const config = obterConfigDisciplina(disciplina);
-  const objetivosApi = await buscarNaApi(disciplina, config);
-  if (objetivosApi.length > 0) {
-    disciplinaCache.set(normalizado, objetivosApi);
-    return objetivosApi;
+  const resultadoApi = await buscarNaApi(disciplina, config, contexto);
+  if (resultadoApi.objetivos.length > 0) {
+    disciplinaCache.set(cacheKey, resultadoApi.objetivos);
+    return resultadoApi.objetivos;
   }
 
-  const fallback = filtrarFallbackPorDisciplina(disciplina).map(
+  const fallback = filtrarFallbackPorDisciplina(disciplina, config).map(
     ({ codigo, descricao, etapa, area }) => ({
       codigo,
       descricao,
@@ -343,7 +615,7 @@ export async function obterObjetivosBnccPorDisciplina(
   );
 
   if (fallback.length > 0) {
-    disciplinaCache.set(normalizado, fallback);
+    disciplinaCache.set(cacheKey, fallback);
     return fallback;
   }
 
@@ -354,6 +626,6 @@ export async function obterObjetivosBnccPorDisciplina(
     area,
   }));
 
-  disciplinaCache.set(normalizado, generico);
+  disciplinaCache.set(cacheKey, generico);
   return generico;
 }

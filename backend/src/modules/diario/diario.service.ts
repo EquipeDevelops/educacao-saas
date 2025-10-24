@@ -432,7 +432,9 @@ export async function listarObjetivosBncc(
 ) {
   const componente = await obterComponenteDoProfessor(componenteId, user);
   const disciplina = componente.materia.nome;
-  const objetivos = await obterObjetivosBnccPorDisciplina(disciplina);
+  const objetivos = await obterObjetivosBnccPorDisciplina(disciplina, {
+    serie: componente.turma.serie,
+  });
 
   return objetivos.map((objetivo) => ({
     codigo: objetivo.codigo,

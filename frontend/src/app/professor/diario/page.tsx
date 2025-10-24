@@ -578,8 +578,9 @@ export default function DiarioProfessorPage() {
   }, [diarioAtual, alunos, presencas]);
 
   return (
-    <div className={styles.pageContainer}>
-      <ToastContainer position="bottom-right" autoClose={5000} />
+    <>
+      <div className={styles.pageContainer}>
+        <ToastContainer position="bottom-right" autoClose={5000} />
       <header className={styles.header}>
         <h1>Diário de Aula</h1>
         <p>
@@ -1011,7 +1012,7 @@ export default function DiarioProfessorPage() {
           )}
         </div>
       </div>
-    </div>
+      </div>
 
       {modalFrequenciasAberto && (
         <div className={styles.modalOverlay} role="dialog" aria-modal="true">
@@ -1139,5 +1140,6 @@ export default function DiarioProfessorPage() {
           </div>
         </div>
       )}
+    </>
   );
 }
