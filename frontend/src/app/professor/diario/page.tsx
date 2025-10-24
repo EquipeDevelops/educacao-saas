@@ -717,7 +717,7 @@ export default function DiarioProfessorPage() {
 
   const resumoPresencaAtual = useMemo(() => {
     if (!diarioAtual) return null;
-    return alunos.reduce(
+    const totais = alunos.reduce(
       (acc, aluno) => {
         const situacao =
           presencas[aluno.matriculaId] ??
@@ -729,6 +729,16 @@ export default function DiarioProfessorPage() {
       },
       { presentes: 0, faltas: 0, faltasJustificadas: 0 },
     );
+
+    const totalAlunos = alunos.length;
+    const percentualPresenca =
+      totalAlunos > 0 ? (totais.presentes / totalAlunos) * 100 : 0;
+
+    return {
+      ...totais,
+      total: totalAlunos,
+      percentualPresenca,
+    };
   }, [diarioAtual, alunos, presencas]);
 
   return (
@@ -769,18 +779,41 @@ export default function DiarioProfessorPage() {
               </select>
             </div>
 
-            <div className={styles.summaryChips}>
-              <span className={styles.chip}>
-                <FiUsers /> {resumoTurmaSelecionada?.alunosTotal ?? 0} alunos
-              </span>
-              <span className={styles.chip}>
-                <FiCheckCircle /> {resumoTurmaSelecionada?.alunosAtivos ?? 0}{" "}
-                ativos
-              </span>
-              <span className={styles.chip}>
-                <FiCalendar /> Último registro:{" "}
-                {formatarDataISO(resumoTurmaSelecionada?.ultimoRegistro)}
-              </span>
+            <div className={styles.statGroup}>
+              <div className={styles.statCard}>
+                <span>
+                  <FiUsers /> Alunos
+                </span>
+                <strong>{resumoTurmaSelecionada?.alunosTotal ?? 0}</strong>
+                <small>
+                  {resumoTurmaSelecionada?.alunosAtivos ?? 0} ativos ·{" "}
+                  {resumoTurmaSelecionada?.alunosInativos ?? 0} inativos
+                </small>
+              </div>
+
+              <div className={styles.statCard}>
+                <span>
+                  <FiUserCheck /> Participação
+                </span>
+                <strong>{resumoTurmaSelecionada?.alunosAtivos ?? 0}</strong>
+                <small>
+                  Estudantes acompanhados nesta turma
+                </small>
+              </div>
+
+              <div className={styles.statCard}>
+                <span>
+                  <FiCalendar /> Último registro
+                </span>
+                <strong>
+                  {formatarDataISO(resumoTurmaSelecionada?.ultimoRegistro)}
+                </strong>
+                <small>
+                  {resumoTurmaSelecionada?.ultimoRegistro
+                    ? "Mantenha o diário sempre atualizado"
+                    : "Nenhuma aula registrada ainda"}
+                </small>
+              </div>
             </div>
           </section>
 
@@ -1126,17 +1159,29 @@ export default function DiarioProfessorPage() {
                         <p>
                           <strong>Atividade:</strong> {registro.atividade}
                         </p>
-                        <div className={styles.summaryChips}>
-                          <span className={styles.chip}>
-                            Presentes: {registro.resumoPresencas.presentes}
-                          </span>
-                          <span className={styles.chip}>
-                            Faltas: {registro.resumoPresencas.faltas}
-                          </span>
-                          <span className={styles.chip}>
-                            Faltas justificadas:{" "}
-                            {registro.resumoPresencas.faltasJustificadas}
-                          </span>
+                        <div
+                          className={`${styles.statGroup} ${styles.statGroupCompact}`}
+                        >
+                          <div className={styles.statCard}>
+                            <span>
+                              <FiCheckSquare /> Presenças
+                            </span>
+                            <strong>{registro.resumoPresencas.presentes}</strong>
+                          </div>
+                          <div className={styles.statCard}>
+                            <span>
+                              <FiUserX /> Faltas
+                            </span>
+                            <strong>{registro.resumoPresencas.faltas}</strong>
+                          </div>
+                          <div className={styles.statCard}>
+                            <span>
+                              <FiClock /> Justificadas
+                            </span>
+                            <strong>
+                              {registro.resumoPresencas.faltasJustificadas}
+                            </strong>
+                          </div>
                         </div>
 
                         {estaCarregando &&
@@ -1304,17 +1349,40 @@ export default function DiarioProfessorPage() {
                   </div>
 
                   {resumoPresencaAtual && (
-                    <div className={styles.summaryChips}>
-                      <span className={styles.chip}>
-                        Presentes: {resumoPresencaAtual.presentes}
-                      </span>
-                      <span className={styles.chip}>
-                        Faltas: {resumoPresencaAtual.faltas}
-                      </span>
-                      <span className={styles.chip}>
-                        Faltas justificadas:{" "}
-                        {resumoPresencaAtual.faltasJustificadas}
-                      </span>
+                    <div
+                      className={`${styles.statGroup} ${styles.statGroupCompact}`}
+                    >
+                      <div className={styles.statCard}>
+                        <span>
+                          <FiCheckSquare /> Presentes
+                        </span>
+                        <strong>{resumoPresencaAtual.presentes}</strong>
+                        <small>
+                          de {resumoPresencaAtual.total} alunos registrados
+                        </small>
+                      </div>
+                      <div className={styles.statCard}>
+                        <span>
+                          <FiUserX /> Ausências
+                        </span>
+                        <strong>{resumoPresencaAtual.faltas}</strong>
+                        <small>
+                          {resumoPresencaAtual.faltasJustificadas} justificadas
+                        </small>
+                      </div>
+                      <div className={styles.statCard}>
+                        <span>
+                          <FiTrendingUp /> Presença
+                        </span>
+                        <strong>
+                          {resumoPresencaAtual.percentualPresenca.toLocaleString(
+                            "pt-BR",
+                            { maximumFractionDigits: 1 },
+                          )}
+                          %
+                        </strong>
+                        <small>Revise antes de salvar a frequência</small>
+                      </div>
                     </div>
                   )}
 
@@ -1340,14 +1408,22 @@ export default function DiarioProfessorPage() {
           className={styles.modalOverlay}
           role="dialog"
           aria-modal="true"
-          onClick={fecharModalFrequencias}
-          onMouseDown={fecharModalFrequencias}
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) {
+              fecharModalFrequencias();
+            }
+          }}
+          onClick={(event) => {
+            if (event.target === event.currentTarget) {
+              fecharModalFrequencias();
+            }
+          }}
         >
           <div
             className={styles.modalContent}
             role="document"
-            onClick={(event) => event.stopPropagation()}
             onMouseDown={(event) => event.stopPropagation()}
+            onClick={(event) => event.stopPropagation()}
           >
             <button
               type="button"
@@ -1514,46 +1590,70 @@ export default function DiarioProfessorPage() {
                         <thead>
                           <tr>
                             <th>Data</th>
-                            <th>Objetivo</th>
+                            <th>Objetivos</th>
                             <th>Presentes</th>
                             <th>Faltas</th>
                             <th>Faltas just.</th>
+                            <th>% Presença</th>
                             <th>Ações</th>
                           </tr>
                         </thead>
                         <tbody>
-                          {resumoFrequencias.aulas.map((aula) => (
-                            <tr key={aula.id}>
-                              <td>{formatarDataISO(aula.data)}</td>
-                              <td>
-                                <div className={styles.objectiveChipRow}>
-                                  {aula.objetivos.map((objetivo) => (
-                                    <span
-                                      key={`${aula.id}-${objetivo.codigo}`}
-                                      className={styles.objectiveChip}
-                                    >
-                                      {objetivo.codigo}
-                                    </span>
-                                  ))}
-                                </div>
-                              </td>
-                              <td>{aula.resumoPresencas.presentes}</td>
-                              <td>{aula.resumoPresencas.faltas}</td>
-                              <td>{aula.resumoPresencas.faltasJustificadas}</td>
-                              <td>
-                                <button
-                                  type="button"
-                                  className={styles.smallButton}
-                                  onClick={() => {
-                                    fecharModalFrequencias();
-                                    selecionarDiario(aula.id, true);
-                                  }}
-                                >
-                                  <FiBookOpen /> Abrir
-                                </button>
-                              </td>
-                            </tr>
-                          ))}
+                          {resumoFrequencias.aulas.map((aula) => {
+                            const totalRegistros =
+                              aula.resumoPresencas.presentes +
+                              aula.resumoPresencas.faltas +
+                              aula.resumoPresencas.faltasJustificadas;
+                            const percentualPresenca =
+                              totalRegistros > 0
+                                ? (aula.resumoPresencas.presentes /
+                                    totalRegistros) *
+                                  100
+                                : 0;
+
+                            return (
+                              <tr key={aula.id}>
+                                <td>{formatarDataISO(aula.data)}</td>
+                                <td>
+                                  <div className={styles.objectiveChipRow}>
+                                    {aula.objetivos.map((objetivo) => (
+                                      <span
+                                        key={`${aula.id}-${objetivo.codigo}`}
+                                        className={styles.objectiveChip}
+                                      >
+                                        {objetivo.codigo}
+                                      </span>
+                                    ))}
+                                  </div>
+                                </td>
+                                <td>{aula.resumoPresencas.presentes}</td>
+                                <td>{aula.resumoPresencas.faltas}</td>
+                                <td>
+                                  {aula.resumoPresencas.faltasJustificadas}
+                                </td>
+                                <td>
+                                  <span className={styles.percentBadge}>
+                                    {percentualPresenca.toLocaleString("pt-BR", {
+                                      maximumFractionDigits: 1,
+                                    })}
+                                    %
+                                  </span>
+                                </td>
+                                <td>
+                                  <button
+                                    type="button"
+                                    className={styles.smallButton}
+                                    onClick={() => {
+                                      fecharModalFrequencias();
+                                      selecionarDiario(aula.id, true);
+                                    }}
+                                  >
+                                    <FiBookOpen /> Abrir
+                                  </button>
+                                </td>
+                              </tr>
+                            );
+                          })}
                         </tbody>
                       </table>
                     </div>

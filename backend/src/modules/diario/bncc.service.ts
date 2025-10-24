@@ -384,6 +384,10 @@ function extrairObjetivos(
     const habilidadesDiretas = (item as any).habilidades;
     const habilidadesAno = (item as any).habilidadesAno;
     const infoHabilidades = (item as any).info_habilidades;
+    const codigosHabilidade =
+      (item as any).codigo_habilidade ||
+      (item as any).codigoHabilidade ||
+      (item as any).codigoHabilidades;
 
     const candidato =
       Array.isArray(habilidadesDiretas)
@@ -392,6 +396,8 @@ function extrairObjetivos(
         ? habilidadesAno
         : Array.isArray(infoHabilidades)
         ? infoHabilidades
+        : Array.isArray(codigosHabilidade)
+        ? codigosHabilidade
         : null;
 
     if (candidato) {
@@ -441,7 +447,11 @@ function extrairObjetivos(
         (item as any).cod_habilidade ||
         (item as any).codigoHabilidadeBNCC ||
         (item as any).codigo_habilidade_bncc ||
-        (item as any).codigo_hab;
+        (item as any).codigo_hab ||
+        (item as any).nome_codigo ||
+        (item as any).nomeCodigo ||
+        (item as any).codigoBncc ||
+        (item as any).codigoBNCC;
       const descricao =
         (item as any).descricao ||
         (item as any).habilidade ||
@@ -450,7 +460,9 @@ function extrairObjetivos(
         (item as any).habilidadeBNCC ||
         (item as any).descricaoHabilidade ||
         (item as any).descricao_habilidade_bncc ||
-        (item as any).descricao_objetivo;
+        (item as any).descricao_objetivo ||
+        (item as any).nome_habilidade ||
+        (item as any).nomeHabilidade;
 
       if (!codigo || !descricao) return null;
 
@@ -711,7 +723,10 @@ function construirTentativasApi(
 
 const DEFAULT_HEADERS = {
   Accept: "application/json, text/plain, */*",
-  "User-Agent": "EducacaoSaaS/1.0 (+https://educacao-saas.local)",
+  "User-Agent":
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
+  "Accept-Language": "pt-BR,pt;q=0.9",
+  Referer: "https://cientificar1992.pythonanywhere.com/visualizarBncc/",
 };
 
 async function requisitar(url: string, redirectCount = 0): Promise<unknown> {
@@ -935,21 +950,11 @@ export async function obterObjetivosBnccPorDisciplina(
   if (resultadoApi.objetivos.length > 0) {
     const combinados = new Map<string, BnccObjetivo>();
     resultadoApi.objetivos.forEach((objetivo) => {
-      combinados.set(objetivo.codigo, objetivo);
+      const chave = objetivo.codigo.trim();
+      if (!combinados.has(chave)) {
+        combinados.set(chave, objetivo);
+      }
     });
-
-    filtrarFallbackPorDisciplina(disciplina, config)
-      .map(({ codigo, descricao, etapa, area }) => ({
-        codigo,
-        descricao,
-        etapa,
-        area,
-      }))
-      .forEach((fallbackObjetivo) => {
-        if (!combinados.has(fallbackObjetivo.codigo)) {
-          combinados.set(fallbackObjetivo.codigo, fallbackObjetivo);
-        }
-      });
 
     const objetivosOrdenados = ordenarObjetivos(Array.from(combinados.values()));
     disciplinaCache.set(cacheKey, {
