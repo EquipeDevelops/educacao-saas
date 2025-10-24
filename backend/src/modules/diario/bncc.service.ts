@@ -586,6 +586,7 @@ function inferirEtapas(
   const ordem: EtapaApi[] = [];
   const texto = serie ? normalizarNomeDisciplina(serie) : "";
   const numero = extrairNumeroSerie(serie);
+  const siglaPreferida = inferirSiglaSerie(serie);
 
   const explicitoFundamental = /(fundamental|fund\.|ef)/.test(texto);
   const explicitoMedio = /(medio|ensino medio|\bem\b)/.test(texto);
@@ -618,6 +619,12 @@ function inferirEtapas(
     } else if (numero > 9) {
       push("medio");
     }
+  }
+
+  if (siglaPreferida === "EF") {
+    push("fundamental");
+  } else if (siglaPreferida === "EM") {
+    push("medio");
   }
 
   if (config?.preferencia) {
@@ -918,6 +925,20 @@ function filtrarPorEtapa(
 }
 
 function inferirSiglaSerie(serie?: string | null): "EM" | "EF" | undefined {
+  if (!serie) {
+    return undefined;
+  }
+
+  const texto = normalizarNomeDisciplina(serie);
+
+  if (/(fundamental|fund\.|ef\b|ef\s|ef1|ef ii|anos finais)/.test(texto)) {
+    return "EF";
+  }
+
+  if (/(ensino medio|medio|\bem\b)/.test(texto)) {
+    return "EM";
+  }
+
   const numero = extrairNumeroSerie(serie);
   if (numero === undefined) {
     return undefined;

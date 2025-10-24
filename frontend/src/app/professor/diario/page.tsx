@@ -741,6 +741,10 @@ export default function DiarioProfessorPage() {
     };
   }, [diarioAtual, alunos, presencas]);
 
+  const percentualPresencaNormalizado = resumoPresencaAtual
+    ? Math.min(100, Math.max(0, resumoPresencaAtual.percentualPresenca))
+    : 0;
+
   return (
     <>
       <div className={styles.pageContainer}>
@@ -1349,39 +1353,85 @@ export default function DiarioProfessorPage() {
                   </div>
 
                   {resumoPresencaAtual && (
-                    <div
-                      className={`${styles.statGroup} ${styles.statGroupCompact}`}
-                    >
-                      <div className={styles.statCard}>
-                        <span>
-                          <FiCheckSquare /> Presentes
-                        </span>
-                        <strong>{resumoPresencaAtual.presentes}</strong>
-                        <small>
-                          de {resumoPresencaAtual.total} alunos registrados
-                        </small>
-                      </div>
-                      <div className={styles.statCard}>
-                        <span>
-                          <FiUserX /> Ausências
-                        </span>
-                        <strong>{resumoPresencaAtual.faltas}</strong>
-                        <small>
-                          {resumoPresencaAtual.faltasJustificadas} justificadas
-                        </small>
-                      </div>
-                      <div className={styles.statCard}>
-                        <span>
-                          <FiTrendingUp /> Presença
-                        </span>
-                        <strong>
-                          {resumoPresencaAtual.percentualPresenca.toLocaleString(
-                            "pt-BR",
-                            { maximumFractionDigits: 1 },
+                    <div className={styles.frequencyOverview}>
+                      <div className={styles.frequencyMain}>
+                        <div className={styles.frequencyMainHeader}>
+                          <span>
+                            <FiTrendingUp /> Taxa de presença
+                          </span>
+                          <strong>
+                            {resumoPresencaAtual.percentualPresenca.toLocaleString(
+                              "pt-BR",
+                              { maximumFractionDigits: 1 },
+                            )}
+                            %
+                          </strong>
+                        </div>
+                        <div
+                          className={styles.frequencyProgress}
+                          role="progressbar"
+                          aria-valuenow={Number(
+                            percentualPresencaNormalizado.toFixed(1),
                           )}
-                          %
-                        </strong>
-                        <small>Revise antes de salvar a frequência</small>
+                          aria-valuemin={0}
+                          aria-valuemax={100}
+                        >
+                          <div
+                            className={styles.frequencyProgressFill}
+                            style={{
+                              width: `${percentualPresencaNormalizado}%`,
+                            }}
+                          />
+                        </div>
+                        <small>
+                          {resumoPresencaAtual.presentes} de {" "}
+                          {resumoPresencaAtual.total} alunos presentes
+                        </small>
+                      </div>
+
+                      <div className={styles.frequencyBreakdown}>
+                        <div
+                          className={`${styles.frequencyCard} ${styles.frequencyCardPresentes}`}
+                        >
+                          <div className={styles.frequencyIcon}>
+                            <FiCheckSquare />
+                          </div>
+                          <div className={styles.frequencyCardContent}>
+                            <span>Presentes</span>
+                            <strong>{resumoPresencaAtual.presentes}</strong>
+                            <small>
+                              de {resumoPresencaAtual.total} alunos esperados
+                            </small>
+                          </div>
+                        </div>
+
+                        <div
+                          className={`${styles.frequencyCard} ${styles.frequencyCardAusencias}`}
+                        >
+                          <div className={styles.frequencyIcon}>
+                            <FiUserX />
+                          </div>
+                          <div className={styles.frequencyCardContent}>
+                            <span>Faltas</span>
+                            <strong>{resumoPresencaAtual.faltas}</strong>
+                            <small>Sem justificativa registrada</small>
+                          </div>
+                        </div>
+
+                        <div
+                          className={`${styles.frequencyCard} ${styles.frequencyCardJustificadas}`}
+                        >
+                          <div className={styles.frequencyIcon}>
+                            <FiClock />
+                          </div>
+                          <div className={styles.frequencyCardContent}>
+                            <span>Justificadas</span>
+                            <strong>
+                              {resumoPresencaAtual.faltasJustificadas}
+                            </strong>
+                            <small>Incluídas no diário</small>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   )}
