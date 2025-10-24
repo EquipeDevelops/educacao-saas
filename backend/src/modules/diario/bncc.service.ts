@@ -310,7 +310,10 @@ function filtrarFallbackPorDisciplina(nome: string, config?: DisciplinaConfig) {
   );
 }
 
-function extrairColecao(payload: unknown): any[] {
+function extrairColecao(
+  payload: unknown,
+  visitados: WeakSet<object> = new WeakSet()
+): any[] {
   if (Array.isArray(payload)) {
     return payload;
   }
@@ -319,9 +322,16 @@ function extrairColecao(payload: unknown): any[] {
     return [];
   }
 
+  if (visitados.has(payload)) {
+    return [];
+  }
+
+  visitados.add(payload);
+
   const candidates = [
     "results",
     "habilidades",
+    "info_habilidades",
     "data",
     "items",
     "objetivos",
@@ -336,7 +346,25 @@ function extrairColecao(payload: unknown): any[] {
     }
   }
 
-  return [];
+  const arraysDiretos = Object.values(payload as Record<string, unknown>).filter(
+    (value) => Array.isArray(value)
+  );
+  if (arraysDiretos.length) {
+    return arraysDiretos.flat() as any[];
+  }
+
+  const nested = Object.values(payload as Record<string, unknown>).flatMap(
+    (value) => {
+      if (!value || typeof value !== "object") {
+        return [];
+      }
+
+      const collection = extrairColecao(value, visitados);
+      return collection.length ? collection : [];
+    }
+  );
+
+  return nested;
 }
 
 function extrairObjetivos(
@@ -350,7 +378,59 @@ function extrairObjetivos(
     etapaPadrao ?? (config?.preferencia === "fundamental" ? "EF" : "EM");
   const areaPadrao = config?.area;
 
-  const objetivos = collection
+  const expandido = collection.flatMap((item) => {
+    if (!item || typeof item !== "object") return [] as any[];
+
+    const habilidadesDiretas = (item as any).habilidades;
+    const habilidadesAno = (item as any).habilidadesAno;
+    const infoHabilidades = (item as any).info_habilidades;
+
+    const candidato =
+      Array.isArray(habilidadesDiretas)
+        ? habilidadesDiretas
+        : Array.isArray(habilidadesAno)
+        ? habilidadesAno
+        : Array.isArray(infoHabilidades)
+        ? infoHabilidades
+        : null;
+
+    if (candidato) {
+      const contexto = {
+        etapa:
+          (item as any).etapa ||
+          (item as any).etapa_ensino ||
+          (item as any).etapaEnsino ||
+          (item as any).segmento ||
+          (item as any).nivel ||
+          (item as any).modalidade,
+        area:
+          (item as any).area ||
+          (item as any).areaConhecimento ||
+          (item as any).area_conhecimento ||
+          (item as any).campo ||
+          (item as any).campo_experiencia,
+      };
+
+      return candidato.map((habilidade: any) => ({
+        ...habilidade,
+        etapa:
+          habilidade?.etapa ||
+          habilidade?.etapa_ensino ||
+          habilidade?.etapaEnsino ||
+          habilidade?.segmento ||
+          contexto.etapa,
+        area:
+          habilidade?.area ||
+          habilidade?.areaConhecimento ||
+          habilidade?.area_conhecimento ||
+          contexto.area,
+      }));
+    }
+
+    return [item];
+  });
+
+  const objetivos = expandido
     .map((item) => {
       if (!item || typeof item !== "object") return null;
 
@@ -359,28 +439,54 @@ function extrairObjetivos(
         (item as any).codigo_habilidade ||
         (item as any).codigoHabilidade ||
         (item as any).cod_habilidade ||
-        (item as any).codigoHabilidadeBNCC;
+        (item as any).codigoHabilidadeBNCC ||
+        (item as any).codigo_habilidade_bncc ||
+        (item as any).codigo_hab;
       const descricao =
         (item as any).descricao ||
         (item as any).habilidade ||
         (item as any).descricao_habilidade ||
         (item as any).texto ||
-        (item as any).habilidadeBNCC;
+        (item as any).habilidadeBNCC ||
+        (item as any).descricaoHabilidade ||
+        (item as any).descricao_habilidade_bncc ||
+        (item as any).descricao_objetivo;
 
       if (!codigo || !descricao) return null;
 
-      const etapa =
+      const etapaRaw =
         (item as any).etapa ||
         (item as any).etapa_ensino ||
         (item as any).etapaEnsino ||
-        etapaFallback;
-      const area = (item as any).area || (item as any).areaConhecimento;
+        (item as any).segmento ||
+        (item as any).nivel ||
+        (item as any).modalidade;
+      const areaRaw =
+        (item as any).area ||
+        (item as any).areaConhecimento ||
+        (item as any).area_conhecimento ||
+        (item as any).areaConhecimentoBNCC ||
+        (item as any).campo ||
+        (item as any).campo_experiencia;
+
+      const etapaNormalizada = (() => {
+        if (!etapaRaw) return etapaFallback;
+        const valor = String(etapaRaw).toLowerCase();
+        if (/(medio|em|ensino medio)/.test(valor)) return "EM" as const;
+        if (/(fundamental|ef|fund\.)/.test(valor)) return "EF" as const;
+        return etapaFallback;
+      })();
+
+      const codigoNormalizado = String(codigo).trim();
+      const descricaoNormalizada = String(descricao).trim();
+
+      if (!codigoNormalizado || !descricaoNormalizada) return null;
 
       return {
-        codigo: String(codigo).trim(),
-        descricao: String(descricao).trim(),
-        etapa: etapa ? String(etapa).trim() : etapaFallback,
-        area: area ? String(area).trim() : areaPadrao,
+        codigo: codigoNormalizado,
+        descricao: descricaoNormalizada,
+        etapa: etapaNormalizada,
+        area: areaRaw ? String(areaRaw).trim() : areaPadrao,
       } satisfies BnccObjetivo;
     })
     .filter((item): item is BnccObjetivo => Boolean(item));
@@ -544,6 +650,16 @@ function construirTentativasApi(
         });
         tentativas.push({
           url: `${base}/${prefixo}/disciplina/${slug}/${anoSlug}/`,
+          etapa: etapaPadrao,
+          etapaApi: etapa,
+        });
+        tentativas.push({
+          url: `${base}/${prefixo}/${slug}/${anoSlug}/info_habilidades/`,
+          etapa: etapaPadrao,
+          etapaApi: etapa,
+        });
+        tentativas.push({
+          url: `${base}/${prefixo}/${slug}/${anoSlug}/`,
           etapa: etapaPadrao,
           etapaApi: etapa,
         });
@@ -817,7 +933,25 @@ export async function obterObjetivosBnccPorDisciplina(
   const config = obterConfigDisciplina(disciplina);
   const resultadoApi = await buscarNaApi(disciplina, config, contexto);
   if (resultadoApi.objetivos.length > 0) {
-    const objetivosOrdenados = ordenarObjetivos(resultadoApi.objetivos);
+    const combinados = new Map<string, BnccObjetivo>();
+    resultadoApi.objetivos.forEach((objetivo) => {
+      combinados.set(objetivo.codigo, objetivo);
+    });
+
+    filtrarFallbackPorDisciplina(disciplina, config)
+      .map(({ codigo, descricao, etapa, area }) => ({
+        codigo,
+        descricao,
+        etapa,
+        area,
+      }))
+      .forEach((fallbackObjetivo) => {
+        if (!combinados.has(fallbackObjetivo.codigo)) {
+          combinados.set(fallbackObjetivo.codigo, fallbackObjetivo);
+        }
+      });
+
+    const objetivosOrdenados = ordenarObjetivos(Array.from(combinados.values()));
     disciplinaCache.set(cacheKey, {
       objetivos: objetivosOrdenados,
       origem: "api",

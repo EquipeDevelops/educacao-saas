@@ -163,15 +163,14 @@ function formatarDataISO(data: string | null | undefined) {
 function inicializarPresencas(
   alunos: AlunoResumo[],
   atual: Record<string, SituacaoPresenca>,
-  manterExistentes: boolean
+  manterExistentes: boolean,
 ) {
   const base: Record<string, SituacaoPresenca> = manterExistentes
     ? { ...atual }
     : {};
   alunos.forEach((aluno) => {
     if (manterExistentes && base[aluno.matriculaId]) return;
-    base[aluno.matriculaId] =
-      aluno.status === "ATIVA" ? "PRESENTE" : "FALTA";
+    base[aluno.matriculaId] = aluno.status === "ATIVA" ? "PRESENTE" : "FALTA";
   });
   return base;
 }
@@ -185,22 +184,24 @@ export default function DiarioProfessorPage() {
   const [objetivos, setObjetivos] = useState<ObjetivoBncc[]>([]);
   const [registros, setRegistros] = useState<DiarioResumo[]>([]);
   const [diarioAtual, setDiarioAtual] = useState<DiarioDetalhe | null>(null);
-  const [presencas, setPresencas] = useState<Record<string, SituacaoPresenca>>({});
+  const [presencas, setPresencas] = useState<Record<string, SituacaoPresenca>>(
+    {},
+  );
   const [detalhesRegistros, setDetalhesRegistros] = useState<
     Record<string, DiarioDetalhe>
   >({});
   const [registroExpandido, setRegistroExpandido] = useState<string | null>(
-    null
+    null,
   );
   const [registroCarregando, setRegistroCarregando] = useState<string | null>(
-    null
+    null,
   );
 
   const [dataAula, setDataAula] = useState(
-    new Date().toISOString().split("T")[0]
+    new Date().toISOString().split("T")[0],
   );
   const [objetivosSelecionados, setObjetivosSelecionados] = useState<string[]>(
-    []
+    [],
   );
   const [tema, setTema] = useState("");
   const [atividade, setAtividade] = useState("");
@@ -216,12 +217,11 @@ export default function DiarioProfessorPage() {
     useState<FrequenciaDetalhadaTurma | null>(null);
   const [carregandoResumoFrequencias, setCarregandoResumoFrequencias] =
     useState(false);
-  const [modalFrequenciasAberto, setModalFrequenciasAberto] =
-    useState(false);
+  const [modalFrequenciasAberto, setModalFrequenciasAberto] = useState(false);
 
   const resumoTurmaSelecionada = useMemo(
     () => turmas.find((turma) => turma.componenteId === turmaSelecionada),
-    [turmas, turmaSelecionada]
+    [turmas, turmaSelecionada],
   );
 
   const resumoModalFrequencias = useMemo(() => {
@@ -234,30 +234,29 @@ export default function DiarioProfessorPage() {
         acc.faltasJustificadas += aula.resumoPresencas.faltasJustificadas;
         return acc;
       },
-      { presentes: 0, faltas: 0, faltasJustificadas: 0 }
+      { presentes: 0, faltas: 0, faltasJustificadas: 0 },
     );
 
     const mediaPresenca = resumoFrequencias.alunos.length
       ? resumoFrequencias.alunos.reduce(
           (acc, aluno) => acc + aluno.percentualPresenca,
-          0
+          0,
         ) / resumoFrequencias.alunos.length
       : 0;
 
     const ativos = resumoFrequencias.alunos.filter(
-      (aluno) => aluno.statusMatricula === "ATIVA"
+      (aluno) => aluno.statusMatricula === "ATIVA",
     ).length;
     const inativos = resumoFrequencias.alunos.length - ativos;
 
     const ultimaData = resumoFrequencias.aulas.reduce<string | null>(
       (maisRecente, aula) => {
         if (!maisRecente) return aula.data;
-        return new Date(aula.data).getTime() >
-          new Date(maisRecente).getTime()
+        return new Date(aula.data).getTime() > new Date(maisRecente).getTime()
           ? aula.data
           : maisRecente;
       },
-      null
+      null,
     );
 
     return {
@@ -271,7 +270,7 @@ export default function DiarioProfessorPage() {
 
   const ultimaAulaRegistrada = useMemo(
     () => (registros.length ? registros[0] : null),
-    [registros]
+    [registros],
   );
 
   const obterDetalheDiario = useCallback(
@@ -282,7 +281,9 @@ export default function DiarioProfessorPage() {
 
       setRegistroCarregando(diarioId);
       try {
-        const resposta = await api.get(`/professor/diario/registros/${diarioId}`);
+        const resposta = await api.get(
+          `/professor/diario/registros/${diarioId}`,
+        );
         const detalhe: DiarioDetalhe = resposta.data;
         setDetalhesRegistros((atual) => ({ ...atual, [diarioId]: detalhe }));
         return detalhe;
@@ -296,7 +297,7 @@ export default function DiarioProfessorPage() {
         setRegistroCarregando((atual) => (atual === diarioId ? null : atual));
       }
     },
-    [detalhesRegistros]
+    [detalhesRegistros],
   );
 
   useEffect(() => {
@@ -330,11 +331,11 @@ export default function DiarioProfessorPage() {
       setCarregandoAlunos(true);
       try {
         const resposta = await api.get(
-          `/professor/diario/turmas/${turmaSelecionada}/alunos`
+          `/professor/diario/turmas/${turmaSelecionada}/alunos`,
         );
         setAlunos(resposta.data.alunos || []);
         setPresencas((atual) =>
-          inicializarPresencas(resposta.data.alunos || [], atual, false)
+          inicializarPresencas(resposta.data.alunos || [], atual, false),
         );
       } catch (error: any) {
         const mensagem =
@@ -351,7 +352,7 @@ export default function DiarioProfessorPage() {
       setCarregandoObjetivos(true);
       try {
         const resposta = await api.get(
-          `/professor/diario/objetivos?componenteId=${turmaSelecionada}`
+          `/professor/diario/objetivos?componenteId=${turmaSelecionada}`,
         );
         setObjetivos(resposta.data || []);
       } catch (error: any) {
@@ -369,7 +370,7 @@ export default function DiarioProfessorPage() {
       setCarregandoRegistros(true);
       try {
         const resposta = await api.get(
-          `/professor/diario/registros?componenteCurricularId=${turmaSelecionada}`
+          `/professor/diario/registros?componenteCurricularId=${turmaSelecionada}`,
         );
         setRegistros(resposta.data || []);
       } catch (error: any) {
@@ -405,17 +406,17 @@ export default function DiarioProfessorPage() {
   useEffect(() => {
     setObjetivosSelecionados((selecionados) =>
       selecionados.filter((codigo) =>
-        objetivos.some((objetivo) => objetivo.codigo === codigo)
-      )
+        objetivos.some((objetivo) => objetivo.codigo === codigo),
+      ),
     );
   }, [objetivos]);
 
   const objetivosSelecionadosDetalhes = useMemo(
     () =>
       objetivos.filter((objetivo) =>
-        objetivosSelecionados.includes(objetivo.codigo)
+        objetivosSelecionados.includes(objetivo.codigo),
       ),
-    [objetivosSelecionados, objetivos]
+    [objetivosSelecionados, objetivos],
   );
 
   const objetivosFiltrados = useMemo(() => {
@@ -424,13 +425,13 @@ export default function DiarioProfessorPage() {
     return objetivos.filter(
       (objetivo) =>
         objetivo.codigo.toLowerCase().includes(termo) ||
-        objetivo.descricao.toLowerCase().includes(termo)
+        objetivo.descricao.toLowerCase().includes(termo),
     );
   }, [buscaObjetivo, objetivos]);
 
   const objetivoPrincipal = useMemo(
     () => objetivosSelecionadosDetalhes[0] ?? null,
-    [objetivosSelecionadosDetalhes]
+    [objetivosSelecionadosDetalhes],
   );
 
   const alternarObjetivo = useCallback((codigo: string) => {
@@ -456,7 +457,7 @@ export default function DiarioProfessorPage() {
 
   const podeSalvarFrequencia = useMemo(
     () => Boolean(diarioAtual && alunos.length),
-    [diarioAtual, alunos.length]
+    [diarioAtual, alunos.length],
   );
 
   const handleRegistrarAula = async (event: React.FormEvent) => {
@@ -491,7 +492,9 @@ export default function DiarioProfessorPage() {
         atividade: atividade.trim(),
       });
 
-      toast.success("Aula registrada com sucesso. Agora registre a frequência.");
+      toast.success(
+        "Aula registrada com sucesso. Agora registre a frequência.",
+      );
       setObjetivosSelecionados([]);
       setTema("");
       setAtividade("");
@@ -514,7 +517,7 @@ export default function DiarioProfessorPage() {
     if (!turmaSelecionada) return;
     try {
       const resposta = await api.get(
-        `/professor/diario/registros?componenteCurricularId=${turmaSelecionada}`
+        `/professor/diario/registros?componenteCurricularId=${turmaSelecionada}`,
       );
       setRegistros(resposta.data || []);
       setResumoFrequencias(null);
@@ -525,7 +528,7 @@ export default function DiarioProfessorPage() {
 
   const selecionarDiario = async (
     diarioId: string,
-    manterPresencasExistentes = false
+    manterPresencasExistentes = false,
   ) => {
     const detalhe = await obterDetalheDiario(diarioId);
     if (!detalhe) return;
@@ -536,7 +539,7 @@ export default function DiarioProfessorPage() {
     const mapaPresencas = inicializarPresencas(
       alunos,
       manterPresencasExistentes ? presencas : {},
-      true
+      true,
     );
 
     detalhe.presencas.forEach((item) => {
@@ -575,7 +578,7 @@ export default function DiarioProfessorPage() {
     setCarregandoResumoFrequencias(true);
     try {
       const resposta = await api.get(
-        `/professor/diario/frequencias?componenteCurricularId=${turmaSelecionada}`
+        `/professor/diario/frequencias?componenteCurricularId=${turmaSelecionada}`,
       );
       setResumoFrequencias(resposta.data || null);
     } catch (error: any) {
@@ -589,9 +592,31 @@ export default function DiarioProfessorPage() {
     }
   };
 
-  const fecharModalFrequencias = () => {
+  const fecharModalFrequencias = useCallback(() => {
     setModalFrequenciasAberto(false);
-  };
+  }, []);
+
+  useEffect(() => {
+    if (!modalFrequenciasAberto) {
+      return;
+    }
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        fecharModalFrequencias();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [fecharModalFrequencias, modalFrequenciasAberto]);
 
   const marcarTodos = (situacao: SituacaoPresenca) => {
     setPresencas((atual) => {
@@ -619,26 +644,26 @@ export default function DiarioProfessorPage() {
     setAtividade(ultimaAulaRegistrada.atividade);
 
     const codigosDisponiveis = new Set(
-      objetivos.map((objetivo) => objetivo.codigo)
+      objetivos.map((objetivo) => objetivo.codigo),
     );
     const codigosUltimaAula = (ultimaAulaRegistrada.objetivos || [])
       .map((objetivo) => objetivo.codigo)
       .filter(Boolean);
 
     const reaproveitaveis = codigosUltimaAula.filter((codigo) =>
-      codigosDisponiveis.has(codigo)
+      codigosDisponiveis.has(codigo),
     );
 
     if (reaproveitaveis.length) {
       setObjetivosSelecionados(reaproveitaveis);
       if (reaproveitaveis.length < codigosUltimaAula.length) {
         toast.warn(
-          "Alguns objetivos da aula anterior não estão disponíveis nesta turma."
+          "Alguns objetivos da aula anterior não estão disponíveis nesta turma.",
         );
       }
     } else {
       toast.warn(
-        "Os objetivos da aula anterior não estão disponíveis na lista atual."
+        "Os objetivos da aula anterior não estão disponíveis na lista atual.",
       );
     }
   };
@@ -648,7 +673,10 @@ export default function DiarioProfessorPage() {
     setPresencas((atual) => inicializarPresencas(alunos, atual, false));
   };
 
-  const handleChangePresenca = (matriculaId: string, situacao: SituacaoPresenca) => {
+  const handleChangePresenca = (
+    matriculaId: string,
+    situacao: SituacaoPresenca,
+  ) => {
     setPresencas((atual) => ({ ...atual, [matriculaId]: situacao }));
   };
 
@@ -666,7 +694,7 @@ export default function DiarioProfessorPage() {
 
       await api.post(
         `/professor/diario/registros/${diarioAtual.id}/presencas`,
-        { registros: registrosPresenca }
+        { registros: registrosPresenca },
       );
 
       toast.success("Frequência registrada com sucesso!");
@@ -699,7 +727,7 @@ export default function DiarioProfessorPage() {
         if (situacao === "FALTA_JUSTIFICADA") acc.faltasJustificadas += 1;
         return acc;
       },
-      { presentes: 0, faltas: 0, faltasJustificadas: 0 }
+      { presentes: 0, faltas: 0, faltasJustificadas: 0 },
     );
   }, [diarioAtual, alunos, presencas]);
 
@@ -707,571 +735,620 @@ export default function DiarioProfessorPage() {
     <>
       <div className={styles.pageContainer}>
         <ToastContainer position="bottom-right" autoClose={5000} />
-      <header className={styles.header}>
-        <h1>Diário de Aula</h1>
-        <p>
-          Planeje suas aulas com os objetivos de aprendizagem da BNCC, registre o
-          desenvolvimento pedagógico e acompanhe a frequência dos alunos em tempo
-          real.
-        </p>
-      </header>
+        <div className={styles.pageInner}>
+          <header className={styles.header}>
+            <h1>Diário de Aula</h1>
+            <p>
+              Planeje suas aulas com os objetivos de aprendizagem da BNCC,
+              registre o desenvolvimento pedagógico e acompanhe a frequência dos
+              alunos em tempo real.
+            </p>
+          </header>
 
-      <section className={styles.selectorCard}>
-        <div className={styles.selectorRow}>
-          <label htmlFor="turma">
-            <FiUsers /> Turma
-          </label>
-          <select
-            id="turma"
-            value={turmaSelecionada}
-            onChange={(event) => setTurmaSelecionada(event.target.value)}
-            disabled={carregandoTurmas}
-          >
-            {carregandoTurmas && <option>Carregando turmas...</option>}
-            {!carregandoTurmas && turmas.length === 0 && (
-              <option>Nenhuma turma atribuída</option>
-            )}
-            {!carregandoTurmas &&
-              turmas.map((turma) => (
-                <option key={turma.componenteId} value={turma.componenteId}>
-                  {turma.nomeTurma} • {turma.materia}
-                </option>
-              ))}
-          </select>
-        </div>
-
-        <div className={styles.summaryChips}>
-          <span className={styles.chip}>
-            <FiUsers /> {resumoTurmaSelecionada?.alunosTotal ?? 0} alunos
-          </span>
-          <span className={styles.chip}>
-            <FiCheckCircle /> {resumoTurmaSelecionada?.alunosAtivos ?? 0} ativos
-          </span>
-          <span className={styles.chip}>
-            <FiCalendar /> Último registro: {" "}
-            {formatarDataISO(resumoTurmaSelecionada?.ultimoRegistro)}
-          </span>
-        </div>
-      </section>
-
-      <div className={styles.contentGrid}>
-        <div className={styles.card}>
-          <h2>Alunos da turma</h2>
-          {carregandoAlunos ? (
-            <p>Carregando alunos...</p>
-          ) : alunos.length === 0 ? (
-            <div className={styles.emptyState}>
-              <p>Nenhum aluno vinculado a esta turma até o momento.</p>
-            </div>
-          ) : (
-            <div className={styles.tableWrapper}>
-              <table className={styles.table}>
-                <thead>
-                  <tr>
-                    <th>Aluno</th>
-                    <th>Status</th>
-                    <th>Última frequência</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {alunos.map((aluno) => (
-                    <tr key={aluno.matriculaId}>
-                      <td>{aluno.nome}</td>
-                      <td>
-                        <span
-                          className={`${styles.statusBadge} ${
-                            aluno.status === "ATIVA"
-                              ? styles.statusAtiva
-                              : styles.statusInativa
-                          }`}
-                        >
-                          {statusLabels[aluno.status] || aluno.status}
-                        </span>
-                      </td>
-                      <td>
-                        {aluno.ultimaFrequencia ? (
-                          <span className={styles.frequencyBadge}>
-                            {formatarDataISO(aluno.ultimaFrequencia.data)} • {" "}
-                            {situacaoLabels[aluno.ultimaFrequencia.situacao]}
-                          </span>
-                        ) : (
-                          "-"
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-
-        <div className={styles.card}>
-          <h2>Registrar aula</h2>
-          <form className={styles.formGrid} onSubmit={handleRegistrarAula}>
-            <div className={styles.formGroup}>
-              <label htmlFor="data">
-                <FiCalendar /> Data da aula
+          <section className={styles.selectorCard}>
+            <div className={styles.selectorRow}>
+              <label htmlFor="turma">
+                <FiUsers /> Turma
               </label>
-              <input
-                id="data"
-                type="date"
-                max={new Date().toISOString().split("T")[0]}
-                value={dataAula}
-                onChange={(event) => setDataAula(event.target.value)}
-              />
-            </div>
-
-            <div className={styles.formGroup}>
-              <label htmlFor="objetivoBusca">
-                <FiBookOpen /> Objetivos de aprendizagem (BNCC)
-              </label>
-              <div className={styles.objectiveSelector}>
-                <div className={styles.objectiveToolbar}>
-                  <input
-                    id="objetivoBusca"
-                    type="text"
-                    value={buscaObjetivo}
-                    onChange={(event) => setBuscaObjetivo(event.target.value)}
-                    placeholder="Pesquisar por código ou habilidade"
-                    disabled={carregandoObjetivos}
-                  />
-                  <div className={styles.objectiveToolbarButtons}>
-                    <button
-                      type="button"
-                      className={styles.secondaryButton}
-                      onClick={selecionarObjetivosFiltrados}
-                      disabled={carregandoObjetivos || objetivosFiltrados.length === 0}
-                    >
-                      Selecionar visíveis
-                    </button>
-                    <button
-                      type="button"
-                      className={styles.ghostButton}
-                      onClick={limparObjetivosSelecionados}
-                      disabled={!objetivosSelecionados.length}
-                    >
-                      Limpar
-                    </button>
-                  </div>
-                </div>
-                <div
-                  className={styles.objectiveList}
-                  role="listbox"
-                  aria-multiselectable="true"
-                  aria-busy={carregandoObjetivos}
-                >
-                  {carregandoObjetivos ? (
-                    <p className={styles.helperText}>Carregando objetivos...</p>
-                  ) : objetivosFiltrados.length === 0 ? (
-                    <p className={styles.helperText}>
-                      Nenhum objetivo encontrado para o filtro informado.
-                    </p>
-                  ) : (
-                    objetivosFiltrados.map((objetivo) => {
-                      const selecionado = objetivosSelecionados.includes(
-                        objetivo.codigo
-                      );
-                      return (
-                        <label
-                          key={objetivo.codigo}
-                          className={`${styles.objectiveItem} ${
-                            selecionado ? styles.objectiveItemSelected : ""
-                          }`}
-                        >
-                          <input
-                            type="checkbox"
-                            checked={selecionado}
-                            onChange={() => alternarObjetivo(objetivo.codigo)}
-                          />
-                          <span>
-                            <strong>{objetivo.codigo}</strong>
-                            <small>{objetivo.descricao}</small>
-                          </span>
-                        </label>
-                      );
-                    })
-                  )}
-                </div>
-                {objetivosSelecionadosDetalhes.length > 0 && (
-                  <div className={styles.selectedObjectives}>
-                    {objetivosSelecionadosDetalhes.map((objetivo) => (
-                      <span
-                        key={objetivo.codigo}
-                        className={styles.objectiveChip}
-                      >
-                        {objetivo.codigo}
-                        <button
-                          type="button"
-                          onClick={() => alternarObjetivo(objetivo.codigo)}
-                          aria-label={`Remover ${objetivo.codigo}`}
-                        >
-                          <FiX />
-                        </button>
-                      </span>
-                    ))}
-                  </div>
+              <select
+                id="turma"
+                value={turmaSelecionada}
+                onChange={(event) => setTurmaSelecionada(event.target.value)}
+                disabled={carregandoTurmas}
+              >
+                {carregandoTurmas && <option>Carregando turmas...</option>}
+                {!carregandoTurmas && turmas.length === 0 && (
+                  <option>Nenhuma turma atribuída</option>
                 )}
-              </div>
-              <span className={styles.helperText}>
-                {objetivosSelecionadosDetalhes.length > 0
-                  ? [
-                      `${objetivosSelecionadosDetalhes.length} objetivo(s) selecionado(s).`,
-                      objetivoPrincipal?.area
-                        ? `Área principal: ${objetivoPrincipal.area}`
-                        : null,
-                      objetivoPrincipal
-                        ? `Etapa: ${objetivoPrincipal.etapa || "EM"}`
-                        : null,
-                    ]
-                      .filter(Boolean)
-                      .join(" ")
-                  : "Escolha um ou mais objetivos alinhados à disciplina. Use a busca para localizar códigos ou descrições específicas."}
+                {!carregandoTurmas &&
+                  turmas.map((turma) => (
+                    <option key={turma.componenteId} value={turma.componenteId}>
+                      {turma.nomeTurma} • {turma.materia}
+                    </option>
+                  ))}
+              </select>
+            </div>
+
+            <div className={styles.summaryChips}>
+              <span className={styles.chip}>
+                <FiUsers /> {resumoTurmaSelecionada?.alunosTotal ?? 0} alunos
+              </span>
+              <span className={styles.chip}>
+                <FiCheckCircle /> {resumoTurmaSelecionada?.alunosAtivos ?? 0}{" "}
+                ativos
+              </span>
+              <span className={styles.chip}>
+                <FiCalendar /> Último registro:{" "}
+                {formatarDataISO(resumoTurmaSelecionada?.ultimoRegistro)}
               </span>
             </div>
+          </section>
 
-            <div className={styles.formGroup}>
-              <label htmlFor="tema">Tema / saber desenvolvido</label>
-              <input
-                id="tema"
-                value={tema}
-                onChange={(event) => setTema(event.target.value)}
-                placeholder="Ex.: Transformações de energia e sustentabilidade"
-              />
+          <div className={styles.contentGrid}>
+            <div className={styles.card}>
+              <h2>Alunos da turma</h2>
+              {carregandoAlunos ? (
+                <p>Carregando alunos...</p>
+              ) : alunos.length === 0 ? (
+                <div className={styles.emptyState}>
+                  <p>Nenhum aluno vinculado a esta turma até o momento.</p>
+                </div>
+              ) : (
+                <div className={styles.tableWrapper}>
+                  <table className={styles.table}>
+                    <thead>
+                      <tr>
+                        <th>Aluno</th>
+                        <th>Status</th>
+                        <th>Última frequência</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {alunos.map((aluno) => (
+                        <tr key={aluno.matriculaId}>
+                          <td>{aluno.nome}</td>
+                          <td>
+                            <span
+                              className={`${styles.statusBadge} ${
+                                aluno.status === "ATIVA"
+                                  ? styles.statusAtiva
+                                  : styles.statusInativa
+                              }`}
+                            >
+                              {statusLabels[aluno.status] || aluno.status}
+                            </span>
+                          </td>
+                          <td>
+                            {aluno.ultimaFrequencia ? (
+                              <span className={styles.frequencyBadge}>
+                                {formatarDataISO(aluno.ultimaFrequencia.data)} •{" "}
+                                {
+                                  situacaoLabels[
+                                    aluno.ultimaFrequencia.situacao
+                                  ]
+                                }
+                              </span>
+                            ) : (
+                              "-"
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
 
-            <div className={styles.formGroup}>
-              <label htmlFor="atividade">Atividade desenvolvida</label>
-              <textarea
-                id="atividade"
-                value={atividade}
-                onChange={(event) => setAtividade(event.target.value)}
-                placeholder="Descreva como o objetivo foi trabalhado em sala de aula..."
-              />
-            </div>
+            <div className={styles.card}>
+              <h2>Registrar aula</h2>
+              <form className={styles.formGrid} onSubmit={handleRegistrarAula}>
+                <div className={styles.formGroup}>
+                  <label htmlFor="data">
+                    <FiCalendar /> Data da aula
+                  </label>
+                  <input
+                    id="data"
+                    type="date"
+                    max={new Date().toISOString().split("T")[0]}
+                    value={dataAula}
+                    onChange={(event) => setDataAula(event.target.value)}
+                  />
+                </div>
 
-            <div className={styles.helperActions}>
-              <button
-                type="button"
-                className={styles.secondaryButton}
-                onClick={aplicarUltimaAulaComoReferencia}
-                disabled={!ultimaAulaRegistrada}
-              >
-                <FiCopy /> Usar última aula como referência
-              </button>
-            </div>
+                <div className={styles.formGroup}>
+                  <label htmlFor="objetivoBusca">
+                    <FiBookOpen /> Objetivos de aprendizagem (BNCC)
+                  </label>
+                  <div className={styles.objectiveSelector}>
+                    <div className={styles.objectiveToolbar}>
+                      <input
+                        id="objetivoBusca"
+                        type="text"
+                        value={buscaObjetivo}
+                        onChange={(event) =>
+                          setBuscaObjetivo(event.target.value)
+                        }
+                        placeholder="Pesquisar por código ou habilidade"
+                        disabled={carregandoObjetivos}
+                      />
+                      <div className={styles.objectiveToolbarButtons}>
+                        <button
+                          type="button"
+                          className={styles.secondaryButton}
+                          onClick={selecionarObjetivosFiltrados}
+                          disabled={
+                            carregandoObjetivos ||
+                            objetivosFiltrados.length === 0
+                          }
+                        >
+                          Selecionar visíveis
+                        </button>
+                        <button
+                          type="button"
+                          className={styles.ghostButton}
+                          onClick={limparObjetivosSelecionados}
+                          disabled={!objetivosSelecionados.length}
+                        >
+                          Limpar
+                        </button>
+                      </div>
+                    </div>
+                    <div
+                      className={styles.objectiveList}
+                      role="listbox"
+                      aria-multiselectable="true"
+                      aria-busy={carregandoObjetivos}
+                    >
+                      {carregandoObjetivos ? (
+                        <p className={styles.helperText}>
+                          Carregando objetivos...
+                        </p>
+                      ) : objetivosFiltrados.length === 0 ? (
+                        <p className={styles.helperText}>
+                          Nenhum objetivo encontrado para o filtro informado.
+                        </p>
+                      ) : (
+                        objetivosFiltrados.map((objetivo) => {
+                          const selecionado = objetivosSelecionados.includes(
+                            objetivo.codigo,
+                          );
+                          return (
+                            <label
+                              key={objetivo.codigo}
+                              className={`${styles.objectiveItem} ${
+                                selecionado ? styles.objectiveItemSelected : ""
+                              }`}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={selecionado}
+                                onChange={() =>
+                                  alternarObjetivo(objetivo.codigo)
+                                }
+                              />
+                              <span>
+                                <strong>{objetivo.codigo}</strong>
+                                <small>{objetivo.descricao}</small>
+                              </span>
+                            </label>
+                          );
+                        })
+                      )}
+                    </div>
+                    {objetivosSelecionadosDetalhes.length > 0 && (
+                      <div className={styles.selectedObjectives}>
+                        {objetivosSelecionadosDetalhes.map((objetivo) => (
+                          <span
+                            key={objetivo.codigo}
+                            className={styles.objectiveChip}
+                          >
+                            {objetivo.codigo}
+                            <button
+                              type="button"
+                              onClick={() => alternarObjetivo(objetivo.codigo)}
+                              aria-label={`Remover ${objetivo.codigo}`}
+                            >
+                              <FiX />
+                            </button>
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <span className={styles.helperText}>
+                    {objetivosSelecionadosDetalhes.length > 0
+                      ? [
+                          `${objetivosSelecionadosDetalhes.length} objetivo(s) selecionado(s).`,
+                          objetivoPrincipal?.area
+                            ? `Área principal: ${objetivoPrincipal.area}`
+                            : null,
+                          objetivoPrincipal
+                            ? `Etapa: ${objetivoPrincipal.etapa || "EM"}`
+                            : null,
+                        ]
+                          .filter(Boolean)
+                          .join(" ")
+                      : "Escolha um ou mais objetivos alinhados à disciplina. Use a busca para localizar códigos ou descrições específicas."}
+                  </span>
+                </div>
 
-            <div className={styles.actionsRow}>
-              <button
-                type="submit"
-                className={styles.primaryButton}
-                disabled={salvandoRegistro || !turmaSelecionada}
-              >
-                <FiCheckCircle /> Registrar aula
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
+                <div className={styles.formGroup}>
+                  <label htmlFor="tema">Tema / saber desenvolvido</label>
+                  <input
+                    id="tema"
+                    value={tema}
+                    onChange={(event) => setTema(event.target.value)}
+                    placeholder="Ex.: Transformações de energia e sustentabilidade"
+                  />
+                </div>
 
-      <div className={styles.contentGrid}>
-        <div className={styles.card}>
-          <div className={styles.diarioHeader}>
-            <h2>Histórico de aulas registradas</h2>
-            <div className={styles.headerActions}>
-              <button
-                type="button"
-                className={styles.secondaryButton}
-                onClick={handleAbrirResumoFrequencias}
-                disabled={carregandoTurmas || !turmaSelecionada}
-              >
-                <FiList /> Ver todas as frequências
-              </button>
-              <button
-                type="button"
-                className={styles.secondaryButton}
-                onClick={atualizarRegistros}
-                disabled={carregandoRegistros}
-              >
-                <FiRefreshCcw /> Atualizar
-              </button>
+                <div className={styles.formGroup}>
+                  <label htmlFor="atividade">Atividade desenvolvida</label>
+                  <textarea
+                    id="atividade"
+                    value={atividade}
+                    onChange={(event) => setAtividade(event.target.value)}
+                    placeholder="Descreva como o objetivo foi trabalhado em sala de aula..."
+                  />
+                </div>
+
+                <div className={styles.helperActions}>
+                  <button
+                    type="button"
+                    className={styles.secondaryButton}
+                    onClick={aplicarUltimaAulaComoReferencia}
+                    disabled={!ultimaAulaRegistrada}
+                  >
+                    <FiCopy /> Usar última aula como referência
+                  </button>
+                </div>
+
+                <div className={styles.actionsRow}>
+                  <button
+                    type="submit"
+                    className={styles.primaryButton}
+                    disabled={salvandoRegistro || !turmaSelecionada}
+                  >
+                    <FiCheckCircle /> Registrar aula
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
-          {carregandoRegistros ? (
-            <p>Carregando registros...</p>
-          ) : registros.length === 0 ? (
-            <div className={styles.emptyState}>
-              <p>Você ainda não registrou aulas para esta turma.</p>
-              <span>Assim que você registrar, o histórico aparecerá aqui.</span>
-            </div>
-          ) : (
-            <div className={styles.diarioList}>
-              {registros.map((registro) => {
-                const detalheExpandido =
-                  registroExpandido === registro.id
-                    ? detalhesRegistros[registro.id]
-                    : null;
-                const estaCarregando = registroCarregando === registro.id;
 
-                return (
-                  <div key={registro.id} className={styles.diarioItem}>
-                    <div className={styles.diarioHeader}>
-                      <div>
-                        <strong>{formatarDataISO(registro.data)}</strong>
-                        <div className={styles.objectiveChipRow}>
-                          {registro.objetivos.slice(0, 4).map((objetivo) => (
-                            <span
-                              key={objetivo.codigo}
-                              className={styles.objectiveChip}
+          <div className={styles.contentGrid}>
+            <div className={styles.card}>
+              <div className={styles.diarioHeader}>
+                <h2>Histórico de aulas registradas</h2>
+                <div className={styles.headerActions}>
+                  <button
+                    type="button"
+                    className={styles.secondaryButton}
+                    onClick={handleAbrirResumoFrequencias}
+                    disabled={carregandoTurmas || !turmaSelecionada}
+                  >
+                    <FiList /> Ver todas as frequências
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.secondaryButton}
+                    onClick={atualizarRegistros}
+                    disabled={carregandoRegistros}
+                  >
+                    <FiRefreshCcw /> Atualizar
+                  </button>
+                </div>
+              </div>
+              {carregandoRegistros ? (
+                <p>Carregando registros...</p>
+              ) : registros.length === 0 ? (
+                <div className={styles.emptyState}>
+                  <p>Você ainda não registrou aulas para esta turma.</p>
+                  <span>
+                    Assim que você registrar, o histórico aparecerá aqui.
+                  </span>
+                </div>
+              ) : (
+                <div className={styles.diarioList}>
+                  {registros.map((registro) => {
+                    const detalheExpandido =
+                      registroExpandido === registro.id
+                        ? detalhesRegistros[registro.id]
+                        : null;
+                    const estaCarregando = registroCarregando === registro.id;
+
+                    return (
+                      <div key={registro.id} className={styles.diarioItem}>
+                        <div className={styles.diarioHeader}>
+                          <div>
+                            <strong>{formatarDataISO(registro.data)}</strong>
+                            <div className={styles.objectiveChipRow}>
+                              {registro.objetivos
+                                .slice(0, 4)
+                                .map((objetivo) => (
+                                  <span
+                                    key={objetivo.codigo}
+                                    className={styles.objectiveChip}
+                                  >
+                                    {objetivo.codigo}
+                                  </span>
+                                ))}
+                              {registro.objetivos.length > 4 && (
+                                <span className={styles.moreChip}>
+                                  +{registro.objetivos.length - 4}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <div className={styles.diarioActions}>
+                            <button
+                              type="button"
+                              className={styles.smallButton}
+                              onClick={() => selecionarDiario(registro.id)}
                             >
-                              {objetivo.codigo}
-                            </span>
-                          ))}
-                          {registro.objetivos.length > 4 && (
-                            <span className={styles.moreChip}>
-                              +{registro.objetivos.length - 4}
+                              <FiBookOpen /> Editar frequência
+                            </button>
+                            <button
+                              type="button"
+                              className={styles.smallButton}
+                              onClick={() =>
+                                alternarExpandirRegistro(registro.id)
+                              }
+                            >
+                              <FiEye />
+                              {registroExpandido === registro.id
+                                ? " Ocultar resumo"
+                                : " Ver resumo"}
+                            </button>
+                          </div>
+                        </div>
+                        <div className={styles.objectiveDescriptionBlock}>
+                          <strong>Objetivos selecionados:</strong>
+                          {registro.objetivos.length > 0 ? (
+                            <ul>
+                              {registro.objetivos.map((objetivo) => (
+                                <li key={`${registro.id}-${objetivo.codigo}`}>
+                                  <strong>{objetivo.codigo}:</strong>{" "}
+                                  {objetivo.descricao}
+                                </li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <span className={styles.helperText}>
+                              Nenhum objetivo registrado para esta aula.
                             </span>
                           )}
                         </div>
-                      </div>
-                      <div className={styles.diarioActions}>
-                        <button
-                          type="button"
-                          className={styles.smallButton}
-                          onClick={() => selecionarDiario(registro.id)}
-                        >
-                          <FiBookOpen /> Editar frequência
-                        </button>
-                        <button
-                          type="button"
-                          className={styles.smallButton}
-                          onClick={() => alternarExpandirRegistro(registro.id)}
-                        >
-                          <FiEye />
-                          {registroExpandido === registro.id
-                            ? " Ocultar resumo"
-                            : " Ver resumo"}
-                        </button>
-                      </div>
-                    </div>
-                    <div className={styles.objectiveDescriptionBlock}>
-                      <strong>Objetivos selecionados:</strong>
-                      {registro.objetivos.length > 0 ? (
-                        <ul>
-                          {registro.objetivos.map((objetivo) => (
-                            <li key={`${registro.id}-${objetivo.codigo}`}>
-                              <strong>{objetivo.codigo}:</strong> {objetivo.descricao}
-                            </li>
-                          ))}
-                        </ul>
-                      ) : (
-                        <span className={styles.helperText}>
-                          Nenhum objetivo registrado para esta aula.
-                        </span>
-                      )}
-                    </div>
-                    <p>
-                      <strong>Tema:</strong> {registro.tema}
-                    </p>
-                    <p>
-                      <strong>Atividade:</strong> {registro.atividade}
-                    </p>
-                    <div className={styles.summaryChips}>
-                      <span className={styles.chip}>
-                        Presentes: {registro.resumoPresencas.presentes}
-                      </span>
-                      <span className={styles.chip}>
-                        Faltas: {registro.resumoPresencas.faltas}
-                      </span>
-                      <span className={styles.chip}>
-                        Faltas justificadas: {registro.resumoPresencas.faltasJustificadas}
-                      </span>
-                    </div>
+                        <p>
+                          <strong>Tema:</strong> {registro.tema}
+                        </p>
+                        <p>
+                          <strong>Atividade:</strong> {registro.atividade}
+                        </p>
+                        <div className={styles.summaryChips}>
+                          <span className={styles.chip}>
+                            Presentes: {registro.resumoPresencas.presentes}
+                          </span>
+                          <span className={styles.chip}>
+                            Faltas: {registro.resumoPresencas.faltas}
+                          </span>
+                          <span className={styles.chip}>
+                            Faltas justificadas:{" "}
+                            {registro.resumoPresencas.faltasJustificadas}
+                          </span>
+                        </div>
 
-                    {estaCarregando && registroExpandido === registro.id && (
-                      <p className={styles.loadingInline}>Carregando frequência...</p>
-                    )}
+                        {estaCarregando &&
+                          registroExpandido === registro.id && (
+                            <p className={styles.loadingInline}>
+                              Carregando frequência...
+                            </p>
+                          )}
 
-                    {detalheExpandido && (
-                      <div className={styles.expandedAttendance}>
-                        <table className={styles.attendanceSummaryTable}>
-                          <thead>
-                            <tr>
-                              <th>Aluno</th>
-                              <th>Situação</th>
-                              <th>Observação</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {detalheExpandido.presencas.map((item) => (
-                              <tr key={`${detalheExpandido.id}-${item.matriculaId}`}>
-                                <td>{item.aluno}</td>
-                                <td>
-                                  <span
-                                    className={`${styles.presencaBadge} ${styles[`presenca${item.situacao}`]}`}
+                        {detalheExpandido && (
+                          <div className={styles.expandedAttendance}>
+                            <table className={styles.attendanceSummaryTable}>
+                              <thead>
+                                <tr>
+                                  <th>Aluno</th>
+                                  <th>Situação</th>
+                                  <th>Observação</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {detalheExpandido.presencas.map((item) => (
+                                  <tr
+                                    key={`${detalheExpandido.id}-${item.matriculaId}`}
                                   >
-                                    {situacaoLabels[item.situacao]}
-                                  </span>
-                                </td>
-                                <td>{item.observacao || "-"}</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
+                                    <td>{item.aluno}</td>
+                                    <td>
+                                      <span
+                                        className={`${styles.presencaBadge} ${styles[`presenca${item.situacao}`]}`}
+                                      >
+                                        {situacaoLabels[item.situacao]}
+                                      </span>
+                                    </td>
+                                    <td>{item.observacao || "-"}</td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        )}
                       </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-
-        <div className={styles.card}>
-          <div className={styles.diarioHeader}>
-            <h2>Frequência da aula</h2>
-            {diarioAtual && (
-              <button
-                type="button"
-                className={styles.secondaryButton}
-                onClick={limparDiarioAtual}
-              >
-                Limpar seleção
-              </button>
-            )}
-          </div>
-
-          {!diarioAtual ? (
-            <div className={styles.emptyState}>
-              <p>Selecione um registro para marcar a frequência.</p>
-              <span>
-                Após registrar a aula, escolha-a no histórico ao lado para lançar
-                presença e faltas.
-              </span>
-            </div>
-          ) : (
-            <>
-              <div className={styles.alertMessage}>
-                <div className={styles.alertHeader}>
-                  <strong>{formatarDataISO(diarioAtual.data)}</strong>
-                  <div className={styles.objectiveChipRow}>
-                    {diarioAtual.objetivos.slice(0, 5).map((objetivo) => (
-                      <span key={objetivo.codigo} className={styles.objectiveChip}>
-                        {objetivo.codigo}
-                      </span>
-                    ))}
-                    {diarioAtual.objetivos.length > 5 && (
-                      <span className={styles.moreChip}>
-                        +{diarioAtual.objetivos.length - 5}
-                      </span>
-                    )}
-                  </div>
-                </div>
-                <p>
-                  {diarioAtual.objetivoDescricao}
-                  {diarioAtual.objetivos.length > 1 && (
-                    <span>
-                      {" "}• +{diarioAtual.objetivos.length - 1} habilidade(s)
-                      adicional(is)
-                    </span>
-                  )}
-                </p>
-              </div>
-
-              <div className={styles.tableWrapper}>
-                <table className={styles.attendanceTable}>
-                  <thead>
-                    <tr>
-                      <th>Aluno</th>
-                      <th>Situação</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {alunos.map((aluno) => (
-                      <tr key={aluno.matriculaId}>
-                        <td>{aluno.nome}</td>
-                        <td>
-                          <select
-                            className={styles.attendanceSelect}
-                            value={presencas[aluno.matriculaId] || "PRESENTE"}
-                            onChange={(event) =>
-                              handleChangePresenca(
-                                aluno.matriculaId,
-                                event.target.value as SituacaoPresenca
-                              )
-                            }
-                            disabled={aluno.status !== "ATIVA"}
-                          >
-                            {Object.entries(situacaoLabels).map(([value, label]) => (
-                              <option key={value} value={value}>
-                                {label}
-                              </option>
-                            ))}
-                          </select>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              <div className={styles.bulkActions}>
-                <button
-                  type="button"
-                  className={styles.secondaryButton}
-                  onClick={() => marcarTodos("PRESENTE")}
-                >
-                  <FiCheckSquare /> Marcar todos presentes
-                </button>
-                <button
-                  type="button"
-                  className={styles.secondaryButton}
-                  onClick={() => marcarTodos("FALTA")}
-                >
-                  <FiMinusCircle /> Marcar todos ausentes
-                </button>
-                <button
-                  type="button"
-                  className={styles.secondaryButton}
-                  onClick={restaurarPresencasPadrao}
-                >
-                  <FiRefreshCcw /> Restaurar padrão
-                </button>
-              </div>
-
-              {resumoPresencaAtual && (
-                <div className={styles.summaryChips}>
-                  <span className={styles.chip}>
-                    Presentes: {resumoPresencaAtual.presentes}
-                  </span>
-                  <span className={styles.chip}>
-                    Faltas: {resumoPresencaAtual.faltas}
-                  </span>
-                  <span className={styles.chip}>
-                    Faltas justificadas: {resumoPresencaAtual.faltasJustificadas}
-                  </span>
+                    );
+                  })}
                 </div>
               )}
+            </div>
 
-              <div className={styles.actionsRow}>
-                <button
-                  type="button"
-                  className={styles.primaryButton}
-                  onClick={handleSalvarPresencas}
-                  disabled={!podeSalvarFrequencia || salvandoPresencas}
-                >
-                  <FiCheckCircle /> Salvar frequência
-                </button>
+            <div className={styles.card}>
+              <div className={styles.diarioHeader}>
+                <h2>Frequência da aula</h2>
+                {diarioAtual && (
+                  <button
+                    type="button"
+                    className={styles.secondaryButton}
+                    onClick={limparDiarioAtual}
+                  >
+                    Limpar seleção
+                  </button>
+                )}
               </div>
-            </>
-          )}
+
+              {!diarioAtual ? (
+                <div className={styles.emptyState}>
+                  <p>Selecione um registro para marcar a frequência.</p>
+                  <span>
+                    Após registrar a aula, escolha-a no histórico ao lado para
+                    lançar presença e faltas.
+                  </span>
+                </div>
+              ) : (
+                <>
+                  <div className={styles.alertMessage}>
+                    <div className={styles.alertHeader}>
+                      <strong>{formatarDataISO(diarioAtual.data)}</strong>
+                      <div className={styles.objectiveChipRow}>
+                        {diarioAtual.objetivos.slice(0, 5).map((objetivo) => (
+                          <span
+                            key={objetivo.codigo}
+                            className={styles.objectiveChip}
+                          >
+                            {objetivo.codigo}
+                          </span>
+                        ))}
+                        {diarioAtual.objetivos.length > 5 && (
+                          <span className={styles.moreChip}>
+                            +{diarioAtual.objetivos.length - 5}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <p>
+                      {diarioAtual.objetivoDescricao}
+                      {diarioAtual.objetivos.length > 1 && (
+                        <span>
+                          {" "}
+                          • +{diarioAtual.objetivos.length - 1} habilidade(s)
+                          adicional(is)
+                        </span>
+                      )}
+                    </p>
+                  </div>
+
+                  <div className={styles.tableWrapper}>
+                    <table className={styles.attendanceTable}>
+                      <thead>
+                        <tr>
+                          <th>Aluno</th>
+                          <th>Situação</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {alunos.map((aluno) => (
+                          <tr key={aluno.matriculaId}>
+                            <td>{aluno.nome}</td>
+                            <td>
+                              <select
+                                className={styles.attendanceSelect}
+                                value={
+                                  presencas[aluno.matriculaId] || "PRESENTE"
+                                }
+                                onChange={(event) =>
+                                  handleChangePresenca(
+                                    aluno.matriculaId,
+                                    event.target.value as SituacaoPresenca,
+                                  )
+                                }
+                                disabled={aluno.status !== "ATIVA"}
+                              >
+                                {Object.entries(situacaoLabels).map(
+                                  ([value, label]) => (
+                                    <option key={value} value={value}>
+                                      {label}
+                                    </option>
+                                  ),
+                                )}
+                              </select>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <div className={styles.bulkActions}>
+                    <button
+                      type="button"
+                      className={styles.secondaryButton}
+                      onClick={() => marcarTodos("PRESENTE")}
+                    >
+                      <FiCheckSquare /> Marcar todos presentes
+                    </button>
+                    <button
+                      type="button"
+                      className={styles.secondaryButton}
+                      onClick={() => marcarTodos("FALTA")}
+                    >
+                      <FiMinusCircle /> Marcar todos ausentes
+                    </button>
+                    <button
+                      type="button"
+                      className={styles.secondaryButton}
+                      onClick={restaurarPresencasPadrao}
+                    >
+                      <FiRefreshCcw /> Restaurar padrão
+                    </button>
+                  </div>
+
+                  {resumoPresencaAtual && (
+                    <div className={styles.summaryChips}>
+                      <span className={styles.chip}>
+                        Presentes: {resumoPresencaAtual.presentes}
+                      </span>
+                      <span className={styles.chip}>
+                        Faltas: {resumoPresencaAtual.faltas}
+                      </span>
+                      <span className={styles.chip}>
+                        Faltas justificadas:{" "}
+                        {resumoPresencaAtual.faltasJustificadas}
+                      </span>
+                    </div>
+                  )}
+
+                  <div className={styles.actionsRow}>
+                    <button
+                      type="button"
+                      className={styles.primaryButton}
+                      onClick={handleSalvarPresencas}
+                      disabled={!podeSalvarFrequencia || salvandoPresencas}
+                    >
+                      <FiCheckCircle /> Salvar frequência
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
         </div>
-      </div>
       </div>
 
       {modalFrequenciasAberto && (
-        <div className={styles.modalOverlay} role="dialog" aria-modal="true">
-          <div className={styles.modalContent}>
+        <div
+          className={styles.modalOverlay}
+          role="dialog"
+          aria-modal="true"
+          onClick={fecharModalFrequencias}
+          onMouseDown={fecharModalFrequencias}
+        >
+          <div
+            className={styles.modalContent}
+            role="document"
+            onClick={(event) => event.stopPropagation()}
+            onMouseDown={(event) => event.stopPropagation()}
+          >
             <button
               type="button"
               className={styles.modalCloseButton}
@@ -1301,7 +1378,7 @@ export default function DiarioProfessorPage() {
                   </span>
                   {resumoModalFrequencias?.ultimaData && (
                     <span className={styles.modalChip}>
-                      <FiClock /> Última aula: {" "}
+                      <FiClock /> Última aula:{" "}
                       {formatarDataISO(resumoModalFrequencias.ultimaData)}
                     </span>
                   )}
@@ -1332,7 +1409,8 @@ export default function DiarioProfessorPage() {
                     </strong>
                     <p className={styles.summaryCaption}>
                       {resumoModalFrequencias.totais.faltas} faltas ·{" "}
-                      {resumoModalFrequencias.totais.faltasJustificadas} justificadas
+                      {resumoModalFrequencias.totais.faltasJustificadas}{" "}
+                      justificadas
                     </p>
                   </div>
 
@@ -1346,7 +1424,7 @@ export default function DiarioProfessorPage() {
                         {
                           minimumFractionDigits: 0,
                           maximumFractionDigits: 1,
-                        }
+                        },
                       )}
                       %
                     </strong>
@@ -1365,7 +1443,8 @@ export default function DiarioProfessorPage() {
                 <div className={styles.emptyState}>
                   <p>Nenhuma aula registrada para esta turma até o momento.</p>
                   <span>
-                    Registre uma aula para visualizar o acompanhamento de frequências.
+                    Registre uma aula para visualizar o acompanhamento de
+                    frequências.
                   </span>
                 </div>
               ) : (
@@ -1373,7 +1452,9 @@ export default function DiarioProfessorPage() {
                   <section className={styles.modalSection}>
                     <h4>Resumo por aluno</h4>
                     <div className={styles.modalTableWrapper}>
-                      <table className={styles.modalTable}>
+                      <table
+                        className={`${styles.modalTable} ${styles.modalStudentsTable}`}
+                      >
                         <thead>
                           <tr>
                             <th>Aluno</th>
@@ -1405,10 +1486,13 @@ export default function DiarioProfessorPage() {
                               <td>{aluno.faltasJustificadas}</td>
                               <td>
                                 <span className={styles.percentBadge}>
-                                  {aluno.percentualPresenca.toLocaleString("pt-BR", {
-                                    minimumFractionDigits: 0,
-                                    maximumFractionDigits: 2,
-                                  })}
+                                  {aluno.percentualPresenca.toLocaleString(
+                                    "pt-BR",
+                                    {
+                                      minimumFractionDigits: 0,
+                                      maximumFractionDigits: 2,
+                                    },
+                                  )}
                                   %
                                 </span>
                               </td>
@@ -1420,9 +1504,13 @@ export default function DiarioProfessorPage() {
                   </section>
 
                   <section className={styles.modalSection}>
-                    <h4>Frequência por aula ({resumoFrequencias.totalAulas})</h4>
+                    <h4>
+                      Frequência por aula ({resumoFrequencias.totalAulas})
+                    </h4>
                     <div className={styles.modalTableWrapper}>
-                      <table className={styles.modalTable}>
+                      <table
+                        className={`${styles.modalTable} ${styles.modalLessonsTable}`}
+                      >
                         <thead>
                           <tr>
                             <th>Data</th>
