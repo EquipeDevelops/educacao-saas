@@ -1,3 +1,4 @@
+import http from "node:http";
 import https from "node:https";
 import { URL } from "node:url";
 import { bnccFallback } from "@/data/bnccFallback";
@@ -26,7 +27,15 @@ export type BnccBuscaContexto = {
 const DEFAULT_API_URL =
   process.env.BNCC_API_URL ?? "https://cientificar1992.pythonanywhere.com";
 
-const disciplinaCache = new Map<string, BnccObjetivo[]>();
+type CacheEntry = {
+  objetivos: BnccObjetivo[];
+  origem: "api" | "fallback";
+  atualizadoEm: number;
+};
+
+const CACHE_TTL_MS = 1000 * 60 * 15; // 15 minutos para revalidar fallback
+
+const disciplinaCache = new Map<string, CacheEntry>();
 
 const codigoParaDisciplinas = new Map<string, Set<string>>();
 bnccFallback.forEach((item) => {
@@ -576,44 +585,110 @@ function construirTentativasApi(
   return Array.from(unico.values());
 }
 
-async function requisitar(url: string): Promise<unknown> {
+const DEFAULT_HEADERS = {
+  Accept: "application/json, text/plain, */*",
+  "User-Agent": "EducacaoSaaS/1.0 (+https://educacao-saas.local)",
+};
+
+async function requisitar(url: string, redirectCount = 0): Promise<unknown> {
+  if (redirectCount > 3) {
+    throw new Error("Limite de redirecionamentos da API da BNCC excedido.");
+  }
+
+  if (typeof fetch === "function") {
+    const response = await fetch(url, {
+      headers: DEFAULT_HEADERS,
+      redirect: "manual",
+    });
+
+    if (response.status >= 300 && response.status < 400) {
+      const location = response.headers.get("location");
+      if (!location) {
+        throw new Error("Redirecionamento inválido recebido da API da BNCC.");
+      }
+      const absolute = new URL(location, url).toString();
+      return requisitar(absolute, redirectCount + 1);
+    }
+
+    if (!response.ok) {
+      throw new Error(
+        `Resposta inesperada da API da BNCC: ${response.status}`
+      );
+    }
+
+    if (response.status === 204) {
+      return [];
+    }
+
+    return response.json();
+  }
+
   return new Promise((resolve, reject) => {
     try {
       const parsed = new URL(url);
+      const isHttps = parsed.protocol === "https:";
+      const transport = isHttps ? https : http;
 
-      const request = https.get(parsed, (response) => {
-        if (!response.statusCode || response.statusCode >= 400) {
-          response.resume();
-          reject(
-            new Error(`Resposta inesperada da API da BNCC: ${response.statusCode}`)
-          );
-          return;
-        }
-
-        let rawData = "";
-        response.setEncoding("utf8");
-        response.on("data", (chunk) => {
-          rawData += chunk;
-        });
-        response.on("end", () => {
-          if (!rawData) {
-            resolve([]);
+      const request = transport.request(
+        {
+          protocol: parsed.protocol,
+          hostname: parsed.hostname,
+          port: parsed.port || (isHttps ? 443 : 80),
+          path: `${parsed.pathname}${parsed.search}`,
+          method: "GET",
+          headers: DEFAULT_HEADERS,
+        },
+        (response) => {
+          if (
+            response.statusCode &&
+            response.statusCode >= 300 &&
+            response.statusCode < 400 &&
+            response.headers.location
+          ) {
+            response.resume();
+            const nextUrl = new URL(response.headers.location, url).toString();
+            requisitar(nextUrl, redirectCount + 1)
+              .then(resolve)
+              .catch(reject);
             return;
           }
 
-          try {
-            resolve(JSON.parse(rawData));
-          } catch (error) {
-            reject(error);
+          if (!response.statusCode || response.statusCode >= 400) {
+            response.resume();
+            reject(
+              new Error(
+                `Resposta inesperada da API da BNCC: ${response.statusCode}`
+              )
+            );
+            return;
           }
-        });
-      });
+
+          let rawData = "";
+          response.setEncoding("utf8");
+          response.on("data", (chunk) => {
+            rawData += chunk;
+          });
+          response.on("end", () => {
+            if (!rawData) {
+              resolve([]);
+              return;
+            }
+
+            try {
+              resolve(JSON.parse(rawData));
+            } catch (error) {
+              reject(error);
+            }
+          });
+        }
+      );
 
       request.setTimeout(7000, () => {
         request.destroy(new Error("Tempo limite ao consultar a API da BNCC."));
       });
 
       request.on("error", reject);
+      request.end();
     } catch (error) {
       reject(error);
     }
@@ -706,20 +781,40 @@ function gerarChaveCache(
   return `${disciplinaNormalizada}|${serieNormalizada}`;
 }
 
+function ordenarObjetivos(objetivos: BnccObjetivo[]) {
+  return objetivos
+    .slice()
+    .sort((a, b) =>
+      a.codigo.localeCompare(b.codigo, "pt-BR", { numeric: true, sensitivity: "base" })
+    );
+}
+
 export async function obterObjetivosBnccPorDisciplina(
   disciplina: string,
   contexto?: BnccBuscaContexto
 ): Promise<BnccObjetivo[]> {
   const cacheKey = gerarChaveCache(disciplina, contexto);
-  if (disciplinaCache.has(cacheKey)) {
-    return disciplinaCache.get(cacheKey)!;
+  const cacheEntry = disciplinaCache.get(cacheKey);
+  if (cacheEntry) {
+    const expirouFallback =
+      cacheEntry.origem === "fallback" &&
+      Date.now() - cacheEntry.atualizadoEm > CACHE_TTL_MS;
+
+    if (!expirouFallback) {
+      return cacheEntry.objetivos;
+    }
   }
 
   const config = obterConfigDisciplina(disciplina);
   const resultadoApi = await buscarNaApi(disciplina, config, contexto);
   if (resultadoApi.objetivos.length > 0) {
-    disciplinaCache.set(cacheKey, resultadoApi.objetivos);
-    return resultadoApi.objetivos;
+    const objetivosOrdenados = ordenarObjetivos(resultadoApi.objetivos);
+    disciplinaCache.set(cacheKey, {
+      objetivos: objetivosOrdenados,
+      origem: "api",
+      atualizadoEm: Date.now(),
+    });
+    return objetivosOrdenados;
   }
 
   const fallback = filtrarFallbackPorDisciplina(disciplina, config).map(
@@ -732,8 +827,13 @@ export async function obterObjetivosBnccPorDisciplina(
   );
 
   if (fallback.length > 0) {
-    disciplinaCache.set(cacheKey, fallback);
-    return fallback;
+    const objetivosOrdenados = ordenarObjetivos(fallback);
+    disciplinaCache.set(cacheKey, {
+      objetivos: objetivosOrdenados,
+      origem: "fallback",
+      atualizadoEm: Date.now(),
+    });
+    return objetivosOrdenados;
   }
 
   const generico = bnccFallback.map(({ codigo, descricao, etapa, area }) => ({
@@ -743,6 +843,11 @@ export async function obterObjetivosBnccPorDisciplina(
     area,
   }));
 
-  disciplinaCache.set(cacheKey, generico);
-  return generico;
+  const objetivosOrdenados = ordenarObjetivos(generico);
+  disciplinaCache.set(cacheKey, {
+    objetivos: objetivosOrdenados,
+    origem: "fallback",
+    atualizadoEm: Date.now(),
+  });
+  return objetivosOrdenados;
 }
