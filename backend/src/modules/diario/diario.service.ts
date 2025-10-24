@@ -1,0 +1,404 @@
+import {
+  PrismaClient,
+  SituacaoPresenca,
+  StatusMatricula,
+} from "@prisma/client";
+import { AuthenticatedRequest } from "@/middlewares/auth";
+import { obterObjetivosBnccPorDisciplina } from "./bncc.service";
+
+const prisma = new PrismaClient();
+
+type UsuarioAutenticado = AuthenticatedRequest["user"];
+
+type CreateDiarioInput = {
+  data: string;
+  componenteCurricularId: string;
+  objetivoCodigo: string;
+  objetivoDescricao: string;
+  tema: string;
+  atividade: string;
+  observacoes?: string;
+};
+
+type PresencaInput = {
+  matriculaId: string;
+  situacao: SituacaoPresenca;
+  observacao?: string;
+};
+
+function ensureProfessor(user: UsuarioAutenticado) {
+  if (!user?.perfilId || user.papel !== "PROFESSOR") {
+    throw new Error("Apenas professores podem acessar o diário de aula.");
+  }
+}
+
+async function obterComponenteDoProfessor(
+  componenteId: string,
+  user: UsuarioAutenticado
+) {
+  ensureProfessor(user);
+  const componente = await prisma.componenteCurricular.findFirst({
+    where: { id: componenteId, professorId: user.perfilId! },
+    include: {
+      materia: { select: { id: true, nome: true } },
+      turma: {
+        select: {
+          id: true,
+          nome: true,
+          serie: true,
+          turno: true,
+          unidadeEscolarId: true,
+        },
+      },
+    },
+  });
+
+  if (!componente) {
+    throw new Error("Componente curricular não encontrado para o professor.");
+  }
+
+  return componente;
+}
+
+export async function listarTurmas(user: UsuarioAutenticado) {
+  ensureProfessor(user);
+
+  const componentes = await prisma.componenteCurricular.findMany({
+    where: { professorId: user.perfilId! },
+    select: {
+      id: true,
+      ano_letivo: true,
+      materia: { select: { nome: true } },
+      turma: {
+        select: {
+          id: true,
+          nome: true,
+          serie: true,
+          turno: true,
+        },
+      },
+    },
+  });
+
+  const turmaIds = componentes.map((c) => c.turma.id);
+  const matriculas = await prisma.matriculas.findMany({
+    where: { turmaId: { in: turmaIds } },
+    select: { turmaId: true, status: true },
+  });
+
+  const diarios = await prisma.diarioAula.findMany({
+    where: { componenteCurricularId: { in: componentes.map((c) => c.id) } },
+    select: { id: true, data: true, componenteCurricularId: true },
+    orderBy: { data: "desc" },
+  });
+
+  const statsMap = new Map<
+    string,
+    { total: number; ativos: number; inativos: number }
+  >();
+  matriculas.forEach((matricula) => {
+    const current = statsMap.get(matricula.turmaId) ?? {
+      total: 0,
+      ativos: 0,
+      inativos: 0,
+    };
+    current.total += 1;
+    if (matricula.status === StatusMatricula.ATIVA) {
+      current.ativos += 1;
+    } else {
+      current.inativos += 1;
+    }
+    statsMap.set(matricula.turmaId, current);
+  });
+
+  const ultimoRegistroPorComponente = new Map<string, Date>();
+  diarios.forEach((registro) => {
+    if (!ultimoRegistroPorComponente.has(registro.componenteCurricularId)) {
+      ultimoRegistroPorComponente.set(
+        registro.componenteCurricularId,
+        registro.data
+      );
+    }
+  });
+
+  return componentes
+    .map((componente) => {
+      const resumoTurma = statsMap.get(componente.turma.id) ?? {
+        total: 0,
+        ativos: 0,
+        inativos: 0,
+      };
+      return {
+        componenteId: componente.id,
+        turmaId: componente.turma.id,
+        nomeTurma: `${componente.turma.serie} ${componente.turma.nome}`,
+        materia: componente.materia.nome,
+        turno: componente.turma.turno,
+        alunosTotal: resumoTurma.total,
+        alunosAtivos: resumoTurma.ativos,
+        alunosInativos: resumoTurma.inativos,
+        ultimoRegistro:
+          ultimoRegistroPorComponente.get(componente.id)?.toISOString() || null,
+      };
+    })
+    .sort((a, b) => a.nomeTurma.localeCompare(b.nomeTurma));
+}
+
+export async function listarAlunos(
+  componenteId: string,
+  user: UsuarioAutenticado
+) {
+  const componente = await obterComponenteDoProfessor(componenteId, user);
+
+  const matriculas = await prisma.matriculas.findMany({
+    where: { turmaId: componente.turma.id },
+    select: {
+      id: true,
+      status: true,
+      aluno: { select: { usuario: { select: { nome: true, id: true } } } },
+    },
+    orderBy: { aluno: { usuario: { nome: "asc" } } },
+  });
+
+  const matriculaIds = matriculas.map((m) => m.id);
+
+  const presencas = await prisma.diarioAulaPresenca.findMany({
+    where: { matriculaId: { in: matriculaIds } },
+    include: { diarioAula: { select: { data: true } } },
+  });
+
+  const presencaMaisRecente = new Map<
+    string,
+    { data: Date; situacao: SituacaoPresenca }
+  >();
+
+  presencas.forEach((registro) => {
+    const atual = presencaMaisRecente.get(registro.matriculaId);
+    if (!atual || atual.data < registro.diarioAula.data) {
+      presencaMaisRecente.set(registro.matriculaId, {
+        data: registro.diarioAula.data,
+        situacao: registro.situacao,
+      });
+    }
+  });
+
+  return {
+    turma: {
+      id: componente.turma.id,
+      nome: `${componente.turma.serie} ${componente.turma.nome}`,
+      materia: componente.materia.nome,
+      turno: componente.turma.turno,
+    },
+    alunos: matriculas.map((matricula) => ({
+      matriculaId: matricula.id,
+      alunoId: matricula.aluno.usuario.id,
+      nome: matricula.aluno.usuario.nome,
+      status: matricula.status,
+      ultimaFrequencia: presencaMaisRecente.get(matricula.id)
+        ? {
+            data: presencaMaisRecente.get(matricula.id)!.data.toISOString(),
+            situacao: presencaMaisRecente.get(matricula.id)!.situacao,
+          }
+        : null,
+    })),
+  };
+}
+
+export async function listarRegistros(
+  componenteId: string,
+  user: UsuarioAutenticado
+) {
+  ensureProfessor(user);
+
+  const registros = await prisma.diarioAula.findMany({
+    where: {
+      componenteCurricularId: componenteId,
+      professorId: user.perfilId!,
+      unidadeEscolarId: user.unidadeEscolarId!,
+    },
+    include: { registros_presenca: true },
+    orderBy: { data: "desc" },
+  });
+
+  return registros.map((registro) => {
+    const resumo = registro.registros_presenca.reduce(
+      (acc, presenca) => {
+        if (presenca.situacao === SituacaoPresenca.PRESENTE) acc.presentes += 1;
+        if (presenca.situacao === SituacaoPresenca.FALTA) acc.faltas += 1;
+        if (presenca.situacao === SituacaoPresenca.FALTA_JUSTIFICADA)
+          acc.faltasJustificadas += 1;
+        return acc;
+      },
+      { presentes: 0, faltas: 0, faltasJustificadas: 0 }
+    );
+
+    return {
+      id: registro.id,
+      data: registro.data.toISOString(),
+      objetivoCodigo: registro.objetivoCodigo,
+      objetivoDescricao: registro.objetivoDescricao,
+      tema: registro.tema,
+      atividade: registro.atividade,
+      resumoPresencas: resumo,
+    };
+  });
+}
+
+export async function obterRegistro(
+  diarioId: string,
+  user: UsuarioAutenticado
+) {
+  ensureProfessor(user);
+  const registro = await prisma.diarioAula.findFirst({
+    where: {
+      id: diarioId,
+      professorId: user.perfilId!,
+      unidadeEscolarId: user.unidadeEscolarId!,
+    },
+    include: {
+      componenteCurricular: {
+        select: {
+          id: true,
+          materia: { select: { nome: true } },
+          turma: { select: { id: true, nome: true, serie: true } },
+        },
+      },
+      registros_presenca: {
+        include: {
+          matricula: {
+            select: {
+              id: true,
+              status: true,
+              aluno: { select: { usuario: { select: { nome: true } } } },
+            },
+          },
+        },
+      },
+    },
+  });
+
+  if (!registro) {
+    throw new Error("Registro de aula não encontrado.");
+  }
+
+  return {
+    id: registro.id,
+    data: registro.data.toISOString(),
+    objetivoCodigo: registro.objetivoCodigo,
+    objetivoDescricao: registro.objetivoDescricao,
+    tema: registro.tema,
+    atividade: registro.atividade,
+    componenteCurricular: registro.componenteCurricular,
+    presencas: registro.registros_presenca.map((presenca) => ({
+      matriculaId: presenca.matriculaId,
+      aluno: presenca.matricula.aluno.usuario.nome,
+      statusMatricula: presenca.matricula.status,
+      situacao: presenca.situacao,
+      observacao: presenca.observacao,
+    })),
+  };
+}
+
+export async function criarRegistro(
+  input: CreateDiarioInput,
+  user: UsuarioAutenticado
+) {
+  const componente = await obterComponenteDoProfessor(
+    input.componenteCurricularId,
+    user
+  );
+
+  const dataRegistro = new Date(`${input.data}T03:00:00.000Z`);
+
+  const registro = await prisma.diarioAula.create({
+    data: {
+      data: dataRegistro,
+      objetivoCodigo: input.objetivoCodigo,
+      objetivoDescricao: input.objetivoDescricao,
+      tema: input.tema,
+      atividade: input.atividade,
+      observacoes: input.observacoes,
+      professorId: user.perfilId!,
+      componenteCurricularId: componente.id,
+      unidadeEscolarId: componente.turma.unidadeEscolarId,
+    },
+  });
+
+  return registro;
+}
+
+export async function atualizarPresencas(
+  diarioId: string,
+  registros: PresencaInput[],
+  user: UsuarioAutenticado
+) {
+  const diario = await prisma.diarioAula.findFirst({
+    where: {
+      id: diarioId,
+      professorId: user.perfilId!,
+      unidadeEscolarId: user.unidadeEscolarId!,
+    },
+    include: {
+      componenteCurricular: { select: { turmaId: true } },
+    },
+  });
+
+  if (!diario) {
+    throw new Error("Registro de aula não encontrado para o professor.");
+  }
+
+  const matriculas = await prisma.matriculas.findMany({
+    where: { turmaId: diario.componenteCurricular.turmaId },
+    select: { id: true },
+  });
+
+  const matriculaPermitida = new Set(matriculas.map((m) => m.id));
+
+  registros.forEach((registro) => {
+    if (!matriculaPermitida.has(registro.matriculaId)) {
+      throw new Error(
+        "Há alunos que não pertencem à turma vinculada a este diário."
+      );
+    }
+  });
+
+  await prisma.$transaction([
+    prisma.diarioAulaPresenca.deleteMany({ where: { diarioAulaId: diario.id } }),
+    prisma.diarioAulaPresenca.createMany({
+      data: registros.map((presenca) => ({
+        diarioAulaId: diario.id,
+        matriculaId: presenca.matriculaId,
+        situacao: presenca.situacao,
+        observacao: presenca.observacao,
+      })),
+    }),
+  ]);
+
+  return obterRegistro(diario.id, user);
+}
+
+export async function listarObjetivosBncc(
+  componenteId: string,
+  user: UsuarioAutenticado
+) {
+  const componente = await obterComponenteDoProfessor(componenteId, user);
+  const disciplina = componente.materia.nome;
+  const objetivos = await obterObjetivosBnccPorDisciplina(disciplina);
+
+  return objetivos.map((objetivo) => ({
+    codigo: objetivo.codigo,
+    descricao: objetivo.descricao,
+    etapa: objetivo.etapa ?? "EM",
+    area: objetivo.area ?? null,
+  }));
+}
+
+export const diarioService = {
+  listarTurmas,
+  listarAlunos,
+  listarRegistros,
+  obterRegistro,
+  criarRegistro,
+  atualizarPresencas,
+  listarObjetivosBncc,
+};
