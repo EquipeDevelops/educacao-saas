@@ -20,6 +20,11 @@ type DisciplinaConfig = {
   slugs: Partial<Record<EtapaApi, string>>;
 };
 
+type ContextoHabilidade = {
+  etapa?: unknown;
+  area?: unknown;
+};
+
 export type BnccBuscaContexto = {
   serie?: string | null;
 };
@@ -367,6 +372,56 @@ function extrairColecao(
   return nested;
 }
 
+function extrairCodigoEDescricaoDeString(valor: string) {
+  const texto = String(valor).trim();
+  const match = texto.match(/\(?\s*([A-Z]{2}\d{2,}[A-Z0-9]*)\)?\s*-?\s*(.+)?/);
+  if (match) {
+    const [, codigo, descricao] = match;
+    const restante = (descricao ?? "").trim();
+    return {
+      codigo: codigo?.trim() ?? "",
+      descricao: restante || texto,
+    };
+  }
+
+  return { codigo: "", descricao: texto };
+}
+
+function normalizarEntradaHabilidade(
+  habilidade: any,
+  contexto: ContextoHabilidade
+) {
+  if (typeof habilidade === "string") {
+    const { codigo, descricao } = extrairCodigoEDescricaoDeString(habilidade);
+
+    return {
+      codigo,
+      descricao,
+      etapa: contexto.etapa,
+      area: contexto.area,
+    } satisfies Partial<BnccObjetivo>;
+  }
+
+  if (!habilidade || typeof habilidade !== "object") {
+    return habilidade;
+  }
+
+  return {
+    ...habilidade,
+    etapa:
+      habilidade?.etapa ||
+      habilidade?.etapa_ensino ||
+      habilidade?.etapaEnsino ||
+      habilidade?.segmento ||
+      contexto.etapa,
+    area:
+      habilidade?.area ||
+      habilidade?.areaConhecimento ||
+      habilidade?.area_conhecimento ||
+      contexto.area,
+  };
+}
+
 function extrairObjetivos(
   payload: unknown,
   config?: DisciplinaConfig,
@@ -417,20 +472,9 @@ function extrairObjetivos(
           (item as any).campo_experiencia,
       };
 
-      return candidato.map((habilidade: any) => ({
-        ...habilidade,
-        etapa:
-          habilidade?.etapa ||
-          habilidade?.etapa_ensino ||
-          habilidade?.etapaEnsino ||
-          habilidade?.segmento ||
-          contexto.etapa,
-        area:
-          habilidade?.area ||
-          habilidade?.areaConhecimento ||
-          habilidade?.area_conhecimento ||
-          contexto.area,
-      }));
+      return candidato.map((habilidade: any) =>
+        normalizarEntradaHabilidade(habilidade, contexto)
+      );
     }
 
     return [item];
