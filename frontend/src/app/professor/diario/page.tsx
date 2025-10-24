@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import {
@@ -9,6 +9,12 @@ import {
   FiBookOpen,
   FiCheckCircle,
   FiRefreshCcw,
+  FiList,
+  FiEye,
+  FiX,
+  FiCopy,
+  FiCheckSquare,
+  FiMinusCircle,
 } from "react-icons/fi";
 
 import { useAuth } from "@/contexts/AuthContext";
@@ -68,6 +74,57 @@ type ObjetivoBncc = {
   area?: string | null;
 };
 
+type FrequenciaAlunoResumo = {
+  matriculaId: string;
+  aluno: string;
+  statusMatricula: string;
+  totalAulasRegistradas: number;
+  totalRegistradoParaAluno: number;
+  presentes: number;
+  faltas: number;
+  faltasJustificadas: number;
+  percentualPresenca: number;
+  presencas: {
+    diarioId: string;
+    data: string;
+    situacao: SituacaoPresenca;
+    objetivoCodigo: string;
+  }[];
+};
+
+type FrequenciaAulaCompleta = {
+  id: string;
+  data: string;
+  objetivoCodigo: string;
+  objetivoDescricao: string;
+  tema: string;
+  atividade: string;
+  presencas: {
+    matriculaId: string;
+    aluno: string;
+    situacao: SituacaoPresenca;
+    statusMatricula: string;
+    observacao: string | null;
+  }[];
+  resumoPresencas: {
+    presentes: number;
+    faltas: number;
+    faltasJustificadas: number;
+  };
+};
+
+type FrequenciaDetalhadaTurma = {
+  componente: {
+    id: string;
+    turmaId: string;
+    nomeTurma: string;
+    materia: string;
+  };
+  totalAulas: number;
+  aulas: FrequenciaAulaCompleta[];
+  alunos: FrequenciaAlunoResumo[];
+};
+
 const situacaoLabels: Record<SituacaoPresenca, string> = {
   PRESENTE: "Presente",
   FALTA: "Falta",
@@ -118,6 +175,15 @@ export default function DiarioProfessorPage() {
   const [registros, setRegistros] = useState<DiarioResumo[]>([]);
   const [diarioAtual, setDiarioAtual] = useState<DiarioDetalhe | null>(null);
   const [presencas, setPresencas] = useState<Record<string, SituacaoPresenca>>({});
+  const [detalhesRegistros, setDetalhesRegistros] = useState<
+    Record<string, DiarioDetalhe>
+  >({});
+  const [registroExpandido, setRegistroExpandido] = useState<string | null>(
+    null
+  );
+  const [registroCarregando, setRegistroCarregando] = useState<string | null>(
+    null
+  );
 
   const [dataAula, setDataAula] = useState(
     new Date().toISOString().split("T")[0]
@@ -132,10 +198,46 @@ export default function DiarioProfessorPage() {
   const [carregandoRegistros, setCarregandoRegistros] = useState(false);
   const [salvandoRegistro, setSalvandoRegistro] = useState(false);
   const [salvandoPresencas, setSalvandoPresencas] = useState(false);
+  const [resumoFrequencias, setResumoFrequencias] =
+    useState<FrequenciaDetalhadaTurma | null>(null);
+  const [carregandoResumoFrequencias, setCarregandoResumoFrequencias] =
+    useState(false);
+  const [modalFrequenciasAberto, setModalFrequenciasAberto] =
+    useState(false);
 
   const resumoTurmaSelecionada = useMemo(
     () => turmas.find((turma) => turma.componenteId === turmaSelecionada),
     [turmas, turmaSelecionada]
+  );
+
+  const ultimaAulaRegistrada = useMemo(
+    () => (registros.length ? registros[0] : null),
+    [registros]
+  );
+
+  const obterDetalheDiario = useCallback(
+    async (diarioId: string): Promise<DiarioDetalhe | null> => {
+      if (detalhesRegistros[diarioId]) {
+        return detalhesRegistros[diarioId];
+      }
+
+      setRegistroCarregando(diarioId);
+      try {
+        const resposta = await api.get(`/professor/diario/registros/${diarioId}`);
+        const detalhe: DiarioDetalhe = resposta.data;
+        setDetalhesRegistros((atual) => ({ ...atual, [diarioId]: detalhe }));
+        return detalhe;
+      } catch (error: any) {
+        const mensagem =
+          error?.response?.data?.message ||
+          "Não foi possível carregar o registro selecionado.";
+        toast.error(mensagem);
+        return null;
+      } finally {
+        setRegistroCarregando((atual) => (atual === diarioId ? null : atual));
+      }
+    },
+    [detalhesRegistros]
   );
 
   useEffect(() => {
@@ -227,6 +329,10 @@ export default function DiarioProfessorPage() {
     carregarRegistros();
     setDiarioAtual(null);
     setPresencas({});
+    setDetalhesRegistros({});
+    setRegistroExpandido(null);
+    setResumoFrequencias(null);
+    setModalFrequenciasAberto(false);
   }, [turmaSelecionada]);
 
   useEffect(() => {
@@ -297,6 +403,7 @@ export default function DiarioProfessorPage() {
         `/professor/diario/registros?componenteCurricularId=${turmaSelecionada}`
       );
       setRegistros(resposta.data || []);
+      setResumoFrequencias(null);
     } catch (error) {
       console.error("Erro ao atualizar registros do diário", error);
     }
@@ -306,27 +413,107 @@ export default function DiarioProfessorPage() {
     diarioId: string,
     manterPresencasExistentes = false
   ) => {
+    const detalhe = await obterDetalheDiario(diarioId);
+    if (!detalhe) return;
+
+    setDiarioAtual(detalhe);
+    setRegistroExpandido(diarioId);
+
+    const mapaPresencas = inicializarPresencas(
+      alunos,
+      manterPresencasExistentes ? presencas : {},
+      true
+    );
+
+    detalhe.presencas.forEach((item) => {
+      mapaPresencas[item.matriculaId] = item.situacao;
+    });
+
+    setPresencas(mapaPresencas);
+  };
+
+  const alternarExpandirRegistro = async (diarioId: string) => {
+    if (registroExpandido === diarioId) {
+      setRegistroExpandido(null);
+      return;
+    }
+
+    const detalhe = await obterDetalheDiario(diarioId);
+    if (detalhe) {
+      setRegistroExpandido(diarioId);
+    }
+  };
+
+  const handleAbrirResumoFrequencias = async () => {
+    if (!turmaSelecionada) {
+      toast.info("Selecione uma turma para visualizar as frequências gerais.");
+      return;
+    }
+
+    setModalFrequenciasAberto(true);
+    if (
+      resumoFrequencias &&
+      resumoFrequencias.componente.id === turmaSelecionada
+    ) {
+      return;
+    }
+
+    setCarregandoResumoFrequencias(true);
     try {
-      const resposta = await api.get(`/professor/diario/registros/${diarioId}`);
-      const detalhe: DiarioDetalhe = resposta.data;
-      setDiarioAtual(detalhe);
-
-      const mapaPresencas = inicializarPresencas(
-        alunos,
-        manterPresencasExistentes ? presencas : {},
-        true
+      const resposta = await api.get(
+        `/professor/diario/frequencias?componenteCurricularId=${turmaSelecionada}`
       );
-
-      detalhe.presencas.forEach((item) => {
-        mapaPresencas[item.matriculaId] = item.situacao;
-      });
-
-      setPresencas(mapaPresencas);
+      setResumoFrequencias(resposta.data || null);
     } catch (error: any) {
       const mensagem =
         error?.response?.data?.message ||
-        "Não foi possível carregar o registro selecionado.";
+        "Não foi possível carregar o consolidado de frequências.";
       toast.error(mensagem);
+      setResumoFrequencias(null);
+    } finally {
+      setCarregandoResumoFrequencias(false);
+    }
+  };
+
+  const fecharModalFrequencias = () => {
+    setModalFrequenciasAberto(false);
+  };
+
+  const marcarTodos = (situacao: SituacaoPresenca) => {
+    setPresencas((atual) => {
+      const atualizado = { ...atual };
+      alunos.forEach((aluno) => {
+        if (aluno.status === "ATIVA") {
+          atualizado[aluno.matriculaId] = situacao;
+        }
+      });
+      return atualizado;
+    });
+  };
+
+  const restaurarPresencasPadrao = () => {
+    setPresencas((atual) => inicializarPresencas(alunos, atual, false));
+  };
+
+  const aplicarUltimaAulaComoReferencia = () => {
+    if (!ultimaAulaRegistrada) {
+      toast.info("Ainda não há uma aula anterior para reutilizar.");
+      return;
+    }
+
+    setTema(ultimaAulaRegistrada.tema);
+    setAtividade(ultimaAulaRegistrada.atividade);
+
+    if (
+      objetivos.some(
+        (objetivo) => objetivo.codigo === ultimaAulaRegistrada.objetivoCodigo
+      )
+    ) {
+      setObjetivoSelecionado(ultimaAulaRegistrada.objetivoCodigo);
+    } else {
+      toast.warn(
+        "O objetivo utilizado na última aula não está disponível na lista atual."
+      );
     }
   };
 
@@ -358,6 +545,11 @@ export default function DiarioProfessorPage() {
 
       toast.success("Frequência registrada com sucesso!");
       await atualizarRegistros();
+      setDetalhesRegistros((atual) => {
+        const copia = { ...atual };
+        delete copia[diarioAtual.id];
+        return copia;
+      });
       await selecionarDiario(diarioAtual.id, true);
     } catch (error: any) {
       const mensagem =
@@ -551,6 +743,17 @@ export default function DiarioProfessorPage() {
               />
             </div>
 
+            <div className={styles.helperActions}>
+              <button
+                type="button"
+                className={styles.secondaryButton}
+                onClick={aplicarUltimaAulaComoReferencia}
+                disabled={!ultimaAulaRegistrada}
+              >
+                <FiCopy /> Usar última aula como referência
+              </button>
+            </div>
+
             <div className={styles.actionsRow}>
               <button
                 type="submit"
@@ -568,14 +771,24 @@ export default function DiarioProfessorPage() {
         <div className={styles.card}>
           <div className={styles.diarioHeader}>
             <h2>Histórico de aulas registradas</h2>
-            <button
-              type="button"
-              className={styles.secondaryButton}
-              onClick={atualizarRegistros}
-              disabled={carregandoRegistros}
-            >
-              <FiRefreshCcw /> Atualizar
-            </button>
+            <div className={styles.headerActions}>
+              <button
+                type="button"
+                className={styles.secondaryButton}
+                onClick={handleAbrirResumoFrequencias}
+                disabled={carregandoTurmas || !turmaSelecionada}
+              >
+                <FiList /> Ver todas as frequências
+              </button>
+              <button
+                type="button"
+                className={styles.secondaryButton}
+                onClick={atualizarRegistros}
+                disabled={carregandoRegistros}
+              >
+                <FiRefreshCcw /> Atualizar
+              </button>
+            </div>
           </div>
           {carregandoRegistros ? (
             <p>Carregando registros...</p>
@@ -586,45 +799,96 @@ export default function DiarioProfessorPage() {
             </div>
           ) : (
             <div className={styles.diarioList}>
-              {registros.map((registro) => (
-                <div key={registro.id} className={styles.diarioItem}>
-                  <div className={styles.diarioHeader}>
-                    <div>
-                      <strong>{formatarDataISO(registro.data)}</strong>
-                      <p>{registro.objetivoCodigo}</p>
+              {registros.map((registro) => {
+                const detalheExpandido =
+                  registroExpandido === registro.id
+                    ? detalhesRegistros[registro.id]
+                    : null;
+                const estaCarregando = registroCarregando === registro.id;
+
+                return (
+                  <div key={registro.id} className={styles.diarioItem}>
+                    <div className={styles.diarioHeader}>
+                      <div>
+                        <strong>{formatarDataISO(registro.data)}</strong>
+                        <p>{registro.objetivoCodigo}</p>
+                      </div>
+                      <div className={styles.diarioActions}>
+                        <button
+                          type="button"
+                          className={styles.smallButton}
+                          onClick={() => selecionarDiario(registro.id)}
+                        >
+                          <FiBookOpen /> Editar frequência
+                        </button>
+                        <button
+                          type="button"
+                          className={styles.smallButton}
+                          onClick={() => alternarExpandirRegistro(registro.id)}
+                        >
+                          <FiEye />
+                          {registroExpandido === registro.id
+                            ? " Ocultar resumo"
+                            : " Ver resumo"}
+                        </button>
+                      </div>
                     </div>
-                    <div className={styles.diarioActions}>
-                      <button
-                        type="button"
-                        className={styles.smallButton}
-                        onClick={() => selecionarDiario(registro.id)}
-                      >
-                        Ver frequência
-                      </button>
+                    <p>
+                      <strong>Objetivo:</strong> {registro.objetivoDescricao}
+                    </p>
+                    <p>
+                      <strong>Tema:</strong> {registro.tema}
+                    </p>
+                    <p>
+                      <strong>Atividade:</strong> {registro.atividade}
+                    </p>
+                    <div className={styles.summaryChips}>
+                      <span className={styles.chip}>
+                        Presentes: {registro.resumoPresencas.presentes}
+                      </span>
+                      <span className={styles.chip}>
+                        Faltas: {registro.resumoPresencas.faltas}
+                      </span>
+                      <span className={styles.chip}>
+                        Faltas justificadas: {registro.resumoPresencas.faltasJustificadas}
+                      </span>
                     </div>
+
+                    {estaCarregando && registroExpandido === registro.id && (
+                      <p className={styles.loadingInline}>Carregando frequência...</p>
+                    )}
+
+                    {detalheExpandido && (
+                      <div className={styles.expandedAttendance}>
+                        <table className={styles.attendanceSummaryTable}>
+                          <thead>
+                            <tr>
+                              <th>Aluno</th>
+                              <th>Situação</th>
+                              <th>Observação</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {detalheExpandido.presencas.map((item) => (
+                              <tr key={`${detalheExpandido.id}-${item.matriculaId}`}>
+                                <td>{item.aluno}</td>
+                                <td>
+                                  <span
+                                    className={`${styles.presencaBadge} ${styles[`presenca${item.situacao}`]}`}
+                                  >
+                                    {situacaoLabels[item.situacao]}
+                                  </span>
+                                </td>
+                                <td>{item.observacao || "-"}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
                   </div>
-                  <p>
-                    <strong>Objetivo:</strong> {registro.objetivoDescricao}
-                  </p>
-                  <p>
-                    <strong>Tema:</strong> {registro.tema}
-                  </p>
-                  <p>
-                    <strong>Atividade:</strong> {registro.atividade}
-                  </p>
-                  <div className={styles.summaryChips}>
-                    <span className={styles.chip}>
-                      Presentes: {registro.resumoPresencas.presentes}
-                    </span>
-                    <span className={styles.chip}>
-                      Faltas: {registro.resumoPresencas.faltas}
-                    </span>
-                    <span className={styles.chip}>
-                      Faltas justificadas: {registro.resumoPresencas.faltasJustificadas}
-                    </span>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
@@ -695,6 +959,30 @@ export default function DiarioProfessorPage() {
                 </table>
               </div>
 
+              <div className={styles.bulkActions}>
+                <button
+                  type="button"
+                  className={styles.secondaryButton}
+                  onClick={() => marcarTodos("PRESENTE")}
+                >
+                  <FiCheckSquare /> Marcar todos presentes
+                </button>
+                <button
+                  type="button"
+                  className={styles.secondaryButton}
+                  onClick={() => marcarTodos("FALTA")}
+                >
+                  <FiMinusCircle /> Marcar todos ausentes
+                </button>
+                <button
+                  type="button"
+                  className={styles.secondaryButton}
+                  onClick={restaurarPresencasPadrao}
+                >
+                  <FiRefreshCcw /> Restaurar padrão
+                </button>
+              </div>
+
               {resumoPresencaAtual && (
                 <div className={styles.summaryChips}>
                   <span className={styles.chip}>
@@ -724,5 +1012,132 @@ export default function DiarioProfessorPage() {
         </div>
       </div>
     </div>
+
+      {modalFrequenciasAberto && (
+        <div className={styles.modalOverlay} role="dialog" aria-modal="true">
+          <div className={styles.modalContent}>
+            <button
+              type="button"
+              className={styles.modalCloseButton}
+              onClick={fecharModalFrequencias}
+              aria-label="Fechar resumo de frequências"
+            >
+              <FiX />
+            </button>
+
+            <h3>
+              Frequência geral — {resumoFrequencias?.componente.nomeTurma || ""}
+            </h3>
+            {resumoFrequencias?.componente.materia && (
+              <p className={styles.modalSubtitle}>
+                Disciplina: {resumoFrequencias.componente.materia}
+              </p>
+            )}
+
+            {carregandoResumoFrequencias ? (
+              <p>Carregando consolidado...</p>
+            ) : !resumoFrequencias || resumoFrequencias.totalAulas === 0 ? (
+              <div className={styles.emptyState}>
+                <p>Nenhuma aula registrada para esta turma até o momento.</p>
+                <span>
+                  Registre uma aula para visualizar o acompanhamento de frequências.
+                </span>
+              </div>
+            ) : (
+              <div className={styles.modalGrid}>
+                <section className={styles.modalSection}>
+                  <h4>Resumo por aluno</h4>
+                  <div className={styles.tableWrapper}>
+                    <table className={styles.modalTable}>
+                      <thead>
+                        <tr>
+                          <th>Aluno</th>
+                          <th>Status</th>
+                          <th>Presenças</th>
+                          <th>Faltas</th>
+                          <th>Faltas just.</th>
+                          <th>% Presença</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {resumoFrequencias.alunos.map((aluno) => (
+                          <tr key={aluno.matriculaId}>
+                            <td>{aluno.aluno}</td>
+                            <td>
+                              <span
+                                className={`${styles.statusBadge} ${
+                                  aluno.statusMatricula === "ATIVA"
+                                    ? styles.statusAtiva
+                                    : styles.statusInativa
+                                }`}
+                              >
+                                {statusLabels[aluno.statusMatricula] ||
+                                  aluno.statusMatricula}
+                              </span>
+                            </td>
+                            <td>{aluno.presentes}</td>
+                            <td>{aluno.faltas}</td>
+                            <td>{aluno.faltasJustificadas}</td>
+                            <td>
+                              <span className={styles.percentBadge}>
+                                {aluno.percentualPresenca.toLocaleString("pt-BR", {
+                                  minimumFractionDigits: 0,
+                                  maximumFractionDigits: 2,
+                                })}
+                                %
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </section>
+
+                <section className={styles.modalSection}>
+                  <h4>Frequência por aula ({resumoFrequencias.totalAulas})</h4>
+                  <div className={styles.tableWrapper}>
+                    <table className={styles.modalTable}>
+                      <thead>
+                        <tr>
+                          <th>Data</th>
+                          <th>Objetivo</th>
+                          <th>Presentes</th>
+                          <th>Faltas</th>
+                          <th>Faltas just.</th>
+                          <th>Ações</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {resumoFrequencias.aulas.map((aula) => (
+                          <tr key={aula.id}>
+                            <td>{formatarDataISO(aula.data)}</td>
+                            <td>{aula.objetivoCodigo}</td>
+                            <td>{aula.resumoPresencas.presentes}</td>
+                            <td>{aula.resumoPresencas.faltas}</td>
+                            <td>{aula.resumoPresencas.faltasJustificadas}</td>
+                            <td>
+                              <button
+                                type="button"
+                                className={styles.smallButton}
+                                onClick={() => {
+                                  fecharModalFrequencias();
+                                  selecionarDiario(aula.id, true);
+                                }}
+                              >
+                                <FiBookOpen /> Abrir
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </section>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
   );
 }

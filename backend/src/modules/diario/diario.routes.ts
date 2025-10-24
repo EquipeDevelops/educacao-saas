@@ -8,6 +8,7 @@ import {
   getRegistroSchema,
   listAlunosSchema,
   listRegistrosSchema,
+  listarFrequenciasSchema,
   objetivosBnccSchema,
 } from "./diario.validator";
 
@@ -66,6 +67,14 @@ router.get(
   authorize("PROFESSOR"),
   validate(objetivosBnccSchema),
   diarioController.listarObjetivosBncc
+);
+
+router.get(
+  "/frequencias",
+  protect,
+  authorize("PROFESSOR"),
+  validate(listarFrequenciasSchema),
+  diarioController.listarFrequencias
 );
 
 export const diarioRoutes = router;

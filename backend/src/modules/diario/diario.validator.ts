@@ -89,3 +89,11 @@ export const objetivosBnccSchema = z.object({
       .min(1),
   }),
 });
+
+export const listarFrequenciasSchema = z.object({
+  query: z.object({
+    componenteCurricularId: z
+      .string({ required_error: "Informe o componente curricular." })
+      .min(1),
+  }),
+});

@@ -26,6 +26,55 @@ type PresencaInput = {
   observacao?: string;
 };
 
+type FrequenciaResumoAluno = {
+  matriculaId: string;
+  aluno: string;
+  statusMatricula: StatusMatricula;
+  totalAulasRegistradas: number;
+  totalRegistradoParaAluno: number;
+  presentes: number;
+  faltas: number;
+  faltasJustificadas: number;
+  percentualPresenca: number;
+  presencas: {
+    diarioId: string;
+    data: string;
+    situacao: SituacaoPresenca;
+    objetivoCodigo: string;
+  }[];
+};
+
+type FrequenciaDetalhadaResposta = {
+  componente: {
+    id: string;
+    turmaId: string;
+    nomeTurma: string;
+    materia: string;
+  };
+  totalAulas: number;
+  aulas: {
+    id: string;
+    data: string;
+    objetivoCodigo: string;
+    objetivoDescricao: string;
+    tema: string;
+    atividade: string;
+    presencas: {
+      matriculaId: string;
+      aluno: string;
+      situacao: SituacaoPresenca;
+      statusMatricula: StatusMatricula;
+      observacao: string | null;
+    }[];
+    resumoPresencas: {
+      presentes: number;
+      faltas: number;
+      faltasJustificadas: number;
+    };
+  }[];
+  alunos: FrequenciaResumoAluno[];
+};
+
 function ensureProfessor(user: UsuarioAutenticado) {
   if (!user?.perfilId || user.papel !== "PROFESSOR") {
     throw new Error("Apenas professores podem acessar o diário de aula.");
@@ -393,6 +442,143 @@ export async function listarObjetivosBncc(
   }));
 }
 
+export async function listarFrequenciasDetalhadas(
+  componenteId: string,
+  user: UsuarioAutenticado
+): Promise<FrequenciaDetalhadaResposta> {
+  const componente = await obterComponenteDoProfessor(componenteId, user);
+
+  const diarios = await prisma.diarioAula.findMany({
+    where: {
+      componenteCurricularId: componente.id,
+      professorId: user.perfilId!,
+      unidadeEscolarId: user.unidadeEscolarId!,
+    },
+    include: {
+      registros_presenca: {
+        include: {
+          matricula: {
+            select: {
+              id: true,
+              status: true,
+              aluno: { select: { usuario: { select: { nome: true } } } },
+            },
+          },
+        },
+      },
+    },
+    orderBy: { data: "desc" },
+  });
+
+  const totalAulas = diarios.length;
+  const alunoMap = new Map<string, FrequenciaResumoAluno>();
+
+  const matriculasTurma = await prisma.matriculas.findMany({
+    where: { turmaId: componente.turma.id },
+    select: {
+      id: true,
+      status: true,
+      aluno: { select: { usuario: { select: { nome: true } } } },
+    },
+  });
+
+  matriculasTurma.forEach((matricula) => {
+    alunoMap.set(matricula.id, {
+      matriculaId: matricula.id,
+      aluno: matricula.aluno.usuario.nome,
+      statusMatricula: matricula.status,
+      totalAulasRegistradas: totalAulas,
+      totalRegistradoParaAluno: 0,
+      presentes: 0,
+      faltas: 0,
+      faltasJustificadas: 0,
+      percentualPresenca: 0,
+      presencas: [],
+    });
+  });
+
+  const aulas = diarios.map((registro) => {
+    const resumo = registro.registros_presenca.reduce(
+      (acc, presenca) => {
+        if (presenca.situacao === SituacaoPresenca.PRESENTE) acc.presentes += 1;
+        if (presenca.situacao === SituacaoPresenca.FALTA) acc.faltas += 1;
+        if (presenca.situacao === SituacaoPresenca.FALTA_JUSTIFICADA)
+          acc.faltasJustificadas += 1;
+        return acc;
+      },
+      { presentes: 0, faltas: 0, faltasJustificadas: 0 }
+    );
+
+    registro.registros_presenca.forEach((presenca) => {
+      const matriculaId = presenca.matriculaId;
+      const statusMatricula = presenca.matricula.status;
+      const atual = alunoMap.get(matriculaId)!;
+      atual.totalRegistradoParaAluno += 1;
+      if (presenca.situacao === SituacaoPresenca.PRESENTE) {
+        atual.presentes += 1;
+      }
+      if (presenca.situacao === SituacaoPresenca.FALTA) {
+        atual.faltas += 1;
+      }
+      if (presenca.situacao === SituacaoPresenca.FALTA_JUSTIFICADA) {
+        atual.faltasJustificadas += 1;
+      }
+
+      atual.presencas.push({
+        diarioId: registro.id,
+        data: registro.data.toISOString(),
+        situacao: presenca.situacao,
+        objetivoCodigo: registro.objetivoCodigo,
+      });
+    });
+
+    return {
+      id: registro.id,
+      data: registro.data.toISOString(),
+      objetivoCodigo: registro.objetivoCodigo,
+      objetivoDescricao: registro.objetivoDescricao,
+      tema: registro.tema,
+      atividade: registro.atividade,
+      presencas: registro.registros_presenca.map((presenca) => ({
+        matriculaId: presenca.matriculaId,
+        aluno: presenca.matricula.aluno.usuario.nome,
+        situacao: presenca.situacao,
+        statusMatricula: presenca.matricula.status,
+        observacao: presenca.observacao,
+      })),
+      resumoPresencas: resumo,
+    };
+  });
+
+  const alunos = Array.from(alunoMap.values())
+    .map((aluno) => {
+      const divisor = aluno.totalRegistradoParaAluno || totalAulas || 1;
+      const percentual = Math.round(
+        (aluno.presentes / divisor) * 100 * 100
+      ) / 100;
+      return {
+        ...aluno,
+        percentualPresenca: Number.isFinite(percentual) ? percentual : 0,
+        presencas: aluno.presencas.sort((a, b) =>
+          a.data < b.data ? 1 : a.data > b.data ? -1 : 0
+        ),
+      };
+    })
+    .sort((a, b) => a.aluno.localeCompare(b.aluno));
+
+  return {
+    componente: {
+      id: componente.id,
+      turmaId: componente.turma.id,
+      nomeTurma: `${componente.turma.serie} ${componente.turma.nome}`,
+      materia: componente.materia.nome,
+    },
+    totalAulas,
+    aulas,
+    alunos,
+  };
+}
+
 export const diarioService = {
   listarTurmas,
   listarAlunos,
@@ -401,4 +587,5 @@ export const diarioService = {
   criarRegistro,
   atualizarPresencas,
   listarObjetivosBncc,
+  listarFrequenciasDetalhadas,
 };

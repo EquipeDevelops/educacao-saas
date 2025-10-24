@@ -115,4 +115,18 @@ export const diarioController = {
         .json({ message: error.message || "Não foi possível carregar os objetivos da BNCC." });
     }
   },
+
+  listarFrequencias: async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const frequencias = await diarioService.listarFrequenciasDetalhadas(
+        req.query.componenteCurricularId as string,
+        req.user
+      );
+      return res.status(200).json(frequencias);
+    } catch (error: any) {
+      return res
+        .status(403)
+        .json({ message: error.message || "Não foi possível carregar as frequências desta turma." });
+    }
+  },
 };
