@@ -16,6 +16,7 @@ import {
   FiFileText,
   FiLogOut,
   FiBookOpen,
+  FiBook,
 } from "react-icons/fi";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -42,6 +43,7 @@ const navLinks = [
         text: "Atividades",
         icon: <FiBookOpen />,
       },
+      { href: "/professor/diario", text: "Diário", icon: <FiBook /> },
       { href: "/professor/correcoes", text: "Correções", icon: <FiEdit /> },
       { href: "/professor/faltas", text: "Lançar Faltas", icon: <FiUserX /> },
       {
