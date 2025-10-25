@@ -387,6 +387,73 @@ function extrairCodigoEDescricaoDeString(valor: string) {
   return { codigo: "", descricao: texto };
 }
 
+function coagirParaArray<T>(valor: T | T[] | null | undefined) {
+  if (Array.isArray(valor)) {
+    return valor as T[];
+  }
+
+  if (valor === null || valor === undefined) {
+    return [] as T[];
+  }
+
+  return [valor as T];
+}
+
+function expandirCodigosHabilidadeObjeto(
+  entrada: any,
+  contexto: ContextoHabilidade
+) {
+  if (!entrada || typeof entrada !== "object" || Array.isArray(entrada)) {
+    return [] as any[];
+  }
+
+  const codigos = coagirParaArray(
+    (entrada as any).nome_codigo ||
+      (entrada as any).codigo ||
+      (entrada as any).codigos ||
+      (entrada as any).codigo_habilidade ||
+      (entrada as any).codigoHabilidade
+  ).map((codigo) => String(codigo ?? "").trim());
+
+  const descricoes = coagirParaArray(
+    (entrada as any).nome_habilidade ||
+      (entrada as any).descricao ||
+      (entrada as any).descricao_habilidade ||
+      (entrada as any).habilidade ||
+      (entrada as any).habilidades
+  ).map((descricao) => String(descricao ?? "").trim());
+
+  if (!codigos.length) {
+    return [] as any[];
+  }
+
+  return codigos
+    .map((codigo, index) => {
+      const descricaoBruta =
+        descricoes[index] ??
+        descricoes[descricoes.length - 1] ??
+        (entrada as any).descricao ??
+        (entrada as any).nome_habilidade ??
+        (entrada as any).habilidade ??
+        "";
+
+      const codigoNormalizado = String(codigo ?? "").trim();
+      const descricaoNormalizada = String(descricaoBruta ?? "").trim();
+
+      if (!codigoNormalizado) {
+        return null;
+      }
+
+      return {
+        codigo: codigoNormalizado,
+        descricao: descricaoNormalizada || codigoNormalizado,
+        etapa: contexto.etapa,
+        area: contexto.area,
+      } satisfies Partial<BnccObjetivo>;
+    })
+    .filter((item): item is Partial<BnccObjetivo> => Boolean(item?.codigo));
+}
+
 function normalizarEntradaHabilidade(
   habilidade: any,
   contexto: ContextoHabilidade
@@ -444,7 +511,7 @@ function extrairObjetivos(
       (item as any).codigoHabilidade ||
       (item as any).codigoHabilidades;
 
-    const candidato =
+    let candidato =
       Array.isArray(habilidadesDiretas)
         ? habilidadesDiretas
         : Array.isArray(habilidadesAno)
@@ -454,6 +521,16 @@ function extrairObjetivos(
         : Array.isArray(codigosHabilidade)
         ? codigosHabilidade
         : null;
+
+    if (!candidato && codigosHabilidade) {
+      const expandido = expandirCodigosHabilidadeObjeto(
+        codigosHabilidade,
+        contexto
+      );
+      if (expandido.length) {
+        candidato = expandido;
+      }
+    }
 
     if (candidato) {
       const contexto = {
