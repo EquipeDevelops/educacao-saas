@@ -159,7 +159,12 @@ export async function listarTurmas(user: UsuarioAutenticado) {
   ensureProfessor(user);
 
   const componentes = await prisma.componenteCurricular.findMany({
-    where: { professorId: user.perfilId! },
+    where: {
+      professorId: user.perfilId!,
+      turma: {
+        isNot: null,
+      },
+    },
     select: {
       id: true,
       ano_letivo: true,
@@ -170,19 +175,40 @@ export async function listarTurmas(user: UsuarioAutenticado) {
           nome: true,
           serie: true,
           turno: true,
+          unidadeEscolarId: true,
         },
       },
     },
   });
 
-  const turmaIds = componentes.map((c) => c.turma.id);
+  const componentesComTurma = componentes.filter(
+    (componente) => {
+      if (!componente.turma || !componente.materia) {
+        return false;
+      }
+
+      if (user.unidadeEscolarId) {
+        return (
+          componente.turma.unidadeEscolarId === user.unidadeEscolarId
+        );
+      }
+
+      return true;
+    },
+  );
+
+  if (!componentesComTurma.length) {
+    return [];
+  }
+
+  const turmaIds = componentesComTurma.map((c) => c.turma!.id);
   const matriculas = await prisma.matriculas.findMany({
     where: { turmaId: { in: turmaIds } },
     select: { turmaId: true, status: true },
   });
 
   const diarios = await prisma.diarioAula.findMany({
-    where: { componenteCurricularId: { in: componentes.map((c) => c.id) } },
+    where: { componenteCurricularId: { in: componentesComTurma.map((c) => c.id) } },
     select: { id: true, data: true, componenteCurricularId: true },
     orderBy: { data: "desc" },
   });
@@ -216,19 +242,23 @@ export async function listarTurmas(user: UsuarioAutenticado) {
     }
   });
 
-  return componentes
+  return componentesComTurma
     .map((componente) => {
-      const resumoTurma = statsMap.get(componente.turma.id) ?? {
+      const turma = componente.turma!;
+      const serie = turma.serie ? String(turma.serie).trim() : "";
+      const nome = turma.nome ? String(turma.nome).trim() : "";
+      const nomeTurma = [serie, nome].filter(Boolean).join(" ");
+      const resumoTurma = statsMap.get(turma.id) ?? {
         total: 0,
         ativos: 0,
         inativos: 0,
       };
       return {
         componenteId: componente.id,
-        turmaId: componente.turma.id,
-        nomeTurma: `${componente.turma.serie} ${componente.turma.nome}`,
-        materia: componente.materia.nome,
-        turno: componente.turma.turno,
+        turmaId: turma.id,
+        nomeTurma: nomeTurma || turma.id,
+        materia: componente.materia!.nome,
+        turno: turma.turno,
         alunosTotal: resumoTurma.total,
         alunosAtivos: resumoTurma.ativos,
         alunosInativos: resumoTurma.inativos,

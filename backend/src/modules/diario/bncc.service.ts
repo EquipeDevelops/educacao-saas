@@ -511,6 +511,22 @@ function extrairObjetivos(
       (item as any).codigoHabilidade ||
       (item as any).codigoHabilidades;
 
+    const contexto: ContextoHabilidade = {
+      etapa:
+        (item as any).etapa ||
+        (item as any).etapa_ensino ||
+        (item as any).etapaEnsino ||
+        (item as any).segmento ||
+        (item as any).nivel ||
+        (item as any).modalidade,
+      area:
+        (item as any).area ||
+        (item as any).areaConhecimento ||
+        (item as any).area_conhecimento ||
+        (item as any).campo ||
+        (item as any).campo_experiencia,
+    };
+
     let candidato =
       Array.isArray(habilidadesDiretas)
         ? habilidadesDiretas
@@ -533,22 +549,6 @@ function extrairObjetivos(
     }
 
     if (candidato) {
-      const contexto = {
-        etapa:
-          (item as any).etapa ||
-          (item as any).etapa_ensino ||
-          (item as any).etapaEnsino ||
-          (item as any).segmento ||
-          (item as any).nivel ||
-          (item as any).modalidade,
-        area:
-          (item as any).area ||
-          (item as any).areaConhecimento ||
-          (item as any).area_conhecimento ||
-          (item as any).campo ||
-          (item as any).campo_experiencia,
-      };
-
       return candidato.map((habilidade: any) =>
         normalizarEntradaHabilidade(habilidade, contexto)
       );
