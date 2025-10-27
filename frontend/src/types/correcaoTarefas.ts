@@ -12,7 +12,9 @@ export type Resposta = {
   id: string;
   questaoId: string;
   resposta_texto: string | null;
-  opcaoEscolhidaId: string | null;
+  avaliado_em?: string | null;
+  opcaoEscolhidaId?: string | null;
+  opcaoEscolhida?: { id: string; correta: boolean } | null;
   nota: number | null;
   feedback: string | null;
 };

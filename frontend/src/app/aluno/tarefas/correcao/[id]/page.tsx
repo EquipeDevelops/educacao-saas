@@ -22,6 +22,8 @@ export default function VerCorrecaoPage() {
     useCorrecaoData(submissaoId);
 
   const totalQuestoes = correcaoMap.length;
+  console.log(correcaoMap);
+  
   const totalAcertos = correcaoMap.reduce((acertos, item) => {
     const { questao, resposta } = item;
     if (!resposta) {
@@ -29,11 +31,9 @@ export default function VerCorrecaoPage() {
     }
     switch (questao.tipo) {
       case 'MULTIPLA_ESCOLHA': {
-        // Encontra a opção marcada como correta no gabarito.
         const opcaoCorreta = questao.opcoes_multipla_escolha.find(
           (opt) => opt.correta === true,
         );
-        // Verifica se o gabarito existe e se o ID da resposta do aluno é o mesmo.
         if (opcaoCorreta && resposta.opcaoEscolhidaId === opcaoCorreta.id) {
           return acertos + 1;
         }

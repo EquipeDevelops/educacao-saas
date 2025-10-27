@@ -9,6 +9,7 @@ const fullInclude = {
     include: {
       turma: { select: { nome: true, serie: true } },
       materia: { select: { nome: true } },
+      professor: { select: { usuario: { select: { nome: true } } } },
     },
   },
   _count: {

@@ -1,0 +1,337 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  gap: 20px;
+}
+
+.container > h1 {
+  font-size: 2rem;
+  font-weight: 500;
+}
+
+.telasContainer {
+  display: flex;
+  height: 100%;
+  gap: 20px;
+}
+
+.trabalhosContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 45%;
+}
+
+.detalhesContainer {
+  width: 55%;
+  padding: 20px;
+  border-radius: 15px;
+  border: 1px solid var(--cor-borda);
+  background-color: var(--cor-fundo-card);
+  position: static;
+}
+
+.cardsContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.cardTrabalho {
+  background-color: var(--cor-fundo-card);
+  padding: 20px;
+  border-radius: 15px;
+  border: 1px solid var(--cor-borda);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.activeTrabalho {
+  border-color: var(--cor-icons);
+  box-shadow: 0px 0px 0px 3px var(--cor-primaria-light);
+}
+
+.materiaPontos {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.materiaPontos h4 {
+  font-size: 0.9rem;
+  border: 1px solid color-mix(in srgb, currentColor 30%, white 70%);
+  font-weight: 400;
+  padding: 2px 10px;
+  background-color: var(--cor-primaria-light);
+  border-radius: 10px;
+  color: var(--cor-primaria);
+}
+
+.materiaPontos span {
+  padding: 2px 10px;
+  border-radius: 10px;
+  background-color: var(--cor-primaria);
+  color: white;
+}
+
+.descricao h3 {
+  font-size: 1.3rem;
+  font-weight: 500;
+  margin-bottom: 5px;
+}
+
+.descricao p {
+  font-size: 1.1rem;
+  color: var(--cor-subtexto);
+  margin-bottom: 30px;
+}
+
+.infoAdicionais {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.professor {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.professor span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  color: var(--cor-primaria);
+  font-weight: 500;
+  background-color: var(--cor-primaria-light);
+  font-size: 0.95rem;
+}
+
+.professor p {
+  font-size: 0.95rem;
+  color: var(--cor-subtexto);
+}
+
+.prazo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--cor-primaria);
+}
+
+.mensagemNaoSelecionado {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  height: 100%;
+  gap: 20px;
+}
+
+.mensagemNaoSelecionado h3 {
+  font-size: 1.5rem;
+  font-weight: 400;
+  color: var(--cor-subtexto);
+}
+
+.mensagemNaoSelecionado svg {
+  font-size: 2.5rem;
+  color: var(--cor-subtexto);
+}
+
+.detalhes {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.detalhes h3 {
+  font-size: 1.3rem;
+  font-weight: 500;
+  margin-bottom: 20px;
+}
+
+.detalhes .info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.detalhes .info p:first-child {
+  font-size: 0.9rem;
+  border: 1px solid color-mix(in srgb, currentColor 30%, white 70%);
+  padding: 2px 10px;
+  background-color: var(--cor-primaria-light);
+  color: var(--cor-primaria);
+  border-radius: 10px;
+}
+
+.detalhes .info p:last-child {
+  padding: 5px 15px;
+  font-size: 1.2rem;
+  background-color: var(--cor-primaria);
+  color: white;
+  border-radius: 10px;
+}
+
+.detalhes h2 {
+  font-size: 1.5rem;
+  font-weight: 500;
+  margin-bottom: 20px;
+}
+
+.professorEPrazo {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  border-bottom: 1px solid var(--cor-borda);
+  padding-bottom: 20px;
+  margin-bottom: 20px;
+}
+
+.professorEPrazo .professorNome {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.professorEPrazo .professorNome span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: white;
+  border: 1px solid var(--cor-borda);
+  color: var(--cor-subtexto);
+  font-weight: 500;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+}
+
+.professorEPrazo .professorNome p {
+  color: var(--cor-subtexto);
+  font-size: 1rem;
+}
+
+.prazoDetalhes {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--cor-subtexto) !important;
+  font-size: 1rem;
+}
+
+.descricaoDetalhes {
+  margin-bottom: 30px;
+}
+
+.descricaoDetalhes p {
+  font-size: 1rem;
+  color: var(--cor-subtexto);
+}
+
+.requisitos {
+  margin-bottom: 30px;
+}
+
+.requisitos ul {
+  display: flex;
+  gap: 10px;
+}
+
+.requisitos ul li {
+  color: var(--cor-primaria);
+  padding: 5px 10px;
+  border-radius: 10px;
+  font-size: .95rem;
+  border: 1px solid color-mix(in srgb, currentColor 30%, white 70%);
+}
+
+.anexo {
+  margin-bottom: 30px;
+}
+
+.anexo > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 20px;
+  border: 1px solid var(--cor-borda);
+  border-radius: 15px;
+  cursor: pointer;
+}
+
+.anexoItens {
+  display: flex;
+  gap: 20px;
+}
+
+.anexo .icone {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 50px;
+  height: 50px;
+  border-radius: 10px;
+  background-color: var(--cor-perigo-light);
+}
+
+.anexo .icone svg {
+  color: var(--cor-perigo);
+  font-size: 1.5rem;
+}
+
+.infoAnexo h4{
+  font-size: 1.1rem;
+  margin-bottom: 5px;
+  color: var(--cor-subtexto);
+  font-weight: 500;
+}
+
+.infoAnexo p {
+  display: flex;
+  font-size: .95rem;
+  gap: 15px;
+  color: var(--cor-subtexto);
+}
+
+.infoAnexo p span {
+  position: relative;
+}
+
+.infoAnexo p span::before {
+  position: absolute;
+  content: "";
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background-color: var(--cor-subtexto);
+  left: -9px;
+  top: 6px;
+}
+
+.anexo .iconeDawnload {
+  font-size: 1.3rem;
+}
+
+.linkMessage {
+  background-color: var(--cor-primaria);
+  padding: 10px 20px;
+  text-align: center;
+  font-size: 1.1rem;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 15px;
+  gap: 10px;
+  margin-top: 50px;
+}

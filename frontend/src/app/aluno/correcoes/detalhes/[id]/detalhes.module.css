@@ -1,0 +1,86 @@
+.container {
+  background-color: var(--cor-fundo-card);
+  padding: 20px;
+  height: 100%;
+  border: 1px solid var(--cor-borda);
+  border-radius: 15px;
+}
+
+.container a {
+  color: var(--cor-texto);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 1rem;
+  margin-bottom: 10px;
+  transition: all 0.2s ease;
+  padding: 10px;
+  border-radius: 5px;
+  width: fit-content;
+}
+
+.container a:hover {
+  background-color: rgba(0, 0, 0, 0.101);
+  color: var(--cor-texto-destaque);
+}
+
+.container a svg {
+  font-size: 1.4rem;
+}
+
+.container h1 {
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.containerCards {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 20px;
+}
+
+.gabarito {
+  grid-column: 1 / 1;
+  padding: 20px;
+  border: 1px solid var(--cor-borda);
+  border-radius: 15px;
+}
+
+.gabarito h2 {
+  font-size: 1.2rem;
+  font-weight: 500;
+  margin-bottom: 20px;
+}
+
+.gabarito ul {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.feedbackContainer {
+  grid-column: 2 / 3;
+  border: 1px solid var(--cor-borda);
+  padding: 20px;
+  border-radius: 15px;
+  grid-row: 1 / 2;
+  height: fit-content;
+  margin-top: 20px;
+}
+
+.feedbackContainer h2 {
+  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-weight: 500;
+}
+
+.feedbackContainer h2 svg {
+  color: var(--cor-primaria);
+}
+
+.feedbackContainer p {
+  margin-top: 20px;
+  color: var(--cor-subtexto);
+}

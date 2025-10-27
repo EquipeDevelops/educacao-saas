@@ -1,0 +1,53 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  background-color: white;
+  padding: 20px;
+  margin-top: 20px;
+  border-radius: 15px;
+  border: 1px solid var(--cor-borda);
+
+  & h2 {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+    gap: 10px;
+    font-size: 1.2rem;
+    font-weight: 500;
+
+    & svg {
+      font-size: 1.2rem !important;
+      color: var(--cor-primaria);
+    }
+  }
+}
+
+.actionsLinks {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  flex-wrap: wrap;
+
+  & a {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    border: 1px solid var(--cor-borda);
+    padding: 20px;
+    border-radius: 10px;
+    width: 100%;
+    max-width: 265px;
+    transition: all .2s ease;
+
+    & svg {
+      font-size: 1.5rem;
+      color: var(--cor-primaria);
+    }
+
+    &:hover {
+      background-color: rgb(241, 241, 241);
+    }
+  }
+}

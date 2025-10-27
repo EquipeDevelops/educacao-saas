@@ -1,0 +1,150 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  border: 1px solid var(--cor-borda);
+  border-radius: 10px;
+  margin-top: 20px;
+}
+
+.infoContainer {
+  display: flex;
+  justify-content: space-between;
+  align-items: first baseline;
+  gap: 20px;
+  border-bottom: 1.5px solid var(--cor-borda);
+  padding-bottom: 20px;
+}
+
+.dadosContainer {
+  flex: 1;
+}
+
+.dadosContainer {
+  display: flex;
+  flex-direction: column;
+}
+
+.dadosContainer .materia {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 5px;
+}
+
+.dadosContainer .materia p {
+  font-size: .9rem;
+  padding: 2px 10px;
+  color: var(--cor-subtexto);
+  border: 1px solid var(--cor-borda);
+  border-radius: 10px;
+  font-weight: 500;
+  color: var(--cor-texto-destaque);
+}
+
+.dadosContainer .materia .materiaNome {
+  background-color: var(--cor-borda);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.dadosContainer .materia .mensagemSobreNota {
+  color: var(--cor-primaria);
+  background-color: var(--cor-primaria-light);
+  border: 1px solid color-mix(in srgb, var(--cor-primaria) 25%, white 75%);
+}
+
+.dadosContainer .titulo h2 {
+  font-size: 1.4rem;
+  margin-top: 10px;
+  margin-bottom: 5px;
+  font-weight: 500;
+}
+
+.dadosContainer .titulo p {
+  color: var(--cor-subtexto);
+  font-size: 1rem;
+  margin-bottom: 10px;
+}
+
+.datas {
+  display: flex;
+  gap: 20px;
+}
+
+.datas p {
+  color: var(--cor-subtexto);
+}
+
+.notaContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.notaContainer p {
+  font-size: 1rem;
+  color: var(--cor-subtexto);
+}
+
+.notaContainer p span {
+  color: var(--cor-texto-destaque);
+  font-weight: 500;
+  font-size: 1.5rem;
+}
+
+.containerProfessor {
+  margin-top: 20px;
+}
+
+.professor {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.professor span {
+  width: 35px;
+  height: 35px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--cor-borda);
+  border-radius: 50%;
+}
+
+.professor div p:first-child {
+  font-weight: 500;
+  font-size: 1.1rem;
+  margin-bottom: 5px;
+}
+
+.professor div p:last-child {
+  color: var(--cor-subtexto);
+  font-size: .95rem;
+}
+
+.barraAcertos {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 20px;
+  border-radius: 10px;
+}
+
+.descricaoAcertos {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.descricaoAcertos h4 {
+  font-size: 1rem;
+  font-weight: 400;
+  color: var(--cor-subtexto);
+}
+
+.descricaoAcertos p {
+  color: var(--cor-subtexto);
+}
