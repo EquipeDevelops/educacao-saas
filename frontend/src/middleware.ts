@@ -6,12 +6,10 @@ export function middleware(request: NextRequest) {
   const loginPath = '/auth/login';
   const publicRoutes = ['/auth/login', '/auth/forgot-password'];
 
-  // se a rota for publica, permite seguir.
   if (publicRoutes.includes(request.nextUrl.pathname)) {
     return NextResponse.next();
   }
   
-  // Se o usuário não estiver autenticado e a rota não for pública, redireciona para a página de login
   if (!token) {
     return NextResponse.redirect(new URL(loginPath, request.url));
   }

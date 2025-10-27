@@ -1,0 +1,64 @@
+.titulo h1 {
+  font-size: 2rem;
+  margin-bottom: 5px;
+}
+
+.titulo p {
+  color: var(--cor-subtexto);
+  margin-bottom: 20px;
+}
+
+.filtersRow {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
+  gap: 40px;
+}
+
+.filtersRow label {
+  width: 100%;
+}
+
+.filtersRow label p {
+  margin: 0px 0px 5px 10px;
+  color: var(--cor-subtexto);
+}
+
+.tipoGroup {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  align-items: center;
+  width: fit-content;
+  background-color: #fff;
+  border-radius: 15px;
+  overflow: hidden;
+  border: 1px solid var(--cor-borda);
+}
+
+.tipoChip {
+  background: var(--cor-fundo-card);
+  color: var(--cor-subtexto);
+  padding: 10px 20px;
+  font-size: .9rem;
+  cursor: pointer;
+  border-radius: 0px;
+  transition: border-color .15s ease, background-color .15s ease, color .15s ease;
+}
+.tipoChip:hover {
+  border-color: var(--cor-primaria);
+  background-color: rgba(0, 0, 0, 0.101);
+}
+
+.activeChip {
+  background-color: rgba(0, 0, 0, 0.101);
+  color: var(--cor-texto-destaque);
+}
+
+.listaCorrecoes {
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
+  padding: 0;
+  list-style: none;
+}

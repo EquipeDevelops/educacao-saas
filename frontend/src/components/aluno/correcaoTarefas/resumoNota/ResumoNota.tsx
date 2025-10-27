@@ -34,7 +34,7 @@ export default function ResumoNota(resumoNota: ResumoProps) {
         <div className={styles.nota}>
           <h3>Nota Final: {nota_total}</h3>
           <p>
-            Acertou {total_acertos} de {total_questoes} ({porcentagem_acertos}%)
+            Acertou {total_acertos} de {total_questoes} ({Math.floor(porcentagem_acertos)}%)
           </p>
         </div>
         <div
@@ -51,7 +51,7 @@ export default function ResumoNota(resumoNota: ResumoProps) {
               <LuCircleAlert />
             )}
           </span>
-          <p>{porcentagem_acertos}%</p>
+          <p>{Math.floor(porcentagem_acertos)}%</p>
         </div>
       </div>
       <BarraDeProgresso porcentagem={porcentagem_acertos} />

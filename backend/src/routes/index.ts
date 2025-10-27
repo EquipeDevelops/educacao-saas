@@ -34,6 +34,7 @@ import { eventoRoutes } from "../modules/eventos/eventos.routes";
 import { geradorProvaIARoutes } from "../modules/geradorProvaIA/geradorProvaIA.routes";
 import { auditLogRoutes } from "../modules/auditLog/auditLog.routes";
 import { categoriaTransacaoRoutes } from "../modules/categoriaTransacao/categoriaTransacao.routes";
+import { alunoDashboardRoutes } from "../modules/alunoDashboard/alunoDashboard.routes"
 
 const protectedRouter = Router();
 
@@ -66,6 +67,7 @@ protectedRouter.use("/eventos", eventoRoutes);
 protectedRouter.use("/gerador-prova-ia", geradorProvaIARoutes);
 
 protectedRouter.use("/professor/dashboard", professorDashboardRoutes);
+protectedRouter.use("/aluno/dashboard", alunoDashboardRoutes);
 protectedRouter.use("/gestor/dashboard", gestorDashboardRoutes);
 protectedRouter.use("/gestor/relatorios", relatoriosRoutes);
 protectedRouter.use("/financeiro", financeiroRoutes);
