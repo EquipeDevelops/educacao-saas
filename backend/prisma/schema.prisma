@@ -15,6 +15,19 @@ enum PeriodoAvaliacao {
   RECUPERACAO_FINAL
 }
 
+enum TipoTrabalho {
+  PESQUISA
+  RESENHA
+  APRESENTACAO
+  OUTRO
+}
+
+type Metadados {
+  tipoTrabalho  TipoTrabalho
+  permiteAnexos Boolean
+  requisitos    String[]
+}
+
 enum TipoDeAvaliacao {
   PROVA
   TRABALHO
@@ -102,7 +115,7 @@ model Usuarios {
   data_nascimento        DateTime?            @db.Date
   cpf_criptografado      Bytes?
   metadados              Json?
-  EventosCalendario      EventosCalendario[]
+  EventosCalendario      EventosCalendario[]           
 
   @@map("usuarios")
   @@index([instituicaoId])
@@ -308,6 +321,7 @@ model Tarefas {
   questoes               Questoes[]
   submissoes             Submissoes[]
   ComentarioTarefa       ComentarioTarefa[]
+  metadata              Metadados?
 
   @@map("tarefas")
   @@index([unidadeEscolarId])
@@ -547,6 +561,7 @@ enum TipoEvento {
   RECUPERACAO
   FERIADO
   EVENTO_ESCOLAR
+  PROVA
   OUTRO
 }
 
@@ -570,5 +585,3 @@ model EventosCalendario {
   @@map("eventos_calendario")
   @@index([unidadeEscolarId, data_inicio])
 }
-
-// import { VscMortarBoard } from 'react-icons/vsc'

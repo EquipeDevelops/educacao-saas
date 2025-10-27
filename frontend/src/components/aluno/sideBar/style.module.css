@@ -3,6 +3,7 @@
   flex-direction: column;
   gap: 20px;
   padding: 20px;
+  min-width: 220px;
   background-color: var(--cor-primaria-dark);
   min-height: 100vh;
 }
@@ -28,20 +29,25 @@
 .navLinks {
   display: flex;
   flex-direction: column;
-  align-items: center;
   height: 100%;
   gap: 10px;
+  width: 100%;
   & a {
-    font-size: 1.4rem;
     color: var(--cor-icons);
-    padding: 10px;
+    padding: 15px 10px 15px 15px;
+    font-size: 1.05rem;
     display: flex;
     align-items: center;
-    justify-content: center;
-    border-radius: 5px;
+    gap: 10px;
+    border-radius: 10px;
     transition: background-color 0.2s, color 0.2s;
+    position: relative;
     &:hover {
       background-color: var(--cor-icons-background-hover);
+    }
+
+    & svg {
+      font-size: 1.4rem;
     }
   }
   & .activeLink {
@@ -50,18 +56,34 @@
     &:hover {
       background-color: var(--cor-icons-background);
     }
+
+    &::before {
+      content: '';
+      position: absolute;
+      width: 4px;
+      height: 30px;
+      background-color: white;
+      left: 0px;
+      border-radius: 0px 5px 5px 0px;
+    }
   }
 }
 
 .navLinksContainer button {
-  padding: 10px;
+  padding: 15px 10px;
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 10px;
   border-radius: 5px;
-  font-size: 1.4rem;
+  font-size: 1.05rem;
+  width: 100%;
   color: var(--cor-icons);
   background-color: transparent;
+  & svg {
+    font-size: 1.4rem;
+  }
+
   &:hover {
     background-color: var(--cor-icons-background);
     color: white;

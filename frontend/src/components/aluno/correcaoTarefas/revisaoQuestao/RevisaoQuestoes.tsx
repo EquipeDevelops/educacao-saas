@@ -13,8 +13,7 @@ export default function RevisaoQuestoes({
   let acertou = false;
   let respostaAluno = '';
   let respostaCorreta = '';
-
-  // Se o aluno não respondeu a esta questão
+  
   if (!resposta) {
     acertou = false;
     respostaAluno = 'Você não respondeu a esta questão.';

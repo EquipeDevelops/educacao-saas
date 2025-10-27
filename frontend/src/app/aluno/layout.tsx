@@ -6,11 +6,11 @@ import { useEffect, ReactNode } from 'react';
 import AlunoSideBar from '../../components/aluno/sideBar/AlunoSideBar';
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
-  const { isAuthenticated, loading } = useAuth();
+  const { isAuthenticated, loading, user } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (!loading && !isAuthenticated) {
+    if (!loading && !isAuthenticated && user?.papel !== 'ALUNO') {
       router.push('/auth/login');
     }
   }, [isAuthenticated, loading, router]);
@@ -18,7 +18,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   return (
     <div style={{ display: 'flex' }}>
       <AlunoSideBar />
-      <main style={{position: 'relative'}}>{children}</main>
+      <main style={{ position: 'relative', width: '100%' }}>{children}</main>
     </div>
   );
 }

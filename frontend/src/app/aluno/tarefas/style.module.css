@@ -11,3 +11,78 @@
   gap: 20px;
   width: 100%;
 }
+
+/* equipedevelops/educacao-saas/educacao-saas-main/frontend/src/app/aluno/tarefas/style.module.css */
+.title {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-bottom: 20px;
+}
+
+.cardGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.pagination button {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 6px;
+  background-color: var(--cor-primaria);
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.pagination button:disabled {
+  background-color: var(--cor-cinza);
+  cursor: not-allowed;
+}
+
+.pagination span {
+  font-weight: 500;
+}
+
+.filtersContainer {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  & div {
+    display: flex;
+    gap: 20px;
+    & select,
+    input[type='date'] {
+      display: flex;
+      width: auto;
+      height: fit-content;
+      align-items: center;
+      justify-content: center;
+      padding: 15px 20px;
+      border-radius: 10px;
+      font-size: 1rem;
+      color: var(--cor-texto);
+    }
+  }
+
+  .clearButton {
+    background-color: white;
+    border: 1px solid var(--cor-borda);
+    color: var(--cor-texto);
+    transition: all .2s ease;
+    &:hover {
+      background-color: var(--cor-primaria);
+      color: white;
+    }
+  }
+}

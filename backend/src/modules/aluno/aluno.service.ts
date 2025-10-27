@@ -1,4 +1,5 @@
 import { PrismaClient } from "@prisma/client";
+import { AuthenticatedRequest } from "../../middlewares/auth";
 
 const prisma = new PrismaClient();
 
@@ -173,8 +174,86 @@ async function getBoletim(usuarioId: string) {
   return boletimFinal;
 }
 
+async function getProfile(user: AuthenticatedRequest["user"]) {
+  if (!user || user.papel !== "ALUNO" || !user.perfilId || !user.unidadeEscolarId) {
+    throw new Error("Usuário não é um aluno válido.");
+  }
+
+  const { id: usuarioId, perfilId: alunoPerfilId, unidadeEscolarId } = user;
+  const [usuario, perfilAluno, matriculaAtiva] = await Promise.all([
+    prisma.usuarios.findUnique({
+      where: { id: usuarioId },
+      select: {
+        nome: true,
+        email: true,
+        data_nascimento: true,
+        status: true,
+        unidade_escolar: { select: { nome: true } },
+      },
+    }),
+    prisma.usuarios_aluno.findUnique({
+      where: { id: alunoPerfilId },
+      select: { numero_matricula: true, email_responsavel: true },
+    }),
+    prisma.matriculas.findFirst({
+      where: { alunoId: alunoPerfilId, status: "ATIVA" },
+      select: {
+        ano_letivo: true,
+        turma: { select: { nome: true, serie: true } },
+      },
+    }),
+  ]);
+
+  if (!usuario || !perfilAluno || !matriculaAtiva) {
+    throw new Error("Dados essenciais do aluno não encontrados.");
+  }
+
+  const [totalEntregas, provasFeitas] = await Promise.all([
+    prisma.submissoes.count({
+      where: {
+        alunoId: alunoPerfilId,
+        status: { in: ["ENVIADA", "ENVIADA_COM_ATRASO", "AVALIADA"] },
+      },
+    }),
+    prisma.submissoes.count({
+      where: {
+        alunoId: alunoPerfilId,
+        tarefa: { tipo: "PROVA" },
+        status: { in: ["ENVIADA", "ENVIADA_COM_ATRASO", "AVALIADA"] },
+      },
+    }),
+  ]);
+
+  const boletimData = await getBoletim(usuarioId);
+  const materias = Object.values(boletimData);
+  let mediaGlobal = 0;
+  if (materias.length > 0) {
+    const somaMedias = materias.reduce(
+      (acc, materia) => acc + (materia.mediaFinalGeral || 0),
+      0
+    );
+    mediaGlobal = somaMedias / materias.length;
+  }
+
+  return {
+    nome: usuario.nome,
+    email: usuario.email,
+    status: usuario.status,
+    dataNascimento: usuario.data_nascimento,
+    escola: usuario.unidade_escolar?.nome,
+    numeroMatricula: perfilAluno.numero_matricula,
+    emailResponsavel: perfilAluno.email_responsavel,
+    turma: `${matriculaAtiva.turma.serie} - ${matriculaAtiva.turma.nome}`,
+    anoLetivo: matriculaAtiva.ano_letivo,
+    totalAtividadesEntregues: totalEntregas,
+    provasFeitas: provasFeitas,
+    mediaGlobal: parseFloat(mediaGlobal.toFixed(2)),
+  };
+}
+
 export const alunoService = {
   findAllPerfis,
   findOne: findOneByUserId,
   getBoletim,
+  getProfile,
 };

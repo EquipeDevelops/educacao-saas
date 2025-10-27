@@ -3,16 +3,18 @@
 import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
 import { VscMortarBoard } from 'react-icons/vsc';
-import { IoHome } from 'react-icons/io5';
+import { BiHomeAlt } from 'react-icons/bi';
 import {
-  FaShapes,
-  FaUser,
-  FaAward,
-  FaMessage,
-  FaRankingStar,
-  FaDoorOpen,
-} from 'react-icons/fa6';
-import { FaPencilRuler, FaBookOpen } from 'react-icons/fa';
+  LuShapes,
+  LuBookOpenText,
+  LuClipboardCheck,
+  LuSquareCheckBig,
+  LuTrophy,
+  LuMessageSquareText,
+  LuDoorOpen,
+} from 'react-icons/lu';
+import { BsPerson } from 'react-icons/bs';
+import { PiRanking } from 'react-icons/pi';
 import styles from './style.module.css';
 import { usePathname } from 'next/navigation';
 
@@ -33,25 +35,31 @@ export default function AlunoSideBar() {
             href={'/aluno'}
             className={pathname === '/aluno' ? styles.activeLink : ''}
           >
-            <IoHome />
+            <BiHomeAlt /> Inicio
           </Link>
           <Link
             href={'/aluno/tarefas'}
             className={pathname === '/aluno/tarefas' ? styles.activeLink : ''}
           >
-            <FaShapes />
+            <LuShapes /> Tarefas
           </Link>
           <Link
-            href={'/aluno/atividades_avaliacoes'}
-            className={pathname === '/aluno/atividades_avaliacoes' ? styles.activeLink : ''}
+            href={'/aluno/trabalhos'}
+            className={pathname === '/aluno/trabalhos' ? styles.activeLink : ''}
           >
-            <FaBookOpen />
+            <LuBookOpenText /> Trabalhos
+          </Link>
+          <Link
+            href={'/aluno/provas'}
+            className={pathname === '/aluno/provas' ? styles.activeLink : ''}
+          >
+            <LuClipboardCheck /> Provas
           </Link>
           <Link
             href={'/aluno/correcoes'}
             className={pathname === '/aluno/correcoes' ? styles.activeLink : ''}
           >
-            <FaPencilRuler />
+            <LuSquareCheckBig /> Correcões
           </Link>
           <Link
             href={'/aluno/conquistas'}
@@ -59,29 +67,29 @@ export default function AlunoSideBar() {
               pathname === '/aluno/conquistas' ? styles.activeLink : ''
             }
           >
-            <FaAward />
+            <LuTrophy /> Conquistas
           </Link>
           <Link
             href={'/aluno/mensagens'}
             className={pathname === '/aluno/mensagens' ? styles.activeLink : ''}
           >
-            <FaMessage />
+            <LuMessageSquareText /> Mensagens
           </Link>
           <Link
             href={'/aluno/ranking'}
             className={pathname === '/aluno/ranking' ? styles.activeLink : ''}
           >
-            <FaRankingStar />
+            <PiRanking /> Ranking
           </Link>
           <Link
             href={'/aluno/perfil'}
             className={pathname === '/aluno/perfil' ? styles.activeLink : ''}
           >
-            <FaUser />
+            <BsPerson /> Perfil
           </Link>
         </nav>
         <button onClick={signOut} className={styles.btnLogout}>
-          <FaDoorOpen />
+          <LuDoorOpen /> Sair
         </button>
       </div>
     </div>

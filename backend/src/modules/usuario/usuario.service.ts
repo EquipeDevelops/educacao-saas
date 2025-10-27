@@ -3,14 +3,82 @@ import bcrypt from "bcryptjs";
 import { CreateUserInput } from "./usuario.validator";
 
 const prisma = new PrismaClient();
-type PrismaTransactionClient = Omit<
-  PrismaClient,
-  "$connect" | "$disconnect" | "$on" | "$transaction" | "$use" | "$extends"
->;
+type PrismaTransactionClient = PrismaClient;
 
 interface UserCreationData extends CreateUserInput {
   instituicaoId: string;
   unidadeEscolarId: string;
+}
+
+type UpdateCredentialsPayload = {
+  email?: string;
+  currentPassword?: string;
+  newPassword?: string;
+};
+
+type ActorUser = { id: string; papel?: string; instituicaoId?: string | null; unidadeEscolarId?: string | null };
+
+export async function updateUserCredentials(
+  id: string,
+  payload: UpdateCredentialsPayload,
+  where: Prisma.UsuariosWhereInput,
+  actorUser?: ActorUser,
+  prismaClient: PrismaTransactionClient = prisma
+) {
+  const { email, currentPassword, newPassword } = payload;
+
+  return prismaClient.$transaction(async (tx) => {
+    const usuario = await tx.usuarios.findFirst({
+      where: { id, ...where },
+      select: { id: true, senha_hash: true, email: true },
+    });
+
+    if (!usuario) {
+      throw new Error("Usuário não encontrado ou sem permissão para atualizar.");
+    }
+
+    if (newPassword) {
+      if (!currentPassword) {
+        throw new Error("Senha atual inválida.");
+      }
+      const match = await bcrypt.compare(currentPassword, usuario.senha_hash);
+      if (!match) {
+        throw new Error("Senha atual inválida.");
+      }
+    }
+
+    const updateData: Prisma.UsuariosUpdateInput = {};
+    if (email && email !== usuario.email) {
+      updateData.email = email;
+    }
+
+    if (newPassword) {
+      const senhaHash = await bcrypt.hash(newPassword, 10);
+      updateData.senha_hash = senhaHash;
+    }
+
+    if (Object.keys(updateData).length === 0) {
+      const { senha_hash, ...usuarioSemSenha } = usuario as any;
+      return usuarioSemSenha;
+    }
+    const updated = await tx.usuarios.updateMany({
+      where: { id, ...where },
+      data: updateData,
+    });
+
+    if (updated.count === 0) {
+      throw new Error("Usuário não encontrado ou sem permissão para atualizar.");
+    }
+
+    const finalUser = await tx.usuarios.findUniqueOrThrow({
+      where: { id },
+      include: { perfil_aluno: true, perfil_professor: true },
+    });
+
+    const { senha_hash, ...usuarioSemSenha } = finalUser as any;
+
+    return usuarioSemSenha;
+  });
 }
 
 export async function createUser(
@@ -130,3 +198,4 @@ export async function deleteUser(id: string, where: Prisma.UsuariosWhereInput) {
   await prisma.usuarios.delete({ where: { id } });
   return { message: "Usuário deletado com sucesso." };
 }
+

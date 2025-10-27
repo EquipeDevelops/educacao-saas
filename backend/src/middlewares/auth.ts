@@ -1,12 +1,13 @@
-import { Request, Response, NextFunction } from "express";
-import jwt from "jsonwebtoken";
-import { PrismaClient, PapelUsuario } from "@prisma/client";
+import { Request, Response, NextFunction } from 'express';
+import jwt from 'jsonwebtoken';
+import { PrismaClient, PapelUsuario } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
 export interface AuthenticatedRequest extends Request {
   user: {
     id: string;
+    nome: string;
     instituicaoId: string | null;
     unidadeEscolarId: string | null;
     papel: PapelUsuario;
@@ -17,29 +18,29 @@ export interface AuthenticatedRequest extends Request {
 export const protect = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   console.log("\n--- [AUTH MIDDLEWARE] Iniciando middleware 'protect' ---");
   console.log(
-    "[AUTH MIDDLEWARE] Verificando JWT_SECRET:",
-    process.env.JWT_SECRET
+    '[AUTH MIDDLEWARE] Verificando JWT_SECRET:',
+    process.env.JWT_SECRET,
   );
 
   let token;
 
   if (
     req.headers.authorization &&
-    req.headers.authorization.startsWith("Bearer")
+    req.headers.authorization.startsWith('Bearer')
   ) {
-    token = req.headers.authorization.split(" ")[1];
+    token = req.headers.authorization.split(' ')[1];
   }
 
-  console.log("[AUTH MIDDLEWARE] Token encontrado:", !!token);
+  console.log('[AUTH MIDDLEWARE] Token encontrado:', !!token);
 
   if (!token) {
     return res
       .status(401)
-      .json({ message: "Não autenticado. Faça o login para obter acesso." });
+      .json({ message: 'Não autenticado. Faça o login para obter acesso.' });
   }
 
   try {
@@ -58,7 +59,7 @@ export const protect = async (
     if (!usuario) {
       return res
         .status(401)
-        .json({ message: "O usuário dono deste token não existe mais." });
+        .json({ message: 'O usuário dono deste token não existe mais.' });
     }
 
     (req as AuthenticatedRequest).user = {
@@ -71,15 +72,15 @@ export const protect = async (
     };
 
     console.log(
-      "[AUTH MIDDLEWARE] Usuário autenticado com sucesso:",
-      (req as AuthenticatedRequest).user.id
+      '[AUTH MIDDLEWARE] Usuário autenticado com sucesso:',
+      (req as AuthenticatedRequest).user.id,
     );
     next();
   } catch (error) {
-    console.error("--- [ERRO NO AUTH MIDDLEWARE] ---");
+    console.error('--- [ERRO NO AUTH MIDDLEWARE] ---');
     console.error(error);
-    console.error("---------------------------------");
-    return res.status(401).json({ message: "Token inválido ou expirado." });
+    console.error('---------------------------------');
+    return res.status(401).json({ message: 'Token inválido ou expirado.' });
   }
 };
 
@@ -90,7 +91,7 @@ export const authorize = (...roles: PapelUsuario[]) => {
     if (!roles.includes(user.papel)) {
       return res.status(403).json({
         message: `Acesso negado. Apenas usuários com os seguintes papéis são permitidos: ${roles.join(
-          ", "
+          ', ',
         )}`,
       });
     }

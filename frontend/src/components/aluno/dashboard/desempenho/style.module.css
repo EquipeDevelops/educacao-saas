@@ -1,0 +1,139 @@
+.container {
+  background-color: var(--cor-fundo-card);
+  width: 100%;
+  margin-top: 20px;
+  padding: 20px;
+  border-radius: 15px;
+  border: 1px solid var(--cor-borda);
+  max-width: 500px;
+
+  & h2 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.2rem;
+    font-weight: 500;
+    margin-bottom: 20px;
+    & svg {
+      font-size: 1.2rem;
+      color: var(--cor-primaria);
+    }
+  }
+}
+
+.taxaConclusao {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 20px;
+
+  & .description {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    color: var(--cor-subtexto);
+    margin-bottom: 10px;
+    & span {
+      font-size: 1.5rem;
+      font-weight: 400;
+      color: var(--cor-texto);
+    }
+  }
+
+  & .avaliacao {
+    margin-top: 5px;
+    font-size: 0.95rem;
+  }
+
+  & .otimaAvaliacao {
+    color: var(--cor-sucesso-dark);
+  }
+
+  & .boaAvaliacao {
+    color: var(--cor-aviso);
+  }
+
+  & .avaliacaoRuim {
+    color: var(--cor-perigo);
+  }
+}
+
+.notasContainer {
+  & .ultimaNota {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    padding: 20px;
+    background-color: rgb(245, 245, 245);
+    border-radius: 15px;
+    & svg {
+      font-size: 1.8rem;
+      color: var(--cor-primaria);
+      margin-bottom: 10px;
+    }
+
+    & p {
+      color: var(--cor-subtexto);
+      margin-bottom: 5px;
+    }
+
+    & h3 {
+      font-size: 2rem;
+      font-weight: 500;
+    }
+  }
+
+  & .notas {
+    margin-top: 20px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 10px;
+    & li {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      padding: 20px;
+      border-radius: 15px;
+      gap: 5px;
+
+      & p {
+        font-size: 0.9rem;
+        color: var(--cor-subtexto);
+      }
+
+      & p:first-child {
+        font-size: 1.2rem;
+      }
+    }
+
+    & .media {
+      background-color: var(--cor-sucesso-light);
+      & p:first-child {
+        color: #0D542B;
+      }
+    }
+
+    & .notaAlta {
+      background-color: var(--cor-aviso-light);
+      & p:first-child {
+        color: #733E0A;
+      }
+    }
+
+    & .notaBaixa {
+      background-color: var(--cor-perigo-light);
+      & p:first-child {
+        color: #82181A;
+      }
+    }
+
+    & .materia {
+      background-color: var(--cor-envio-light);
+      & p:first-child {
+        color: #59168B;
+      }
+    }
+  }
+}

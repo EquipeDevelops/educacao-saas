@@ -1,18 +1,18 @@
-import { Request, Response, NextFunction } from "express";
-import { alunoService } from "./aluno.service";
-import { AuthenticatedRequest } from "../../middlewares/auth";
+import { Request, Response, NextFunction } from 'express';
+import { alunoService } from './aluno.service';
+import { AuthenticatedRequest } from '../../middlewares/auth';
 
 export const alunoController = {
   findAll: async (
     req: AuthenticatedRequest,
     res: Response,
-    next: NextFunction
+    next: NextFunction,
   ) => {
     try {
       const { unidadeEscolarId } = req.user;
       if (!unidadeEscolarId) {
         return res.status(403).json({
-          message: "Usuário não está associado a uma unidade escolar.",
+          message: 'Usuário não está associado a uma unidade escolar.',
         });
       }
       const alunos = await alunoService.findAllPerfis(unidadeEscolarId);
@@ -27,7 +27,7 @@ export const alunoController = {
       const { id } = req.params; // ID do USUÁRIO
       const aluno = await alunoService.findOne(id);
       if (!aluno) {
-        return res.status(404).json({ message: "Aluno não encontrado." });
+        return res.status(404).json({ message: 'Aluno não encontrado.' });
       }
       res.json(aluno);
     } catch (error) {
@@ -38,13 +38,26 @@ export const alunoController = {
   getBoletim: async (
     req: AuthenticatedRequest,
     res: Response,
-    next: NextFunction
+    next: NextFunction,
   ) => {
     try {
       const { id } = req.params; // ID do USUÁRIO do aluno
       console.log(`[CONTROLLER] Requisição para boletim do usuário ID: ${id}`);
       const boletimData = await alunoService.getBoletim(id);
       res.json(boletimData);
+    } catch (error) {
+      next(error);
+    }
+  },
+  
+  getProfile: async (
+    req: AuthenticatedRequest,
+    res: Response,
+    next: NextFunction,
+  ) => {
+    try {
+      const profileData = await alunoService.getProfile(req.user);
+      res.json(profileData);
     } catch (error) {
       next(error);
     }

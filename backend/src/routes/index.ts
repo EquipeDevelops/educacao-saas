@@ -27,6 +27,7 @@ import { respostaRoutes } from "../modules/respostaSubmissao/respostaSubmissao.r
 import { avaliacaoRoutes } from "../modules/avaliacaoParcial/avaliacaoParcial.routes";
 import { registroFaltaRoutes } from "../modules/registroFalta/registroFalta.routes";
 import { professorDashboardRoutes } from "../modules/professorDashboard/professorDashboard.routes";
+import { alunoDashboardRoutes } from "../modules/alunoDashboard/alunoDashboard.routes"; 
 
 // Importação das rotas de Engajamento e Comunicação
 import { conquistaRoutes } from "../modules/conquista/conquista.routes";
@@ -74,5 +75,6 @@ mainRouter.use("/gerador-prova-ia", geradorProvaIARoutes);
 
 // --- ROTAS DE DASHBOARD E RELATÓRIOS ---
 mainRouter.use("/professor/dashboard", professorDashboardRoutes);
+mainRouter.use("/aluno/dashboard", alunoDashboardRoutes);
 
 export default mainRouter;

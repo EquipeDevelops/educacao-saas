@@ -1,6 +1,6 @@
-import { Prisma, PrismaClient } from "@prisma/client";
-import { CreateTarefaInput, FindAllTarefasInput } from "./tarefa.validator";
-import { AuthenticatedRequest } from "../../middlewares/auth";
+import { Prisma, PrismaClient } from '@prisma/client';
+import { CreateTarefaInput, FindAllTarefasInput } from './tarefa.validator';
+import { AuthenticatedRequest } from '../../middlewares/auth';
 
 const prisma = new PrismaClient();
 
@@ -9,6 +9,7 @@ const fullInclude = {
     include: {
       turma: { select: { nome: true, serie: true } },
       materia: { select: { nome: true } },
+      professor: { select: { usuario: { select: { nome: true } } } },
     },
   },
   _count: {
@@ -25,27 +26,27 @@ async function verifyOwnership(tarefaId: string, professorId: string) {
   });
 
   if (!tarefa) {
-    const error = new Error("Tarefa não encontrada.");
-    (error as any).code = "P2025";
+    const error = new Error('Tarefa não encontrada.');
+    (error as any).code = 'P2025';
     throw error;
   }
 
   if (tarefa.componenteCurricular.professorId !== professorId) {
     const error = new Error(
-      "Você não tem permissão para modificar esta tarefa."
+      'Você não tem permissão para modificar esta tarefa.',
     );
-    (error as any).code = "FORBIDDEN";
+    (error as any).code = 'FORBIDDEN';
     throw error;
   }
 }
 
 export async function create(
   data: CreateTarefaInput,
-  user: AuthenticatedRequest["user"]
+  user: AuthenticatedRequest['user'],
 ) {
   if (!user.perfilId) {
-    const error = new Error("Professor não autenticado corretamente.");
-    (error as any).code = "FORBIDDEN";
+    const error = new Error('Professor não autenticado corretamente.');
+    (error as any).code = 'FORBIDDEN';
     throw error;
   }
   const professorId = user.perfilId;
@@ -62,9 +63,9 @@ export async function create(
 
   if (!componente) {
     const error = new Error(
-      "Você não tem permissão para criar tarefas para este componente curricular."
+      'Você não tem permissão para criar tarefas para este componente curricular.',
     );
-    (error as any).code = "FORBIDDEN";
+    (error as any).code = 'FORBIDDEN';
     throw error;
   }
 
@@ -78,12 +79,12 @@ export async function create(
 }
 
 export async function findAll(
-  user: AuthenticatedRequest["user"],
-  filters: FindAllTarefasInput
+  user: AuthenticatedRequest['user'],
+  filters: FindAllTarefasInput,
 ) {
   const where: Prisma.TarefasWhereInput = {};
 
-  if (user.papel === "GESTOR") {
+  if (user.papel === 'GESTOR') {
     where.unidadeEscolarId = user.unidadeEscolarId;
   }
 
@@ -91,11 +92,11 @@ export async function findAll(
     where.componenteCurricularId = filters.componenteCurricularId;
   }
 
-  if (user.papel === "ALUNO") {
+  if (user.papel === 'ALUNO') {
     const matricula = await prisma.matriculas.findFirst({
       where: {
         aluno: { usuarioId: user.id },
-        status: "ATIVA",
+        status: 'ATIVA',
       },
       select: { turmaId: true },
     });
@@ -110,14 +111,14 @@ export async function findAll(
     };
   }
 
-  if (user.papel === "PROFESSOR") {
+  if (user.papel === 'PROFESSOR') {
     where.componenteCurricular = { professorId: user.perfilId! };
   }
 
   return prisma.tarefas.findMany({ where, include: fullInclude });
 }
 
-export async function findById(id: string, user: AuthenticatedRequest["user"]) {
+export async function findById(id: string, user: AuthenticatedRequest['user']) {
   const tarefa = await prisma.tarefas.findUnique({
     where: { id },
     include: fullInclude,
@@ -126,14 +127,14 @@ export async function findById(id: string, user: AuthenticatedRequest["user"]) {
   if (!tarefa) return null;
 
   if (
-    user.papel === "PROFESSOR" &&
+    user.papel === 'PROFESSOR' &&
     tarefa.componenteCurricular.professorId !== user.perfilId
   ) {
     return null;
   }
 
   if (
-    (user.papel === "GESTOR" || user.papel === "ALUNO") &&
+    (user.papel === 'GESTOR' || user.papel === 'ALUNO') &&
     tarefa.unidadeEscolarId !== user.unidadeEscolarId
   ) {
     return null;
@@ -145,11 +146,11 @@ export async function findById(id: string, user: AuthenticatedRequest["user"]) {
 export async function update(
   id: string,
   data: Prisma.TarefasUpdateInput,
-  user: AuthenticatedRequest["user"]
+  user: AuthenticatedRequest['user'],
 ) {
   if (!user.perfilId) {
-    const error = new Error("Professor não autenticado corretamente.");
-    (error as any).code = "FORBIDDEN";
+    const error = new Error('Professor não autenticado corretamente.');
+    (error as any).code = 'FORBIDDEN';
     throw error;
   }
   await verifyOwnership(id, user.perfilId);
@@ -159,38 +160,38 @@ export async function update(
 export async function publish(
   id: string,
   publicado: boolean,
-  user: AuthenticatedRequest["user"]
+  user: AuthenticatedRequest['user'],
 ) {
   if (!user.perfilId) {
-    const error = new Error("Professor não autenticado corretamente.");
-    (error as any).code = "FORBIDDEN";
+    const error = new Error('Professor não autenticado corretamente.');
+    (error as any).code = 'FORBIDDEN';
     throw error;
   }
   await verifyOwnership(id, user.perfilId);
   return prisma.tarefas.update({ where: { id }, data: { publicado } });
 }
 
-export async function remove(id: string, user: AuthenticatedRequest["user"]) {
-  console.log("[DEBUG] Tentando deletar tarefa com ID:", id);
+export async function remove(id: string, user: AuthenticatedRequest['user']) {
+  console.log('[DEBUG] Tentando deletar tarefa com ID:', id);
 
   if (!user.perfilId) {
-    const error = new Error("Professor não autenticado corretamente.");
-    (error as any).code = "FORBIDDEN";
+    const error = new Error('Professor não autenticado corretamente.');
+    (error as any).code = 'FORBIDDEN';
     throw error;
   }
 
   await verifyOwnership(id, user.perfilId);
-  console.log("[DEBUG] Ownership verificada com sucesso");
+  console.log('[DEBUG] Ownership verificada com sucesso');
 
   try {
     const result = await prisma.tarefas.delete({
       where: { id },
     });
 
-    console.log("[DEBUG] Tarefa deletada com sucesso via cascade");
+    console.log('[DEBUG] Tarefa deletada com sucesso via cascade');
     return result;
   } catch (error) {
-    console.log("[DEBUG] Erro ao deletar tarefa:", error);
+    console.log('[DEBUG] Erro ao deletar tarefa:', error);
     throw error;
   }
 }

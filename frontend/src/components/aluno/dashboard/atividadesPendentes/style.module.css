@@ -1,0 +1,101 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  background-color: var(--cor-fundo-card);
+  margin-top: 20px;
+  border-radius: 15px;
+  border: 1px solid var(--cor-borda);
+  padding: 20px;
+  min-height: 300px;
+
+  & h2 {
+    font-size: 1.2rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+
+    & svg {
+      color: var(--cor-primaria);
+    }
+  }
+}
+
+.atividadesContainer {
+  margin-bottom: 20px;
+}
+
+.atividade {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-radius: 0px 15px 15px 0px;
+  padding: 20px;
+  border-left: 2px solid var(--cor-primaria);
+  transition: all .2s ease;
+
+  &:hover {
+    background-color: rgba(0, 0, 0, 0.055) ;
+  }
+
+  & h3 {
+    font-size: 1.1rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 5px;
+
+    & span {
+      color: var(--cor-subtexto);
+      font-weight: 400;
+      font-size: 1rem;
+      position: relative;
+
+      &::before {
+        position: absolute;
+        content: '';
+        width: 5px;
+        height: 5px;
+        top: 8px;
+        left: -12px;
+        background-color: var(--cor-subtexto);
+        border-radius: 50%;
+      }
+    }
+  }
+}
+
+.atividadeTitulo {
+  font-size: 1rem;
+  color: var(--cor-subtexto);
+}
+
+.atividadePrazo {
+  padding: 5px 10px;
+  border-radius: 5px;
+  background-color: var(--cor-primaria-light);
+  color: var(--cor-primaria);
+  font-weight: 500;
+}
+
+.buttonLink {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  align-self: center;
+  border: 1px solid var(--cor-borda);
+  border-radius: 10px;
+  padding: 10px 20px;
+  width: 100%;
+  text-align: center;
+  color: var(--cor-texto);
+  transition: all .2s ease;
+
+  &:hover {
+    background-color: rgba(0, 0, 0, 0.048);
+    color: var(--cor-texto-destaque);
+  }
+}

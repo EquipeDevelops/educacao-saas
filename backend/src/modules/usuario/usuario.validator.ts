@@ -69,5 +69,25 @@ export const updateUserSchema = z.object({
   params: paramsSchema,
 });
 
+export const updateCredentialsSchema = z.object({
+  body: z.object({
+    email: z.string().email("Formato de email inválido.").optional(),
+    currentPassword: z.string().min(6, "A senha atual deve ter no mínimo 6 caracteres.").optional(),
+    newPassword: z
+      .string()
+      .min(6, "A nova senha deve ter no mínimo 6 caracteres.")
+      .optional(),
+  })
+  .refine((data) => {
+    return !!data.email || !!data.newPassword;
+  }, { message: "Informe email ou nova senha." })
+  .refine((data) => {
+    if (data.newPassword) return !!data.currentPassword;
+    return true;
+  }, { message: "Senha atual é necessária para alterar a senha.", path: ["currentPassword"] }),
+  params: paramsSchema,
+});
+
+export type UpdateCredentialsInput = z.infer<typeof updateCredentialsSchema>;
 export type CreateUserInput = z.infer<typeof createUserSchema>["body"];
 export type UpdateUserInput = z.infer<typeof updateUserSchema>;

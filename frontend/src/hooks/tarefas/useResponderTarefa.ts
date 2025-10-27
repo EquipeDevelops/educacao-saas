@@ -1,4 +1,6 @@
-import { useState, useEffect, FormEvent } from 'react';
+'use client';
+
+import { useState, useEffect, FormEvent, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { api } from '@/services/api';
 import { useAuth } from '@/contexts/AuthContext';
@@ -15,18 +17,21 @@ export function useResponderTarefa(tarefaId: string) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const initializationStarted = useRef(false);
+
   useEffect(() => {
-    if (!tarefaId || !user) return;
+    if (!tarefaId || !user || initializationStarted.current) return;
 
     async function initializeSubmissao() {
+      initializationStarted.current = true;
       try {
         setIsLoading(true);
         setError(null);
 
         const [tarefaRes, questoesRes, subsRes] = await Promise.all([
-          api.get(/tarefas/${tarefaId}),
-          api.get(/questoes?tarefaId=${tarefaId}),
-          api.get(/submissoes?tarefaId=${tarefaId}),
+          api.get(`/tarefas/${tarefaId}`),
+          api.get(`/questoes?tarefaId=${tarefaId}`),
+          api.get(`/submissoes?tarefaId=${tarefaId}`),
         ]);
 
         setTarefa(tarefaRes.data);
@@ -44,7 +49,19 @@ export function useResponderTarefa(tarefaId: string) {
           setSubmissaoId(submissaoRes.data.id);
         }
       } catch (err: any) {
-        setError(err.response?.data?.message || 'Falha ao carregar a tarefa.');
+        if (err.response?.status === 409) {
+          try {
+            const subsRes = await api.get(`/submissoes?tarefaId=${tarefaId}`);
+            if (subsRes.data.length > 0) {
+              setSubmissaoId(subsRes.data[0].id);
+              setError(null);
+            }
+          } catch (retryErr: any) {
+             setError(retryErr.response?.data?.message || 'Falha ao recuperar a tarefa após conflito.');
+          }
+        } else {
+            setError(err.response?.data?.message || 'Falha ao carregar a tarefa.');
+        }
       } finally {
         setIsLoading(false);
       }
@@ -60,41 +77,50 @@ export function useResponderTarefa(tarefaId: string) {
     setRespostas((prev) => {
       const newMap = new Map(prev);
       const existing = newMap.get(questaoId) || { questaoId };
-      newMap.set(questaoId, { ...existing, ...value });
+      const updatedValue = { ...existing, ...value };
+
+      if (updatedValue.opcaoEscolhidaId) {
+        const questao = questoes.find(q => q.id === questaoId);
+        const opcaoSelecionada = questao?.opcoes_multipla_escolha.find(
+          opt => opt.id === updatedValue.opcaoEscolhidaId
+        );
+        if (opcaoSelecionada) {
+          updatedValue.resposta_texto = opcaoSelecionada.texto;
+        }
+      }
+
+      newMap.set(questaoId, updatedValue);
       return newMap;
     });
   };
 
   async function handleSubmit(event: FormEvent) {
-  event.preventDefault();
-  if (!submissaoId) {
-    setError('ID da submissão não encontrado. Recarregue a página.');
-    return;
+    event.preventDefault();
+    if (!submissaoId) {
+      setError('ID da submissão não encontrado. Recarregue a página.');
+      return;
+    }
+    if (respostas.size !== questoes.length) {
+      setError('Por favor, responda todas as questões antes de enviar.');
+      return;
+    }
+  
+    setIsLoading(true);
+    setError(null);
+  
+    try {
+      const payload = { respostas: Array.from(respostas.values()) };
+      await api.post(`/respostas/submissao/${submissaoId}/save`, payload);
+  
+      alert('Tarefa enviada com sucesso!');
+      router.push('/aluno/tarefas');
+      router.refresh();
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Erro ao enviar suas respostas.');
+    } finally {
+      setIsLoading(false);
+    }
   }
-  if (respostas.size !== questoes.length) {
-    setError('Por favor, responda todas as questões antes de enviar.');
-    return;
-  }
-
-  setIsLoading(true);
-  setError(null);
-
-  try {
-    const payload = { respostas: Array.from(respostas.values()) };
-    await api.post(/respostas/submissao/${submissaoId}/save, payload);
-
-    await api.patch(/submissoes/${submissaoId}, {
-      status: 'ENVIADA',
-    });
-
-    alert('Tarefa enviada com sucesso!');
-    router.replace('/aluno/tarefas');
-    router.refresh();
-  } catch (err: any) {
-    setError(err.response?.data?.message || 'Erro ao enviar suas respostas.');
-    setIsLoading(false);
-  }
-}
 
   return {
     tarefa,
@@ -105,4 +131,4 @@ export function useResponderTarefa(tarefaId: string) {
     handleRespostaChange,
     handleSubmit,
   };
-},
+}

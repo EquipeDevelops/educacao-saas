@@ -1,36 +1,45 @@
-import { Router } from "express";
-import { usuarioController } from "./usuario.controller";
-import { validate } from "../../middlewares/validate";
-import { createUserSchema, updateUserSchema } from "./usuario.validator";
-import { protect, authorize } from "../../middlewares/auth";
+import { Router } from 'express';
+import { usuarioController } from './usuario.controller';
+import { validate } from '../../middlewares/validate';
+import { createUserSchema, updateUserSchema } from './usuario.validator';
+import { protect, authorize } from '../../middlewares/auth';
+import { updateCredentialsSchema } from './usuario.validator';
 
 const router = Router();
 
 router.post(
-  "/",
+  '/',
   protect,
-  authorize("GESTOR"),
+  authorize('GESTOR'),
   validate(createUserSchema),
-  usuarioController.create
+  usuarioController.create,
 );
 
-router.get("/", protect, authorize("GESTOR"), usuarioController.findAll);
+router.get('/', protect, authorize('GESTOR'), usuarioController.findAll);
 
 router.get(
-  "/:id",
+  '/:id',
   protect,
-  authorize("GESTOR", "PROFESSOR"),
-  usuarioController.findById
+  authorize('GESTOR', 'PROFESSOR'),
+  usuarioController.findById,
 );
 
 router.patch(
-  "/:id",
+  '/:id',
   protect,
-  authorize("GESTOR"),
+  authorize('GESTOR'),
   validate(updateUserSchema),
-  usuarioController.update
+  usuarioController.update,
 );
 
-router.delete("/:id", protect, authorize("GESTOR"), usuarioController.remove);
+router.patch(
+  '/:id/credentials',
+  protect,
+  authorize('GESTOR', 'ALUNO'),
+  validate(updateCredentialsSchema),
+  usuarioController.updateCredentials,
+);
+
+router.delete('/:id', protect, authorize('GESTOR'), usuarioController.remove);
 
 export const usuarioRoutes = router;
