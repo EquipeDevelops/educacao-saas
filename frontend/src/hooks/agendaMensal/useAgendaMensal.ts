@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 import { api } from '@/services/api';
 
 export type EventoCalendario = {
@@ -57,12 +58,30 @@ const mapApiEvento = (evento: ApiEvento): EventoCalendario => {
 };
 
 export function useAgendaMensal(startISO: string, endISO: string) {
+  const { loading: authLoading, isAuthenticated } = useAuth();
+
   const [eventos, setEventos] = useState<EventoCalendario[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let alive = true;
+    if (authLoading) {
+      setLoading(true);
+      return () => {
+        alive = false;
+      };
+    }
+
+    if (!isAuthenticated) {
+      setEventos([]);
+      setError('Sessão expirada. Faça login novamente.');
+      setLoading(false);
+      return () => {
+        alive = false;
+      };
+    }
+
     (async () => {
       setLoading(true);
       setError(null);
@@ -89,7 +108,7 @@ export function useAgendaMensal(startISO: string, endISO: string) {
       }
     })();
     return () => { alive = false; };
-  }, [startISO, endISO]);
+  }, [startISO, endISO, authLoading, isAuthenticated]);
 
   return { eventos, loading, error };
 }
