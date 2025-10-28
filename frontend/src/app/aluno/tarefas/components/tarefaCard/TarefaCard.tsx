@@ -22,7 +22,7 @@ function getStatusInfo(tarefa: TarefaComStatus): StatusInfo {
           text: 'Avaliada',
           backgroundColor: '#EDFFEF',
           color: '#0A6C4D',
-          link: `/aluno/tarefas/correcao/${tarefa.submissao.id}`,
+          link: `/aluno/correcoes/detalhes/${tarefa.submissao.id}`,
         };
       case 'ENVIADA':
       case 'ENVIADA_COM_ATRASO':
@@ -30,7 +30,7 @@ function getStatusInfo(tarefa: TarefaComStatus): StatusInfo {
           text: 'Enviada',
           backgroundColor: '#F0ECFD',
           color: '#563D9D',
-          link: `/aluno/tarefas/correcao/${tarefa.submissao.id}`,
+          link: `/aluno/tarefas/revisao/${tarefa.submissao.id}`,
         };
       case 'EM_ANDAMENTO':
         return {

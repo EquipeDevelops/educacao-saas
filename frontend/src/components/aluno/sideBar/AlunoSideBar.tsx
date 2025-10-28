@@ -12,6 +12,7 @@ import {
   LuTrophy,
   LuMessageSquareText,
   LuDoorOpen,
+  LuCalendarDays,
 } from 'react-icons/lu';
 import { BsPerson } from 'react-icons/bs';
 import { PiRanking } from 'react-icons/pi';
@@ -60,6 +61,12 @@ export default function AlunoSideBar() {
             className={pathname === '/aluno/correcoes' ? styles.activeLink : ''}
           >
             <LuSquareCheckBig /> Correcões
+          </Link>
+          <Link
+            href={'/aluno/agenda'}
+            className={pathname === '/aluno/agenda' ? styles.activeLink : ''}
+          >
+            <LuCalendarDays /> Agenda
           </Link>
           <Link
             href={'/aluno/conquistas'}

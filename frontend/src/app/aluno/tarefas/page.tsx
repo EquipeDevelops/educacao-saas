@@ -1,7 +1,7 @@
 'use client';
 
 import { useMinhasTarefas } from '@/hooks/tarefas/useMinhasTarefas';
-import TarefaCard from '@/components/aluno/correcaoTarefas/tarefaCard/TarefaCard';
+import TarefaCard from '@/app/aluno/tarefas/components/tarefaCard/TarefaCard';
 import ErrorMsg from '@/components/errorMsg/ErrorMsg';
 import styles from './style.module.css';
 import Section from '@/components/section/Section';

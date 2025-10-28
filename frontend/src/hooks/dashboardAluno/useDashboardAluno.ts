@@ -1,4 +1,3 @@
-// equipedevelops/educacao-saas/educacao-saas-main/frontend/src/hooks/aluno/useAlunoDashboard.ts
 import { useState, useEffect } from 'react';
 import { api } from '@/services/api';
 import { useAuth } from '@/contexts/AuthContext';
@@ -11,7 +10,7 @@ import {
   TarefaPendente,
   MensagemRecente,
 } from '@/types/statusAluno';
-import { EventoCalendario } from '@/components/aluno/agenda/AgendaSemanalAluno';
+import { EventoCalendario } from '@/components/aluno/agenda/agendaSemanal/AgendaSemanalAluno';
 
 export function useAlunoDashboard() {
   const { user, loading: authLoading } = useAuth();

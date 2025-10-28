@@ -3,10 +3,9 @@ import Loading from '@/components/loading/Loading';
 import Section from '@/components/section/Section';
 import styles from './home.module.css';
 import ErrorMsg from '@/components/errorMsg/ErrorMsg';
-import CardsInfo from '@/components/aluno/dashboard/cardsInfo/CardsInfo';
 import FichaAluno from '@/components/aluno/dashboard/fichaAluno/FichaAluno';
 import AcoesRapidas from '@/components/aluno/dashboard/acoesRapidas/AcoesRapidas';
-import AgendaSemanalAluno from '@/components/aluno/agenda/AgendaSemanalAluno';
+import AgendaSemanalAluno from '@/components/aluno/agenda/agendaSemanal/AgendaSemanalAluno';
 import { useAlunoDashboard } from '@/hooks/dashboardAluno/useDashboardAluno';
 import Desempenho from '@/components/aluno/dashboard/desempenho/Desempenho';
 import AtividadesPendentes from '@/components/aluno/dashboard/atividadesPendentes/AtividadesPendentes';
@@ -16,9 +15,6 @@ export default function AlunoPage() {
   const {
     error,
     isLoading,
-    nextTask,
-    stats,
-    proximasAulas,
     alunoInfo,
     agendaEventos,
     performance,
@@ -57,11 +53,6 @@ export default function AlunoPage() {
               </p>
             </div>
           </header>
-          <CardsInfo
-            nextTask={nextTask}
-            stats={stats}
-            proximasAulas={proximasAulas}
-          />
           <div className={styles.bodyDashboard}>
             <div className={styles.infoAluno}>
               <FichaAluno alunoInfo={alunoInfo} />
