@@ -67,7 +67,7 @@ export function useAgendaMensal(startISO: string, endISO: string) {
       setLoading(true);
       setError(null);
       try {
-        const { data } = await api.get('/aluno/agenda', {
+        const { data } = await api.get('/alunos/agenda', {
           params: { start: startISO, end: endISO },
         });
         if (!alive) return;
