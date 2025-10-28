@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   FaChevronLeft,
   FaChevronRight,
@@ -8,48 +8,10 @@ import {
   FaRegCalendar,
 } from 'react-icons/fa';
 import styles from './agenda.module.css';
-import { useAgendaMensal } from '@/hooks/agendaMensal/useAgendaMensal';
-
-export type EventoCalendario = {
-  id: string;
-  date: string | Date;
-  type:
-    | 'Aula'
-    | 'Prova'
-    | 'Trabalho'
-    | 'Tarefa'
-    | 'Recuperação'
-    | 'Reunião'
-    | 'Feriado'
-    | 'Evento Escolar';
-  title: string;
-  details?: string;
-  time?: string;
-};
-
-type ApiEvento = {
-  id: string;
-  data: string;
-  tipo: string;
-  titulo: string;
-  detalhes?: string;
-  horario?: string;
-};
-
-const MESES_PT = [
-  'Outubro',
-  'Novembro',
-  'Dezembro',
-  'Janeiro',
-  'Fevereiro',
-  'Março',
-  'Abril',
-  'Maio',
-  'Junho',
-  'Julho',
-  'Agosto',
-  'Setembro',
-];
+import {
+  useAgendaMensal,
+  type EventoCalendario,
+} from '@/hooks/agendaMensal/useAgendaMensal';
 function monthLabel(date: Date) {
   const formatter = new Intl.DateTimeFormat('pt-BR', {
     month: 'long',
@@ -91,31 +53,6 @@ function getMonthMatrix(viewDate: Date) {
     days.push(atMidnight(d));
   }
   return { days, start, end };
-}
-
-function mapApiToEvento(a: ApiEvento): EventoCalendario {
-  const mapTipo: Record<string, EventoCalendario['type']> = {
-    AULA: 'Aula',
-    PROVA: 'Prova',
-    TRABALHO: 'Trabalho',
-    TAREFA: 'Tarefa',
-    RECUPERACAO: 'Recuperação',
-    REUNIAO: 'Reunião',
-    FERIADO: 'Feriado',
-    EVENTO_ESCOLAR: 'Evento Escolar',
-  };
-  const tipo =
-    mapTipo[a.tipo?.toUpperCase?.()] ??
-    (a.tipo as EventoCalendario['type']) ??
-    'Evento Escolar';
-  return {
-    id: a.id,
-    date: a.data,
-    type: tipo,
-    title: a.titulo,
-    details: a.detalhes,
-    time: a.horario,
-  };
 }
 
 export default function AgendaMensalAlunoPage() {
@@ -173,6 +110,15 @@ export default function AgendaMensalAlunoPage() {
           </span>
         </div>
       </header>
+
+      {!loading && error && (
+        <div className={styles.errorBanner} role="alert">
+          <FaCalendarAlt
+            className={`${styles.errorIcon} ${styles.errorBannerIcon}`}
+          />
+          <span>{error}</span>
+        </div>
+      )}
 
       <div className={styles.wrapper}>
         {/* Coluna esquerda: calendário */}
@@ -284,6 +230,13 @@ export default function AgendaMensalAlunoPage() {
             <div className={styles.empty}>
               <FaRegCalendar className={styles.emptyIcon} />
               <p>Carregando…</p>
+            </div>
+          ) : error ? (
+            <div className={`${styles.empty} ${styles.errorState}`}>
+              <FaCalendarAlt
+                className={`${styles.errorIcon} ${styles.errorStateIcon}`}
+              />
+              <p>{error}</p>
             </div>
           ) : eventosSelecionado.length === 0 ? (
             <div className={styles.empty}>
