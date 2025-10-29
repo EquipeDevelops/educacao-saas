@@ -35,6 +35,19 @@ export const createTarefaSchema = z.object({
         tipoTrabalho: z.string().optional(),
         permiteAnexos: z.boolean().optional(),
         requisitos: z.array(z.string()).optional(),
+        anexos: z
+          .array(
+            z.object({
+              id: z.string(),
+              nome: z.string(),
+              tipo: z.string(),
+              tamanho: z.number(),
+              url: z.string(),
+              visualizacaoUrl: z.string().optional(),
+              enviadoEm: z.string().optional(),
+            })
+          )
+          .optional(),
       })
       .optional(),
   }),

@@ -254,11 +254,17 @@
   border: 1px solid color-mix(in srgb, currentColor 30%, white 70%);
 }
 
-.anexo {
+.anexos {
   margin-bottom: 30px;
 }
 
-.anexo > div {
+.anexoLista {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.anexoLista li {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -266,7 +272,7 @@
   padding: 20px;
   border: 1px solid var(--cor-borda);
   border-radius: 15px;
-  cursor: pointer;
+  background-color: white;
 }
 
 .anexoItens {
@@ -274,7 +280,7 @@
   gap: 20px;
 }
 
-.anexo .icone {
+.anexoItens .icone {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -284,7 +290,7 @@
   background-color: var(--cor-perigo-light);
 }
 
-.anexo .icone svg {
+.anexoItens .icone svg {
   color: var(--cor-perigo);
   font-size: 1.5rem;
 }
@@ -318,7 +324,24 @@
   top: 6px;
 }
 
-.anexo .iconeDawnload {
+.downloadLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background-color: var(--cor-primaria-light);
+  color: var(--cor-primaria);
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.downloadLink:hover {
+  background-color: var(--cor-primaria);
+  color: white;
+}
+
+.iconeDownload {
   font-size: 1.3rem;
 }
 

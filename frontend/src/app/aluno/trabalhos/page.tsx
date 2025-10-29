@@ -16,6 +16,24 @@ import {
 import Link from 'next/link';
 import Pagination from '@/components/paginacao/Paginacao';
 
+function formatFileSize(bytes?: number) {
+  if (!bytes) return '—';
+  if (bytes === 0) return '0 B';
+  const units = ['B', 'KB', 'MB', 'GB'];
+  const index = Math.min(
+    Math.floor(Math.log(bytes) / Math.log(1024)),
+    units.length - 1,
+  );
+  const size = bytes / Math.pow(1024, index);
+  return `${size.toFixed(size >= 10 || index === 0 ? 0 : 1)} ${units[index]}`;
+}
+
+function getFileExtension(name: string) {
+  const parts = name.split('.');
+  if (parts.length <= 1) return '';
+  return parts[parts.length - 1];
+}
+
 export default function AtividadesPostadasPage() {
   const {
     error,
@@ -210,23 +228,43 @@ export default function AtividadesPostadasPage() {
                   </ul>
                 </div>
 
-                {trabalhoSelecionado.metadata?.permiteAnexos && (
-                  <div className={styles.anexo}>
-                    <h3>Anexo</h3>
-                    <div>
-                      <div className={styles.anexoItens}>
-                        <div className={styles.icone}>
-                          <LuFileText />
-                        </div>
-                        <div className={styles.infoAnexo}>
-                          <h4>Trabalho_anexo.pdf</h4>
-                          <p>
-                            PDF <span>2.4 MB</span>
-                          </p>
-                        </div>
-                      </div>
-                      <LuDownload className={styles.iconeDawnload} />
-                    </div>
+                {(trabalhoSelecionado.metadata?.anexos?.length ?? 0) > 0 && (
+                  <div className={styles.anexos}>
+                    <h3>Anexos</h3>
+                    <ul className={styles.anexoLista}>
+                      {trabalhoSelecionado.metadata?.anexos?.map((anexo) => {
+                        const extensao = getFileExtension(anexo.nome);
+                        const extensaoLabel = extensao
+                          ? extensao.toUpperCase()
+                          : 'ARQUIVO';
+                        return (
+                          <li key={anexo.id}>
+                            <div className={styles.anexoItens}>
+                              <div className={styles.icone}>
+                                <LuFileText />
+                              </div>
+                              <div className={styles.infoAnexo}>
+                                <h4>{anexo.nome}</h4>
+                                <p>
+                                  {extensaoLabel}
+                                  {' '}
+                                  <span>{formatFileSize(anexo.tamanho)}</span>
+                                </p>
+                              </div>
+                            </div>
+                            <a
+                              href={anexo.url || anexo.visualizacaoUrl || '#'}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className={styles.downloadLink}
+                              aria-label={`Baixar ${anexo.nome}`}
+                            >
+                              <LuDownload className={styles.iconeDownload} />
+                            </a>
+                          </li>
+                        );
+                      })}
+                    </ul>
                   </div>
                 )}
 
