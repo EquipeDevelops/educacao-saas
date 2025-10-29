@@ -13,6 +13,13 @@ router.get(
   alunoController.getBoletim
 );
 
+router.get(
+  "/agenda",
+  protect,
+  authorize("ALUNO"),
+  alunoController.getAgendaMensal
+);
+
 // Rota para buscar os dados de um aluno específico (incluindo seu nome)
 router.get(
   "/:id",

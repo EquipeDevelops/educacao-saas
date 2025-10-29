@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   FaChevronLeft,
   FaChevronRight,
@@ -8,48 +8,10 @@ import {
   FaRegCalendar,
 } from 'react-icons/fa';
 import styles from './agenda.module.css';
-import { useAgendaMensal } from '@/hooks/agendaMensal/useAgendaMensal';
-
-export type EventoCalendario = {
-  id: string;
-  date: string | Date;
-  type:
-    | 'Aula'
-    | 'Prova'
-    | 'Trabalho'
-    | 'Tarefa'
-    | 'Recuperação'
-    | 'Reunião'
-    | 'Feriado'
-    | 'Evento Escolar';
-  title: string;
-  details?: string;
-  time?: string;
-};
-
-type ApiEvento = {
-  id: string;
-  data: string;
-  tipo: string;
-  titulo: string;
-  detalhes?: string;
-  horario?: string;
-};
-
-const MESES_PT = [
-  'Outubro',
-  'Novembro',
-  'Dezembro',
-  'Janeiro',
-  'Fevereiro',
-  'Março',
-  'Abril',
-  'Maio',
-  'Junho',
-  'Julho',
-  'Agosto',
-  'Setembro',
-];
+import {
+  useAgendaMensal,
+  type EventoCalendario,
+} from '@/hooks/agendaMensal/useAgendaMensal';
 function monthLabel(date: Date) {
   const formatter = new Intl.DateTimeFormat('pt-BR', {
     month: 'long',
@@ -75,8 +37,15 @@ function addMonths(d: Date, n: number) {
 function isoDate(d: Date) {
   return d.toISOString().slice(0, 10);
 }
-function toDate(v: string | Date) {
-  return atMidnight(v instanceof Date ? v : new Date(v));
+function sortKeyForTime(time?: string) {
+  if (!time) return '99:99';
+  const normalized = time.trim();
+  if (!normalized) return '99:99';
+  const lower = normalized.toLowerCase();
+  if (lower.startsWith('dia inteiro')) return '00:00';
+  const match = normalized.match(/\d{2}:\d{2}/);
+  if (match) return match[0];
+  return `98:${normalized}`;
 }
 function getMonthMatrix(viewDate: Date) {
   const start = startOfMonth(viewDate);
@@ -93,31 +62,6 @@ function getMonthMatrix(viewDate: Date) {
   return { days, start, end };
 }
 
-function mapApiToEvento(a: ApiEvento): EventoCalendario {
-  const mapTipo: Record<string, EventoCalendario['type']> = {
-    AULA: 'Aula',
-    PROVA: 'Prova',
-    TRABALHO: 'Trabalho',
-    TAREFA: 'Tarefa',
-    RECUPERACAO: 'Recuperação',
-    REUNIAO: 'Reunião',
-    FERIADO: 'Feriado',
-    EVENTO_ESCOLAR: 'Evento Escolar',
-  };
-  const tipo =
-    mapTipo[a.tipo?.toUpperCase?.()] ??
-    (a.tipo as EventoCalendario['type']) ??
-    'Evento Escolar';
-  return {
-    id: a.id,
-    date: a.data,
-    type: tipo,
-    title: a.titulo,
-    details: a.detalhes,
-    time: a.horario,
-  };
-}
-
 export default function AgendaMensalAlunoPage() {
   const [viewDate, setViewDate] = useState(atMidnight(new Date()));
   const [selectedDate, setSelectedDate] = useState(atMidnight(new Date()));
@@ -132,12 +76,15 @@ export default function AgendaMensalAlunoPage() {
   const eventosByDay = useMemo(() => {
     const m = new Map<string, EventoCalendario[]>();
     for (const ev of eventos) {
-      const k = isoDate(toDate(ev.date));
-      if (!m.has(k)) m.set(k, []);
-      m.get(k)!.push(ev);
+      const key = (ev.date || '').slice(0, 10);
+      if (!key) continue;
+      if (!m.has(key)) m.set(key, []);
+      m.get(key)!.push(ev);
     }
     for (const [k, arr] of m) {
-      arr.sort((a, b) => (a.time || '').localeCompare(b.time || ''));
+      arr.sort((a, b) =>
+        sortKeyForTime(a.time).localeCompare(sortKeyForTime(b.time)),
+      );
       m.set(k, arr);
     }
     return m;
@@ -173,6 +120,15 @@ export default function AgendaMensalAlunoPage() {
           </span>
         </div>
       </header>
+
+      {!loading && error && (
+        <div className={styles.errorBanner} role="alert">
+          <FaCalendarAlt
+            className={`${styles.errorIcon} ${styles.errorBannerIcon}`}
+          />
+          <span>{error}</span>
+        </div>
+      )}
 
       <div className={styles.wrapper}>
         {/* Coluna esquerda: calendário */}
@@ -284,6 +240,13 @@ export default function AgendaMensalAlunoPage() {
             <div className={styles.empty}>
               <FaRegCalendar className={styles.emptyIcon} />
               <p>Carregando…</p>
+            </div>
+          ) : error ? (
+            <div className={`${styles.empty} ${styles.errorState}`}>
+              <FaCalendarAlt
+                className={`${styles.errorIcon} ${styles.errorStateIcon}`}
+              />
+              <p>{error}</p>
             </div>
           ) : eventosSelecionado.length === 0 ? (
             <div className={styles.empty}>
