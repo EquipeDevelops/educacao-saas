@@ -1,6 +1,10 @@
 import { Prisma, PrismaClient } from "@prisma/client";
 import { CreateTarefaInput, FindAllTarefasInput } from "./tarefa.validator";
 import { AuthenticatedRequest } from "../../middlewares/auth";
+import {
+  googleDriveService,
+  GoogleDriveFile,
+} from "../../services/googleDrive.service";
 
 const prisma = new PrismaClient();
 
@@ -69,9 +73,17 @@ export async function create(
     throw error;
   }
 
+  const metadata = {
+    ...(data.metadata ?? {}),
+    anexos: Array.isArray((data.metadata as any)?.anexos)
+      ? (data.metadata as any).anexos
+      : [],
+  } as Prisma.JsonObject;
+
   return prisma.tarefas.create({
     data: {
       ...data,
+      metadata,
       unidadeEscolarId: componente.turma.unidadeEscolarId,
     },
     include: fullInclude,
@@ -157,6 +169,61 @@ export async function update(
   return prisma.tarefas.update({ where: { id }, data });
 }
 
+export async function addAttachments(
+  id: string,
+  files: Express.Multer.File[],
+  user: AuthenticatedRequest["user"]
+) {
+  if (!user.perfilId) {
+    const error = new Error("Professor não autenticado corretamente.");
+    (error as any).code = "FORBIDDEN";
+    throw error;
+  }
+
+  await verifyOwnership(id, user.perfilId);
+
+  const tarefa = await prisma.tarefas.findUnique({
+    where: { id },
+    select: { metadata: true },
+  });
+
+  if (!tarefa) {
+    const error = new Error("Tarefa não encontrada.");
+    (error as any).code = "P2025";
+    throw error;
+  }
+
+  const uploadedAttachments: GoogleDriveFile[] = [];
+
+  for (const file of files) {
+    const uploaded = await googleDriveService.uploadFile({
+      buffer: file.buffer,
+      mimeType: file.mimetype,
+      name: file.originalname,
+    });
+    uploadedAttachments.push(uploaded);
+  }
+
+  const currentMetadata = (tarefa.metadata as Record<string, any>) ?? {};
+  const existingAttachments = Array.isArray(currentMetadata.anexos)
+    ? currentMetadata.anexos
+    : [];
+
+  const anexosAtualizados = [...existingAttachments, ...uploadedAttachments];
+
+  const metadataAtualizada: Prisma.JsonObject = {
+    ...currentMetadata,
+    anexos: anexosAtualizados,
+  };
+
+  await prisma.tarefas.update({
+    where: { id },
+    data: { metadata: metadataAtualizada },
+  });
+
+  return anexosAtualizados;
+}
+
 export async function publish(
   id: string,
   publicado: boolean,
@@ -203,4 +270,5 @@ export const tarefaService = {
   update,
   publish,
   remove,
+  addAttachments,
 };
