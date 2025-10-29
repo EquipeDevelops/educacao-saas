@@ -12,6 +12,9 @@ import {
   useAgendaMensal,
   type EventoCalendario,
 } from '@/hooks/agendaMensal/useAgendaMensal';
+import Section from '@/components/section/Section';
+import Loading from '@/components/loading/Loading';
+
 function monthLabel(date: Date) {
   const formatter = new Intl.DateTimeFormat('pt-BR', {
     month: 'long',
@@ -85,188 +88,199 @@ export default function AgendaMensalAlunoPage() {
   const selectedKey = isoDate(selectedDate);
   const eventosSelecionado = eventosByDay.get(selectedKey) ?? [];
 
+  if (loading) {
+    return (
+      <Section>
+        <Loading />
+      </Section>
+    );
+  }
   return (
-    <div className={styles.page}>
-      <header className={styles.pageHeader}>
-        <h1>Agenda</h1>
-        <p className={styles.subtitle}>
-          Acompanhe suas aulas, provas e eventos escolares
-        </p>
-        <div className={styles.legend}>
-          <span>
-            <i className={`${styles.dot} ${styles.aula}`} /> Aulas
-          </span>
-          <span>
-            <i className={`${styles.dot} ${styles.prova}`} /> Provas
-          </span>
-          <span>
-            <i className={`${styles.dot} ${styles.trabalho}`} /> Trabalhos
-          </span>
-          <span>
-            <i className={`${styles.dot} ${styles.tarefa}`} /> Tarefas
-          </span>
-          <span>
-            <i className={`${styles.dot} ${styles.evento_escolar}`} /> Eventos
-          </span>
-        </div>
-      </header>
-
-      {!loading && error && (
-        <div className={styles.errorBanner} role="alert">
-          <FaCalendarAlt
-            className={`${styles.errorIcon} ${styles.errorBannerIcon}`}
-          />
-          <span>{error}</span>
-        </div>
-      )}
-
-      <div className={styles.wrapper}>
-        {/* Coluna esquerda: calendário */}
-        <section className={styles.calendarCard}>
-          <div className={styles.calendarHeader}>
-            <div className={styles.monthNav}>
-              <button
-                className={styles.navBtn}
-                onClick={() => setViewDate((d) => addMonths(d, -1))}
-                aria-label="Mês anterior"
-              >
-                <FaChevronLeft />
-              </button>
-              <div className={styles.monthLabel}>{monthLabel(viewDate)}</div>
-              <button
-                className={styles.navBtn}
-                onClick={() => setViewDate((d) => addMonths(d, +1))}
-                aria-label="Próximo mês"
-              >
-                <FaChevronRight />
-              </button>
-            </div>
-
-            <button
-              className={styles.todayBtn}
-              onClick={() => {
-                const now = atMidnight(new Date());
-                setViewDate(startOfMonth(now));
-                setSelectedDate(now);
-              }}
-            >
-              Hoje
-            </button>
+    <Section>
+      <div className={styles.page}>
+        <header className={styles.pageHeader}>
+          <h1>Agenda</h1>
+          <p className={styles.subtitle}>
+            Acompanhe suas aulas, provas e eventos escolares
+          </p>
+          <div className={styles.legend}>
+            <span>
+              <i className={`${styles.dot} ${styles.aula}`} /> Aulas
+            </span>
+            <span>
+              <i className={`${styles.dot} ${styles.prova}`} /> Provas
+            </span>
+            <span>
+              <i className={`${styles.dot} ${styles.trabalho}`} /> Trabalhos
+            </span>
+            <span>
+              <i className={`${styles.dot} ${styles.tarefa}`} /> Tarefas
+            </span>
+            <span>
+              <i className={`${styles.dot} ${styles.evento_escolar}`} /> Eventos
+            </span>
           </div>
+        </header>
 
-          <div className={styles.weekdays}>
-            {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((d) => (
-              <div key={d} className={styles.weekday}>
-                {d}
-              </div>
-            ))}
+        {!loading && error && (
+          <div className={styles.errorBanner} role="alert">
+            <FaCalendarAlt
+              className={`${styles.errorIcon} ${styles.errorBannerIcon}`}
+            />
+            <span>{error}</span>
           </div>
+        )}
 
-          <div className={styles.grid}>
-            {days.map((d, i) => {
-              const k = isoDate(d);
-              const inMonth = d.getMonth() === viewDate.getMonth();
-              const events = eventosByDay.get(k) ?? [];
-              const count = events.length;
-              const isToday = k === todayKey;
-              const isSelected = k === selectedKey;
-
-              return (
+        <div className={styles.wrapper}>
+          {/* Coluna esquerda: calendário */}
+          <section className={styles.calendarCard}>
+            <div className={styles.calendarHeader}>
+              <div className={styles.monthNav}>
                 <button
-                  key={`${k}-${i}`}
-                  className={[
-                    styles.cell,
-                    inMonth ? '' : styles.outMonth,
-                    isToday ? styles.today : '',
-                    isSelected ? styles.selected : '',
-                  ].join(' ')}
-                  onClick={() => setSelectedDate(d)}
+                  className={styles.navBtn}
+                  onClick={() => setViewDate((d) => addMonths(d, -1))}
+                  aria-label="Mês anterior"
                 >
-                  <div className={styles.cellTop}>
-                    <span className={styles.dayNumber}>{d.getDate()}</span>
-                    {count > 0 && (
-                      <span className={styles.counter}>{count}</span>
-                    )}
-                  </div>
-                  {/* Dots alinhados ao rodapé do cell */}
-                  <div className={styles.cellDots}>
-                    {events.slice(0, 4).map((ev) => (
-                      <i
-                        key={ev.id}
-                        className={`${styles.dot} ${
-                          styles[ev.type.toLowerCase().replace(' ', '_')]
-                        }`}
-                        title={ev.title}
-                      />
-                    ))}
-                    {events.length > 4 && (
-                      <span className={styles.more}>+{events.length - 4}</span>
-                    )}
-                  </div>
+                  <FaChevronLeft />
                 </button>
-              );
-            })}
-          </div>
-        </section>
+                <div className={styles.monthLabel}>{monthLabel(viewDate)}</div>
+                <button
+                  className={styles.navBtn}
+                  onClick={() => setViewDate((d) => addMonths(d, +1))}
+                  aria-label="Próximo mês"
+                >
+                  <FaChevronRight />
+                </button>
+              </div>
 
-        {/* Coluna direita: painel do dia */}
-        <aside className={styles.sideCard}>
-          <div className={styles.sideHeader}>
-            <div className={styles.sideTitle}>
-              {new Intl.DateTimeFormat('pt-BR', {
-                weekday: 'long',
-                day: 'numeric',
-                month: 'long',
-                year: 'numeric',
-              }).format(selectedDate)}
+              <button
+                className={styles.todayBtn}
+                onClick={() => {
+                  const now = atMidnight(new Date());
+                  setViewDate(startOfMonth(now));
+                  setSelectedDate(now);
+                }}
+              >
+                Hoje
+              </button>
             </div>
-            <div className={styles.sideSub}>
-              {eventosSelecionado.length}{' '}
-              {eventosSelecionado.length === 1 ? 'evento' : 'eventos'}
-            </div>
-          </div>
 
-          {loading ? (
-            <div className={styles.empty}>
-              <FaRegCalendar className={styles.emptyIcon} />
-              <p>Carregando…</p>
-            </div>
-          ) : error ? (
-            <div className={`${styles.empty} ${styles.errorState}`}>
-              <FaCalendarAlt
-                className={`${styles.errorIcon} ${styles.errorStateIcon}`}
-              />
-              <p>{error}</p>
-            </div>
-          ) : eventosSelecionado.length === 0 ? (
-            <div className={styles.empty}>
-              <FaRegCalendar className={styles.emptyIcon} />
-              <p>Nenhum evento neste dia</p>
-            </div>
-          ) : (
-            <ul className={styles.eventList}>
-              {eventosSelecionado.map((ev) => (
-                <li key={ev.id} className={styles.eventItem}>
-                  <span
-                    className={`${styles.pill} ${
-                      styles[ev.type.toLowerCase().replace(' ', '_')]
-                    }`}
-                  >
-                    {ev.type}
-                  </span>
-                  <div className={styles.eventMain}>
-                    <div className={styles.eventTitle}>{ev.title}</div>
-                    {ev.details && (
-                      <div className={styles.eventDetails}>{ev.details}</div>
-                    )}
-                  </div>
-                  <div className={styles.eventTime}>{ev.time ?? '--:--'}</div>
-                </li>
+            <div className={styles.weekdays}>
+              {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((d) => (
+                <div key={d} className={styles.weekday}>
+                  {d}
+                </div>
               ))}
-            </ul>
-          )}
-        </aside>
+            </div>
+
+            <div className={styles.grid}>
+              {days.map((d, i) => {
+                const k = isoDate(d);
+                const inMonth = d.getMonth() === viewDate.getMonth();
+                const events = eventosByDay.get(k) ?? [];
+                const count = events.length;
+                const isToday = k === todayKey;
+                const isSelected = k === selectedKey;
+
+                return (
+                  <button
+                    key={`${k}-${i}`}
+                    className={[
+                      styles.cell,
+                      inMonth ? '' : styles.outMonth,
+                      isToday ? styles.today : '',
+                      isSelected ? styles.selected : '',
+                    ].join(' ')}
+                    onClick={() => setSelectedDate(d)}
+                  >
+                    <div className={styles.cellTop}>
+                      <span className={styles.dayNumber}>{d.getDate()}</span>
+                      {count > 0 && (
+                        <span className={styles.counter}>{count}</span>
+                      )}
+                    </div>
+                    {/* Dots alinhados ao rodapé do cell */}
+                    <div className={styles.cellDots}>
+                      {events.slice(0, 4).map((ev) => (
+                        <i
+                          key={ev.id}
+                          className={`${styles.dot} ${
+                            styles[ev.type.toLowerCase().replace(' ', '_')]
+                          }`}
+                          title={ev.title}
+                        />
+                      ))}
+                      {events.length > 4 && (
+                        <span className={styles.more}>
+                          +{events.length - 4}
+                        </span>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+
+          {/* Coluna direita: painel do dia */}
+          <aside className={styles.sideCard}>
+            <div className={styles.sideHeader}>
+              <div className={styles.sideTitle}>
+                {new Intl.DateTimeFormat('pt-BR', {
+                  weekday: 'long',
+                  day: 'numeric',
+                  month: 'long',
+                  year: 'numeric',
+                }).format(selectedDate)}
+              </div>
+              <div className={styles.sideSub}>
+                {eventosSelecionado.length}{' '}
+                {eventosSelecionado.length === 1 ? 'evento' : 'eventos'}
+              </div>
+            </div>
+
+            {loading ? (
+              <div className={styles.empty}>
+                <FaRegCalendar className={styles.emptyIcon} />
+                <p>Carregando…</p>
+              </div>
+            ) : error ? (
+              <div className={`${styles.empty} ${styles.errorState}`}>
+                <FaCalendarAlt
+                  className={`${styles.errorIcon} ${styles.errorStateIcon}`}
+                />
+                <p>{error}</p>
+              </div>
+            ) : eventosSelecionado.length === 0 ? (
+              <div className={styles.empty}>
+                <FaRegCalendar className={styles.emptyIcon} />
+                <p>Nenhum evento neste dia</p>
+              </div>
+            ) : (
+              <ul className={styles.eventList}>
+                {eventosSelecionado.map((ev) => (
+                  <li key={ev.id} className={styles.eventItem}>
+                    <span
+                      className={`${styles.pill} ${
+                        styles[ev.type.toLowerCase().replace(' ', '_')]
+                      }`}
+                    >
+                      {ev.type}
+                    </span>
+                    <div className={styles.eventMain}>
+                      <div className={styles.eventTitle}>{ev.title}</div>
+                      {ev.details && (
+                        <div className={styles.eventDetails}>{ev.details}</div>
+                      )}
+                    </div>
+                    <div className={styles.eventTime}>{ev.time ?? '--:--'}</div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </aside>
+        </div>
       </div>
-    </div>
+    </Section>
   );
 }

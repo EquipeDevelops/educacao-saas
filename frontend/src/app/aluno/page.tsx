@@ -23,8 +23,6 @@ export default function AlunoPage() {
   } = useAlunoDashboard();
   const dataAtual = new Date();
 
-  console.log(mensagensRecentes);
-
   if (isLoading) {
     return <Loading />;
   }

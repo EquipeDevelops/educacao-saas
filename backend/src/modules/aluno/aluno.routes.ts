@@ -20,11 +20,18 @@ router.get(
   alunoController.getAgendaMensal
 );
 
+router.get(
+  '/profile/me',
+  protect,
+  authorize('ALUNO'),
+  alunoController.getProfile,
+);
+
 // Rota para buscar os dados de um aluno específico (incluindo seu nome)
 router.get(
   "/:id",
   protect,
-  authorize("GESTOR", "PROFESSOR"),
+  authorize("GESTOR", "PROFESSOR", "ALUNO"),
   alunoController.findOne // Garante que esta rota está aqui
 );
 

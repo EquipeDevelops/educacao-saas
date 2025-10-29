@@ -93,4 +93,17 @@ export const alunoController = {
       next(error);
     }
   },
+
+  getProfile: async (
+    req: AuthenticatedRequest,
+    res: Response,
+    next: NextFunction,
+  ) => {
+    try {
+      const profileData = await alunoService.getProfile(req.user);
+      res.json(profileData);
+    } catch (error) {
+      next(error);
+    }
+  },
 };

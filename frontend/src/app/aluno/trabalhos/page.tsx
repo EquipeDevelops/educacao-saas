@@ -71,6 +71,7 @@ export default function AtividadesPostadasPage() {
     <Section>
       <div className={styles.container}>
         <h1>Trabalhos</h1>
+        <p>Aqui você verá todos os trabalhos postados pelos professores</p>
         <div className={styles.telasContainer}>
           <div className={styles.trabalhosContainer}>
             <input
