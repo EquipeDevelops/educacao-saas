@@ -22,41 +22,51 @@ export default function MensagensRecentes({
   mensagens = [],
 }: MensagensRecentesProps) {
   console.log(mensagens);
+  
 
   return (
     <div className={styles.container}>
-      <div className={styles.header}>
-        <LuMessagesSquare />
-        <h3>Mensagens Recentes</h3>
-      </div>
+      <h2>
+        <span></span>Mensagens Recentes
+      </h2>
       <div className={styles.list}>
         {mensagens.length > 0 ? (
-          mensagens.map((msg) => (
-            <Link
-              key={msg.id}
-              href={`/aluno/mensagens?conversaId=${msg.id}`}
-              className={styles.item}
-            >
-              <div className={styles.avatar}>
-                {getInitials(msg.nomeOutraPessoa)}
-              </div>
-              <div className={styles.content}>
-                <div className={styles.info}>
-                  <span className={styles.nome}>
-                    {msg.papelUsuarioMensagem === 'PROFESSOR' ? 'Prof. ' : ''}
-                    {msg.nomeOutraPessoa}
-                  </span>
-                  <span className={styles.data}>
-                    {new Date(msg.dataUltimaMensagem).toLocaleDateString(
-                      'pt-BR',
-                      { day: '2-digit', month: '2-digit' },
-                    )}
-                  </span>
-                </div>
-                <p className={styles.mensagem}>{msg.ultimaMensagem}</p>
-              </div>
-            </Link>
-          ))
+          mensagens.map((msg) => {
+            return (
+              <>
+                {msg.ultimaMensagem !== 'Nenhuma mensagem ainda.' ? (
+                  <Link
+                    key={msg.id}
+                    href={`/aluno/mensagens?conversaId=${msg.id}`}
+                    className={styles.item}
+                  >
+                    <div className={styles.avatar}>
+                      {getInitials(msg.nomeOutraPessoa)}
+                    </div>
+                    <div className={styles.content}>
+                      <div className={styles.info}>
+                        <span className={styles.nome}>
+                          {msg.papelUsuarioMensagem === 'PROFESSOR'
+                            ? 'Prof. '
+                            : ''}
+                          {msg.nomeOutraPessoa}
+                        </span>
+                        <span className={styles.data}>
+                          {new Date(msg.dataUltimaMensagem).toLocaleDateString(
+                            'pt-BR',
+                            { day: '2-digit', month: '2-digit' },
+                          )}
+                        </span>
+                      </div>
+                      <p className={styles.mensagem}>{msg.ultimaMensagem}</p>
+                    </div>
+                  </Link>
+                ) : (
+                  ''
+                )}
+              </>
+            );
+          })
         ) : (
           <p className={styles.semMensagens}>Nenhuma mensagem recente.</p>
         )}

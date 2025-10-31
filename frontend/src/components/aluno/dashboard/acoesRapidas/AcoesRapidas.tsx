@@ -15,7 +15,7 @@ export default function AcoesRapidas() {
       link: '/aluno/disciplinas',
       icon: <VscMortarBoard />,
     },
-    { text: 'Grade', link: '/aluno/grade', icon: <IoCalendarOutline /> },
+    { text: 'Grade', link: '/aluno/agenda', icon: <IoCalendarOutline /> },
     { text: 'Mensagens', link: '/aluno/mensagens', icon: <FiMessageCircle /> },
     { text: 'Conquistas', link: '/aluno/conquistas', icon: <LuTrophy /> },
   ];
@@ -23,13 +23,13 @@ export default function AcoesRapidas() {
   return (
     <div className={styles.container}>
       <h2>
-        <SlEnergy /> Ações Rápidas
+        <span></span>Ações Rápidas
       </h2>
       <ul className={styles.actionsLinks}>
         {linksActions.map(({ icon, link, text }) => {
           return (
             <Link key={text} href={link}>
-              {icon}
+              <div className={styles.iconContainer}>{icon}</div>
               <p>{text}</p>
             </Link>
           );

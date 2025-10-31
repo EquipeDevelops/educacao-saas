@@ -1,8 +1,9 @@
-import { Router } from "express";
+import { Router, NextFunction, Request, Response } from "express";
 import { tarefaController } from "./tarefa.controller";
 import { validate } from "../../middlewares/validate";
 import { protect, authorize } from "../../middlewares/auth";
 import { z } from "zod";
+import multer from "multer";
 import {
   createTarefaSchema,
   updateTarefaSchema,
@@ -13,6 +14,42 @@ import {
 } from "./tarefa.validator";
 
 const router = Router();
+
+const allowedMimeTypes = new Set([
+  "application/pdf",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/vnd.ms-powerpoint",
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+]);
+
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 20 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    if (allowedMimeTypes.has(file.mimetype)) {
+      return cb(null, true);
+    }
+    return cb(
+      new Error(
+        "Tipo de arquivo não suportado. Envie apenas PDF, Word ou PowerPoint."
+      )
+    );
+  },
+});
+
+const uploadAnexos = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  upload.array("anexos", 5)(req, res, (err) => {
+    if (err) {
+      return res.status(400).json({ message: err.message });
+    }
+    return next();
+  });
+};
 
 router.post(
   "/",
@@ -58,6 +95,15 @@ router.get(
   authorize("ADMINISTRADOR", "GESTOR", "PROFESSOR", "ALUNO"),
   validate(z.object({ params: paramsSchema })),
   tarefaController.findById
+);
+
+router.post(
+  "/:id/anexos",
+  protect,
+  authorize("PROFESSOR"),
+  validate(z.object({ params: paramsSchema })),
+  uploadAnexos,
+  tarefaController.uploadAttachments
 );
 
 export const tarefaRoutes = router;

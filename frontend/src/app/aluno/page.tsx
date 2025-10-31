@@ -5,7 +5,7 @@ import styles from './home.module.css';
 import ErrorMsg from '@/components/errorMsg/ErrorMsg';
 import FichaAluno from '@/components/aluno/dashboard/fichaAluno/FichaAluno';
 import AcoesRapidas from '@/components/aluno/dashboard/acoesRapidas/AcoesRapidas';
-import AgendaSemanalAluno from '@/components/aluno/agenda/agendaSemanal/AgendaSemanalAluno';
+import AgendaSemanalAluno from '@/components/aluno/dashboard/agendaSemanal/AgendaSemanalAluno';
 import { useAlunoDashboard } from '@/hooks/dashboardAluno/useDashboardAluno';
 import Desempenho from '@/components/aluno/dashboard/desempenho/Desempenho';
 import AtividadesPendentes from '@/components/aluno/dashboard/atividadesPendentes/AtividadesPendentes';
@@ -35,10 +35,6 @@ export default function AlunoPage() {
       <Section>
         <div className={styles.dashboardContainer}>
           <header className={styles.header}>
-            <div className={styles.nameAndMessage}>
-              <h1>Olá, {alunoInfo?.nome}!</h1>
-              <p>Bem-vindo de volta ao seu painel educacional</p>
-            </div>
             <div className={styles.dateInfo}>
               <p className={styles.weekDay}>
                 {dataAtual.toLocaleDateString('pt-BR', { weekday: 'long' })}
@@ -52,16 +48,12 @@ export default function AlunoPage() {
             </div>
           </header>
           <div className={styles.bodyDashboard}>
-            <div className={styles.infoAluno}>
-              <FichaAluno alunoInfo={alunoInfo} />
-              <AcoesRapidas />
-              <AtividadesPendentes atividades={tarefasPendentes} />
-              <MensagensRecentes mensagens={mensagensRecentes} />
-            </div>
-            <div className={styles.calendario_desempenho}>
-              <AgendaSemanalAluno eventos={agendaEventos} />
-              <Desempenho desempenho={performance} />
-            </div>
+            <FichaAluno alunoInfo={alunoInfo} />
+            <AcoesRapidas />
+            <Desempenho desempenho={performance} />
+            <AtividadesPendentes atividades={tarefasPendentes} />
+            <MensagensRecentes mensagens={mensagensRecentes} />
+            <AgendaSemanalAluno eventos={agendaEventos} />
           </div>
         </div>
       </Section>

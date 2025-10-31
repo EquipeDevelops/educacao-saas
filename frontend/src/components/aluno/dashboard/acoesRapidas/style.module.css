@@ -1,9 +1,10 @@
 .container {
   display: flex;
   flex-direction: column;
+  height: 100%;
+  grid-row: 2 / 3;
   background-color: white;
   padding: 20px;
-  margin-top: 20px;
   border-radius: 15px;
   border: 1px solid var(--cor-borda);
 
@@ -15,9 +16,11 @@
     font-size: 1.2rem;
     font-weight: 500;
 
-    & svg {
-      font-size: 1.2rem !important;
-      color: var(--cor-primaria);
+    & span {
+      width: 5px;
+      height: 25px;
+      background-color: var(--cor-primaria);
+      border-radius: 5px;
     }
   }
 }
@@ -33,21 +36,31 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 20px;
-    border: 1px solid var(--cor-borda);
+    gap: 10px;
+    border: 1px solid color-mix(in srgb, var(--cor-primaria) 20%, white 80%);
+    background-color: var(--cor-primaria-light);
     padding: 20px;
-    border-radius: 10px;
+    border-radius: 15px;
     width: 100%;
     max-width: 265px;
-    transition: all .2s ease;
+    transition: all 0.2s ease;
 
-    & svg {
-      font-size: 1.5rem;
-      color: var(--cor-primaria);
+    & .iconContainer {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: var(--cor-primaria);
+      width: 52px;
+      height: 52px;
+      border-radius: 15px;
+      & svg {
+        font-size: 1.5rem;
+        color: white;
+      }
     }
 
     &:hover {
-      background-color: rgb(241, 241, 241);
+      background-color: var(--cor-icons);
     }
   }
 }

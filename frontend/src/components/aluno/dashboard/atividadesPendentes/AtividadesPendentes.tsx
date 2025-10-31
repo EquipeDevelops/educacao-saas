@@ -1,5 +1,5 @@
 import { TarefaPendente } from '@/types/statusAluno';
-import { LuClipboardList } from 'react-icons/lu';
+import { LuClipboardList, LuClock } from 'react-icons/lu';
 import { LuSquareArrowOutUpRight } from 'react-icons/lu';
 import styles from './style.module.css';
 import Link from 'next/link';
@@ -13,7 +13,7 @@ export default function AtividadesPendentes({ atividades }: AtividadesProps) {
     <div className={styles.container}>
       <div>
         <h2>
-          <LuClipboardList /> Atividades Pendentes
+          <span></span>Atividades Pendentes
         </h2>
         <ul className={styles.atividadesContainer}>
           {atividades.map((atividade) => {
@@ -45,6 +45,7 @@ export default function AtividadesPendentes({ atividades }: AtividadesProps) {
                   <p className={styles.atividadeTitulo}>{atividade.titulo}</p>
                 </div>
                 <span className={styles.atividadePrazo}>
+                  <LuClock />
                   {new Date(atividade.data_entrega)
                     .toLocaleDateString('pt-br')
                     .slice(0, 5)}

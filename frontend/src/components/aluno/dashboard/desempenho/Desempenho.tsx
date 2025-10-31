@@ -14,7 +14,7 @@ export default function Desempenho({ desempenho }: DesempenhoProps) {
   return (
     <div className={styles.container}>
       <h2>
-        <FaArrowTrendUp /> Desempenho Acadêmico
+        <span></span>Desempenho Acadêmico
       </h2>
       <div className={styles.taxaConclusao}>
         <p className={styles.description}>
@@ -37,28 +37,23 @@ export default function Desempenho({ desempenho }: DesempenhoProps) {
             : 'Desempenho Ruim'}
         </span>
       </div>
-      <div className={styles.notasContainer}>
-        <div className={styles.ultimaNota}>
-          <FiTarget />
-          <p>Última Nota</p>
-          <h3>{desempenho.ultimaNota}</h3>
-        </div>
-        <ul className={styles.notas}>
-          <li className={styles.media}>
+      <div className={styles.infoNotasContainer}>
+        <ul>
+          <li className={styles.cardUltimaNota}>
+            <h4>Última Nota</h4>
+            <p>{desempenho.ultimaNota}</p>
+          </li>
+          <li className={styles.cardMedia}>
+            <h4>Média Global</h4>
             <p>{desempenho.mediaGeral}</p>
-            <p>Média Global</p>
           </li>
-          <li className={styles.notaAlta}>
+          <li className={styles.cardNotaAlta}>
+            <h4>Nota mais alta</h4>
             <p>{desempenho.notaMaisAlta}</p>
-            <p>Nota mais alta</p>
           </li>
-          <li className={styles.notaBaixa}>
-            <p>{desempenho.notaMaisBaixa}</p>
-            <p>Nota mais baixa</p>
-          </li>
-          <li className={styles.materia}>
+          <li className={styles.cardMateria}>
+            <h4>Máteria de destaque</h4>
             <p>{desempenho.melhorMateria}</p>
-            <p>Maior destaque</p>
           </li>
         </ul>
       </div>

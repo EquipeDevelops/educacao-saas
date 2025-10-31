@@ -1,8 +1,8 @@
 :root {
-  --cor-primaria: #0070f3;
+  --cor-primaria: #016be4;
   --cor-primaria-hover: #1365c4;
   --cor-primaria-dark: #1E5BB8;
-  --cor-primaria-light: #eaf2ff;
+  --cor-primaria-light: #ecf4ff;
   --cor-icons: #DBEAFE;
   --cor-icons-background: rgba(255, 255, 255, 0.207);
   --cor-icons-background-hover: #092a8462;
@@ -13,8 +13,8 @@
   --cor-perigo-light: #ffe3e3;
   --cor-perigo-dark: #af0202;
   --cor-aviso: #fdbf07;
-  --cor-aviso-light: #fffbd0;
-  --cor-aviso-dark: #d08700;
+  --cor-aviso-light: #fff4df;
+  --cor-aviso-dark: #c27f03;
   --cor-aviso-hover: #e0a800;
   --cor-envio: #9810fa;
   --cor-envio-light: #f8f4ff;

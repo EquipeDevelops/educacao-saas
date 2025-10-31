@@ -10,7 +10,7 @@ import {
   TarefaPendente,
   MensagemRecente,
 } from '@/types/statusAluno';
-import { EventoCalendario } from '@/components/aluno/agenda/agendaSemanal/AgendaSemanalAluno';
+import { EventoCalendario } from '@/components/aluno/dashboard/agendaSemanal/AgendaSemanalAluno';
 
 export function useAlunoDashboard() {
   const { user, loading: authLoading } = useAuth();
