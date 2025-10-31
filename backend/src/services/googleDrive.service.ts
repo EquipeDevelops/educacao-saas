@@ -1,3 +1,4 @@
+// backend/src/services/googleDrive.service.ts
 import { randomBytes } from "crypto";
 
 const GOOGLE_OAUTH_TOKEN_URL = "https://oauth2.googleapis.com/token";
@@ -24,44 +25,49 @@ export interface GoogleDriveFile {
 let cachedAccessToken: { token: string; expiresAt: number } | null = null;
 let cachedFolderId: string | null = null;
 
-const clientId =
-  process.env.GOOGLE_DRIVE_CLIENT_ID ??
-  "34172535407-i467kkn72q9mgfadfapf9kpi87u96gr8.apps.googleusercontent.com";
-const clientSecret =
-  process.env.GOOGLE_DRIVE_CLIENT_SECRET ??
-  "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";
-const redirectUri =
-  process.env.GOOGLE_DRIVE_REDIRECT_URI ?? "http://localhost:4000";
-const refreshToken = process.env.GOOGLE_REFRESH_TOKEN!;
-const folderName =
-  process.env.GOOGLE_DRIVE_FOLDER_NAME ?? "anexos_educacaoSass";
+// 🔒 SEM DEFAULTS: tudo vem de ENV
+const clientId = process.env.GOOGLE_DRIVE_CLIENT_ID;
+const clientSecret = process.env.GOOGLE_DRIVE_CLIENT_SECRET;
+const redirectUri = process.env.GOOGLE_DRIVE_REDIRECT_URI; // opcional no refresh
+const refreshToken = process.env.GOOGLE_DRIVE_REFRESH_TOKEN; // 👈 nome consistente
+const folderName = process.env.GOOGLE_DRIVE_FOLDER_NAME ?? "anexos_educacaoSass";
+
+function ensureEnv() {
+  const missing: string[] = [];
+  if (!clientId) missing.push("GOOGLE_DRIVE_CLIENT_ID");
+  if (!clientSecret) missing.push("GOOGLE_DRIVE_CLIENT_SECRET");
+  if (!refreshToken) missing.push("GOOGLE_DRIVE_REFRESH_TOKEN");
+  // redirectUri não é obrigatório para refresh_token flow
+  if (missing.length) {
+    throw new Error(
+      `Variáveis de ambiente ausentes: ${missing.join(
+        ", "
+      )}. Configure-as no .env (não comitar).`
+    );
+  }
+}
 
 async function getAccessToken(): Promise<string> {
   if (cachedAccessToken && cachedAccessToken.expiresAt > Date.now()) {
     return cachedAccessToken.token;
   }
 
-  if (!refreshToken) {
-    throw new Error(
-      "Token de atualização do Google Drive não configurado. Defina GOOGLE_DRIVE_REFRESH_TOKEN."
-    );
-  }
+  ensureEnv();
 
   const params = new URLSearchParams({
-    client_id: clientId,
-    client_secret: clientSecret,
-    refresh_token: refreshToken,
+    client_id: clientId!,
+    client_secret: clientSecret!,
+    refresh_token: refreshToken!,
     grant_type: "refresh_token",
-    redirect_uri: redirectUri,
+    // redirect_uri: redirectUri ?? "", // não é necessário para o refresh; evite enviar vazio
   });
 
-  console.log('🔐 Gerando novo access token...');
+  // Log leve (sem segredos)
+  console.log("🔐 Solicitando novo access token ao Google…");
 
   const response = await fetch(GOOGLE_OAUTH_TOKEN_URL, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: params.toString(),
   });
 
@@ -79,6 +85,7 @@ async function getAccessToken(): Promise<string> {
 
   cachedAccessToken = {
     token: data.access_token,
+    // margem de 60s
     expiresAt: Date.now() + (data.expires_in - 60) * 1000,
   };
 
@@ -86,9 +93,7 @@ async function getAccessToken(): Promise<string> {
 }
 
 async function ensureFolder(accessToken: string): Promise<string> {
-  if (cachedFolderId) {
-    return cachedFolderId;
-  }
+  if (cachedFolderId) return cachedFolderId;
 
   const query = new URLSearchParams({
     q: `name='${folderName}' and mimeType='application/vnd.google-apps.folder' and trashed=false`,
@@ -97,9 +102,7 @@ async function ensureFolder(accessToken: string): Promise<string> {
   });
 
   const listResponse = await fetch(`${GOOGLE_DRIVE_FILES_URL}?${query}`, {
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-    },
+    headers: { Authorization: `Bearer ${accessToken}` },
   });
 
   if (!listResponse.ok) {
@@ -111,7 +114,7 @@ async function ensureFolder(accessToken: string): Promise<string> {
     files?: Array<{ id: string; name: string }>;
   };
 
-  if (listData.files && listData.files.length > 0) {
+  if (listData.files?.length) {
     cachedFolderId = listData.files[0].id;
     return cachedFolderId;
   }
@@ -139,6 +142,7 @@ async function ensureFolder(accessToken: string): Promise<string> {
 }
 
 async function setFilePermissions(accessToken: string, fileId: string) {
+  // ⚠️ Isto deixa o arquivo público (link share). Use com consciência.
   const response = await fetch(
     `${GOOGLE_DRIVE_FILES_URL}/${fileId}/permissions`,
     {
@@ -164,11 +168,7 @@ async function fetchFileMetadata(accessToken: string, fileId: string) {
 
   const response = await fetch(
     `${GOOGLE_DRIVE_FILES_URL}/${fileId}?${params.toString()}`,
-    {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    }
+    { headers: { Authorization: `Bearer ${accessToken}` } }
   );
 
   if (!response.ok) {
@@ -199,10 +199,9 @@ export async function uploadFile({
   const closeDelimiter = `\r\n--${boundary}--`;
 
   const metadataPart = Buffer.from(
-    `${delimiter}Content-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify({
-      name,
-      parents: [folderId],
-    })}`
+    `${delimiter}Content-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(
+      { name, parents: [folderId] }
+    )}`
   );
 
   const fileHeader = Buffer.from(
@@ -255,6 +254,4 @@ export async function uploadFile({
   };
 }
 
-export const googleDriveService = {
-  uploadFile,
-};
+export const googleDriveService = { uploadFile };
