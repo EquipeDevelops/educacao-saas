@@ -25,14 +25,12 @@ let cachedAccessToken: { token: string; expiresAt: number } | null = null;
 let cachedFolderId: string | null = null;
 
 const clientId =
-  process.env.GOOGLE_DRIVE_CLIENT_ID ??
-  "34172535407-i467kkn72q9mgfadfapf9kpi87u96gr8.apps.googleusercontent.com";
+  process.env.GOOGLE_DRIVE_CLIENT_ID
 const clientSecret =
-  process.env.GOOGLE_DRIVE_CLIENT_SECRET ??
-  "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";
+  process.env.GOOGLE_DRIVE_CLIENT_SECRET
 const redirectUri =
   process.env.GOOGLE_DRIVE_REDIRECT_URI ?? "http://localhost:4000";
-const refreshToken = process.env.GOOGLE_DRIVE_REFRESH_TOKEN ?? "1//05Vh_ZCIrHzOFCgYIARAAGAUSNwF-L9IrXxkdOcEzO1ETgDFL5Hm-km3DfAVc8fx2CkL-SA9cGw_dGUbm5Lw3QmD8y6gzlQI1E5o";
+const refreshToken = process.env.GOOGLE_DRIVE_REFRESH_TOKEN;
 const folderName =
   process.env.GOOGLE_DRIVE_FOLDER_NAME ?? "anexos_educacaoSass";
 
