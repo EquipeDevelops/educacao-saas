@@ -2,7 +2,7 @@
 
 import { useAuth } from "@/contexts/AuthContext";
 
-export default function AdministradorPage() {
+export default function AtestePage() {
   const { user, loading } = useAuth();
 
   if (loading || !user) {

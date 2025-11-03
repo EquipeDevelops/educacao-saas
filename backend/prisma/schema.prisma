@@ -765,7 +765,7 @@ model Pagamento {
 model CategoriaTransacao {
   id               String      @id @default(auto()) @map("_id") @db.ObjectId
   nome             String
-  tipo             TipoTransacao // RECEITA ou DESPESA
+  tipo             TipoTransacao 
   unidadeEscolarId String      @db.ObjectId
   unidadeEscolar   Unidades_Escolares @relation(fields: [unidadeEscolarId], references: [id])
   transacoes       Transacao[]
@@ -773,3 +773,5 @@ model CategoriaTransacao {
   @@unique([nome, unidadeEscolarId])
   @@map("categorias_transacao")
 }
+
+
