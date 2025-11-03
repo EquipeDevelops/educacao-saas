@@ -96,6 +96,7 @@ model Unidades_Escolares {
   Plano Plano[]
   Mensalidade Mensalidade[]
   CategoriaTransacao CategoriaTransacao[]
+  DiariosAula DiarioAula[]
 }
 
 model Usuarios {
@@ -151,6 +152,7 @@ model Usuarios_professor {
   titulacao              String?
   area_especializacao    String?
   componentes_lecionados ComponenteCurricular[]
+  diarios_aula           DiarioAula[]
 
   @@map("perfis_professores")
 }
@@ -247,6 +249,7 @@ model Matriculas {
   ano_letivo          Int
   avaliacoes_parciais AvaliacaoParcial[]
   registros_falta     RegistroFalta[]
+  registros_presenca  DiarioAulaPresenca[]
   aluno               Usuarios_aluno     @relation(fields: [alunoId], references: [id])
   alunoId             String             @db.ObjectId
   turma               Turmas             @relation(fields: [turmaId], references: [id])
@@ -272,6 +275,7 @@ model ComponenteCurricular {
   avaliacoes_parciais AvaliacaoParcial[]
   Tarefas             Tarefas[]
   HorarioAula         HorarioAula[]
+  diarios_aula        DiarioAula[]
 
   @@map("componentes_curriculares")
   @@unique([turmaId, materiaId, ano_letivo])
@@ -304,6 +308,67 @@ model RegistroFalta {
 
   @@map("registros_falta")
   @@index([matriculaId])
+}
+
+enum SituacaoPresenca {
+  PRESENTE
+  FALTA
+  FALTA_JUSTIFICADA
+}
+
+model DiarioAula {
+  id                      String                 @id @default(auto()) @map("_id") @db.ObjectId
+  data                    DateTime               @db.Date
+  objetivoCodigo          String
+  objetivoDescricao       String
+  tema                    String?
+  atividade               String?
+  observacoes             String?
+  criado_em               DateTime               @default(now())
+  atualizado_em           DateTime               @updatedAt
+  professor               Usuarios_professor     @relation(fields: [professorId], references: [id])
+  professorId             String                 @db.ObjectId
+  componenteCurricular    ComponenteCurricular   @relation(fields: [componenteCurricularId], references: [id])
+  componenteCurricularId  String                 @db.ObjectId
+  unidadeEscolar          Unidades_Escolares     @relation(fields: [unidadeEscolarId], references: [id])
+  unidadeEscolarId        String                 @db.ObjectId
+  objetivos               DiarioAulaObjetivo[]
+  registros_presenca      DiarioAulaPresenca[]
+
+  @@map("diarios_aula")
+  @@index([professorId])
+  @@index([componenteCurricularId])
+  @@index([unidadeEscolarId])
+  @@unique([componenteCurricularId, data])
+}
+
+model DiarioAulaPresenca {
+  id             String           @id @default(auto()) @map("_id") @db.ObjectId
+  situacao       SituacaoPresenca @default(PRESENTE)
+  observacao     String?
+  matricula      Matriculas       @relation(fields: [matriculaId], references: [id])
+  matriculaId    String           @db.ObjectId
+  diarioAula     DiarioAula       @relation(fields: [diarioAulaId], references: [id], onDelete: Cascade)
+  diarioAulaId   String           @db.ObjectId
+
+  @@map("diarios_aula_presencas")
+  @@index([matriculaId])
+  @@index([diarioAulaId])
+  @@unique([diarioAulaId, matriculaId])
+}
+
+model DiarioAulaObjetivo {
+  id           String     @id @default(auto()) @map("_id") @db.ObjectId
+  codigo       String
+  descricao    String
+  etapa        String?
+  area         String?
+  diarioAula   DiarioAula @relation(fields: [diarioAulaId], references: [id], onDelete: Cascade)
+  diarioAulaId String     @db.ObjectId
+
+  @@map("diarios_aula_objetivos")
+  @@index([diarioAulaId])
+  @@unique([diarioAulaId, codigo])
 }
 
 enum TipoTarefa {
@@ -700,7 +765,7 @@ model Pagamento {
 model CategoriaTransacao {
   id               String      @id @default(auto()) @map("_id") @db.ObjectId
   nome             String
-  tipo             TipoTransacao // RECEITA ou DESPESA
+  tipo             TipoTransacao 
   unidadeEscolarId String      @db.ObjectId
   unidadeEscolar   Unidades_Escolares @relation(fields: [unidadeEscolarId], references: [id])
   transacoes       Transacao[]
@@ -708,3 +773,5 @@ model CategoriaTransacao {
   @@unique([nome, unidadeEscolarId])
   @@map("categorias_transacao")
 }
+
+
