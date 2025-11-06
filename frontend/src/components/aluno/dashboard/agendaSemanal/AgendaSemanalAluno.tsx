@@ -3,9 +3,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import { FaCalendarAlt } from 'react-icons/fa';
 import styles from './styles.module.css';
+import { LuBookOpen, LuCalendar, LuClipboard, LuClipboardList, LuRefreshCcw, LuSchool, LuUsers } from 'react-icons/lu';
 
-// Para conveniência, mantive o tipo aqui como no seu exemplo.
-// O ideal é que ele seja importado de um arquivo central de tipos, como '@/types/agenda'.
 export type EventoCalendario = {
   id: string;
   date: Date;
@@ -63,7 +62,7 @@ export default function AgendaSemanalAluno({ eventos = [] }: AgendaProps) {
       .filter((e) => new Date(e.date).toDateString() === date.toDateString())
       .sort((a, b) => (a.time || '').localeCompare(b.time || ''));
   };
-
+  
   return (
     <div className={styles.container}>
       <div className={styles.header}>
@@ -125,7 +124,26 @@ export default function AgendaSemanalAluno({ eventos = [] }: AgendaProps) {
                 styles[evento.type.toLowerCase().replace(' ', '_')]
               }`}
             >
-              {evento.title}
+              {evento.type === 'Aula' ? (
+                <LuBookOpen />
+              ) : evento.type === 'Prova' ? (
+                <LuClipboard />
+              ) : evento.type === 'Trabalho' ? (
+                <LuClipboardList />
+              ) : evento.type === 'Recuperação' ? (
+                <LuRefreshCcw />
+              ) : evento.type === 'Reunião' ? (
+                <LuUsers />
+              ) : evento.type === 'Feriado' ? (
+                <LuCalendar />
+              ) : evento.type === 'Evento Escolar' ? (
+                <LuSchool />
+              ) : (
+                <LuCalendar />
+              )}
+              <p>
+                 {evento.type} - {evento.title} {evento.time ? <span>{evento.time}</span> : null}
+              </p>
             </div>
           ))
         ) : (

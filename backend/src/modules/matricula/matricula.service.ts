@@ -30,7 +30,7 @@ export async function create(
   ]);
 
   if (!aluno || !turma) {
-    throw new Error("Aluno ou turma não encontrado na sua unidade escolar.");
+    throw new Error("Aluno ou turma nao encontrada na sua unidade escolar.");
   }
 
   const matriculaExistente = await prisma.matriculas.findFirst({
@@ -43,7 +43,7 @@ export async function create(
 
   if (matriculaExistente) {
     throw new Error(
-      "Este aluno já possui uma matrícula ativa para este ano letivo."
+      "Este aluno ja possui uma matricula ativa para este ano letivo."
     );
   }
 
@@ -64,24 +64,53 @@ export async function findAll(
     turma: { unidadeEscolarId: user.unidadeEscolarId },
   };
 
+  let turmaIdFilter = filters.turmaId;
+  let professorValidadoPeloComponente = false;
+
+  if (filters.componenteCurricularId) {
+    const componente = await prisma.componenteCurricular.findFirst({
+      where: {
+        id: filters.componenteCurricularId,
+        turma: { unidadeEscolarId: user.unidadeEscolarId },
+        ...(user.papel === "PROFESSOR"
+          ? { professorId: user.perfilId! }
+          : {}),
+      },
+      select: { turmaId: true },
+    });
+
+    if (!componente) {
+      throw new Error(
+        "Voce nao tem permissao para visualizar os alunos deste componente curricular."
+      );
+    }
+
+    turmaIdFilter = componente.turmaId;
+    professorValidadoPeloComponente = user.papel === "PROFESSOR";
+  }
+
   if (user.papel === "ALUNO") {
     where.aluno = { usuarioId: user.id };
   }
 
   if (user.papel === "PROFESSOR") {
-    if (filters.turmaId) {
-      const temAcesso = await prisma.componenteCurricular.findFirst({
-        where: {
-          professorId: user.perfilId!,
-          turmaId: filters.turmaId,
-        },
-      });
-      if (!temAcesso) {
-        throw new Error(
-          "Você não tem permissão para ver os alunos desta turma."
-        );
+    if (turmaIdFilter) {
+      if (!professorValidadoPeloComponente) {
+        const temAcesso = await prisma.componenteCurricular.findFirst({
+          where: {
+            professorId: user.perfilId!,
+            turmaId: turmaIdFilter,
+          },
+        });
+
+        if (!temAcesso) {
+          throw new Error(
+            "Voce nao tem permissao para ver os alunos desta turma."
+          );
+        }
       }
-      where.turmaId = filters.turmaId;
+
+      where.turmaId = turmaIdFilter;
     } else {
       const componentesDoProfessor = await prisma.componenteCurricular.findMany(
         {
@@ -89,8 +118,13 @@ export async function findAll(
           select: { turmaId: true },
         }
       );
+
       const turmasIds = [
-        ...new Set(componentesDoProfessor.map((c) => c.turmaId)),
+        ...new Set(
+          componentesDoProfessor
+            .map((c) => c.turmaId)
+            .filter((turmaId): turmaId is string => Boolean(turmaId))
+        ),
       ];
 
       if (turmasIds.length === 0) {
@@ -101,12 +135,17 @@ export async function findAll(
     }
   }
 
-  if (filters.turmaId) {
-    where.turmaId = filters.turmaId;
+  if (turmaIdFilter) {
+    where.turmaId = turmaIdFilter;
   }
 
-  if (filters.ano_letivo) where.ano_letivo = Number(filters.ano_letivo);
-  if (filters.status) where.status = filters.status;
+  if (filters.ano_letivo) {
+    where.ano_letivo = Number(filters.ano_letivo);
+  }
+
+  if (filters.status) {
+    where.status = filters.status;
+  }
 
   return prisma.matriculas.findMany({
     where,
@@ -131,10 +170,11 @@ export async function updateStatus(
 ) {
   const matricula = await findById(id, user);
   if (!matricula) {
-    const error = new Error("Matrícula não encontrada.");
+    const error = new Error("Matricula nao encontrada.");
     (error as any).code = "P2025";
     throw error;
   }
+
   return prisma.matriculas.update({
     where: { id },
     data: { status },
@@ -145,10 +185,11 @@ export async function updateStatus(
 export async function remove(id: string, user: AuthenticatedRequest["user"]) {
   const matricula = await findById(id, user);
   if (!matricula) {
-    const error = new Error("Matrícula não encontrada.");
+    const error = new Error("Matricula nao encontrada.");
     (error as any).code = "P2025";
     throw error;
   }
+
   return prisma.matriculas.delete({ where: { id } });
 }
 

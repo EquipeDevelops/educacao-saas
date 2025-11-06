@@ -1,4 +1,10 @@
-import { Prisma, PrismaClient, StatusSubmissao } from "@prisma/client";
+import {
+  Prisma,
+  PrismaClient,
+  StatusSubmissao,
+  TipoDeAvaliacao,
+  TipoTarefa,
+} from "@prisma/client";
 import {
   CreateSubmissaoInput,
   GradeSubmissaoInput,
@@ -12,6 +18,22 @@ const fullInclude = {
   aluno: { include: { usuario: { select: { id: true, nome: true } } } },
   tarefa: { select: { id: true, titulo: true, pontos: true } },
   respostas: true,
+};
+
+const mapTipoTarefaParaTipoAvaliacao = (
+  tipo: TipoTarefa
+): TipoDeAvaliacao => {
+  switch (tipo) {
+    case "PROVA":
+      return TipoDeAvaliacao.PROVA;
+    case "TRABALHO":
+      return TipoDeAvaliacao.TRABALHO;
+    case "QUESTIONARIO":
+    case "LICAO_DE_CASA":
+      return TipoDeAvaliacao.ATIVIDADE_EM_SALA;
+    default:
+      return TipoDeAvaliacao.OUTRO;
+  }
 };
 
 async function verificarConquistasDeTarefasConcluidas(
@@ -29,7 +51,7 @@ async function verificarConquistasDeTarefasConcluidas(
     });
 
     console.log(
-      `[CONQUISTA] Total de tarefas concluídas: ${totalTarefasConcluidas}`
+      `[CONQUISTA] Total de tarefas conclu��das: ${totalTarefasConcluidas}`
     );
 
     const conquistasDisponiveis = await prisma.conquistasPorUnidade.findMany({
@@ -49,7 +71,7 @@ async function verificarConquistasDeTarefasConcluidas(
 
     if (conquistasDisponiveis.length === 0) {
       console.log(
-        "[CONQUISTA] Nenhuma conquista por tarefa concluída ativa para esta unidade."
+        "[CONQUISTA] Nenhuma conquista por tarefa conclu��da ativa para esta unidade."
       );
       return;
     }
@@ -89,7 +111,7 @@ async function verificarConquistasDeTarefasConcluidas(
     }
   } catch (error) {
     console.error(
-      "[ERRO CONQUISTA] Falha ao verificar conquistas automáticas:",
+      "[ERRO CONQUISTA] Falha ao verificar conquistas automǭticas:",
       error
     );
   }
@@ -112,7 +134,7 @@ export async function create(
   });
   if (!tarefa) {
     throw new Error(
-      "Tarefa não encontrada ou não está disponível em sua unidade escolar."
+      "Tarefa nǜo encontrada ou nǜo estǭ dispon��vel em sua unidade escolar."
     );
   }
 
@@ -124,14 +146,14 @@ export async function create(
     },
   });
   if (!matricula) {
-    throw new Error("Você não está matriculado na turma desta tarefa.");
+    throw new Error("VocǦ nǜo estǭ matriculado na turma desta tarefa.");
   }
 
   const submissaoExistente = await prisma.submissoes.findFirst({
     where: { tarefaId, alunoId: alunoId! },
   });
   if (submissaoExistente) {
-    throw new Error("Já existe uma submissão para esta tarefa.");
+    throw new Error("Jǭ existe uma submissǜo para esta tarefa.");
   }
 
   return prisma.submissoes.create({
@@ -206,33 +228,116 @@ export async function grade(
   const submissao = await prisma.submissoes.findFirst({
     where: { id, unidadeEscolarId: unidadeEscolarId! },
   });
-  if (!submissao) throw new Error("Submissão não encontrada.");
+  if (!submissao) throw new Error("Submissǜo nǜo encontrada.");
 
   const tarefa = await prisma.tarefas.findFirst({
     where: {
       id: submissao.tarefaId,
       componenteCurricular: { professorId: professorId! },
     },
+    select: {
+      id: true,
+      tipo: true,
+      componenteCurricularId: true,
+      bimestre: { select: { id: true, periodo: true } },
+      componenteCurricular: { select: { turmaId: true } },
+    },
   });
   if (!tarefa) {
-    throw new Error("Você não tem permissão para avaliar esta submissão.");
+    throw new Error("VocǦ nǜo tem permissǜo para avaliar esta submissǜo.");
   }
 
-  const submissaoAtualizada = await prisma.submissoes.update({
-    where: { id },
-    data: {
-      ...data,
-      status: StatusSubmissao.AVALIADA,
+  const matricula = await prisma.matriculas.findFirst({
+    where: {
+      alunoId: submissao.alunoId,
+      turmaId: tarefa.componenteCurricular.turmaId,
+      status: "ATIVA",
     },
-    include: fullInclude,
+    select: { id: true },
   });
 
-  if (submissaoAtualizada) {
-    await verificarConquistasDeTarefasConcluidas(
-      submissao.alunoId,
-      submissao.unidadeEscolarId
+  if (!matricula) {
+    throw new Error(
+      "Não foi possível localizar a matrícula ativa do aluno para esta turma."
     );
   }
+
+  let bimestre = tarefa.bimestre;
+  if (!bimestre) {
+    bimestre = await prisma.bimestres.findFirst({
+      where: {
+        unidadeEscolarId: submissao.unidadeEscolarId,
+        dataInicio: { lte: new Date() },
+        dataFim: { gte: new Date() },
+      },
+      select: { id: true, periodo: true },
+    });
+  }
+
+  if (!bimestre) {
+    const error = new Error(
+      "Nenhum bimestre vigente configurado para registrar a nota desta tarefa."
+    );
+    (error as any).code = "NO_ACTIVE_BIMESTRE";
+    throw error;
+  }
+
+  const tipoAvaliacao = mapTipoTarefaParaTipoAvaliacao(tarefa.tipo);
+  const agora = new Date();
+
+  const submissaoAtualizada = await prisma.$transaction(async (tx) => {
+    const atualizada = await tx.submissoes.update({
+      where: { id },
+      data: {
+        ...data,
+        status: StatusSubmissao.AVALIADA,
+      },
+      include: fullInclude,
+    });
+
+    const avaliacaoExistente = await tx.avaliacaoParcial.findFirst({
+      where: {
+        tarefaId: tarefa.id,
+        matriculaId: matricula.id,
+      },
+    });
+
+    if (avaliacaoExistente) {
+      await tx.avaliacaoParcial.update({
+        where: { id: avaliacaoExistente.id },
+        data: {
+          nota: data.nota_total,
+          periodo: bimestre.periodo,
+          tipo: tipoAvaliacao,
+          data: agora,
+          bimestre: { connect: { id: bimestre.id } },
+          tarefa: { connect: { id: tarefa.id } },
+        },
+      });
+    } else {
+      await tx.avaliacaoParcial.create({
+        data: {
+          nota: data.nota_total,
+          periodo: bimestre.periodo,
+          tipo: tipoAvaliacao,
+          data: agora,
+          matricula: { connect: { id: matricula.id } },
+          componenteCurricular: {
+            connect: { id: tarefa.componenteCurricularId },
+          },
+          bimestre: { connect: { id: bimestre.id } },
+          tarefa: { connect: { id: tarefa.id } },
+        },
+      });
+    }
+
+    return atualizada;
+  });
+
+  await verificarConquistasDeTarefasConcluidas(
+    submissao.alunoId,
+    submissao.unidadeEscolarId
+  );
 
   return submissaoAtualizada;
 }

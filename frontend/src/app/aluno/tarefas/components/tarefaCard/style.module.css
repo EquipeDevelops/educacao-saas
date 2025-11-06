@@ -1,7 +1,7 @@
 .card {
   display: flex;
-  align-items: baseline;
-  justify-content: space-between;
+  flex-direction: column;
+  flex: 1;
   background-color: var(--cor-fundo-card);
   padding: 20px;
   border-radius: 10px;
@@ -12,112 +12,139 @@
   }
 }
 
-.infoGeral {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  & .infoTarefa {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    & p {
-      padding: 5px 10px;
-      font-weight: 500;
-      font-size: .8rem;
-      border-radius: 10px;
-      /* Mistura duas cores, para clarear a borda */
-      border: 1px solid color-mix(in srgb, currentColor 30%, white 70%);
-    }
-    & .materia {
-      background-color: var(--cor-primaria-light);
-      color: var(--cor-primaria);
-    }
-  }
-}
-
-.descricao {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  & h3 {
-    font-size: 1.5rem;
-    font-weight: 500;
-    color: var(--cor-texto-destaque);
-  }
-  & p {
-    color: var(--cor-subtexto);
-  }
-}
-
-.outrasInfo {
+.statusContainer {
   display: flex;
   align-items: center;
-  margin-top: 20px;
-  gap: 20px;
-  & li {
-    display: flex;
-    align-items: center;
-    font-weight: 400;
-    font-size: .9rem;
-    gap: 5px;
-    color: var(--cor-subtexto);
-    & span {
-      background-color: var(--cor-primaria);
-      color: white;
-      padding: 5px;
-      border-radius: 50%;
-      font-weight: 400;
-    }
-  }
+  justify-content: space-between;
+  margin-bottom: 10px;
 }
 
-.containerAcao {
+.statusContainer div {
   display: flex;
-  flex-direction: column;
+  gap: 10px;
+}
+
+.statusContainer div p {
+  font-size: .9rem;
+  padding: 2px 10px;
+  font-weight: 500;
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, currentColor 20%, white 80%);
+}
+
+.statusContainer div p:first-child {
+  font-size: 0.9rem;
+  border: 1px solid color-mix(in srgb, var(--cor-cinza) 40%, white 60%);
+  font-weight: 500;
+  padding: 2px 10px;
+  border-radius: 10px;
+  color: var(--cor-subtexto);
+  background-color: color-mix(in srgb, var(--cor-cinza) 10%, white 90%)
+}
+
+.statusContainer div p:last-child {
+  color: var(--cor-primaria);
+  background-color: var(--cor-primaria-light);
+}
+
+.avaliada {
+  background-color: var(--cor-sucesso-light) !important;
+  color: var(--cor-sucesso-dark) !important;
+}
+
+.pontos {
+  font-size: .9rem;
+  display: flex;
+  align-items: center;
   gap: 5px;
-  align-items: end;
-  & .prazo {
-    font-size: 1rem;
-    color: var(--cor-subtexto);
-    margin-bottom: 5px;
-  }
+  color: var(--cor-subtexto);
+}
 
-  & .pontos {
-    font-size: 1.5rem;
-    font-weight: 500;
-    color: var(--cor-primaria);
-    margin-bottom: 20px;
-  }
+.pontos span {
+  font-size: 1.15rem;
+  padding: 2px 10px;
+  border-radius: 10px;
+  background-color: var(--cor-primaria-light);
+  color: var(--cor-primaria);
+  border: 1px solid color-mix(in srgb, currentColor 20%, white 80%);
+}
 
-  & .botaoAcao {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    background-color: var(--cor-primaria);
-    border-radius: 10px;
-    font-size: 1.1rem;
-    padding: 8px 10px;
-    transition: all .2s ease;
-    border: 1px solid var(--cor-primaria);
-    & p, svg {
-      color: white;
-    }
-    & svg {
-      font-size: 1.5rem;
-    }
-    &:hover {
-      background-color: var(--cor-primaria-hover);
-    }
-  }
+.infoContainer h2 {
+  font-size: 1.2rem;
+  font-weight: 500;
+  margin-bottom: 10px;
+}
 
-  & .botaoAvaliado {
-    background-color: white;
-    border-color: var(--cor-borda);
-    & p, svg {
-      color: var(--cor-texto);
-    }
-    &:hover {
-      background-color: color-mix(in srgb, white 92%, black 8%);
-    }
-  }
+.otherInfos {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  border-bottom: 1px solid var(--cor-borda);
+  padding-bottom: 20px;
+}
+
+.otherInfos p {
+  color: var(--cor-subtexto);
+  font-size: .95rem;
+}
+
+.otherInfos p:last-child {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.professor {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.professor span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid color-mix(in srgb, currentColor 20%, white 80%);
+  background-color: var(--cor-primaria-light);
+  color: var(--cor-primaria);
+  font-size: .9rem;
+  border-radius: 50%;
+}
+
+.actionContainer {
+  display: flex;
+  margin-top: 20px;
+  justify-content: space-between;
+}
+
+.actionContainer p {
+  display: flex;
+  align-items: center;
+  color: var(--cor-subtexto);
+  font-weight: 500;
+  gap: 10px;
+}
+
+.actionContainer a {
+  padding: 10px 20px;
+  color: var(--cor-primaria);
+  border: 1px solid color-mix(in srgb, currentColor 20%, white 80%);
+  border-radius: 10px;
+  transition: all .2s ease;
+}
+
+.actionContainer a:hover {
+  background-color: var(--cor-primaria-light);
+}
+
+.actionContainer .activeLink {
+  background-color: var(--cor-primaria);
+  border: 1px solid var(--cor-primaria);
+  color: white;
+}
+
+.actionContainer .activeLink:hover {
+  background-color: var(--cor-primaria-dark);
 }

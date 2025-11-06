@@ -1,7 +1,15 @@
 import Link from 'next/link';
 import { TarefaComStatus } from '@/types/tarefas';
 import styles from './style.module.css';
-import { LuClipboardList } from 'react-icons/lu';
+import {
+  LuCalendar,
+  LuClipboardList,
+  LuFile,
+  LuFileArchive,
+  LuFileCode,
+  LuFileDigit,
+  LuFileText,
+} from 'react-icons/lu';
 import { IoPlayOutline } from 'react-icons/io5';
 import { IoIosCheckmarkCircleOutline } from 'react-icons/io';
 import { IoEyeOutline } from 'react-icons/io5';
@@ -21,7 +29,7 @@ function getStatusInfo(tarefa: TarefaComStatus): StatusInfo {
         return {
           text: 'Avaliada',
           backgroundColor: '#EDFFEF',
-          color: '#0A6C4D',
+          color: '#34aa65',
           link: `/aluno/correcoes/detalhes/${tarefa.submissao.id}`,
         };
       case 'ENVIADA':
@@ -29,14 +37,14 @@ function getStatusInfo(tarefa: TarefaComStatus): StatusInfo {
         return {
           text: 'Enviada',
           backgroundColor: '#F0ECFD',
-          color: '#563D9D',
+          color: '#9810fa',
           link: `/aluno/tarefas/revisao/${tarefa.submissao.id}`,
         };
       case 'EM_ANDAMENTO':
         return {
           text: 'Em Andamento',
           backgroundColor: '#FFF8E6',
-          color: '#B38B00',
+          color: '#c27f03',
           link: `/aluno/tarefas/responder/${tarefa.id}`,
         };
     }
@@ -49,6 +57,15 @@ function getStatusInfo(tarefa: TarefaComStatus): StatusInfo {
   };
 }
 
+function getInitials(name: string | undefined): string {
+  if (!name) return '...';
+  const nameParts = name.trim().split(' ');
+  if (nameParts.length === 1) return nameParts[0].substring(0, 2).toUpperCase();
+  const firstName = nameParts[0];
+  const lastName = nameParts[nameParts.length - 1];
+  return (firstName.charAt(0) + lastName.charAt(0)).toUpperCase();
+}
+
 type TarefaCardProps = {
   tarefa: TarefaComStatus;
 };
@@ -56,7 +73,6 @@ type TarefaCardProps = {
 export default function TarefaCard({ tarefa }: TarefaCardProps) {
   const totalPontos = tarefa.pontos || 0;
   const totalQuestoes = tarefa._count?.questoes || 0;
-  
 
   const statusInfo = getStatusInfo(tarefa);
   const dataEntregaFormatada = new Date(tarefa.data_entrega).toLocaleString(
@@ -69,70 +85,58 @@ export default function TarefaCard({ tarefa }: TarefaCardProps) {
 
   return (
     <div className={styles.card}>
-      <div className={styles.infoGeral}>
-        <div className={styles.infoTarefa}>
-          <p className={styles.materia}>
+      <div className={styles.statusContainer}>
+        <div>
+          <p className={styles.materiaName}>
             {tarefa.componenteCurricular.materia.nome}
           </p>
           <p
-            className={styles.status}
-            style={{
-              backgroundColor: statusInfo.backgroundColor,
-              color: statusInfo.color,
-            }}
+            className={`${styles.status} ${
+              tarefa.submissao?.status === 'AVALIADA' ? styles.avaliada : ''
+            }`}
           >
             {statusInfo.text}
           </p>
         </div>
-        <div className={styles.descricao}>
-          <h3>{tarefa.titulo}</h3>
-          {tarefa.descricao !== '......' ? <p>{tarefa.descricao}</p> : ''}
-        </div>
-        <ul className={styles.outrasInfo}>
-          <li>
-            <span>AL</span> Prof.{' '}
-            {tarefa.componenteCurricular.professor.usuario.nome}
-          </li>
-          <li>
-            <LuClipboardList /> {totalQuestoes} questões
-          </li>
-        </ul>
+        <p className={styles.pontos}>
+          Total pontos: <span>{totalPontos}</span>
+        </p>
       </div>
-      <ul className={styles.containerAcao}>
-        <li className={styles.prazo}>
-          Prazo: {dataEntregaFormatada.slice(0, 5)}
-        </li>
-        <li className={styles.pontos}>{totalPontos} pontos</li>
+      <div className={styles.infoContainer}>
+        <h2>{tarefa.titulo}</h2>
+        <div className={styles.otherInfos}>
+          <div className={styles.professor}>
+            <span>
+              {getInitials(tarefa.componenteCurricular.professor.usuario.nome)}
+            </span>
+            <p>Prof. {tarefa.componenteCurricular.professor.usuario.nome}</p>
+          </div>
+          <p>
+            <LuFileText /> {totalQuestoes} questões
+          </p>
+        </div>
+      </div>
+      <div className={styles.actionContainer}>
+        <p>
+          <LuCalendar /> Prazo: {dataEntregaFormatada.slice(0, 5)}
+        </p>
         <Link
           href={statusInfo.link}
-          className={`${styles.botaoAcao} ${
-            tarefa.submissao?.status === 'AVALIADA'
-              ? styles.botaoAvaliado
-              : tarefa.submissao?.status === 'EM_ANDAMENTO'
-              ? styles.botaoContinuar
-              : ''
-          }`}
-        >
-          {tarefa.submissao?.status === 'AVALIADA' ? (
-            <IoIosCheckmarkCircleOutline />
-          ) : tarefa.submissao?.status === 'ENVIADA' ? (
-            <IoEyeOutline />
-          ) : (
-            <IoPlayOutline />
-          )}
-          <p>
-            {tarefa.submissao?.status === 'AVALIADA'
-              ? 'Ver Correção'
-              : tarefa.submissao?.status === 'EM_ANDAMENTO'
-              ? 'Continuar atividade'
-              : tarefa.submissao?.status === 'ENVIADA'
-              ? 'Ver Respostas'
+          className={
+            tarefa.submissao?.status === 'EM_ANDAMENTO'
+              ? styles.activeLink
               : tarefa.submissao?.status === 'NAO_INICIADA'
-              ? 'Iniciar Atividade'
-              : 'Iniciar Atividade'}
-          </p>
+              ? styles.activeLink
+              : ''
+          }
+        >
+          {statusInfo.text === 'Avaliada'
+            ? 'Ver Correção'
+            : statusInfo.text === 'Enviada'
+            ? 'Ver Respostas'
+            : 'Responder'}
         </Link>
-      </ul>
+      </div>
     </div>
   );
 }

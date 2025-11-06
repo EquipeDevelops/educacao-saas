@@ -17,11 +17,12 @@ export default function AlunoPage() {
     isLoading,
     alunoInfo,
     agendaEventos,
-    performance,
     tarefasPendentes,
     mensagensRecentes,
   } = useAlunoDashboard();
   const dataAtual = new Date();
+  console.log(agendaEventos);
+  
 
   if (isLoading) {
     return <Loading />;
@@ -34,23 +35,10 @@ export default function AlunoPage() {
     <>
       <Section>
         <div className={styles.dashboardContainer}>
-          <header className={styles.header}>
-            <div className={styles.dateInfo}>
-              <p className={styles.weekDay}>
-                {dataAtual.toLocaleDateString('pt-BR', { weekday: 'long' })}
-              </p>
-              <p className={styles.monthDay}>
-                {dataAtual.toLocaleDateString('pt-BR').slice(0, 2)}{' '}
-                <span>
-                  {dataAtual.toLocaleDateString('pt-BR', { month: 'short' })}
-                </span>
-              </p>
-            </div>
-          </header>
           <div className={styles.bodyDashboard}>
             <FichaAluno alunoInfo={alunoInfo} />
             <AcoesRapidas />
-            <Desempenho desempenho={performance} />
+            {/* <Desempenho desempenho={performance} /> */}
             <AtividadesPendentes atividades={tarefasPendentes} />
             <MensagensRecentes mensagens={mensagensRecentes} />
             <AgendaSemanalAluno eventos={agendaEventos} />

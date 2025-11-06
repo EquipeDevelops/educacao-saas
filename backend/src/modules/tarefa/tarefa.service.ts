@@ -16,6 +16,7 @@ const fullInclude = {
       professor: { select: { usuario: { select: { nome: true } } } },
     },
   },
+  bimestre: true,
   _count: {
     select: { questoes: true },
   },
@@ -60,7 +61,8 @@ export async function create(
       id: data.componenteCurricularId,
       professorId,
     },
-    include: {
+    select: {
+      ano_letivo: true,
       turma: { select: { unidadeEscolarId: true } },
     },
   });
@@ -70,6 +72,28 @@ export async function create(
       "Você não tem permissão para criar tarefas para este componente curricular."
     );
     (error as any).code = "FORBIDDEN";
+    throw error;
+  }
+
+  const referencia = new Date();
+  const unidadeEscolarId = componente.turma.unidadeEscolarId;
+  const anoLetivo = componente.ano_letivo;
+
+  const bimestreVigente = await prisma.bimestres.findFirst({
+    where: {
+      unidadeEscolarId,
+      anoLetivo,
+      dataInicio: { lte: referencia },
+      dataFim: { gte: referencia },
+    },
+    orderBy: { dataInicio: "asc" },
+  });
+
+  if (!bimestreVigente) {
+    const error = new Error(
+      "Nenhum bimestre vigente configurado para esta unidade escolar e ano letivo. Solicite ao gestor o cadastro."
+    );
+    (error as any).code = "NO_ACTIVE_BIMESTRE";
     throw error;
   }
 
@@ -84,7 +108,8 @@ export async function create(
     data: {
       ...data,
       metadata,
-      unidadeEscolarId: componente.turma.unidadeEscolarId,
+      unidadeEscolarId,
+      bimestreId: bimestreVigente.id,
     },
     include: fullInclude,
   });
@@ -102,6 +127,10 @@ export async function findAll(
 
   if (filters.componenteCurricularId) {
     where.componenteCurricularId = filters.componenteCurricularId;
+  }
+
+  if (filters.bimestreId) {
+    where.bimestreId = filters.bimestreId;
   }
 
   if (user.papel === "ALUNO") {

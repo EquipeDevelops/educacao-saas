@@ -3,6 +3,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  grid-column: 1 / -1;
   height: 500px;
   & svg {
     font-size: 4rem;

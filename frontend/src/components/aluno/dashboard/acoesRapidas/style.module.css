@@ -3,6 +3,7 @@
   flex-direction: column;
   height: 100%;
   grid-row: 2 / 3;
+  grid-column: 2 / 3;
   background-color: white;
   padding: 20px;
   border-radius: 15px;
@@ -39,10 +40,10 @@
     gap: 10px;
     border: 1px solid color-mix(in srgb, var(--cor-primaria) 20%, white 80%);
     background-color: var(--cor-primaria-light);
-    padding: 20px;
     border-radius: 15px;
-    width: 100%;
-    max-width: 265px;
+    width: 180px;
+    font-size: .95rem;
+    padding: 10px;
     transition: all 0.2s ease;
 
     & .iconContainer {

@@ -13,10 +13,16 @@ export type Questao = {
   opcoes_multipla_escolha: Opcao[];
 };
 
+export type ProvaMetadata = {
+  tempoLimiteMinutos?: number;
+};
+
 export type Tarefa = {
   id: string;
   titulo: string;
   descricao: string | null;
+  pontos?: number | null;
+  metadata?: ProvaMetadata | null;
 };
 
 export type Resposta = {

@@ -3,6 +3,7 @@
   flex-direction: column;
   justify-content: space-between;
   grid-row: 3 / 4;
+  grid-column: 1 / 2;
   background-color: var(--cor-fundo-card);
   border-radius: 15px;
   border: 1px solid var(--cor-borda);

@@ -9,6 +9,35 @@
   border-bottom: 1px solid var(--cor-borda);
 }
 
+.bimestreBanner {
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: var(--cor-fundo);
+  border: 1px solid var(--cor-borda);
+  border-radius: 10px;
+  padding: 1rem 1.25rem;
+  color: var(--cor-texto-destaque);
+}
+
+.bimestreBanner strong {
+  display: block;
+  font-size: 1rem;
+}
+
+.bimestreBanner span {
+  font-size: 0.85rem;
+  color: var(--cor-subtexto);
+}
+
+.bannerHint {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--cor-subtexto);
+  margin-top: 0.35rem;
+}
+
 .header h1 {
   font-size: 2rem;
   font-weight: 700;

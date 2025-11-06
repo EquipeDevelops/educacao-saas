@@ -12,9 +12,21 @@ import {
   FiPaperclip,
   FiClipboard,
   FiTrash2,
+  FiCalendar,
 } from "react-icons/fi";
 import RequisitosBuilder from "@/components/professor/trabalhos/RequisitosBuilder";
 import { Componente } from "../../atividades/nova/page";
+
+type Bimestre = {
+  id: string;
+  periodo: string;
+  dataInicio: string;
+  dataFim: string;
+  nome?: string | null;
+};
+
+const formatarData = (iso: string) =>
+  new Date(iso).toLocaleDateString("pt-BR", { timeZone: "UTC" });
 
 const ALLOWED_ATTACHMENT_TYPES = new Set([
   "application/pdf",
@@ -53,6 +65,9 @@ export default function NovoTrabalhoPage() {
   const [requisitos, setRequisitos] = useState<string[]>([]);
   const [anexos, setAnexos] = useState<File[]>([]);
   const [isSaving, setIsSaving] = useState(false);
+  const [currentBimestre, setCurrentBimestre] = useState<Bimestre | null>(null);
+  const [isBimestreLoading, setIsBimestreLoading] = useState(true);
+  const [bimestreError, setBimestreError] = useState<string | null>(null);
 
   useEffect(() => {
     api.get("/componentes-curriculares").then((response) => {
@@ -61,6 +76,33 @@ export default function NovoTrabalhoPage() {
         setComponenteId(response.data[0].id);
       }
     });
+  }, []);
+
+  useEffect(() => {
+    async function fetchBimestreVigente() {
+      setIsBimestreLoading(true);
+      try {
+        const res = await api.get("/bimestres/vigente");
+        setCurrentBimestre(res.data);
+        setBimestreError(null);
+      } catch (err: any) {
+        if (err.response?.status === 404) {
+          setCurrentBimestre(null);
+          setBimestreError(
+            "Nenhum bimestre vigente configurado. Solicite ao gestor para cadastrar o periodo."
+          );
+        } else {
+          setBimestreError(
+            err.response?.data?.message ||
+              "Falha ao identificar o bimestre vigente."
+          );
+        }
+      } finally {
+        setIsBimestreLoading(false);
+      }
+    }
+
+    fetchBimestreVigente();
   }, []);
 
   const handleSaveTrabalho = async (publicado: boolean) => {
@@ -110,8 +152,10 @@ export default function NovoTrabalhoPage() {
       if (publicado) {
         await api.patch(`/tarefas/${tarefaId}/publish`, { publicado: true });
       }
-
-      alert(`Trabalho "${titulo}" foi salvo com sucesso!`);
+      const nomeBimestre =
+        currentBimestre?.nome ||
+        currentBimestre?.periodo.replace(/_/g, " ");
+      alert(`Trabalho "${titulo}" foi salvo com sucesso! As notas serão registradas no ${nomeBimestre} apos a correcao.`);
       setAnexos([]);
       router.push(`/professor/trabalhos`);
     } catch (error) {
@@ -176,6 +220,33 @@ export default function NovoTrabalhoPage() {
           <p>Defina as instruções, requisitos e pontuação para o trabalho.</p>
         </div>
       </header>
+
+      <div className={styles.bimestreBanner}>
+        <FiCalendar />
+        {isBimestreLoading ? (
+          <span>Identificando bimestre vigente...</span>
+        ) : currentBimestre ? (
+          <div>
+            <strong>
+              {currentBimestre.nome || currentBimestre.periodo.replace(/_/g, " ")}
+            </strong>
+            <span>
+              {formatarData(currentBimestre.dataInicio)} - {formatarData(currentBimestre.dataFim)}
+            </span>
+            <small className={styles.bannerHint}>
+              Ao corrigir este trabalho, as notas serão registradas automaticamente neste bimestre.
+            </small>
+          </div>
+        ) : (
+          <div>
+            <strong>Nenhum bimestre vigente</strong>
+            <span>
+              {bimestreError ||
+                "Cadastre um periodo com o gestor para habilitar a atribuicao automatica."}
+            </span>
+          </div>
+        )}
+      </div>
 
       <form className={styles.form} onSubmit={(e) => e.preventDefault()}>
         <section className={styles.card}>
@@ -359,3 +430,13 @@ export default function NovoTrabalhoPage() {
     </div>
   );
 }
+
+
+
+
+
+
+
+
+
+

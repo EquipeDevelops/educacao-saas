@@ -88,6 +88,7 @@ model Unidades_Escolares {
   conversas            Conversa[]
   conquistas_disponiveis ConquistasPorUnidade[]
   EventosCalendario    EventosCalendario[]
+  bimestres            Bimestres[]
 
   @@map("unidades_escolares")
   @@index([instituicaoId])
@@ -278,6 +279,25 @@ model ComponenteCurricular {
   @@index([professorId])
 }
 
+model Bimestres {
+  id               String             @id @default(auto()) @map("_id") @db.ObjectId
+  anoLetivo        Int
+  periodo          PeriodoAvaliacao
+  dataInicio       DateTime
+  dataFim          DateTime
+  unidadeEscolar   Unidades_Escolares @relation(fields: [unidadeEscolarId], references: [id])
+  unidadeEscolarId String             @db.ObjectId
+  criado_em        DateTime           @default(now())
+  atualizado_em    DateTime           @updatedAt
+  nome             String?
+  tarefas          Tarefas[]
+  avaliacoes       AvaliacaoParcial[]
+
+  @@map("bimestres")
+  @@unique([unidadeEscolarId, anoLetivo, periodo])
+  @@index([unidadeEscolarId, dataInicio, dataFim])
+}
+
 model AvaliacaoParcial {
   id                     String               @id @default(auto()) @map("_id") @db.ObjectId
   nota                   Float
@@ -288,10 +308,16 @@ model AvaliacaoParcial {
   matriculaId            String               @db.ObjectId
   componenteCurricular   ComponenteCurricular @relation(fields: [componenteCurricularId], references: [id])
   componenteCurricularId String               @db.ObjectId
+  bimestre               Bimestres?           @relation(fields: [bimestreId], references: [id])
+  bimestreId             String?              @db.ObjectId
+  tarefa                 Tarefas?             @relation(fields: [tarefaId], references: [id])
+  tarefaId               String?              @db.ObjectId
 
   @@map("avaliacoes_parciais")
   @@index([matriculaId])
   @@index([componenteCurricularId])
+  @@index([bimestreId])
+  @@index([tarefaId])
 }
 
 model RegistroFalta {
@@ -332,10 +358,14 @@ model Tarefas {
   submissoes             Submissoes[]
   ComentarioTarefa       ComentarioTarefa[]
   metadata               Json?               
+  bimestre               Bimestres?           @relation(fields: [bimestreId], references: [id])
+  bimestreId             String?              @db.ObjectId
+  avaliacoes             AvaliacaoParcial[]
 
   @@map("tarefas")
   @@index([unidadeEscolarId])
   @@index([componenteCurricularId])
+  @@index([bimestreId])
 }
 
 enum TipoQuestao {

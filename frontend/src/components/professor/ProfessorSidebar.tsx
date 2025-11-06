@@ -16,8 +16,10 @@ import {
   FiFileText,
   FiLogOut,
   FiBookOpen,
+  FiTable,
 } from "react-icons/fi";
 import { useAuth } from "@/contexts/AuthContext";
+import { FaFile } from "react-icons/fa";
 
 const navLinks = [
   {
@@ -43,6 +45,7 @@ const navLinks = [
         icon: <FiBookOpen />,
       },
       { href: "/professor/correcoes", text: "Correções", icon: <FiEdit /> },
+      { href: "/professor/notas", text: "Notas", icon: <FaFile /> },
       { href: "/professor/faltas", text: "Lançar Faltas", icon: <FiUserX /> },
       {
         href: "/professor/desempenho",

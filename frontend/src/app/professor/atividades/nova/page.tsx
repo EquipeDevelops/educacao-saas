@@ -7,6 +7,7 @@ import styles from "./nova-atividade.module.css";
 import {
   FiInfo,
   FiPaperclip,
+  FiCalendar,
   FiSettings,
   FiSave,
   FiEye,
@@ -22,6 +23,17 @@ export type Componente = {
   turma: { serie: string; nome: string };
 };
 
+type Bimestre = {
+  id: string;
+  periodo: string;
+  dataInicio: string;
+  dataFim: string;
+  nome?: string | null;
+};
+
+const formatarData = (iso: string) =>
+  new Date(iso).toLocaleDateString("pt-BR", { timeZone: "UTC" });
+
 export default function NovaAtividadePage() {
   const router = useRouter();
 
@@ -32,6 +44,10 @@ export default function NovaAtividadePage() {
   const [dataEntrega, setDataEntrega] = useState("");
   const [pontos, setPontos] = useState(10);
   const [questoes, setQuestoes] = useState<Questao[]>([]);
+  const [currentBimestre, setCurrentBimestre] = useState<Bimestre | null>(null);
+  const [isBimestreLoading, setIsBimestreLoading] = useState(true);
+  const [bimestreError, setBimestreError] = useState<string | null>(null);
+
 
   useEffect(() => {
     api.get("/componentes-curriculares").then((response) => {
@@ -40,6 +56,33 @@ export default function NovaAtividadePage() {
         setComponenteId(response.data[0].id);
       }
     });
+  }, []);
+
+  useEffect(() => {
+    async function fetchBimestreVigente() {
+      setIsBimestreLoading(true);
+      try {
+        const res = await api.get("/bimestres/vigente");
+        setCurrentBimestre(res.data);
+        setBimestreError(null);
+      } catch (err: any) {
+        if (err.response?.status === 404) {
+          setCurrentBimestre(null);
+          setBimestreError(
+            "Nenhum bimestre vigente configurado. Solicite ao gestor para cadastrar o periodo."
+          );
+        } else {
+          setBimestreError(
+            err.response?.data?.message ||
+              "Falha ao identificar o bimestre vigente."
+          );
+        }
+      } finally {
+        setIsBimestreLoading(false);
+      }
+    }
+
+    fetchBimestreVigente();
   }, []);
 
   const handleSaveActivity = async (publicado: boolean) => {
@@ -73,8 +116,10 @@ export default function NovaAtividadePage() {
           });
         }
       }
-
-      alert(`Atividade "${titulo}" foi salva com sucesso!`);
+      const nomeBimestre =
+        currentBimestre?.nome ||
+        currentBimestre?.periodo.replace(/_/g, " ");
+      alert(`Atividade "${titulo}" foi salva com sucesso! As notas serão registradas no ${nomeBimestre} apos a correcao.`);
       router.push(`/professor/atividades`);
     } catch (error) {
       console.error("Erro ao salvar atividade", error);
@@ -103,6 +148,32 @@ export default function NovaAtividadePage() {
           </button>
         </div>
       </header>
+
+      <div className={styles.bimestreBanner}>
+        <FiCalendar />
+        {isBimestreLoading ? (
+          <span>Identificando bimestre vigente...</span>
+        ) : currentBimestre ? (
+          <div>
+            <strong>
+              {currentBimestre.nome || currentBimestre.periodo.replace(/_/g, " ")}
+            </strong>
+            <span>
+              {formatarData(currentBimestre.dataInicio)} - {formatarData(currentBimestre.dataFim)}
+            </span>
+            <small className={styles.bannerHint}>
+              Ao corrigir esta atividade, as notas serão registradas automaticamente neste bimestre.
+            </small>
+          </div>
+        ) : (
+          <div>
+            <strong>Nenhum bimestre vigente</strong>
+            <span>
+              {bimestreError || "Cadastre um periodo com o gestor para habilitar a atribuicao automatica."}
+            </span>
+          </div>
+        )}
+      </div>
 
       <form className={styles.form} onSubmit={(e) => e.preventDefault()}>
         <section className={styles.card}>
@@ -247,3 +318,14 @@ export default function NovaAtividadePage() {
     </div>
   );
 }
+
+
+
+
+
+
+
+
+
+
+

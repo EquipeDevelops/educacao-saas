@@ -19,6 +19,9 @@ export const tarefaController = {
       if ((error as any).code === "FORBIDDEN") {
         return res.status(403).json({ message: error.message });
       }
+      if ((error as any).code === "NO_ACTIVE_BIMESTRE") {
+        return res.status(400).json({ message: error.message });
+      }
       return res.status(500).json({ message: "Erro ao criar tarefa." });
     }
   },

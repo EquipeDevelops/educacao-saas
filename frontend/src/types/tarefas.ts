@@ -22,6 +22,7 @@ export interface TarefaMetadata {
   permiteAnexos?: boolean;
   requisitos?: string[];
   anexos?: TarefaAnexo[];
+  tempoLimiteMinutos?: number;
 }
 
 export type ApiTarefa = {

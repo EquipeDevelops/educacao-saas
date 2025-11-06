@@ -48,6 +48,12 @@ export const createTarefaSchema = z.object({
             })
           )
           .optional(),
+        tempoLimiteMinutos: z
+          .number()
+          .int("O tempo limite deve ser um numero inteiro.")
+          .positive("O tempo limite deve ser positivo.")
+          .max(600, "O tempo limite nao pode exceder 600 minutos.")
+          .optional(),
       })
       .optional(),
   }),
@@ -80,6 +86,7 @@ export const findAllTarefasSchema = z.object({
   query: z.object({
     componenteCurricularId: z.string().optional(),
     publicado: z.enum(["true", "false"]).optional(),
+    bimestreId: z.string().optional(),
   }),
 });
 

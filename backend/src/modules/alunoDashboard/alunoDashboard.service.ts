@@ -373,7 +373,7 @@ async function getAgendaDoMes(
           type: 'Aula',
           title: horario.componenteCurricular.materia.nome,
           details: horario.turma.nome,
-          time: `${horario.horario_inicio} - ${horario.horario_fim}`,
+          time: `${horario.hora_inicio} - ${horario.hora_fim}`,
         });
       }
     });
