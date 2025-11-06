@@ -18,6 +18,15 @@ export const gradeSubmissaoSchema = z.object({
   params: paramsSchema,
 });
 
+export const finalizeSubmissaoSchema = z.object({
+  body: z.object({
+    reason: z.enum(["timeout", "abandon"], {
+      required_error: "O motivo da finalizacao e obrigatorio.",
+    }),
+  }),
+  params: paramsSchema,
+});
+
 export const findAllSubmissoesSchema = z.object({
   query: z.object({
     tarefaId: z.string().optional(),
@@ -29,6 +38,7 @@ export type CreateSubmissaoInput = z.infer<
   typeof createSubmissaoSchema
 >["body"];
 export type GradeSubmissaoInput = z.infer<typeof gradeSubmissaoSchema>["body"];
+export type FinalizeSubmissaoInput = z.infer<typeof finalizeSubmissaoSchema>["body"];
 export type FindAllSubmissoesInput = z.infer<
   typeof findAllSubmissoesSchema
 >["query"];

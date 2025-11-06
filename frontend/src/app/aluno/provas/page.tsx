@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect } from 'react';
 import Section from '@/components/section/Section';
@@ -48,56 +48,57 @@ export default function ProvasPage() {
       <div>
         <div className={styles.title}>
           <h2>Provas</h2>
-          <p>Acompanhe e realize as provas disponíveis para a sua turma.</p>
+          <p>Acompanhe e realize as provas disponÃ­veis para a sua turma.</p>
         </div>
 
         <div className={styles.filtersContainer}>
-          <h3>
+          <h2>
             <LuFilter /> Filtros
-          </h3>
+          </h2>
 
-          <div className={styles.filtersRow}>
-            <label>
-              Status
-              <select
-                name="status"
-                value={filters.status}
-                onChange={handleFilterChange}
-              >
-                <option value="">Todos</option>
-                <option value="Disponivel">Disponível</option>
-                <option value="Em Andamento">Em andamento</option>
-                <option value="Enviada">Enviada</option>
-                <option value="Avaliada">Avaliada</option>
-              </select>
-            </label>
+          <div className={styles.filtersContent}>
+            <div className={styles.filtersGroup}>
+              <label>
+                <p>Status</p>
+                <select
+                  name="status"
+                  value={filters.status}
+                  onChange={handleFilterChange}
+                >
+                  <option value="">Todos</option>
+                  <option value="Disponivel">Disponivel</option>
+                  <option value="Em Andamento">Em andamento</option>
+                  <option value="Enviada">Enviada</option>
+                  <option value="Avaliada">Avaliada</option>
+                </select>
+              </label>
 
-            <label>
-              Matéria
-              <select
-                name="materia"
-                value={filters.materia}
-                onChange={handleFilterChange}
-              >
-                <option value="">Todas</option>
-                {materiasUnicas.map((materia) => (
-                  <option key={materia} value={materia}>
-                    {materia}
-                  </option>
-                ))}
-              </select>
-            </label>
+              <label>
+                <p>Materia</p>
+                <select
+                  name="materia"
+                  value={filters.materia}
+                  onChange={handleFilterChange}
+                >
+                  <option value="">Todas</option>
+                  {materiasUnicas.map((materia) => (
+                    <option key={materia} value={materia}>
+                      {materia}
+                    </option>
+                  ))}
+                </select>
+              </label>
 
-            <label>
-              Data de entrega
-              <input
-                type="date"
-                name="data"
-                value={filters.data}
-                onChange={handleFilterChange}
-              />
-            </label>
-
+              <label>
+                <p>Data de entrega</p>
+                <input
+                  type="date"
+                  name="data"
+                  value={filters.data}
+                  onChange={handleFilterChange}
+                />
+              </label>
+            </div>
             <button onClick={clearFilters} className={styles.clearButton}>
               Limpar filtros
             </button>

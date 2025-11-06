@@ -3,11 +3,6 @@ import { TarefaComStatus } from '@/types/tarefas';
 import styles from './style.module.css';
 import {
   LuCalendar,
-  LuClipboardList,
-  LuFile,
-  LuFileArchive,
-  LuFileCode,
-  LuFileDigit,
   LuFileText,
 } from 'react-icons/lu';
 import { IoPlayOutline } from 'react-icons/io5';
@@ -17,8 +12,6 @@ import { useState } from 'react';
 
 type StatusInfo = {
   text: string;
-  backgroundColor: string;
-  color: string;
   link: string;
 };
 
@@ -28,31 +21,23 @@ function getStatusInfo(tarefa: TarefaComStatus): StatusInfo {
       case 'AVALIADA':
         return {
           text: 'Avaliada',
-          backgroundColor: '#EDFFEF',
-          color: '#34aa65',
           link: `/aluno/correcoes/detalhes/${tarefa.submissao.id}`,
         };
       case 'ENVIADA':
       case 'ENVIADA_COM_ATRASO':
         return {
           text: 'Enviada',
-          backgroundColor: '#F0ECFD',
-          color: '#9810fa',
           link: `/aluno/tarefas/revisao/${tarefa.submissao.id}`,
         };
       case 'EM_ANDAMENTO':
         return {
           text: 'Em Andamento',
-          backgroundColor: '#FFF8E6',
-          color: '#c27f03',
           link: `/aluno/tarefas/responder/${tarefa.id}`,
         };
     }
   }
   return {
     text: 'Disponível',
-    backgroundColor: '#E2ECFF',
-    color: '#0070f3',
     link: `/aluno/tarefas/responder/${tarefa.id}`,
   };
 }

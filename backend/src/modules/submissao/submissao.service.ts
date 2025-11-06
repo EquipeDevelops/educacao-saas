@@ -9,6 +9,7 @@ import {
   CreateSubmissaoInput,
   GradeSubmissaoInput,
   FindAllSubmissoesInput,
+  FinalizeSubmissaoInput,
 } from "./submissao.validator";
 import { AuthenticatedRequest } from "../../middlewares/auth";
 
@@ -342,4 +343,221 @@ export async function grade(
   return submissaoAtualizada;
 }
 
-export const submissaoService = { create, findAll, findById, grade };
+
+async function finalizeByAluno(
+  id: string,
+  data: FinalizeSubmissaoInput,
+  user: AuthenticatedRequest["user"]
+) {
+  const { perfilId: alunoId, unidadeEscolarId } = user;
+
+  if (!alunoId || !unidadeEscolarId) {
+    throw new Error("Aluno nao autorizado para finalizar a prova.");
+  }
+
+  const submissao = await prisma.submissoes.findFirst({
+    where: { id, alunoId: alunoId!, unidadeEscolarId: unidadeEscolarId! },
+    include: {
+      respostas: true,
+      tarefa: {
+        select: {
+          id: true,
+          tipo: true,
+          pontos: true,
+          componenteCurricularId: true,
+          componenteCurricular: { select: { turmaId: true, professorId: true } },
+          bimestre: { select: { id: true, periodo: true } },
+          questoes: {
+            select: {
+              id: true,
+              pontos: true,
+              tipo: true,
+              opcoes_multipla_escolha: { select: { id: true, correta: true } },
+            },
+          },
+        },
+      },
+    },
+  });
+
+  if (!submissao) {
+    throw new Error("Submissao nao encontrada para finalizacao.");
+  }
+
+  if (submissao.status === StatusSubmissao.AVALIADA) {
+    return submissao;
+  }
+
+  const reason = data.reason;
+  const agora = new Date();
+
+  const questoesMap = new Map(
+    submissao.tarefa.questoes.map((questao) => [questao.id, questao])
+  );
+
+  const respostasNotas = submissao.respostas.map((resposta) => {
+    const questao = questoesMap.get(resposta.questaoId);
+    if (!questao) return { id: resposta.id, nota: 0 };
+
+    if (reason === "abandon") {
+      return { id: resposta.id, nota: 0 };
+    }
+
+    if (questao.tipo === "MULTIPLA_ESCOLHA") {
+      const correta = questao.opcoes_multipla_escolha.find((opt) => opt.correta);
+      const notaQuestao =
+        correta && resposta.opcaoEscolhidaId === correta.id ? questao.pontos : 0;
+      return { id: resposta.id, nota: notaQuestao };
+    }
+
+    return { id: resposta.id, nota: 0 };
+  });
+
+  let notaFinal =
+    reason === "timeout"
+      ? respostasNotas.reduce((acc, item) => acc + item.nota, 0)
+      : 0;
+
+  if (submissao.tarefa.pontos && submissao.tarefa.pontos > 0) {
+    notaFinal = Math.min(notaFinal, submissao.tarefa.pontos);
+  }
+
+  const tarefa = submissao.tarefa;
+  const componenteCurricular = tarefa.componenteCurricular;
+  if (!componenteCurricular) {
+    throw new Error("Componente curricular nao encontrado para a tarefa.");
+  }
+
+  const matricula = await prisma.matriculas.findFirst({
+    where: {
+      alunoId: submissao.alunoId,
+      turmaId: componenteCurricular.turmaId,
+      status: "ATIVA",
+    },
+    select: { id: true },
+  });
+
+  if (!matricula) {
+    throw new Error(
+      "Nao foi possivel localizar a matricula ativa do aluno para esta turma."
+    );
+  }
+
+  let bimestre = tarefa.bimestre;
+  if (!bimestre) {
+    bimestre = await prisma.bimestres.findFirst({
+      where: {
+        unidadeEscolarId: submissao.unidadeEscolarId,
+        dataInicio: { lte: agora },
+        dataFim: { gte: agora },
+      },
+      select: { id: true, periodo: true },
+    });
+  }
+
+  if (!bimestre) {
+    const error = new Error(
+      "Nenhum bimestre vigente configurado para registrar a nota desta tarefa."
+    );
+    (error as any).code = "NO_ACTIVE_BIMESTRE";
+    throw error;
+  }
+
+  const tipoAvaliacao = mapTipoTarefaParaTipoAvaliacao(tarefa.tipo);
+
+  const existingMetadata =
+    submissao.metadados &&
+    typeof submissao.metadados === "object" &&
+    !Array.isArray(submissao.metadados)
+      ? (submissao.metadados as Prisma.JsonObject)
+      : ({} as Prisma.JsonObject);
+
+  const novosMetadados: Prisma.JsonObject = {
+    ...existingMetadata,
+    finalizacaoAutomatica: true,
+    motivoFinalizacao: reason,
+    finalizadoEm: agora.toISOString(),
+  };
+
+  const resultado = await prisma.$transaction(async (tx) => {
+    if (respostasNotas.length > 0) {
+      await Promise.all(
+        respostasNotas.map(({ id: respostaId, nota }) =>
+          tx.respostas_Submissao.update({
+            where: { id: respostaId },
+            data: {
+              nota,
+              avaliado_em: agora,
+              feedback:
+                reason === "abandon"
+                  ? "Resposta desconsiderada por abandono da prova."
+                  : "Correcao automatica por tempo esgotado.",
+            },
+          })
+        )
+      );
+    }
+
+    const atualizada = await tx.submissoes.update({
+      where: { id },
+      data: {
+        status: StatusSubmissao.AVALIADA,
+        nota_total: notaFinal,
+        feedback:
+          reason === "abandon"
+            ? "Prova finalizada automaticamente por abandono."
+            : "Prova finalizada automaticamente ao termino do tempo.",
+        metadados: novosMetadados,
+        enviado_em:
+          submissao.status === StatusSubmissao.EM_ANDAMENTO
+            ? agora
+            : submissao.enviado_em,
+      },
+      include: fullInclude,
+    });
+
+    const avaliacaoExistente = await tx.avaliacaoParcial.findFirst({
+      where: {
+        tarefaId: tarefa.id,
+        matriculaId: matricula.id,
+      },
+    });
+
+    const dadosAvaliacao = {
+      nota: notaFinal,
+      periodo: bimestre.periodo,
+      tipo: tipoAvaliacao,
+      data: agora,
+      bimestre: { connect: { id: bimestre.id } },
+      tarefa: { connect: { id: tarefa.id } },
+    };
+
+    if (avaliacaoExistente) {
+      await tx.avaliacaoParcial.update({
+        where: { id: avaliacaoExistente.id },
+        data: dadosAvaliacao,
+      });
+    } else {
+      await tx.avaliacaoParcial.create({
+        data: {
+          ...dadosAvaliacao,
+          matricula: { connect: { id: matricula.id } },
+          componenteCurricular: {
+            connect: { id: tarefa.componenteCurricularId },
+          },
+        },
+      });
+    }
+
+    return atualizada;
+  });
+
+  await verificarConquistasDeTarefasConcluidas(
+    submissao.alunoId,
+    submissao.unidadeEscolarId
+  );
+
+  return resultado;
+}
+
+export const submissaoService = { create, findAll, findById, finalizeByAluno, grade };

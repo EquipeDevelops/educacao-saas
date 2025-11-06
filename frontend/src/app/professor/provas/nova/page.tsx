@@ -28,6 +28,8 @@ type Bimestre = {
 const formatarData = (iso: string) =>
   new Date(iso).toLocaleDateString("pt-BR", { timeZone: "UTC" });
 
+const TEMPOS_PROVA = [60, 120, 180] as const;
+
 export default function NovaProvaPage() {
   const router = useRouter();
 
@@ -278,6 +280,29 @@ export default function NovaProvaPage() {
                   value={pontos}
                   onChange={(e) => setPontos(Number(e.target.value))}
                 />
+              </div>
+            </div>
+            <div className={styles.field}>
+              <label>Tempo de Prova</label>
+              <div
+                className={styles.tempoOptions}
+                role="group"
+                aria-label="Tempo de prova"
+              >
+                {TEMPOS_PROVA.map((tempo) => (
+                  <button
+                    type="button"
+                    key={tempo}
+                    onClick={() => setTempoLimiteMinutos(tempo)}
+                    className={`${styles.tempoOption} ${
+                      tempoLimiteMinutos === tempo
+                        ? styles.tempoOptionActive
+                        : ""
+                    }`}
+                  >
+                    {tempo} min
+                  </button>
+                ))}
               </div>
             </div>
           </section>

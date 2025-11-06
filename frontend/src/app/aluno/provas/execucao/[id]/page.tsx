@@ -9,15 +9,21 @@ import Modal from '@/components/modal/Modal';
 import BarraDeProgresso from '@/components/progressBar/BarraDeProgresso';
 import { useResponderTarefa } from '@/hooks/tarefas/useResponderTarefa';
 import styles from './styles.module.css';
-import { LuClock3, LuAlertTriangle } from 'react-icons/lu';
+import { LuClock3, LuActivity } from 'react-icons/lu';
+import { api } from '@/services/api';
+import { LucideAlertCircle } from 'lucide-react';
 
-const formatTimer = (seconds: number | null) => {
-  if (seconds === null || Number.isNaN(seconds)) return '--:--';
+const formatTimer = (seconds: number | null | undefined) => {
+  if (seconds === null || seconds === undefined || Number.isNaN(seconds)) {
+    return '--:--';
+  }
   const safeSeconds = Math.max(0, seconds);
   const minutes = Math.floor(safeSeconds / 60);
   const secs = safeSeconds % 60;
   return `${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
 };
+
+type FinalizeReason = 'timeout' | 'abandon';
 
 export default function ExecucaoProvaPage() {
   const params = useParams();
@@ -28,6 +34,7 @@ export default function ExecucaoProvaPage() {
     tarefa,
     questoes,
     respostas,
+    submissaoId,
     isLoading,
     error,
     handleRespostaChange,
@@ -48,13 +55,14 @@ export default function ExecucaoProvaPage() {
 
   const [questaoAtualIndex, setQuestaoAtualIndex] = useState(0);
   const [showGuide, setShowGuide] = useState(true);
-  const [fullscreenError, setFullscreenError] = useState<string | null>(null);
   const [hasStarted, setHasStarted] = useState(false);
-  const [secondsLeft, setSecondsLeft] = useState<number | null>(null);
+  const [secondsLeft, setSecondsLeft] = useState<number>(tempoLimiteMinutos * 60);
   const [confirmModalOpen, setConfirmModalOpen] = useState(false);
   const [examFinished, setExamFinished] = useState(false);
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const examFinishedRef = useRef(false);
+  const abandonoNotificadoRef = useRef(false);
 
   const questoesOrdenadas = useMemo(
     () => [...questoes].sort((a, b) => a.sequencia - b.sequencia),
@@ -63,8 +71,50 @@ export default function ExecucaoProvaPage() {
 
   const questaoAtual = questoesOrdenadas[questaoAtualIndex];
   const totalQuestoes = questoesOrdenadas.length;
-  const porcentagemConclucao =
+  const porcentagemConclusao =
     totalQuestoes > 0 ? ((questaoAtualIndex + 1) / totalQuestoes) * 100 : 0;
+
+  const finalizeSubmission = useCallback(
+    async (reason: FinalizeReason) => {
+      if (!submissaoId) return;
+      try {
+        await api.post(`/submissoes/${submissaoId}/finalizar`, { reason });
+      } catch (err) {
+        console.error('Erro ao finalizar a prova automaticamente', err);
+      }
+    },
+    [submissaoId],
+  );
+
+  const finalizeSubmissionKeepAlive = useCallback(() => {
+    if (!submissaoId || abandonoNotificadoRef.current) return;
+    abandonoNotificadoRef.current = true;
+    examFinishedRef.current = true;
+
+    const baseUrl = process.env.NEXT_PUBLIC_API_URL;
+    if (!baseUrl) return;
+
+    const normalizedBase = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+    const url = `${normalizedBase}/submissoes/${submissaoId}/finalizar`;
+    const payload = JSON.stringify({ reason: 'abandon' as FinalizeReason });
+
+    try {
+      if (navigator.sendBeacon) {
+        const blob = new Blob([payload], { type: 'application/json' });
+        navigator.sendBeacon(url, blob);
+      } else {
+        fetch(url, {
+          method: 'POST',
+          body: payload,
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          keepalive: true,
+        }).catch(() => undefined);
+      }
+    } catch (err) {
+      console.error('Erro ao finalizar a prova automaticamente', err);
+    }
+  }, [submissaoId]);
 
   const finalizarProva = useCallback(
     async ({
@@ -72,10 +122,13 @@ export default function ExecucaoProvaPage() {
       reason,
     }: {
       force: boolean;
-      reason: 'manual' | 'timeout' | 'fullscreen';
+      reason: 'manual' | 'timeout';
     }) => {
-      if (examFinished) return;
+      if (examFinishedRef.current) return;
+
+      examFinishedRef.current = true;
       setExamFinished(true);
+      abandonoNotificadoRef.current = true;
 
       if (timerRef.current) {
         clearInterval(timerRef.current);
@@ -84,44 +137,55 @@ export default function ExecucaoProvaPage() {
 
       const sucesso = await submitRespostas({ force });
 
-      if (document.fullscreenElement) {
-        try {
-          await document.exitFullscreen();
-        } catch {
-          // ignore
-        }
+      if (!sucesso) {
+        examFinishedRef.current = false;
+        setExamFinished(false);
+        abandonoNotificadoRef.current = false;
+        alert('Nao foi possivel enviar suas respostas.');
+        return;
       }
 
-      const mensagem = sucesso
-        ? reason === 'manual'
+      setConfirmModalOpen(false);
+      setSecondsLeft(0);
+
+      if (reason === 'timeout') {
+        await finalizeSubmission('timeout');
+      }
+
+      const mensagem =
+        reason === 'manual'
           ? 'Prova enviada com sucesso!'
-          : reason === 'timeout'
-          ? 'Tempo esgotado! Sua prova foi enviada automaticamente.'
-          : 'A prova foi encerrada ao sair do modo tela cheia.'
-        : 'Não foi possível enviar suas respostas.';
+          : 'Tempo esgotado! Suas respostas foram registradas automaticamente.';
 
       alert(mensagem);
       router.push('/aluno/provas');
       router.refresh();
     },
-    [examFinished, submitRespostas, router],
+    [submitRespostas, router, finalizeSubmission],
   );
+
+  useEffect(() => {
+    if (!hasStarted) {
+      setSecondsLeft(tempoLimiteMinutos * 60);
+    }
+  }, [tempoLimiteMinutos, hasStarted]);
 
   useEffect(() => {
     if (!hasStarted) return;
 
-    setSecondsLeft(tempoLimiteMinutos * 60);
-
     timerRef.current = setInterval(() => {
       setSecondsLeft((prev) => {
-        if (prev === null) return prev;
-        if (prev <= 1) {
+        const nextValue =
+          prev === null || prev === undefined ? tempoLimiteMinutos * 60 - 1 : prev - 1;
+
+        if (nextValue <= 0) {
           clearInterval(timerRef.current as NodeJS.Timeout);
           timerRef.current = null;
           finalizarProva({ force: true, reason: 'timeout' });
           return 0;
         }
-        return prev - 1;
+
+        return nextValue;
       });
     }, 1000);
 
@@ -134,31 +198,30 @@ export default function ExecucaoProvaPage() {
   }, [hasStarted, tempoLimiteMinutos, finalizarProva]);
 
   useEffect(() => {
-    const handleFullscreenChange = () => {
-      const ativo = !!document.fullscreenElement;
-      if (!ativo && hasStarted && !examFinished) {
-        finalizarProva({ force: true, reason: 'fullscreen' });
+    if (!hasStarted || examFinishedRef.current) return;
+
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      finalizeSubmissionKeepAlive();
+      event.preventDefault();
+      event.returnValue = '';
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [hasStarted, examFinished, finalizeSubmissionKeepAlive]);
+
+  useEffect(() => {
+    return () => {
+      if (hasStarted && !examFinishedRef.current) {
+        finalizeSubmissionKeepAlive();
       }
     };
+  }, [hasStarted, finalizeSubmissionKeepAlive]);
 
-    document.addEventListener('fullscreenchange', handleFullscreenChange);
-    return () => {
-      document.removeEventListener('fullscreenchange', handleFullscreenChange);
-    };
-  }, [hasStarted, examFinished, finalizarProva]);
-
-  const iniciarProva = async () => {
-    setFullscreenError(null);
-    try {
-      await document.documentElement.requestFullscreen();
-      setHasStarted(true);
-      setShowGuide(false);
-      setSecondsLeft(tempoLimiteMinutos * 60);
-    } catch (err) {
-      setFullscreenError(
-        'Não foi possível ativar o modo tela cheia. Verifique as permissões do navegador.',
-      );
-    }
+  const iniciarProva = () => {
+    setHasStarted(true);
+    setShowGuide(false);
+    setSecondsLeft(tempoLimiteMinutos * 60);
   };
 
   const sairSemIniciar = () => {
@@ -180,7 +243,7 @@ export default function ExecucaoProvaPage() {
   if (isLoading) return <Loading />;
   if (error) return <ErrorMsg text={error} />;
   if (!tarefa || !questaoAtual)
-    return <ErrorMsg text="Prova não encontrada ou sem questões disponíveis." />;
+    return <ErrorMsg text="Prova nao encontrada ou sem questoes disponiveis." />;
 
   return (
     <Section>
@@ -190,9 +253,8 @@ export default function ExecucaoProvaPage() {
             <div className={styles.guideCard}>
               <h1>{tarefa.titulo}</h1>
               <p>
-                Antes de começar, a prova será exibida em tela cheia. Se você
-                sair do modo tela cheia, a prova será encerrada e suas respostas
-                serão enviadas automaticamente.
+                Quando a prova comecar, fique nesta pagina ate finalizar. Se voce
+                sair antes do envio, a nota sera zero.
               </p>
 
               <ul>
@@ -203,15 +265,17 @@ export default function ExecucaoProvaPage() {
                   Total de pontos: <strong>{totalPontos}</strong>
                 </li>
                 <li>
-                  Questões: <strong>{totalQuestoes}</strong>
+                  Questoes: <strong>{totalQuestoes}</strong>
                 </li>
               </ul>
 
-              {fullscreenError ? (
-                <div className={styles.warning}>
-                  <LuAlertTriangle /> {fullscreenError}
-                </div>
-              ) : null}
+              <div className={styles.warning}>
+                <LucideAlertCircle />
+                <span>
+                  Fechar ou recarregar a pagina antes do envio encerra a prova com
+                  nota zero.
+                </span>
+              </div>
 
               <div className={styles.guideActions}>
                 <button
@@ -226,7 +290,7 @@ export default function ExecucaoProvaPage() {
                   className={styles.startButton}
                   onClick={iniciarProva}
                 >
-                  Continuar em tela cheia
+                  Iniciar prova
                 </button>
               </div>
             </div>
@@ -236,7 +300,7 @@ export default function ExecucaoProvaPage() {
         <header className={styles.header}>
           <div>
             <h1>{tarefa.titulo}</h1>
-            <p>{tarefa.descricao ?? 'Leia cada questão com atenção.'}</p>
+            <p>{tarefa.descricao ?? 'Leia cada questao com atencao.'}</p>
           </div>
           <div className={styles.headerStats}>
             <div className={styles.timer}>
@@ -253,11 +317,11 @@ export default function ExecucaoProvaPage() {
         <div className={styles.progressBlock}>
           <div className={styles.progressInfo}>
             <p>
-              Questão {questaoAtualIndex + 1} de {totalQuestoes}
+              Questao {questaoAtualIndex + 1} de {totalQuestoes}
             </p>
-            <p>{Math.round(porcentagemConclucao)}% concluído</p>
+            <p>{Math.round(porcentagemConclusao)}% concluido</p>
           </div>
-          <BarraDeProgresso porcentagem={porcentagemConclucao} />
+          <BarraDeProgresso porcentagem={porcentagemConclusao} />
         </div>
 
         <div className={styles.questionCard}>
@@ -314,7 +378,7 @@ export default function ExecucaoProvaPage() {
             onClick={questaoAnterior}
             disabled={questaoAtualIndex === 0}
           >
-            Questão anterior
+            Questao anterior
           </button>
           {questaoAtualIndex === totalQuestoes - 1 ? (
             <button type="button" onClick={() => setConfirmModalOpen(true)}>
@@ -322,7 +386,7 @@ export default function ExecucaoProvaPage() {
             </button>
           ) : (
             <button type="button" onClick={proximaQuestao}>
-              Próxima questão
+              Proxima questao
             </button>
           )}
         </div>
@@ -335,7 +399,7 @@ export default function ExecucaoProvaPage() {
       >
         <div className={styles.modalContent}>
           <h2>Deseja enviar a prova?</h2>
-          <p>Ao confirmar, não será possível alterar suas respostas.</p>
+          <p>Apos o envio nao sera possivel alterar suas respostas.</p>
           <div className={styles.modalActions}>
             <button type="button" onClick={() => setConfirmModalOpen(false)}>
               Continuar respondendo
@@ -343,7 +407,6 @@ export default function ExecucaoProvaPage() {
             <button
               type="button"
               onClick={() => {
-                setConfirmModalOpen(false);
                 finalizarProva({ force: false, reason: 'manual' });
               }}
             >
@@ -355,9 +418,3 @@ export default function ExecucaoProvaPage() {
     </Section>
   );
 }
-
-
-
-
-
-

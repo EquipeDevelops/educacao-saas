@@ -124,6 +124,36 @@
   font-size: 0.9rem;
 }
 
+.tempoOptions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.tempoOption {
+  padding: 0.6rem 1.25rem;
+  border-radius: 999px;
+  border: 1px solid var(--cor-borda);
+  background-color: white;
+  color: var(--cor-texto-destaque);
+  font-weight: 600;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.tempoOption:hover {
+  border-color: var(--cor-primaria);
+  color: var(--cor-primaria);
+  box-shadow: 0 0 0 3px var(--cor-primaria-light);
+}
+
+.tempoOptionActive {
+  background-color: var(--cor-primaria);
+  border-color: var(--cor-primaria);
+  color: #fff;
+  box-shadow: 0 0 0 3px var(--cor-primaria-light);
+}
+
 .field input,
 .field select,
 .field textarea {

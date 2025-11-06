@@ -6,6 +6,7 @@ import { z } from "zod";
 import {
   createSubmissaoSchema,
   gradeSubmissaoSchema,
+  finalizeSubmissaoSchema,
   paramsSchema,
   findAllSubmissoesSchema,
 } from "./submissao.validator";
@@ -20,6 +21,14 @@ router.post(
   submissaoController.create
 );
 
+
+router.post(
+  "/:id/finalizar",
+  protect,
+  authorize("ALUNO"),
+  validate(finalizeSubmissaoSchema),
+  submissaoController.finalizeByAluno
+);
 router.patch(
   "/:id/grade",
   protect,

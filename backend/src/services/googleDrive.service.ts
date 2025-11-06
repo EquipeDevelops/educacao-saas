@@ -29,7 +29,7 @@ let cachedFolderId: string | null = null;
 const clientId = process.env.GOOGLE_DRIVE_CLIENT_ID;
 const clientSecret = process.env.GOOGLE_DRIVE_CLIENT_SECRET;
 const redirectUri = process.env.GOOGLE_DRIVE_REDIRECT_URI; // opcional no refresh
-const refreshToken = process.env.GOOGLE_DRIVE_REFRESH_TOKEN; // 👈 nome consistente
+const refreshToken = process.env.GOOGLE_DRIVE_REFRESH_TOKEN; // 👈 nome consistente 
 const folderName = process.env.GOOGLE_DRIVE_FOLDER_NAME ?? "anexos_educacaoSass";
 
 function ensureEnv() {
@@ -62,7 +62,6 @@ async function getAccessToken(): Promise<string> {
     // redirect_uri: redirectUri ?? "", // não é necessário para o refresh; evite enviar vazio
   });
 
-  // Log leve (sem segredos)
   console.log("🔐 Solicitando novo access token ao Google…");
 
   const response = await fetch(GOOGLE_OAUTH_TOKEN_URL, {
