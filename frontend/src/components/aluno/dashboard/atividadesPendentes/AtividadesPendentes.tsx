@@ -6,9 +6,13 @@ import Link from 'next/link';
 
 interface AtividadesProps {
   atividades: TarefaPendente[];
+  readOnly?: boolean;
 }
 
-export default function AtividadesPendentes({ atividades }: AtividadesProps) {
+export default function AtividadesPendentes({
+  atividades,
+  readOnly = false,
+}: AtividadesProps) {
   return (
     <div className={styles.container}>
       <div>
@@ -18,46 +22,74 @@ export default function AtividadesPendentes({ atividades }: AtividadesProps) {
         <ul className={styles.atividadesContainer}>
           {atividades.map((atividade) => {
             return (
-              <Link
-                href={
-                  atividade.tipo === 'QUESTIONARIO'
-                    ? '/aluno/tarefas'
-                    : atividade.tipo === 'TRABALHO'
-                    ? '/aluno/trabalhos'
-                    : '/aluno/provas'
-                }
-                key={atividade.id}
-                className={styles.atividade}
-              >
-                <div className={styles.atividadesInfo}>
-                  <h3>
-                    {atividade.componenteCurricular.materia.nome}{' '}
-                    <span>
-                      {atividade.tipo === 'QUESTIONARIO'
-                        ? 'Questionário'
-                        : atividade.tipo === 'PROVA'
-                        ? 'Prova'
-                        : atividade.tipo === 'TRABALHO'
-                        ? 'Trabalho'
-                        : 'Lição de casa'}
-                    </span>
-                  </h3>
-                  <p className={styles.atividadeTitulo}>{atividade.titulo}</p>
+              readOnly ? (
+                <div className={`${styles.atividade} ${styles.readOnly}`} key={atividade.id}>
+                  <div className={styles.atividadesInfo}>
+                    <h3>
+                      {atividade.componenteCurricular.materia.nome}{' '}
+                      <span>
+                        {atividade.tipo === 'QUESTIONARIO'
+                          ? 'Questionário'
+                          : atividade.tipo === 'PROVA'
+                          ? 'Prova'
+                          : atividade.tipo === 'TRABALHO'
+                          ? 'Trabalho'
+                          : 'Lição de casa'}
+                      </span>
+                    </h3>
+                    <p className={styles.atividadeTitulo}>{atividade.titulo}</p>
+                  </div>
+                  <span className={styles.atividadePrazo}>
+                    <LuClock />
+                    {new Date(atividade.data_entrega)
+                      .toLocaleDateString('pt-br')
+                      .slice(0, 5)}
+                  </span>
                 </div>
-                <span className={styles.atividadePrazo}>
-                  <LuClock />
-                  {new Date(atividade.data_entrega)
-                    .toLocaleDateString('pt-br')
-                    .slice(0, 5)}
-                </span>
-              </Link>
+              ) : (
+                <Link
+                  href={
+                    atividade.tipo === 'QUESTIONARIO'
+                      ? '/aluno/tarefas'
+                      : atividade.tipo === 'TRABALHO'
+                      ? '/aluno/trabalhos'
+                      : '/aluno/provas'
+                  }
+                  key={atividade.id}
+                  className={styles.atividade}
+                >
+                  <div className={styles.atividadesInfo}>
+                    <h3>
+                      {atividade.componenteCurricular.materia.nome}{' '}
+                      <span>
+                        {atividade.tipo === 'QUESTIONARIO'
+                          ? 'Questionário'
+                          : atividade.tipo === 'PROVA'
+                          ? 'Prova'
+                          : atividade.tipo === 'TRABALHO'
+                          ? 'Trabalho'
+                          : 'Lição de casa'}
+                      </span>
+                    </h3>
+                    <p className={styles.atividadeTitulo}>{atividade.titulo}</p>
+                  </div>
+                  <span className={styles.atividadePrazo}>
+                    <LuClock />
+                    {new Date(atividade.data_entrega)
+                      .toLocaleDateString('pt-br')
+                      .slice(0, 5)}
+                  </span>
+                </Link>
+              )
             );
           })}
         </ul>
       </div>
-      <Link href={'/aluno/atividades_avaliacoes'} className={styles.buttonLink}>
-        Ver todas as atividades <LuSquareArrowOutUpRight />
-      </Link>
+      {!readOnly && (
+        <Link href={'/aluno/atividades_avaliacoes'} className={styles.buttonLink}>
+          Ver todas as atividades <LuSquareArrowOutUpRight />
+        </Link>
+      )}
     </div>
   );
 }

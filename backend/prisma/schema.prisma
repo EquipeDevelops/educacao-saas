@@ -40,6 +40,7 @@ enum PapelUsuario {
   GESTOR
   PROFESSOR
   ALUNO
+  RESPONSAVEL
 }
 
 enum StatusTransacao {
@@ -115,6 +116,7 @@ model Usuarios {
   unidade_escolar        Unidades_Escolares?  @relation(fields: [unidadeEscolarId], references: [id])
   perfil_aluno           Usuarios_aluno?
   perfil_professor       Usuarios_professor?
+  perfil_responsavel     Usuarios_responsavel?
   conversas_participadas Participante[]
   mensagens_enviadas     Mensagem[]
   comentarios_feitos     ComentarioTarefa[]
@@ -142,8 +144,35 @@ model Usuarios_aluno {
   matriculas           Matriculas[]
   submissoes           Submissoes[]
   conquistas_recebidas Conquistas_Usuarios[]
+  responsaveis         ResponsavelAluno[]
 
   @@map("perfis_alunos")
+}
+
+model Usuarios_responsavel {
+  id           String             @id @default(auto()) @map("_id") @db.ObjectId
+  usuario      Usuarios           @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  usuarioId    String             @unique @db.ObjectId
+  telefone     String?
+  alunos       ResponsavelAluno[]
+  criado_em    DateTime           @default(now())
+  atualizado_em DateTime          @updatedAt
+
+  @@map("perfis_responsaveis")
+}
+
+model ResponsavelAluno {
+  id             String               @id @default(auto()) @map("_id") @db.ObjectId
+  responsavel    Usuarios_responsavel @relation(fields: [responsavelId], references: [id], onDelete: Cascade)
+  responsavelId  String               @db.ObjectId
+  aluno          Usuarios_aluno       @relation(fields: [alunoId], references: [id])
+  alunoId        String               @db.ObjectId
+  parentesco     String?
+  principal      Boolean              @default(false)
+  criado_em      DateTime             @default(now())
+
+  @@unique([responsavelId, alunoId])
+  @@map("responsaveis_alunos")
 }
 
 model Usuarios_professor {

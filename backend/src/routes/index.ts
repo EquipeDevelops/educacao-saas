@@ -34,7 +34,8 @@ import { eventoRoutes } from "../modules/eventos/eventos.routes";
 import { geradorProvaIARoutes } from "../modules/geradorProvaIA/geradorProvaIA.routes";
 import { auditLogRoutes } from "../modules/auditLog/auditLog.routes";
 import { categoriaTransacaoRoutes } from "../modules/categoriaTransacao/categoriaTransacao.routes";
-import { alunoDashboardRoutes } from "../modules/alunoDashboard/alunoDashboard.routes"
+import { alunoDashboardRoutes } from "../modules/alunoDashboard/alunoDashboard.routes";
+import { responsavelDashboardRoutes } from "../modules/responsavelDashboard/responsavelDashboard.routes";
 import { bimestreRoutes } from "../modules/bimestre/bimestre.routes";
 
 const protectedRouter = Router();
@@ -70,6 +71,7 @@ protectedRouter.use("/bimestres", bimestreRoutes);
 
 protectedRouter.use("/professor/dashboard", professorDashboardRoutes);
 protectedRouter.use("/aluno/dashboard", alunoDashboardRoutes);
+protectedRouter.use("/responsavel/dashboard", responsavelDashboardRoutes);
 protectedRouter.use("/gestor/dashboard", gestorDashboardRoutes);
 protectedRouter.use("/gestor/relatorios", relatoriosRoutes);
 protectedRouter.use("/financeiro", financeiroRoutes);

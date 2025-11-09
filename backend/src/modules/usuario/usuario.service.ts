@@ -133,6 +133,7 @@ async function createUser(
     papel,
     perfil_aluno,
     perfil_professor,
+    perfil_responsavel,
     instituicaoId,
     unidadeEscolarId,
   } = data;
@@ -156,10 +157,28 @@ async function createUser(
     await prismaClient.usuarios_professor.create({
       data: { usuarioId: novoUsuario.id, ...perfil_professor },
     });
+  } else if (papel === PapelUsuario.RESPONSAVEL && perfil_responsavel) {
+    await prismaClient.usuarios_responsavel.create({
+      data: {
+        usuarioId: novoUsuario.id,
+        telefone: perfil_responsavel.telefone || null,
+        alunos: {
+          create: perfil_responsavel.alunos.map((aluno) => ({
+            aluno: { connect: { id: aluno.alunoId } },
+            parentesco: aluno.parentesco || null,
+            principal: aluno.principal ?? false,
+          })),
+        },
+      },
+    });
   }
   const usuarioCompleto = await prismaClient.usuarios.findUniqueOrThrow({
     where: { id: novoUsuario.id },
-    include: { perfil_aluno: true, perfil_professor: true },
+    include: {
+      perfil_aluno: true,
+      perfil_professor: true,
+      perfil_responsavel: { include: { alunos: true } },
+    },
   });
   const { senha_hash, ...usuarioSemSenha } = usuarioCompleto;
   return usuarioSemSenha;

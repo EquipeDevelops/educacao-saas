@@ -78,6 +78,15 @@
   }
 }
 
+.readOnly {
+  pointer-events: none;
+  cursor: default;
+
+  &:hover {
+    background-color: var(--cor-primaria-light);
+  }
+}
+
 .atividadeTitulo {
   font-size: .9rem;
   color: var(--cor-subtexto);

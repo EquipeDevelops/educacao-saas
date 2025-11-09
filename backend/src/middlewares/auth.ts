@@ -14,6 +14,8 @@ export interface AuthenticatedRequest extends Request {
     papel: PapelUsuario;
     perfilId: string | null;
     nome: string; // <-- A propriedade 'nome' agora faz parte da interface
+    responsavelPerfilId: string | null;
+    responsavelAlunoIds: string[];
   };
 }
 
@@ -51,6 +53,12 @@ export const protect = async (
       include: {
         perfil_aluno: { select: { id: true } },
         perfil_professor: { select: { id: true } },
+        perfil_responsavel: {
+          select: {
+            id: true,
+            alunos: { select: { alunoId: true } },
+          },
+        },
       },
     });
 
@@ -67,8 +75,14 @@ export const protect = async (
       unidadeEscolarId: usuario.unidadeEscolarId,
       papel: usuario.papel,
       perfilId:
-        usuario.perfil_aluno?.id || usuario.perfil_professor?.id || null,
+        usuario.perfil_aluno?.id ||
+        usuario.perfil_professor?.id ||
+        usuario.perfil_responsavel?.id ||
+        null,
       nome: usuario.nome, // <-- LINHA ADICIONADA: O nome do usuário agora é incluído
+      responsavelPerfilId: usuario.perfil_responsavel?.id || null,
+      responsavelAlunoIds:
+        usuario.perfil_responsavel?.alunos.map((relacao) => relacao.alunoId) || [],
     };
 
     console.log(

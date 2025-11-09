@@ -20,6 +20,19 @@ const professorProfileSchema = z.object({
   area_especializacao: z.string().optional(),
 });
 
+const responsavelAlunoSchema = z.object({
+  alunoId: z.string({ required_error: "O aluno vinculado é obrigatório." }),
+  parentesco: z.string().optional(),
+  principal: z.boolean().optional(),
+});
+
+const responsavelProfileSchema = z.object({
+  telefone: z.string().optional(),
+  alunos: z
+    .array(responsavelAlunoSchema)
+    .min(1, "Pelo menos um aluno deve ser vinculado ao responsável."),
+});
+
 export const createUserSchema = z.object({
   body: z
     .object({
@@ -38,6 +51,7 @@ export const createUserSchema = z.object({
 
       perfil_aluno: alunoProfileSchema.optional(),
       perfil_professor: professorProfileSchema.optional(),
+      perfil_responsavel: responsavelProfileSchema.optional(),
     })
     .refine(
       (data) => {
@@ -46,6 +60,9 @@ export const createUserSchema = z.object({
         }
         if (data.papel === PapelUsuario.PROFESSOR) {
           return !!data.perfil_professor;
+        }
+        if (data.papel === PapelUsuario.RESPONSAVEL) {
+          return !!data.perfil_responsavel;
         }
         return true;
       },
