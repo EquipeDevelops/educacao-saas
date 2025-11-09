@@ -1,3 +1,4 @@
+import { TipoDeAvaliacao } from "@prisma/client";
 import { z } from "zod";
 
 export const paramsSchema = z.object({
@@ -10,11 +11,8 @@ export const createAvaliacaoSchema = z.object({
       .number({ required_error: "A nota é obrigatória." })
       .min(0, "A nota não pode ser negativa.")
       .max(10, "A nota não pode ser maior que 10."),
-    periodo: z.string({
-      required_error: "O período é obrigatório (ex: 1º Bimestre).",
-    }),
-    tipo: z.string({
-      required_error: "O tipo é obrigatório (ex: Prova, Trabalho).",
+    tipo: z.nativeEnum(TipoDeAvaliacao, {
+      required_error: "O tipo da avaliação é obrigatório.",
     }),
     data: z.string().datetime({ message: "Formato de data inválido." }),
     matriculaId: z.string({
@@ -23,15 +21,18 @@ export const createAvaliacaoSchema = z.object({
     componenteCurricularId: z.string({
       required_error: "O ID do componente curricular é obrigatório.",
     }),
+    bimestreId: z.string().optional(),
+    tarefaId: z.string().optional(),
   }),
 });
 
 export const updateAvaliacaoSchema = z.object({
   body: z.object({
     nota: z.number().min(0).max(10).optional(),
-    periodo: z.string().optional(),
-    tipo: z.string().optional(),
+    tipo: z.nativeEnum(TipoDeAvaliacao).optional(),
     data: z.string().datetime().optional(),
+    bimestreId: z.string().optional(),
+    tarefaId: z.string().optional(),
   }),
   params: paramsSchema,
 });
@@ -40,13 +41,16 @@ export const findAllAvaliacoesSchema = z.object({
   query: z.object({
     matriculaId: z.string().optional(),
     componenteCurricularId: z.string().optional(),
+    bimestreId: z.string().optional(),
   }),
 });
 
 export type CreateAvaliacaoInput = z.infer<
   typeof createAvaliacaoSchema
 >["body"];
-export type UpdateAvaliacaoInput = z.infer<typeof updateAvaliacaoSchema>;
+export type UpdateAvaliacaoInput = z.infer<
+  typeof updateAvaliacaoSchema
+>["body"];
 export type FindAllAvaliacoesInput = z.infer<
   typeof findAllAvaliacoesSchema
 >["query"];

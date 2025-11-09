@@ -4,6 +4,7 @@ import { AuthenticatedRequest } from "../../middlewares/auth";
 import {
   FindAllAvaliacoesInput,
   CreateAvaliacaoInput,
+  UpdateAvaliacaoInput,
 } from "./avaliacaoParcial.validator";
 
 export const avaliacaoController = {
@@ -15,7 +16,9 @@ export const avaliacaoController = {
       );
       return res.status(201).json(avaliacao);
     } catch (error: any) {
-      return res.status(403).json({ message: error.message });
+      const message =
+        error?.message ?? "Não foi possível criar a avaliação.";
+      return res.status(400).json({ message });
     }
   },
 
@@ -49,14 +52,17 @@ export const avaliacaoController = {
     try {
       const avaliacao = await avaliacaoService.update(
         req.params.id,
-        req.body,
+        req.body as UpdateAvaliacaoInput,
         req.user
       );
       return res.status(200).json(avaliacao);
     } catch (error: any) {
-      if ((error as any).code === "P2025")
+      if ((error as any).code === "P2025") {
         return res.status(404).json({ message: error.message });
-      return res.status(403).json({ message: error.message });
+      }
+      const message =
+        error?.message ?? "Não foi possível atualizar a avaliação.";
+      return res.status(400).json({ message });
     }
   },
 
@@ -67,7 +73,9 @@ export const avaliacaoController = {
     } catch (error: any) {
       if ((error as any).code === "P2025")
         return res.status(404).json({ message: error.message });
-      return res.status(403).json({ message: error.message });
+      const message =
+        error?.message ?? "Não foi possível remover a avaliação.";
+      return res.status(400).json({ message });
     }
   },
 };

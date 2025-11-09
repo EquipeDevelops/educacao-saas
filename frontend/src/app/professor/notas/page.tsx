@@ -1,300 +1,695 @@
 "use client";
 
-import { useState, useEffect, FormEvent, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { FiSave, FiAlertTriangle, FiCheckCircle, FiInfo } from "react-icons/fi";
 import { api } from "@/services/api";
 import styles from "./notas.module.css";
-import { FiSave, FiAward, FiInfo } from "react-icons/fi";
 
 type Componente = {
   id: string;
   materia: { nome: string };
   turma: { id: string; nome: string; serie: string };
 };
+
 type Matricula = {
   id: string;
   aluno: { usuario: { nome: string } };
 };
+
+type Bimestre = {
+  id: string;
+  periodo: string;
+  dataInicio: string;
+  dataFim: string;
+  nome?: string | null;
+};
+
 type Avaliacao = {
   id: string;
   nota: number;
-  matriculaId: string;
-};
-type NotaParaSalvar = {
-  matriculaId: string;
-  nota: number | null;
-  avaliacaoId?: string;
+  periodo: string;
+  data: string;
+  tipo: string;
+  bimestre?: {
+    id: string;
+    periodo: string;
+    nome?: string | null;
+  } | null;
+  tarefa?: {
+    id: string;
+    titulo: string;
+    tipo: string;
+  } | null;
+  matricula: {
+    id: string;
+    aluno: { usuario: { nome: string } };
+  };
 };
 
-const periodosAvaliativos = [
-  { value: "PRIMEIRO_BIMESTRE", label: "1º Bimestre" },
-  { value: "SEGUNDO_BIMESTRE", label: "2º Bimestre" },
-  { value: "TERCEIRO_BIMESTRE", label: "3º Bimestre" },
-  { value: "QUARTO_BIMESTRE", label: "4º Bimestre" },
-  { value: "RECUPERACAO_FINAL", label: "Recuperação Final" },
+type GradeRow = {
+  matriculaId: string;
+  alunoNome: string;
+  bimestres: Record<string, number | null>;
+  recuperacao: number | null;
+  media: number | null;
+  status: "APROVADO" | "REPROVADO" | "PENDENTE";
+};
+
+const periodoLabels: Record<string, string> = {
+  PRIMEIRO_BIMESTRE: "1º Bimestre",
+  SEGUNDO_BIMESTRE: "2º Bimestre",
+  TERCEIRO_BIMESTRE: "3º Bimestre",
+  QUARTO_BIMESTRE: "4º Bimestre",
+  RECUPERACAO_FINAL: "Recuperação",
+};
+
+const tarefaTipoLabels: Record<string, string> = {
+  PROVA: "Prova",
+  TRABALHO: "Trabalho",
+  QUESTIONARIO: "Questionário",
+  LICAO_DE_CASA: "Lição de Casa",
+  ATIVIDADE_EM_SALA: "Atividade em Sala",
+  PARTICIPACAO: "Participação",
+  OUTRO: "Outro",
+};
+
+const periodoOrdem: string[] = [
+  "PRIMEIRO_BIMESTRE",
+  "SEGUNDO_BIMESTRE",
+  "TERCEIRO_BIMESTRE",
+  "QUARTO_BIMESTRE",
 ];
 
-const tiposDeAvaliacao = [
-  { value: "PROVA", label: "Prova" },
-  { value: "TRABALHO", label: "Trabalho" },
-  { value: "ATIVIDADE_EM_SALA", label: "Atividade em Sala" },
-  { value: "PARTICIPACAO", label: "Participação" },
-  { value: "OUTRO", label: "Outro" },
-];
+const dateFormatter = new Intl.DateTimeFormat("pt-BR", {
+  day: "2-digit",
+  month: "2-digit",
+  year: "numeric",
+});
 
-export default function NotasPage() {
+const notaFormatter = (value: number | null) => {
+  if (value === null || Number.isNaN(value)) return "--";
+  return value.toFixed(1);
+};
+
+const getPeriodoLabel = (periodo: string) =>
+  periodoLabels[periodo] ?? periodo.replace(/_/g, " ");
+
+export default function ProfessorNotasPage() {
   const [componentes, setComponentes] = useState<Componente[]>([]);
-  const [selectedComponenteId, setSelectedComponenteId] = useState<string>("");
+  const [bimestres, setBimestres] = useState<Bimestre[]>([]);
   const [matriculas, setMatriculas] = useState<Matricula[]>([]);
-  const [notas, setNotas] = useState<Record<string, NotaParaSalvar>>({});
+  const [avaliacoes, setAvaliacoes] = useState<Avaliacao[]>([]);
 
-  const [periodo, setPeriodo] = useState("PRIMEIRO_BIMESTRE");
-  const [tipo, setTipo] = useState("PROVA");
-  const [data, setData] = useState(new Date().toISOString().substring(0, 16));
+  const [selectedComponenteId, setSelectedComponenteId] = useState<string>("");
+  const [selectedTurmaId, setSelectedTurmaId] = useState<string>("");
+  const [selectedAlunoId, setSelectedAlunoId] = useState<string>("");
+  const [selectedBimestreId, setSelectedBimestreId] = useState<string>("");
+  const [notaInput, setNotaInput] = useState<string>("");
 
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
+  const [loadingComponentes, setLoadingComponentes] = useState(true);
+  const [loadingBimestres, setLoadingBimestres] = useState(true);
+  const [loadingDadosTurma, setLoadingDadosTurma] = useState(false);
+  const [savingNota, setSavingNota] = useState(false);
+
+  const [feedbackError, setFeedbackError] = useState<string | null>(null);
+  const [feedbackSuccess, setFeedbackSuccess] = useState<string | null>(null);
 
   useEffect(() => {
-    async function fetchComponentes() {
+    let ativo = true;
+
+    async function carregarComponentes() {
+      setLoadingComponentes(true);
       try {
-        const res = await api.get("/componentes-curriculares");
-        setComponentes(res.data);
-        if (res.data.length > 0) {
-          setSelectedComponenteId(res.data[0].id);
+        const { data } = await api.get<Componente[]>("/componentes-curriculares");
+        if (!ativo) return;
+        setComponentes(data);
+        if (data.length > 0) {
+          setSelectedComponenteId(data[0].id);
+          setSelectedTurmaId(data[0].turma.id);
         }
-      } catch (err) {
-        setError("Falha ao carregar suas disciplinas.");
+      } catch (error) {
+        if (!ativo) return;
+        setFeedbackError("Falha ao carregar seus componentes curriculares.");
       } finally {
-        setIsLoading(false);
+        if (ativo) setLoadingComponentes(false);
       }
     }
-    fetchComponentes();
+
+    carregarComponentes();
+    return () => {
+      ativo = false;
+    };
   }, []);
 
   useEffect(() => {
-    if (!selectedComponenteId) return;
-
-    async function fetchMatriculas() {
-      const componente = componentes.find((c) => c.id === selectedComponenteId);
-      if (!componente) return;
-
+    let ativo = true;
+    async function carregarBimestres() {
+      setLoadingBimestres(true);
       try {
-        setIsLoading(true);
-        const res = await api.get(`/matriculas?turmaId=${componente.turma.id}`);
-        setMatriculas(res.data);
+        const { data } = await api.get<Bimestre[]>("/bimestres");
+        if (!ativo) return;
+        const hoje = new Date();
+        const filtrados = data
+          .filter((b) => new Date(b.dataInicio) <= hoje)
+          .sort(
+            (a, b) =>
+              new Date(a.dataInicio).getTime() - new Date(b.dataInicio).getTime(),
+          );
+        setBimestres(filtrados);
 
-        const notasIniciais: Record<string, NotaParaSalvar> = {};
-        res.data.forEach((m: Matricula) => {
-          notasIniciais[m.id] = { matriculaId: m.id, nota: null };
-        });
-        setNotas(notasIniciais);
-      } catch (err) {
-        setError("Falha ao carregar os alunos desta turma.");
+        const vigente =
+          filtrados.find((b) => {
+            const inicio = new Date(b.dataInicio);
+            const fim = new Date(b.dataFim);
+            return inicio <= hoje && fim >= hoje;
+          }) ?? filtrados[filtrados.length - 1];
+
+        setSelectedBimestreId(vigente?.id ?? "");
+      } catch (error) {
+        if (!ativo) return;
+        setFeedbackError("Falha ao carregar os bimestres disponíveis.");
       } finally {
-        setIsLoading(false);
+        if (ativo) setLoadingBimestres(false);
       }
     }
-    fetchMatriculas();
+
+    carregarBimestres();
+    return () => {
+      ativo = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!selectedComponenteId) {
+      setMatriculas([]);
+      setAvaliacoes([]);
+      setSelectedAlunoId("");
+      return;
+    }
+
+    const componente = componentes.find((c) => c.id === selectedComponenteId);
+    if (!componente) return;
+
+    let ativo = true;
+    setLoadingDadosTurma(true);
+    setFeedbackError(null);
+
+    async function carregarDadosDaTurma() {
+      try {
+        const [matriculasRes, avaliacoesRes] = await Promise.all([
+          api.get<Matricula[]>("/matriculas", {
+            params: { componenteCurricularId: selectedComponenteId },
+          }),
+          api.get<Avaliacao[]>("/avaliacoes", {
+            params: { componenteCurricularId: selectedComponenteId },
+          }),
+        ]);
+
+        if (!ativo) return;
+
+        const alunosOrdenados = [...matriculasRes.data].sort((a, b) =>
+          a.aluno.usuario.nome.localeCompare(b.aluno.usuario.nome, "pt-BR"),
+        );
+
+        setMatriculas(alunosOrdenados);
+        setAvaliacoes(avaliacoesRes.data);
+        setSelectedTurmaId(componente.turma.id);
+
+        setSelectedAlunoId((prev) => {
+          if (prev && alunosOrdenados.some((m) => m.id === prev)) return prev;
+          return alunosOrdenados[0]?.id ?? "";
+        });
+      } catch (error: any) {
+        if (!ativo) return;
+        const message =
+          error?.response?.data?.message ||
+          "Falha ao carregar os dados da turma.";
+        setFeedbackError(message);
+        setMatriculas([]);
+        setAvaliacoes([]);
+        setSelectedAlunoId("");
+      } finally {
+        if (ativo) setLoadingDadosTurma(false);
+      }
+    }
+
+    carregarDadosDaTurma();
+    return () => {
+      ativo = false;
+    };
   }, [selectedComponenteId, componentes]);
 
-  const handleNotaChange = (matriculaId: string, nota: string) => {
-    const valor = nota === "" ? null : parseFloat(nota);
-    setNotas((prev) => ({
-      ...prev,
-      [matriculaId]: {
-        ...prev[matriculaId],
-        nota: valor,
-      },
-    }));
-  };
-
-  const handleSalvarNotas = async () => {
-    if (!tipo || !periodo || !data) {
-      setError("Preencha o Tipo, Período e Data da avaliação antes de salvar.");
+  useEffect(() => {
+    if (!selectedAlunoId || !selectedBimestreId) {
+      setNotaInput("");
       return;
     }
+    const manual = avaliacoes.find(
+      (avaliacao) =>
+        avaliacao.matricula.id === selectedAlunoId &&
+        (avaliacao.bimestre?.id === selectedBimestreId ||
+          avaliacao.periodo ===
+            bimestres.find((b) => b.id === selectedBimestreId)?.periodo) &&
+        !avaliacao.tarefa,
+    );
 
-    setIsSaving(true);
-    setError(null);
-    setSuccess(null);
-
-    const notasParaEnviar = Object.values(notas).filter((n) => n.nota !== null);
-    if (notasParaEnviar.length === 0) {
-      setError("Nenhuma nota foi inserida para salvar.");
-      setIsSaving(false);
-      return;
+    if (manual) {
+      setNotaInput(manual.nota.toFixed(1));
+    } else {
+      setNotaInput("");
     }
+  }, [selectedAlunoId, selectedBimestreId, avaliacoes, bimestres]);
 
-    const promises = notasParaEnviar.map((notaInfo) => {
-      return api.post("/avaliacoes", {
-        matriculaId: notaInfo.matriculaId,
-        componenteCurricularId: selectedComponenteId,
-        nota: notaInfo.nota,
-        periodo,
-        tipo,
-        data: new Date(data).toISOString(),
-      });
-    });
+  const linhaDeNotas = useMemo<GradeRow[]>(() => {
+    if (matriculas.length === 0) return [];
 
-    try {
-      await Promise.all(promises);
-      setSuccess(`${promises.length} nota(s) salva(s) com sucesso!`);
-    } catch (err: any) {
-      setError(
-        err.response?.data?.message || "Ocorreu um erro ao salvar as notas."
+    return matriculas.map((matricula) => {
+      const avaliacoesDoAluno = avaliacoes.filter(
+        (avaliacao) => avaliacao.matricula.id === matricula.id,
       );
+
+      const mediasPorPeriodo: Record<string, { soma: number; quantidade: number }> =
+        {};
+
+      avaliacoesDoAluno.forEach((avaliacao) => {
+        const periodo = avaliacao.periodo;
+        if (!mediasPorPeriodo[periodo]) {
+          mediasPorPeriodo[periodo] = { soma: 0, quantidade: 0 };
+        }
+        mediasPorPeriodo[periodo].soma += avaliacao.nota;
+        mediasPorPeriodo[periodo].quantidade += 1;
+      });
+
+      const notasBimestres: Record<string, number | null> = {};
+
+      periodoOrdem.forEach((periodo) => {
+        const resumo = mediasPorPeriodo[periodo];
+        notasBimestres[periodo] = resumo
+          ? parseFloat((resumo.soma / resumo.quantidade).toFixed(1))
+          : null;
+      });
+
+      const resumoRecuperacao = mediasPorPeriodo["RECUPERACAO_FINAL"];
+      const recuperacao = resumoRecuperacao
+        ? parseFloat(
+            (resumoRecuperacao.soma / resumoRecuperacao.quantidade).toFixed(1),
+          )
+        : null;
+
+      const todasNotasPresentes = periodoOrdem.every(
+        (periodo) => notasBimestres[periodo] !== null,
+      );
+
+      const mediaFinal = todasNotasPresentes
+        ? parseFloat(
+            (
+              periodoOrdem.reduce(
+                (acc, periodo) => acc + (notasBimestres[periodo] ?? 0),
+                0,
+              ) / periodoOrdem.length
+            ).toFixed(1),
+          )
+        : null;
+
+      const status: GradeRow["status"] = !todasNotasPresentes
+        ? "PENDENTE"
+        : mediaFinal !== null && mediaFinal >= 7
+        ? "APROVADO"
+        : recuperacao !== null && recuperacao >= 7
+        ? "APROVADO"
+        : "REPROVADO";
+
+      return {
+        matriculaId: matricula.id,
+        alunoNome: matricula.aluno.usuario.nome,
+        bimestres: notasBimestres,
+        recuperacao,
+        media: mediaFinal,
+        status,
+      };
+    });
+  }, [matriculas, avaliacoes]);
+
+  const avaliacoesAlunoSelecionado = useMemo(() => {
+    if (!selectedAlunoId) return [];
+    return avaliacoes
+      .filter((avaliacao) => avaliacao.matricula.id === selectedAlunoId)
+      .sort(
+        (a, b) =>
+          new Date(b.data).getTime() - new Date(a.data).getTime(),
+      );
+  }, [avaliacoes, selectedAlunoId]);
+
+  const correcoesAlunoSelecionado = useMemo(() => {
+    return avaliacoesAlunoSelecionado.filter((avaliacao) => avaliacao.tarefa);
+  }, [avaliacoesAlunoSelecionado]);
+
+  const turmaSelecionada = useMemo(
+    () => componentes.find((c) => c.id === selectedComponenteId),
+    [componentes, selectedComponenteId],
+  );
+
+  const bimestreSelecionado = useMemo(
+    () => bimestres.find((b) => b.id === selectedBimestreId) ?? null,
+    [bimestres, selectedBimestreId],
+  );
+
+  const alunoSelecionado = useMemo(
+    () => matriculas.find((m) => m.id === selectedAlunoId) ?? null,
+    [matriculas, selectedAlunoId],
+  );
+
+  const handleRegistrarNota = async () => {
+    setFeedbackError(null);
+    setFeedbackSuccess(null);
+
+    if (!selectedComponenteId || !selectedTurmaId) {
+      setFeedbackError("Selecione uma turma para registrar a nota.");
+      return;
+    }
+
+    if (!selectedAlunoId) {
+      setFeedbackError("Escolha um aluno para registrar a nota.");
+      return;
+    }
+
+    if (!selectedBimestreId || !bimestreSelecionado) {
+      setFeedbackError("Escolha um bimestre válido.");
+      return;
+    }
+
+    const valorNota = parseFloat(notaInput.replace(",", "."));
+    if (Number.isNaN(valorNota) || valorNota < 0 || valorNota > 10) {
+      setFeedbackError("Informe uma nota entre 0 e 10.");
+      return;
+    }
+
+    const dataReferencia = new Date(bimestreSelecionado.dataFim).toISOString();
+
+    const avaliacaoManualExistente = avaliacoes.find(
+      (avaliacao) =>
+        avaliacao.matricula.id === selectedAlunoId &&
+        (avaliacao.bimestre?.id === selectedBimestreId ||
+          avaliacao.periodo === bimestreSelecionado.periodo) &&
+        !avaliacao.tarefa,
+    );
+
+    setSavingNota(true);
+    try {
+      if (avaliacaoManualExistente) {
+        const { data } = await api.put<Avaliacao>(
+          `/avaliacoes/${avaliacaoManualExistente.id}`,
+          {
+            nota: valorNota,
+            data: dataReferencia,
+            bimestreId: selectedBimestreId,
+          },
+        );
+
+        setAvaliacoes((prev) =>
+          prev.map((avaliacao) =>
+            avaliacao.id === data.id ? data : avaliacao,
+          ),
+        );
+        setFeedbackSuccess("Nota atualizada com sucesso.");
+      } else {
+        const { data } = await api.post<Avaliacao>("/avaliacoes", {
+          nota: valorNota,
+          tipo: "PROVA",
+          data: dataReferencia,
+          matriculaId: selectedAlunoId,
+          componenteCurricularId: selectedComponenteId,
+          bimestreId: selectedBimestreId,
+        });
+
+        setAvaliacoes((prev) => [...prev, data]);
+        setFeedbackSuccess("Nota registrada com sucesso.");
+      }
+    } catch (error: any) {
+      const message =
+        error?.response?.data?.message ||
+        "Não foi possível registrar a nota. Tente novamente.";
+      setFeedbackError(message);
     } finally {
-      setIsSaving(false);
+      setSavingNota(false);
     }
   };
 
-  if (isLoading && componentes.length === 0) {
+  if (loadingComponentes && componentes.length === 0) {
     return (
-      <div className={styles.pageContainer}>
-        <p>Carregando...</p>
+      <div className={styles.loadingBox}>
+        <FiInfo />
+        <span>Carregando seus componentes curriculares...</span>
+      </div>
+    );
+  }
+
+  if (!loadingComponentes && componentes.length === 0) {
+    return (
+      <div className={styles.loadingBox}>
+        <FiAlertTriangle />
+        <span>
+          Nenhum componente curricular foi encontrado para o seu perfil de
+          professor.
+        </span>
       </div>
     );
   }
 
   return (
     <div className={styles.pageContainer}>
-      <header className={styles.header}>
-        <h1>Planilha de Lançamento de Notas</h1>
-        <p>
-          Selecione a disciplina, preencha os dados da avaliação e insira as
-          notas dos alunos.
-        </p>
-      </header>
-
       <div className={styles.card}>
-        <div className={styles.filtros}>
-          <div className={styles.field}>
-            <label htmlFor="disciplina">1. Selecione a Disciplina/Turma</label>
-            <select
-              id="disciplina"
-              value={selectedComponenteId}
-              onChange={(e) => setSelectedComponenteId(e.target.value)}
-            >
-              {componentes.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.materia.nome} ({c.turma.serie} - {c.turma.nome})
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
+        <header className={styles.headerBlock}>
+          <h1>Lançar notas</h1>
+          <p>
+            Gerencie as notas da turma e acompanhe as correções registradas
+            automaticamente ao corrigir provas, atividades ou trabalhos.
+          </p>
+        </header>
 
-        <div className={styles.dadosAvaliacao}>
+        <section className={styles.selectionPanel}>
           <div className={styles.field}>
-            <label htmlFor="tipo">2. Tipo de Avaliação</label>
+            <label htmlFor="turma">Turma</label>
             <select
-              id="tipo"
-              value={tipo}
-              onChange={(e) => setTipo(e.target.value)}
+              id="turma"
+              value={selectedComponenteId}
+              onChange={(event) => {
+                setSelectedComponenteId(event.target.value);
+              }}
             >
-              {tiposDeAvaliacao.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
+              {componentes.map((componente) => (
+                <option key={componente.id} value={componente.id}>
+                  {componente.turma.serie} - {componente.turma.nome} ·{" "}
+                  {componente.materia.nome}
                 </option>
               ))}
             </select>
           </div>
+
           <div className={styles.field}>
-            <label htmlFor="periodo">3. Período</label>
+            <label htmlFor="aluno">Aluno</label>
             <select
-              id="periodo"
-              value={periodo}
-              onChange={(e) => setPeriodo(e.target.value)}
+              id="aluno"
+              value={selectedAlunoId}
+              onChange={(event) => setSelectedAlunoId(event.target.value)}
+              disabled={loadingDadosTurma || matriculas.length === 0}
             >
-              {periodosAvaliativos.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
+              {matriculas.map((matricula) => (
+                <option key={matricula.id} value={matricula.id}>
+                  {matricula.aluno.usuario.nome}
                 </option>
               ))}
             </select>
           </div>
+
           <div className={styles.field}>
-            <label htmlFor="data">4. Data da Avaliação</label>
+            <label htmlFor="bimestre">Bimestre</label>
+            <select
+              id="bimestre"
+              value={selectedBimestreId}
+              onChange={(event) => setSelectedBimestreId(event.target.value)}
+              disabled={loadingBimestres || bimestres.length === 0}
+            >
+              {bimestres.map((bimestre) => (
+                <option key={bimestre.id} value={bimestre.id}>
+                  {bimestre.nome
+                    ? bimestre.nome
+                    : getPeriodoLabel(bimestre.periodo)}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className={styles.field}>
+            <label htmlFor="nota">Nota (0 a 10)</label>
             <input
-              id="data"
-              type="datetime-local"
-              value={data}
-              onChange={(e) => setData(e.target.value)}
+              id="nota"
+              type="number"
+              min={0}
+              max={10}
+              step={0.1}
+              placeholder="0,0"
+              value={notaInput}
+              onChange={(event) => setNotaInput(event.target.value)}
+              disabled={loadingDadosTurma}
             />
           </div>
-        </div>
 
-        <div className={styles.tabelaContainer}>
-          <h2 className={styles.cardTitle}>
-            <FiAward /> 5. Lance as Notas
-          </h2>
-          {isLoading ? (
-            <p>Carregando alunos...</p>
+          <button
+            className={styles.saveButton}
+            type="button"
+            onClick={handleRegistrarNota}
+            disabled={
+              savingNota ||
+              loadingDadosTurma ||
+              !selectedAlunoId ||
+              !selectedBimestreId ||
+              notaInput.trim() === ""
+            }
+          >
+            <FiSave />
+            {savingNota ? "Salvando..." : "Registrar nota"}
+          </button>
+        </section>
+
+        {(feedbackError || feedbackSuccess) && (
+          <div
+            className={`${styles.feedback} ${
+              feedbackError ? styles.feedbackError : styles.feedbackSuccess
+            }`}
+          >
+            {feedbackError ? <FiAlertTriangle /> : <FiCheckCircle />}
+            <span>{feedbackError ?? feedbackSuccess}</span>
+          </div>
+        )}
+
+        <section className={styles.correcoesSection}>
+          <header className={styles.sectionHeader}>
+            <h2>Correções registradas automaticamente</h2>
+            <p>
+              Toda correção feita nas submissões aparece aqui e é considerada na
+              média do bimestre.
+            </p>
+          </header>
+
+          {loadingDadosTurma ? (
+            <div className={styles.emptyState}>
+              <FiInfo />
+              <span>Carregando correções da turma...</span>
+            </div>
+          ) : alunoSelecionado ? (
+            correcoesAlunoSelecionado.length > 0 ? (
+              <ul className={styles.correcoesList}>
+                {correcoesAlunoSelecionado.map((avaliacao) => (
+                  <li key={avaliacao.id} className={styles.correcoesItem}>
+                    <div className={styles.correcoesMain}>
+                      <strong>{avaliacao.tarefa?.titulo}</strong>
+                      <span className={styles.correcoesNota}>
+                        Nota: {notaFormatter(avaliacao.nota)}
+                      </span>
+                    </div>
+                    <div className={styles.correcoesMeta}>
+                      <span>
+                        {avaliacao.tarefa
+                          ? tarefaTipoLabels[avaliacao.tarefa.tipo] ??
+                            avaliacao.tarefa.tipo
+                          : tarefaTipoLabels[avaliacao.tipo] ?? avaliacao.tipo}
+                      </span>
+                      <span>
+                        {getPeriodoLabel(
+                          avaliacao.bimestre?.periodo ?? avaliacao.periodo,
+                        )}
+                      </span>
+                      <span>{dateFormatter.format(new Date(avaliacao.data))}</span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <div className={styles.emptyState}>
+                <FiInfo />
+                <span>
+                  Nenhuma correção automática foi registrada para o aluno
+                  selecionado ainda.
+                </span>
+              </div>
+            )
           ) : (
-            <table className={styles.table}>
-              <thead>
-                <tr>
-                  <th>Aluno</th>
-                  <th>Nota (0 a 10)</th>
-                </tr>
-              </thead>
-              <tbody>
-                {matriculas.length > 0 ? (
-                  matriculas.map((matricula, index) => (
-                    <tr
-                      key={matricula.id}
-                      className={index % 2 === 0 ? styles.evenRow : ""}
-                    >
-                      <td>{matricula.aluno.usuario.nome}</td>
+            <div className={styles.emptyState}>
+              <FiInfo />
+              <span>Selecione um aluno para visualizar as correções.</span>
+            </div>
+          )}
+        </section>
+
+        <section className={styles.tableSection}>
+          <header className={styles.sectionHeader}>
+            <h2>Quadro de notas da turma</h2>
+            {turmaSelecionada && (
+              <p>
+                {turmaSelecionada.turma.serie} - {turmaSelecionada.turma.nome} ·{" "}
+                {turmaSelecionada.materia.nome}
+              </p>
+            )}
+          </header>
+
+          {loadingDadosTurma ? (
+            <div className={styles.emptyState}>
+              <FiInfo />
+              <span>Atualizando notas da turma...</span>
+            </div>
+          ) : linhaDeNotas.length === 0 ? (
+            <div className={styles.emptyState}>
+              <FiAlertTriangle />
+              <span>Nenhum aluno foi encontrado para esta turma.</span>
+            </div>
+          ) : (
+            <div className={styles.tableWrapper}>
+              <table className={styles.table}>
+                <thead>
+                  <tr>
+                    <th>Aluno</th>
+                    {periodoOrdem.map((periodo) => (
+                      <th key={periodo}>{getPeriodoLabel(periodo)}</th>
+                    ))}
+                    <th>{getPeriodoLabel("RECUPERACAO_FINAL")}</th>
+                    <th>Média</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {linhaDeNotas.map((linha) => (
+                    <tr key={linha.matriculaId}>
+                      <td className={styles.alunoCell}>{linha.alunoNome}</td>
+                      {periodoOrdem.map((periodo) => (
+                        <td key={periodo}>{notaFormatter(linha.bimestres[periodo])}</td>
+                      ))}
+                      <td>{notaFormatter(linha.recuperacao)}</td>
+                      <td>{notaFormatter(linha.media)}</td>
                       <td>
-                        <input
-                          type="number"
-                          step="0.1"
-                          min="0"
-                          max="10"
-                          className={styles.notaInput}
-                          placeholder="-"
-                          value={notas[matricula.id]?.nota ?? ""}
-                          onChange={(e) =>
-                            handleNotaChange(matricula.id, e.target.value)
-                          }
-                        />
+                        <span
+                          className={`${styles.statusPill} ${
+                            linha.status === "APROVADO"
+                              ? styles.statusSuccess
+                              : linha.status === "REPROVADO"
+                              ? styles.statusDanger
+                              : styles.statusNeutral
+                          }`}
+                        >
+                          {linha.status === "PENDENTE"
+                            ? "Em andamento"
+                            : linha.status === "APROVADO"
+                            ? "Aprovado"
+                            : "Reprovado"}
+                        </span>
                       </td>
                     </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={2} className={styles.noData}>
-                      Nenhum aluno encontrado nesta turma.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
-        </div>
-
-        <div className={styles.footer}>
-          {error && (
-            <p className={styles.error}>
-              <FiInfo /> {error}
-            </p>
-          )}
-          {success && (
-            <p className={styles.success}>
-              <FiInfo /> {success}
-            </p>
-          )}
-          <button
-            onClick={handleSalvarNotas}
-            className={styles.saveButton}
-            disabled={isSaving || matriculas.length === 0}
-          >
-            <FiSave /> {isSaving ? "Salvando..." : "Salvar Notas da Turma"}
-          </button>
-        </div>
+        </section>
       </div>
     </div>
   );

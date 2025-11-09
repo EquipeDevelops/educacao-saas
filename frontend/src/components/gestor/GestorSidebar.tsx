@@ -17,6 +17,7 @@ import {
   FiCalendar,
   FiList,
   FiDollarSign,
+  FiLayers,
 } from "react-icons/fi";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -29,6 +30,7 @@ const navLinks = [
   { href: "/gestor/matriculas", text: "Matrículas", icon: <FiUserCheck /> },
   { href: "/gestor/horarios", text: "Horários", icon: <FiClock /> },
   { href: "/gestor/calendario", text: "Calendario", icon: <FiCalendar /> },
+  { href: "/gestor/bimestres", text: "Bimestres", icon: <FiLayers /> },
   { href: "/gestor/conquistas", text: "Conquistas", icon: <FiAward /> },
   { href: "/gestor/comunicados", text: "Comunicados", icon: <FiSend /> },
   { href: "/gestor/relatorios", text: "Relatórios", icon: <FiFileText /> },

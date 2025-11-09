@@ -33,6 +33,7 @@ export const updateMatriculaSchema = z.object({
 export const findAllMatriculasSchema = z.object({
   query: z.object({
     turmaId: z.string().optional(),
+    componenteCurricularId: z.string().optional(),
     alunoId: z.string().optional(),
     ano_letivo: z.string().optional(),
     status: z.nativeEnum(StatusMatricula).optional(),

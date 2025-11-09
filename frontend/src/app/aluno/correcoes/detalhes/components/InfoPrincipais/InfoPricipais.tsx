@@ -41,14 +41,6 @@ export default function InfoPricipais({
     return (firstName.charAt(0) + lastName.charAt(0)).toUpperCase();
   }
 
-  function getNotaClass(porcentagemNota: number) {
-    const p = Math.max(0, Math.min(100, porcentagemNota));
-
-    if (p < 50) return styles.notaBaixa;
-    if (p < 70) return styles.notaBoa;
-    if (p <= 100) return styles.notaOtima;
-  }
-
   console.log(tarefa);
 
   return (

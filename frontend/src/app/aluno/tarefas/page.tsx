@@ -1,7 +1,7 @@
 'use client';
 
 import { useMinhasTarefas } from '@/hooks/tarefas/useMinhasTarefas';
-import TarefaCard from '@/components/aluno/correcaoTarefas/tarefaCard/TarefaCard';
+import TarefaCard from '@/app/aluno/tarefas/components/tarefaCard/TarefaCard';
 import ErrorMsg from '@/components/errorMsg/ErrorMsg';
 import styles from './style.module.css';
 import Section from '@/components/section/Section';
@@ -9,6 +9,7 @@ import Loading from '@/components/loading/Loading';
 import MessageResult from '@/components/messageResult/MessageResult';
 import { useEffect } from 'react';
 import Pagination from '@/components/paginacao/Paginacao';
+import { LuFilter } from 'react-icons/lu';
 
 export default function MinhasTarefasPage() {
   const {
@@ -46,51 +47,65 @@ export default function MinhasTarefasPage() {
     <Section>
       <div>
         <div className={styles.title}>
-          <h2>Atividades</h2>
-          <p>Exercícios e avaliações das suas disciplinas</p>
+          <h2>Terefas</h2>
+          <p>Exercícios das suas disciplinas</p>
         </div>
 
         <div className={styles.filtersContainer}>
-          <div>
-            <select
-              name="status"
-              value={filters.status}
-              onChange={handleFilterChange}
-              aria-label="Filtrar por status"
-            >
-              <option value="">Status</option>
-              <option value="Disponível">Disponível</option>
-              <option value="Em Andamento">Em Andamento</option>
-              <option value="Enviada">Enviada</option>
-              <option value="Avaliada">Avaliada</option>
-            </select>
+          <h2>
+            <LuFilter />
+            Filtros
+          </h2>
+          <div className={styles.filtros}>
+            <div>
+              <label>
+                <p>Status</p>
+                <select
+                  name="status"
+                  value={filters.status}
+                  onChange={handleFilterChange}
+                  aria-label="Filtrar por status"
+                >
+                  <option value="">Todos</option>
+                  <option value="Disponível">Disponível</option>
+                  <option value="Em Andamento">Em Andamento</option>
+                  <option value="Enviada">Enviada</option>
+                  <option value="Avaliada">Avaliada</option>
+                </select>
+              </label>
 
-            <select
-              name="materia"
-              value={filters.materia}
-              onChange={handleFilterChange}
-              aria-label="Filtrar por matéria"
-            >
-              <option value="">Matéria</option>
-              {materiasUnicas.map((materia) => (
-                <option key={materia} value={materia}>
-                  {materia}
-                </option>
-              ))}
-            </select>
+              <label>
+                <p>Matéria</p>
+                  <select
+                    name="materia"
+                    value={filters.materia}
+                    onChange={handleFilterChange}
+                    aria-label="Filtrar por matéria"
+                  >
+                    <option value="">Todas</option>
+                    {materiasUnicas.map((materia) => (
+                      <option key={materia} value={materia}>
+                        {materia}
+                      </option>
+                    ))}
+                  </select>
+              </label>
 
-            <input
-              type="date"
-              name="data"
-              value={filters.data}
-              onChange={handleFilterChange}
-              aria-label="Filtrar por data"
-            />
+              <label>
+                <p>Data de entrega</p>
+                <input
+                  type="date"
+                  name="data"
+                  value={filters.data}
+                  onChange={handleFilterChange}
+                  aria-label="Filtrar por data"
+                />
+              </label>
+            </div>
+            <button onClick={clearFilters} className={styles.clearButton}>
+              Limpar Filtros
+            </button>
           </div>
-
-          <button onClick={clearFilters} className={styles.clearButton}>
-            Limpar Filtros
-          </button>
         </div>
 
         {isLoading ? (
@@ -103,7 +118,7 @@ export default function MinhasTarefasPage() {
                   <TarefaCard key={tarefa.id} tarefa={tarefa} />
                 ))
               ) : (
-                <MessageResult message="Nenhuma atividade encontrada com os filtros aplicados." />
+                <MessageResult message="Nenhuma atividade encontrada" />
               )}
             </div>
 

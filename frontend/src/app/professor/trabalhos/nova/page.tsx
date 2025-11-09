@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/services/api";
 import styles from "./novo-trabalho.module.css";
@@ -10,11 +10,46 @@ import {
   FiSend,
   FiX,
   FiPaperclip,
-  FiUsers,
   FiClipboard,
+  FiTrash2,
+  FiCalendar,
 } from "react-icons/fi";
 import RequisitosBuilder from "@/components/professor/trabalhos/RequisitosBuilder";
 import { Componente } from "../../atividades/nova/page";
+
+type Bimestre = {
+  id: string;
+  periodo: string;
+  dataInicio: string;
+  dataFim: string;
+  nome?: string | null;
+};
+
+const formatarData = (iso: string) =>
+  new Date(iso).toLocaleDateString("pt-BR", { timeZone: "UTC" });
+
+const ALLOWED_ATTACHMENT_TYPES = new Set([
+  "application/pdf",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/vnd.ms-powerpoint",
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+]);
+
+const ACCEPTED_FILE_EXTENSIONS = ".pdf,.doc,.docx,.ppt,.pptx";
+
+const MAX_ATTACHMENT_SIZE = 20 * 1024 * 1024; // 20MB
+
+function formatFileSize(bytes: number) {
+  if (bytes === 0) return "0 B";
+  const units = ["B", "KB", "MB", "GB"];
+  const index = Math.min(
+    Math.floor(Math.log(bytes) / Math.log(1024)),
+    units.length - 1
+  );
+  const size = bytes / Math.pow(1024, index);
+  return `${size.toFixed(size >= 10 || index === 0 ? 0 : 1)} ${units[index]}`;
+}
 
 export default function NovoTrabalhoPage() {
   const router = useRouter();
@@ -28,6 +63,11 @@ export default function NovoTrabalhoPage() {
   const [tipoTrabalho, setTipoTrabalho] = useState("PESQUISA");
   const [permiteAnexos, setPermiteAnexos] = useState(true);
   const [requisitos, setRequisitos] = useState<string[]>([]);
+  const [anexos, setAnexos] = useState<File[]>([]);
+  const [isSaving, setIsSaving] = useState(false);
+  const [currentBimestre, setCurrentBimestre] = useState<Bimestre | null>(null);
+  const [isBimestreLoading, setIsBimestreLoading] = useState(true);
+  const [bimestreError, setBimestreError] = useState<string | null>(null);
 
   useEffect(() => {
     api.get("/componentes-curriculares").then((response) => {
@@ -38,11 +78,42 @@ export default function NovoTrabalhoPage() {
     });
   }, []);
 
+  useEffect(() => {
+    async function fetchBimestreVigente() {
+      setIsBimestreLoading(true);
+      try {
+        const res = await api.get("/bimestres/vigente");
+        setCurrentBimestre(res.data);
+        setBimestreError(null);
+      } catch (err: any) {
+        if (err.response?.status === 404) {
+          setCurrentBimestre(null);
+          setBimestreError(
+            "Nenhum bimestre vigente configurado. Solicite ao gestor para cadastrar o periodo."
+          );
+        } else {
+          setBimestreError(
+            err.response?.data?.message ||
+              "Falha ao identificar o bimestre vigente."
+          );
+        }
+      } finally {
+        setIsBimestreLoading(false);
+      }
+    }
+
+    fetchBimestreVigente();
+  }, []);
+
   const handleSaveTrabalho = async (publicado: boolean) => {
     if (!titulo || !componenteId || !dataEntrega) {
       alert("Título, Turma e Data de Entrega são obrigatórios.");
       return;
     }
+
+    setIsSaving(true);
+
+    let tarefaId: string | null = null;
 
     try {
       const payload = {
@@ -56,24 +127,89 @@ export default function NovoTrabalhoPage() {
           tipoTrabalho,
           permiteAnexos,
           requisitos,
+          anexos: [],
         },
       };
 
       const tarefaResponse = await api.post("/tarefas", payload);
-      const tarefaId = tarefaResponse.data.id;
+      tarefaId = tarefaResponse.data.id;
+
+      if (anexos.length > 0) {
+        const formData = new FormData();
+        anexos.forEach((file) => formData.append("anexos", file));
+
+        try {
+          await api.post(`/tarefas/${tarefaId}/anexos`, formData, {
+            headers: { "Content-Type": "multipart/form-data" },
+          });
+        } catch (uploadError) {
+          console.error("Erro ao enviar anexos", uploadError);
+          await api.delete(`/tarefas/${tarefaId}`).catch(() => undefined);
+          throw uploadError;
+        }
+      }
 
       if (publicado) {
         await api.patch(`/tarefas/${tarefaId}/publish`, { publicado: true });
       }
-
-      alert(`Trabalho "${titulo}" foi salvo com sucesso!`);
+      const nomeBimestre =
+        currentBimestre?.nome ||
+        currentBimestre?.periodo.replace(/_/g, " ");
+      alert(`Trabalho "${titulo}" foi salvo com sucesso! As notas serão registradas no ${nomeBimestre} apos a correcao.`);
+      setAnexos([]);
       router.push(`/professor/trabalhos`);
     } catch (error) {
       console.error("Erro ao salvar o trabalho", error);
-      alert(
-        "Falha ao salvar o trabalho. Verifique os campos e tente novamente."
-      );
+      const message =
+        (error as any)?.response?.data?.message ??
+        "Falha ao salvar o trabalho. Verifique os campos e tente novamente.";
+      alert(message);
+    } finally {
+      setIsSaving(false);
     }
+  };
+
+  const handleAnexoChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const arquivos = Array.from(event.target.files ?? []);
+
+    if (!arquivos.length) {
+      return;
+    }
+
+    const arquivosValidos: File[] = [];
+    arquivos.forEach((arquivo) => {
+      if (!ALLOWED_ATTACHMENT_TYPES.has(arquivo.type)) {
+        alert(
+          `O arquivo "${arquivo.name}" não é suportado. Envie apenas PDF, Word ou PowerPoint.`
+        );
+        return;
+      }
+
+      if (arquivo.size > MAX_ATTACHMENT_SIZE) {
+        alert(
+          `O arquivo "${arquivo.name}" excede o limite de 20MB. Escolha um arquivo menor.`
+        );
+        return;
+      }
+
+      const jaAdicionado = anexos.some(
+        (item) => item.name === arquivo.name && item.size === arquivo.size
+      );
+
+      if (!jaAdicionado) {
+        arquivosValidos.push(arquivo);
+      }
+    });
+
+    if (arquivosValidos.length > 0) {
+      setAnexos((prev) => [...prev, ...arquivosValidos]);
+    }
+
+    event.target.value = "";
+  };
+
+  const handleRemoveAnexo = (index: number) => {
+    setAnexos((prev) => prev.filter((_, i) => i !== index));
   };
 
   return (
@@ -84,6 +220,33 @@ export default function NovoTrabalhoPage() {
           <p>Defina as instruções, requisitos e pontuação para o trabalho.</p>
         </div>
       </header>
+
+      <div className={styles.bimestreBanner}>
+        <FiCalendar />
+        {isBimestreLoading ? (
+          <span>Identificando bimestre vigente...</span>
+        ) : currentBimestre ? (
+          <div>
+            <strong>
+              {currentBimestre.nome || currentBimestre.periodo.replace(/_/g, " ")}
+            </strong>
+            <span>
+              {formatarData(currentBimestre.dataInicio)} - {formatarData(currentBimestre.dataFim)}
+            </span>
+            <small className={styles.bannerHint}>
+              Ao corrigir este trabalho, as notas serão registradas automaticamente neste bimestre.
+            </small>
+          </div>
+        ) : (
+          <div>
+            <strong>Nenhum bimestre vigente</strong>
+            <span>
+              {bimestreError ||
+                "Cadastre um periodo com o gestor para habilitar a atribuicao automatica."}
+            </span>
+          </div>
+        )}
+      </div>
 
       <form className={styles.form} onSubmit={(e) => e.preventDefault()}>
         <section className={styles.card}>
@@ -186,6 +349,52 @@ export default function NovoTrabalhoPage() {
           </div>
         </section>
 
+        <section className={styles.card}>
+          <h2 className={styles.cardTitle}>
+            <FiPaperclip /> Anexos do Trabalho
+          </h2>
+          <div className={styles.field}>
+            <label htmlFor="anexos">
+              Adicione materiais de apoio (PDF, Word ou PowerPoint - até 20MB)
+            </label>
+            <div className={styles.attachmentInputRow}>
+              <input
+                id="anexos"
+                type="file"
+                multiple
+                accept={ACCEPTED_FILE_EXTENSIONS}
+                onChange={handleAnexoChange}
+              />
+              <span>
+                {anexos.length > 0
+                  ? `${anexos.length} arquivo(s) selecionado(s)`
+                  : "Nenhum arquivo selecionado"}
+              </span>
+            </div>
+          </div>
+
+          {anexos.length > 0 && (
+            <ul className={styles.attachmentList}>
+              {anexos.map((arquivo, index) => (
+                <li key={`${arquivo.name}-${index}`}>
+                  <div>
+                    <p>{arquivo.name}</p>
+                    <span>{formatFileSize(arquivo.size)}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveAnexo(index)}
+                    className={styles.removeAttachmentButton}
+                    aria-label={`Remover arquivo ${arquivo.name}`}
+                  >
+                    <FiTrash2 />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+
         <RequisitosBuilder
           requisitos={requisitos}
           setRequisitos={setRequisitos}
@@ -196,6 +405,7 @@ export default function NovoTrabalhoPage() {
             type="button"
             onClick={() => router.back()}
             className={styles.cancelButton}
+            disabled={isSaving}
           >
             <FiX /> Cancelar
           </button>
@@ -203,6 +413,7 @@ export default function NovoTrabalhoPage() {
             type="button"
             onClick={() => handleSaveTrabalho(false)}
             className={styles.draftButton}
+            disabled={isSaving}
           >
             <FiSave /> Salvar como Rascunho
           </button>
@@ -210,6 +421,7 @@ export default function NovoTrabalhoPage() {
             type="button"
             onClick={() => handleSaveTrabalho(true)}
             className={styles.publishButton}
+            disabled={isSaving}
           >
             <FiSend /> Publicar Trabalho
           </button>
@@ -218,3 +430,13 @@ export default function NovoTrabalhoPage() {
     </div>
   );
 }
+
+
+
+
+
+
+
+
+
+

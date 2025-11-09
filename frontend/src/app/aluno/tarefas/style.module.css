@@ -1,28 +1,7 @@
-.title {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  margin-bottom: 20px;
-}
-
 .cardGrid {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  width: 100%;
-}
-
-/* equipedevelops/educacao-saas/educacao-saas-main/frontend/src/app/aluno/tarefas/style.module.css */
-.title {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  margin-bottom: 20px;
-}
-
-.cardGrid {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  flex-wrap: wrap;
   gap: 20px;
   width: 100%;
 }
@@ -56,19 +35,37 @@
 
 .filtersContainer {
   display: flex;
+  flex-direction: column;
   justify-content: space-between;
+  background-color: white;
+  padding: 20px;
+  border: 1px solid var(--cor-borda);
+  border-radius: 15px;
   margin-bottom: 20px;
+  margin-top: 20px;
   & div {
     display: flex;
+    align-items: last baseline;
+    justify-content: space-between;
     gap: 20px;
+
+    & label {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    & label p {
+      font-size: .9rem;
+      color: var(--cor-subtexto);
+    }
+
     & select,
     input[type='date'] {
       display: flex;
-      width: auto;
+      min-width: 250px;
       height: fit-content;
-      align-items: center;
-      justify-content: center;
-      padding: 15px 20px;
+      padding: 10px 20px;
       border-radius: 10px;
       font-size: 1rem;
       color: var(--cor-texto);
@@ -85,4 +82,17 @@
       color: white;
     }
   }
+}
+
+.filtersContainer h2 {
+  font-size: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  font-weight: 500;
+}
+
+.filtersContainer svg {
+  color: var(--cor-primaria);
 }

@@ -1,4 +1,3 @@
-// equipedevelops/educacao-saas/educacao-saas-main/backend/src/modules/alunoDashboard/alunoDashboard.controller.ts
 import { Response } from "express";
 import { AuthenticatedRequest } from "../../middlewares/auth";
 import { alunoDashboardService } from "./alunoDashboard.service";

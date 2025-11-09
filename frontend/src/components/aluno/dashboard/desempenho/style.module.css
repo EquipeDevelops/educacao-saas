@@ -1,22 +1,24 @@
 .container {
   background-color: var(--cor-fundo-card);
+  grid-row: 4 / 5;
   width: 100%;
-  margin-top: 20px;
   padding: 20px;
   border-radius: 15px;
   border: 1px solid var(--cor-borda);
-  max-width: 500px;
 
   & h2 {
     display: flex;
     align-items: center;
+    margin-bottom: 20px;
     gap: 10px;
     font-size: 1.2rem;
     font-weight: 500;
-    margin-bottom: 20px;
-    & svg {
-      font-size: 1.2rem;
-      color: var(--cor-primaria);
+
+    & span {
+      width: 5px;
+      height: 25px;
+      background-color: var(--cor-primaria);
+      border-radius: 5px;
     }
   }
 }
@@ -24,16 +26,16 @@
 .taxaConclusao {
   display: flex;
   flex-direction: column;
-  margin-bottom: 20px;
+  margin-bottom: 10px;
 
   & .description {
     display: flex;
     align-items: center;
     justify-content: space-between;
     color: var(--cor-subtexto);
-    margin-bottom: 10px;
+    margin-bottom: 5px;
     & span {
-      font-size: 1.5rem;
+      font-size: 1rem;
       font-weight: 400;
       color: var(--cor-texto);
     }
@@ -49,7 +51,7 @@
   }
 
   & .boaAvaliacao {
-    color: var(--cor-aviso);
+    color: var(--cor-aviso-dark);
   }
 
   & .avaliacaoRuim {
@@ -57,83 +59,63 @@
   }
 }
 
-.notasContainer {
-  & .ultimaNota {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-direction: column;
-    padding: 20px;
-    background-color: rgb(245, 245, 245);
-    border-radius: 15px;
-    & svg {
-      font-size: 1.8rem;
-      color: var(--cor-primaria);
-      margin-bottom: 10px;
-    }
+.infoNotasContainer ul {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+}
 
-    & p {
-      color: var(--cor-subtexto);
-      margin-bottom: 5px;
-    }
+.infoNotasContainer ul li {
+  padding: 20px;
+  border: 1px solid var(--cor-borda);
+  width: 100%;
+  min-height: 130px;
+  border-radius: 15px;
+}
 
-    & h3 {
-      font-size: 2rem;
-      font-weight: 500;
-    }
-  }
+.infoNotasContainer ul li h4 {
+  font-size: 1rem;
+  font-weight: 400;
+}
 
-  & .notas {
-    margin-top: 20px;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: 1fr 1fr;
-    gap: 10px;
-    & li {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-direction: column;
-      padding: 20px;
-      border-radius: 15px;
-      gap: 5px;
+.infoNotasContainer ul li p {
+  font-size: 1.4rem;
+  font-weight: 500;
+  margin-top: 10px;
+}
 
-      & p {
-        font-size: 0.9rem;
-        color: var(--cor-subtexto);
-      }
+.cardUltimaNota {
+  background-color: var(--cor-primaria-light);
+  border-color: color-mix(in srgb, var(--cor-primaria) 20%, white 80%) !important;
+}
 
-      & p:first-child {
-        font-size: 1.2rem;
-      }
-    }
+.cardUltimaNota p, .cardUltimaNota h4 {
+  color: var(--cor-primaria);
+}
 
-    & .media {
-      background-color: var(--cor-sucesso-light);
-      & p:first-child {
-        color: #0D542B;
-      }
-    }
+.cardMedia {
+  background-color: color-mix(in srgb, var(--cor-cinza) 12%, white 90%);
+  border-color: color-mix(in srgb, var(--cor-cinza) 25%, white 75%) !important;
+}
 
-    & .notaAlta {
-      background-color: var(--cor-aviso-light);
-      & p:first-child {
-        color: #733E0A;
-      }
-    }
+.cardMedia p, .cardMedia h4 {
+  color: var(--cor-subtexto);
+}
 
-    & .notaBaixa {
-      background-color: var(--cor-perigo-light);
-      & p:first-child {
-        color: #82181A;
-      }
-    }
+.cardNotaAlta {
+  background-color: var(--cor-aviso-light);
+  border-color: color-mix(in srgb, var(--cor-aviso-dark) 25%, white 75%) !important;
+}
 
-    & .materia {
-      background-color: var(--cor-envio-light);
-      & p:first-child {
-        color: #59168B;
-      }
-    }
-  }
+.cardNotaAlta p, .cardNotaAlta h4 {
+  color: var(--cor-aviso-dark);
+}
+
+.cardMateria {
+  background-color: var(--cor-sucesso-light);
+  border-color: color-mix(in srgb, var(--cor-sucesso) 25%, white 75%) !important;
+}
+
+.cardMateria p, .cardMateria h4 {
+  color: var(--cor-sucesso-dark);
 }

@@ -1,0 +1,123 @@
+.title {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 20px;
+}
+
+.title h2 {
+  font-size: 2rem;
+  font-weight: 600;
+  color: var(--cor-texto);
+}
+
+.title p {
+  font-size: 1rem;
+  color: var(--cor-subtexto);
+}
+
+.filtersContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background: #ffffff;
+  border: 1px solid var(--cor-borda);
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 24px;
+}
+
+.filtersContainer h2 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.1rem;
+  color: var(--cor-texto);
+}
+
+.filtersContent {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.filtersGroup {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+}
+
+.filtersGroup label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.9rem;
+  color: var(--cor-subtexto);
+}
+
+.filtersGroup label p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--cor-subtexto);
+}
+
+.filtersGroup select,
+.filtersGroup input[type='date'] {
+  min-width: 220px;
+  border: 1px solid var(--cor-borda);
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 0.95rem;
+  color: var(--cor-texto);
+  background: var(--cor-fundo-card);
+}
+
+.clearButton {
+  padding: 10px 18px;
+  border-radius: 10px;
+  border: 1px solid var(--cor-borda);
+  background: transparent;
+  color: var(--cor-texto);
+  transition: all 0.2s ease;
+}
+
+.clearButton:hover {
+  background: var(--cor-primaria);
+  border-color: var(--cor-primaria);
+  color: #ffffff;
+}
+
+.cardGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 20px;
+}
+
+.emptyState {
+  padding: 40px;
+  text-align: center;
+  color: var(--cor-subtexto);
+  border: 1px dashed var(--cor-borda);
+  border-radius: 16px;
+  background: #fff;
+}
+
+@media (max-width: 768px) {
+  .filtersContent {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .filtersGroup select,
+  .filtersGroup input[type='date'] {
+    min-width: 100%;
+  }
+
+  .clearButton {
+    width: 100%;
+  }
+}
+

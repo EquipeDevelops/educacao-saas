@@ -42,7 +42,7 @@ export function useMinhasTarefas() {
     data: '',
     tipo: [] as string[],
   });
-  const limit = 5;
+  const limit = 6;
 
   useEffect(() => {
     if (authLoading || !user) return;
@@ -127,3 +127,4 @@ export function useMinhasTarefas() {
     materiasUnicas,
   };
 }
+

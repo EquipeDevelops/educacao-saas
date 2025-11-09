@@ -4,10 +4,31 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/services/api";
 import styles from "./nova-prova.module.css";
-import { FiInfo, FiSave, FiSend, FiX, FiCpu, FiEye } from "react-icons/fi";
+import {
+  FiInfo,
+  FiSave,
+  FiSend,
+  FiX,
+  FiCpu,
+  FiEye,
+  FiCalendar,
+} from "react-icons/fi";
 import QuestoesBuilder from "@/components/professor/atividades/QuestoesBuilder";
 import { Questao } from "@/types/tarefas";
 import { Componente } from "../../atividades/nova/page";
+
+type Bimestre = {
+  id: string;
+  periodo: string;
+  dataInicio: string;
+  dataFim: string;
+  nome?: string | null;
+};
+
+const formatarData = (iso: string) =>
+  new Date(iso).toLocaleDateString("pt-BR", { timeZone: "UTC" });
+
+const TEMPOS_PROVA = [60, 120, 180] as const;
 
 export default function NovaProvaPage() {
   const router = useRouter();
@@ -18,12 +39,16 @@ export default function NovaProvaPage() {
   const [descricao, setDescricao] = useState("");
   const [dataEntrega, setDataEntrega] = useState("");
   const [pontos, setPontos] = useState(10);
+  const [tempoLimiteMinutos, setTempoLimiteMinutos] = useState(60);
   const [questoes, setQuestoes] = useState<Questao[]>([]);
 
   const [isIAModalOpen, setIsIAModalOpen] = useState(false);
   const [promptIA, setPromptIA] = useState("");
   const [isGerando, setIsGerando] = useState(false);
   const [erroIA, setErroIA] = useState<string | null>(null);
+  const [currentBimestre, setCurrentBimestre] = useState<Bimestre | null>(null);
+  const [isBimestreLoading, setIsBimestreLoading] = useState(true);
+  const [bimestreError, setBimestreError] = useState<string | null>(null);
 
   useEffect(() => {
     api.get("/componentes-curriculares").then((response) => {
@@ -32,6 +57,33 @@ export default function NovaProvaPage() {
         setComponenteId(response.data[0].id);
       }
     });
+  }, []);
+
+  useEffect(() => {
+    async function fetchBimestreVigente() {
+      setIsBimestreLoading(true);
+      try {
+        const res = await api.get("/bimestres/vigente");
+        setCurrentBimestre(res.data);
+        setBimestreError(null);
+      } catch (err: any) {
+        if (err.response?.status === 404) {
+          setCurrentBimestre(null);
+          setBimestreError(
+            "Nenhum bimestre vigente configurado. Solicite ao gestor para cadastrar o periodo."
+          );
+        } else {
+          setBimestreError(
+            err.response?.data?.message ||
+              "Falha ao identificar o bimestre vigente."
+          );
+        }
+      } finally {
+        setIsBimestreLoading(false);
+      }
+    }
+
+    fetchBimestreVigente();
   }, []);
 
   const handlePreview = () => {
@@ -53,6 +105,11 @@ export default function NovaProvaPage() {
     }
 
     try {
+      const metadata: Record<string, number> = {};
+      if (tempoLimiteMinutos > 0) {
+        metadata.tempoLimiteMinutos = tempoLimiteMinutos;
+      }
+
       const tarefaPayload = {
         titulo,
         descricao,
@@ -60,6 +117,7 @@ export default function NovaProvaPage() {
         pontos: Number(pontos),
         componenteCurricularId: componenteId,
         tipo: "PROVA",
+        ...(Object.keys(metadata).length > 0 ? { metadata } : {}),
       };
       const tarefaResponse = await api.post("/tarefas", tarefaPayload);
       const tarefaId = tarefaResponse.data.id;
@@ -81,8 +139,8 @@ export default function NovaProvaPage() {
           });
         }
       }
-
-      alert(`Prova "${titulo}" foi salva com sucesso!`);
+      const nomeBimestre = currentBimestre?.nome || currentBimestre?.periodo.replace(/_/g, " ");
+      alert(`Prova "${titulo}" foi salva com sucesso! As notas serao registradas no ${nomeBimestre} apos a correcao.`);
       router.push(`/professor/provas`);
     } catch (error) {
       console.error("Erro ao salvar prova", error);
@@ -135,6 +193,34 @@ export default function NovaProvaPage() {
             </button>
           </div>
         </header>
+
+        <div className={styles.bimestreBanner}>
+          <FiCalendar />
+          {isBimestreLoading ? (
+            <span>Identificando bimestre vigente...</span>
+          ) : currentBimestre ? (
+            <div>
+              <strong>
+                {currentBimestre.nome || currentBimestre.periodo.replace(/_/g, " ")}
+              </strong>
+              <span>
+                {formatarData(currentBimestre.dataInicio)} -{" "}
+                {formatarData(currentBimestre.dataFim)}
+              </span>
+              <small className={styles.bannerHint}>
+                Ao corrigir esta prova, as notas serão registradas automaticamente neste bimestre.
+              </small>
+            </div>
+          ) : (
+            <div>
+              <strong>Nenhum bimestre vigente</strong>
+              <span>
+                {bimestreError ||
+                  "Cadastre um periodo com o gestor para habilitar a atribuicao automatica."}
+              </span>
+            </div>
+          )}
+        </div>
 
         <form className={styles.form} onSubmit={(e) => e.preventDefault()}>
           <section className={styles.card}>
@@ -194,6 +280,29 @@ export default function NovaProvaPage() {
                   value={pontos}
                   onChange={(e) => setPontos(Number(e.target.value))}
                 />
+              </div>
+            </div>
+            <div className={styles.field}>
+              <label>Tempo de Prova</label>
+              <div
+                className={styles.tempoOptions}
+                role="group"
+                aria-label="Tempo de prova"
+              >
+                {TEMPOS_PROVA.map((tempo) => (
+                  <button
+                    type="button"
+                    key={tempo}
+                    onClick={() => setTempoLimiteMinutos(tempo)}
+                    className={`${styles.tempoOption} ${
+                      tempoLimiteMinutos === tempo
+                        ? styles.tempoOptionActive
+                        : ""
+                    }`}
+                  >
+                    {tempo} min
+                  </button>
+                ))}
               </div>
             </div>
           </section>
@@ -270,3 +379,8 @@ export default function NovaProvaPage() {
     </>
   );
 }
+
+
+
+
+

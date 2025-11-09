@@ -1,6 +1,7 @@
 .container {
   display: flex;
   align-items: center;
+  grid-column: 1 / -1;
   gap: 20px;
   background-color: var(--cor-primaria);
   padding: 20px;
@@ -12,10 +13,11 @@
   align-items: center;
   justify-content: center;
   background-color: color-mix(in srgb, var(--cor-primaria) 80%, white 20%);
-  font-size: 1.5rem;
+  font-size: 1.6rem;
+  border: 1px solid color-mix(in srgb, var(--cor-primaria) 70%, white 30%);
   color: color-mix(in srgb, var(--cor-primaria) 2%, white 98%);
-  width: 60px;
-  height: 60px;
+  width: 70px;
+  height: 70px;
   border-radius: 50%;
   font-weight: 400;
 }
@@ -25,31 +27,30 @@
   flex-direction: column;
 
   & h2 {
-    font-size: 2rem;
+    font-size: 1.5rem;
     font-weight: 500;
     color: white;
-  }
-
-  & span {
-    font-size: .95rem;
     margin-bottom: 10px;
-    background-color: color-mix(in srgb, var(--cor-primaria) 80%, white 20%);
-    padding: 5px 10px;
-    width: fit-content;
-    border-radius: 10px;
-    border: 1px solid color-mix(in srgb, var(--cor-primaria) 40%, white 30%);
-    color: white;
   }
 
-  & h3 {
-    font-size: 1.5rem;
+  & > p {
+    font-size: 1rem;
     color: white;
-    font-weight: 400;
   }
+}
 
-  & h4 {
-    font-size: 1.3rem;
-    color: color-mix(in srgb, var(--cor-primaria) 20%, white 80%);
-    font-weight: 400;
-  }
+.info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.info p {
+  font-size: .9rem;
+  padding: 5px 10px;
+  background-color: color-mix(in srgb, var(--cor-primaria) 80%, white 20%);
+  border: 1px solid color-mix(in srgb, var(--cor-primaria) 70%, white 30%);
+  color: white;
+  border-radius: 10px;
 }

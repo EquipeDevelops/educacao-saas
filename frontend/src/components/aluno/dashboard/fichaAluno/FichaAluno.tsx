@@ -31,10 +31,12 @@ export default function FichaAluno({ alunoInfo }: FichaAlunoProps) {
         <span>{getInitials(alunoInfo?.nome)}</span>
       </div>
       <div className={style.informacoesAluno}>
-        <h2>{alunoInfo?.nome}</h2>
-        <span>{alunoInfo?.papel === 'ALUNO' ? 'Aluno' : ''}</span>
-        <h3>{alunoInfo?.turma}</h3>
-        <h4>{alunoInfo?.escola}</h4>
+        <h2>Olá, {alunoInfo?.nome}!</h2>
+        <p>Bem vindo de volta ao seu painel educacional</p>
+        <div className={style.info}>
+          <p>{alunoInfo?.turma}</p>
+          <p>{alunoInfo?.escola}</p>
+        </div>
       </div>
     </div>
   );

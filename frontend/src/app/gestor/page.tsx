@@ -19,6 +19,7 @@ import {
   FiTrendingUp,
   FiTrendingDown,
   FiDollarSign,
+  FiLayers,
 } from "react-icons/fi";
 import Loading from "@/components/loading/Loading";
 import { toast, ToastContainer } from "react-toastify";
@@ -289,6 +290,10 @@ export default function GestorHomePage() {
             <Link href="/gestor/vinculos" className={styles.shortcutCard}>
               <FiLink />
               <span>Vincular Professores</span>
+            </Link>
+            <Link href="/gestor/bimestres" className={styles.shortcutCard}>
+              <FiLayers />
+              <span>Gerir Bimestres</span>
             </Link>
           </div>
         </section>

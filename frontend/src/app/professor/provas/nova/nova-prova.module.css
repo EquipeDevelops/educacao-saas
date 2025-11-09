@@ -15,6 +15,36 @@
   border-bottom: 1px solid var(--cor-borda);
 }
 
+.bimestreBanner {
+  max-width: 1000px;
+  margin: 0 auto 2rem auto;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: var(--cor-fundo);
+  border: 1px solid var(--cor-borda);
+  border-radius: 10px;
+  padding: 1rem 1.25rem;
+  color: var(--cor-texto-destaque);
+}
+
+.bimestreBanner strong {
+  display: block;
+  font-size: 1rem;
+}
+
+.bimestreBanner span {
+  font-size: 0.85rem;
+  color: var(--cor-subtexto);
+}
+
+.bannerHint {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--cor-subtexto);
+  margin-top: 0.35rem;
+}
+
 .header h1 {
   font-size: 2rem;
   font-weight: 700;
@@ -92,6 +122,36 @@
   font-weight: 500;
   color: var(--cor-texto);
   font-size: 0.9rem;
+}
+
+.tempoOptions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.tempoOption {
+  padding: 0.6rem 1.25rem;
+  border-radius: 999px;
+  border: 1px solid var(--cor-borda);
+  background-color: white;
+  color: var(--cor-texto-destaque);
+  font-weight: 600;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.tempoOption:hover {
+  border-color: var(--cor-primaria);
+  color: var(--cor-primaria);
+  box-shadow: 0 0 0 3px var(--cor-primaria-light);
+}
+
+.tempoOptionActive {
+  background-color: var(--cor-primaria);
+  border-color: var(--cor-primaria);
+  color: #fff;
+  box-shadow: 0 0 0 3px var(--cor-primaria-light);
 }
 
 .field input,

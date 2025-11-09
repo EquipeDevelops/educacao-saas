@@ -4,8 +4,9 @@ import {
   LuFilePenLine,
   LuBook,
   LuCopyCheck,
-  LuClock9,
-  LuUser,
+  LuCalendar,
+  LuMessageSquare,
+  LuArrowUpRight,
 } from 'react-icons/lu';
 import Link from 'next/link';
 import BarraDeProgresso from '@/components/progressBar/BarraDeProgresso';
@@ -29,59 +30,81 @@ export default function TarefaCorrecaoCard({ tarefa }: TarefaCorrecaoProps) {
     (tarefa.submissao?.nota_total / tarefa.pontos) * 100;
 
   return (
-    <Link
-      href={`/aluno/correcoes/detalhes/${tarefa.submissao?.id}`}
-      className={styles.container}
-    >
-      <div className={styles.iconContainer}>
-        <div className={styles.icon}>
-          {tarefa.tipo === 'QUESTIONARIO' ? (
-            <LuCopyCheck />
-          ) : tarefa.tipo === 'PROVA' ? (
+    <div className={styles.container}>
+      <div className={styles.contentContainer}>
+        <div className={styles.icone}>
+          {tarefa.tipo === 'PROVA' ? (
             <LuFilePenLine />
+          ) : tarefa.tipo === 'QUESTIONARIO' ? (
+            <LuCopyCheck />
           ) : (
             <LuBook />
           )}
         </div>
-      </div>
-      <div className={styles.infoContainer}>
-        <div className={styles.infoMateria}>
-          <p>{tarefa.componenteCurricular.materia.nome}</p>
-          <span>
-            {tarefa.tipo === 'QUESTIONARIO'
-              ? 'Questionário'
-              : tarefa.tipo === 'PROVA'
-              ? 'Prova'
-              : 'Trabalho'}
-          </span>
-        </div>
-        <h2>{tarefa.titulo}</h2>
-        <div className={styles.infoDataCorrecao}>
-          <div className={styles.professor}>
-            <LuUser />
-            <p>{tarefa.componenteCurricular.professor.usuario.nome}</p>
+        <div className={styles.content}>
+          <div className={styles.tituloContainer}>
+            <h4>{tarefa.titulo}</h4>
+            <ul className={styles.shortcuts}>
+              <li>{tarefa.componenteCurricular.materia.nome}</li>
+              <li>
+                {tarefa.tipo === 'QUESTIONARIO'
+                  ? 'Questionário'
+                  : tarefa.tipo === 'PROVA'
+                  ? 'Prova'
+                  : 'Trabalho'}
+              </li>
+            </ul>
           </div>
-          <div className={styles.data}>
+          <ul className={styles.infoDates}>
+            <li>
+              <span>
+                {getInitials(
+                  tarefa.componenteCurricular.professor.usuario.nome,
+                )}
+              </span>
+              Prof. {tarefa.componenteCurricular.professor.usuario.nome}
+            </li>
+            <li>
+              <LuCalendar />
+              <p>
+                Entregue em:{' '}
+                {new Date(tarefa.data_entrega).toLocaleDateString('pt-BR')}
+              </p>
+            </li>
+            <li>
+              <LuCalendar />
+              <p>
+                Corrigido em:{' '}
+                {new Date(tarefa.submissao?.atualizado_em).toLocaleDateString(
+                  'pt-BR',
+                )}
+              </p>
+            </li>
+          </ul>
+          <div className={styles.feedback}>
             <p>
-              <LuClock9 />{' '}
-              {new Date(tarefa.submissao?.enviado_em).toLocaleDateString(
-                'pt-BR',
-              )}
+              <LuMessageSquare /> {tarefa.submissao.feedback}
             </p>
           </div>
         </div>
-        <BarraDeProgresso
-          className={styles.barra}
-          porcentagem={porcentagemAcerto}
-        />
       </div>
-      <div className={styles.notaContainer}>
-        <p>
-          <span>{tarefa.submissao?.nota_total}/</span>
-          {tarefa.pontos}
-        </p>
-        <p>Corrigido</p>
+      <div className={styles.resultContainer}>
+        <div className={styles.nota}>
+          <p style={{ color: porcentagemAcerto < 50 ? '#fc5659ff' : '#2ec488' }}>
+            <span>{tarefa.submissao?.nota_total}</span>/{tarefa.pontos}
+          </p>
+          <p>Pontuação</p>
+        </div>
+        <div className={styles.barraInfo}>
+          <p>
+            Aproveitamento <span style={{ color: porcentagemAcerto < 50 ? '#fc5659ff' : '#2ec488' }}>{porcentagemAcerto}%</span>
+          </p>
+          <BarraDeProgresso className={porcentagemAcerto < 50 ? styles.erroBarra : styles.positivoBarra} porcentagem={porcentagemAcerto} />
+        </div>
+        <Link href={`/aluno/correcoes/detalhes/${tarefa.submissao?.id}`} className={styles.botaoLink}>
+          Ver Detalhes <LuArrowUpRight />
+        </Link>
       </div>
-    </Link>
+    </div>
   );
 }

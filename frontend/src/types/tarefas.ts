@@ -1,9 +1,28 @@
-export type TipoTrabalho = 'PESQUISA' | 'RESENHA' | 'APRESENTACAO' | 'OUTRO';
+export type TipoTrabalho =
+  | 'PESQUISA'
+  | 'RESUMO'
+  | 'RESENHA'
+  | 'APRESENTACAO'
+  | 'PROJETO'
+  | 'RELATORIO'
+  | 'OUTRO';
+
+export interface TarefaAnexo {
+  id: string;
+  nome: string;
+  tipo: string;
+  tamanho: number;
+  url: string;
+  visualizacaoUrl?: string;
+  enviadoEm?: string;
+}
 
 export interface TarefaMetadata {
-  tipoTrabalho: TipoTrabalho;
-  permiteAnexos: boolean;
-  requisitos: string[];
+  tipoTrabalho?: TipoTrabalho;
+  permiteAnexos?: boolean;
+  requisitos?: string[];
+  anexos?: TarefaAnexo[];
+  tempoLimiteMinutos?: number;
 }
 
 export type ApiTarefa = {

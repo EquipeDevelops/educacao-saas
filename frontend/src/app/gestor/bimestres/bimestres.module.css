@@ -1,0 +1,224 @@
+.pageContainer {
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1.5rem;
+}
+
+.header h1 {
+  margin: 0;
+  font-size: 1.8rem;
+}
+
+.header p {
+  color: var(--cor-subtexto);
+  margin-top: 0.5rem;
+}
+
+.refreshButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--cor-primaria);
+  color: white;
+  border-radius: 8px;
+  padding: 0.6rem 1rem;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.filters {
+  display: flex;
+  gap: 1rem;
+}
+
+.filters label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  font-weight: 600;
+}
+
+.filters select {
+  border-radius: 8px;
+  border: 1px solid var(--cor-borda);
+  padding: 0.6rem;
+}
+
+.formSection,
+.listSection {
+  background: var(--cor-fundo-card);
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.formSection h2,
+.listSection h2 {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0 0 1rem 0;
+  font-size: 1.2rem;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.formRow {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.formRow label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  font-weight: 600;
+}
+
+.formRow input,
+.formRow select {
+  border-radius: 8px;
+  border: 1px solid var(--cor-borda);
+  padding: 0.65rem;
+}
+
+.submitButton {
+  align-self: flex-end;
+  display: inline-flex;
+  gap: 0.5rem;
+  align-items: center;
+  background: var(--cor-primaria);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 0.75rem 1.5rem;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.error {
+  color: var(--cor-perigo-dark);
+  font-weight: 600;
+}
+
+.success {
+  color: var(--cor-sucesso-dark);
+  font-weight: 600;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+.card {
+  border: 1px solid var(--cor-borda);
+  border-radius: 12px;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.card.active {
+  border-color: var(--cor-primaria);
+  box-shadow: 0 4px 16px rgba(0, 112, 243, 0.12);
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.periodo {
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+.cardDates {
+  color: var(--cor-subtexto);
+  font-size: 0.9rem;
+}
+
+.cardBadge {
+  display: inline-block;
+  background: var(--cor-fundo);
+  color: var(--cor-subtexto);
+  border-radius: 999px;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.8rem;
+  width: fit-content;
+}
+
+.editButton {
+  background: transparent;
+  border: none;
+  color: var(--cor-primaria);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.editForm {
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.editForm input {
+  border-radius: 8px;
+  border: 1px solid var(--cor-borda);
+  padding: 0.6rem;
+}
+
+.editActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+.editActions button {
+  border: none;
+  border-radius: 8px;
+  padding: 0.6rem 1.1rem;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.editActions button[type="button"] {
+  background: var(--cor-fundo);
+  color: var(--cor-texto);
+  border: 1px solid var(--cor-borda);
+}
+
+.editActions button[type="submit"] {
+  background: var(--cor-primaria);
+  color: white;
+}
+
+.emptyState {
+  text-align: center;
+  padding: 2rem;
+  color: var(--cor-subtexto);
+  border: 1px dashed var(--cor-borda);
+  border-radius: 10px;
+}

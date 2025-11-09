@@ -12,11 +12,11 @@ export const matriculaController = {
     try {
       const matricula = await matriculaService.create(
         req.body as CreateMatriculaInput,
-        req.user // Passa o usuário inteiro para o serviço
+        req.user
       );
       return res.status(201).json(matricula);
     } catch (error: any) {
-      if (error.message.includes("já possui uma matrícula")) {
+      if (error.message.includes("ja possui uma matricula")) {
         return res.status(409).json({ message: error.message });
       }
       return res.status(400).json({ message: error.message });
@@ -31,9 +31,19 @@ export const matriculaController = {
       );
       return res.status(200).json(matriculas);
     } catch (error: any) {
-      return res
-        .status(500)
-        .json({ message: "Erro ao buscar matrículas.", error: error.message });
+      console.error("[MatriculaController] Erro ao buscar matriculas:", error);
+      const message =
+        error?.message ?? "Erro ao buscar matriculas.";
+
+      if (message.toLowerCase().includes("permiss")) {
+        return res.status(403).json({ message });
+      }
+
+      if (message.toLowerCase().includes("nao encontrada")) {
+        return res.status(404).json({ message });
+      }
+
+      return res.status(500).json({ message });
     }
   },
 
@@ -42,11 +52,11 @@ export const matriculaController = {
       const { id } = req.params;
       const matricula = await matriculaService.findById(id, req.user);
       if (!matricula) {
-        return res.status(404).json({ message: "Matrícula não encontrada." });
+        return res.status(404).json({ message: "Matricula nao encontrada." });
       }
       return res.status(200).json(matricula);
     } catch (error: any) {
-      return res.status(500).json({ message: "Erro ao buscar matrícula." });
+      return res.status(500).json({ message: "Erro ao buscar matricula." });
     }
   },
 
@@ -64,9 +74,9 @@ export const matriculaController = {
       if ((error as any).code === "P2025") {
         return res
           .status(404)
-          .json({ message: "Matrícula não encontrada para atualização." });
+          .json({ message: "Matricula nao encontrada para atualizacao." });
       }
-      return res.status(500).json({ message: "Erro ao atualizar matrícula." });
+      return res.status(500).json({ message: "Erro ao atualizar matricula." });
     }
   },
 
@@ -79,9 +89,10 @@ export const matriculaController = {
       if ((error as any).code === "P2025") {
         return res
           .status(404)
-          .json({ message: "Matrícula não encontrada para exclusão." });
+          .json({ message: "Matricula nao encontrada para exclusao." });
       }
-      return res.status(500).json({ message: "Erro ao deletar matrícula." });
+      return res.status(500).json({ message: "Erro ao deletar matricula." });
     }
   },
 };
+

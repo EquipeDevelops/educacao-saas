@@ -1,4 +1,5 @@
 import { Response } from "express";
+import type { Express } from "express";
 import { tarefaService } from "./tarefa.service";
 import { AuthenticatedRequest } from "../../middlewares/auth";
 import {
@@ -17,6 +18,9 @@ export const tarefaController = {
     } catch (error: any) {
       if ((error as any).code === "FORBIDDEN") {
         return res.status(403).json({ message: error.message });
+      }
+      if ((error as any).code === "NO_ACTIVE_BIMESTRE") {
+        return res.status(400).json({ message: error.message });
       }
       return res.status(500).json({ message: "Erro ao criar tarefa." });
     }
@@ -91,6 +95,35 @@ export const tarefaController = {
       if ((error as any).code === "P2025")
         return res.status(404).json({ message: "Tarefa não encontrada." });
       return res.status(500).json({ message: "Erro ao deletar tarefa." });
+    }
+  },
+
+  uploadAttachments: async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const { id } = req.params;
+      const files = (req.files as Express.Multer.File[]) ?? [];
+
+      if (!files.length) {
+        return res
+          .status(400)
+          .json({ message: "Envie ao menos um arquivo para anexar." });
+      }
+
+      const anexos = await tarefaService.addAttachments(id, files, req.user);
+      return res.status(201).json({ anexos });
+    } catch (error: any) {
+      if ((error as any).code === "FORBIDDEN")
+        return res.status(403).json({ message: error.message });
+      if ((error as any).code === "P2025")
+        return res.status(404).json({ message: "Tarefa não encontrada." });
+
+      if (error instanceof Error && error.message.includes("anexo")) {
+        return res.status(400).json({ message: error.message });
+      }
+
+      return res.status(500).json({
+        message: error.message || "Erro ao anexar arquivos ao trabalho.",
+      });
     }
   },
 };

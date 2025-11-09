@@ -1,19 +1,20 @@
-.container {
+﻿.container {
   display: flex;
   flex-direction: column;
+  position: relative;
   height: 100%;
   gap: 20px;
 }
 
 .container > h1 {
   font-size: 2rem;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .telasContainer {
   display: flex;
-  height: 100%;
   gap: 20px;
+  align-items: flex-start;
 }
 
 .trabalhosContainer {
@@ -26,10 +27,14 @@
 .detalhesContainer {
   width: 55%;
   padding: 20px;
+  min-height: 700px;
+  display: flex;
   border-radius: 15px;
   border: 1px solid var(--cor-borda);
   background-color: var(--cor-fundo-card);
-  position: static;
+  position: sticky;
+  top: 32px;
+  align-self: flex-start;
 }
 
 .cardsContainer {
@@ -56,36 +61,37 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 10px;
+  margin-bottom: 20px;
 }
 
 .materiaPontos h4 {
   font-size: 0.9rem;
-  border: 1px solid color-mix(in srgb, currentColor 30%, white 70%);
-  font-weight: 400;
+  border: 1px solid color-mix(in srgb, var(--cor-cinza) 40%, white 60%);
+  font-weight: 500;
   padding: 2px 10px;
-  background-color: var(--cor-primaria-light);
   border-radius: 10px;
-  color: var(--cor-primaria);
+  color: var(--cor-subtexto);
+  background-color: color-mix(in srgb, var(--cor-cinza) 10%, white 90%)
 }
 
 .materiaPontos span {
   padding: 2px 10px;
   border-radius: 10px;
+  font-size: 0.9rem;
   background-color: var(--cor-primaria);
   color: white;
 }
 
 .descricao h3 {
-  font-size: 1.3rem;
-  font-weight: 500;
+  font-size: 1.2rem;
+  font-weight: 400;
   margin-bottom: 5px;
 }
 
 .descricao p {
-  font-size: 1.1rem;
+  font-size: 1rem;
   color: var(--cor-subtexto);
-  margin-bottom: 30px;
+  margin-bottom: 10px;
 }
 
 .infoAdicionais {
@@ -104,13 +110,13 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
-  color: var(--cor-primaria);
-  font-weight: 500;
-  background-color: var(--cor-primaria-light);
-  font-size: 0.95rem;
+  color: var(--cor-subtexto);
+  background-color: white;
+  border: 1px solid var(--cor-borda);
+  font-size: 0.9rem;
 }
 
 .professor p {
@@ -121,8 +127,8 @@
 .prazo {
   display: flex;
   align-items: center;
-  gap: 10px;
-  color: var(--cor-primaria);
+  gap: 5px;
+  color: var(--cor-subtexto);
 }
 
 .mensagemNaoSelecionado {
@@ -130,12 +136,14 @@
   align-items: center;
   justify-content: center;
   flex-direction: column;
+  align-self: center;
   height: 100%;
+  width: 100%;
   gap: 20px;
 }
 
 .mensagemNaoSelecionado h3 {
-  font-size: 1.5rem;
+  font-size: 1.2rem;
   font-weight: 400;
   color: var(--cor-subtexto);
 }
@@ -148,41 +156,43 @@
 .detalhes {
   display: flex;
   flex-direction: column;
+  width: 100%;
   height: 100%;
 }
 
 .detalhes h3 {
-  font-size: 1.3rem;
+  font-size: 1rem;
   font-weight: 500;
-  margin-bottom: 20px;
+  margin-bottom: 10px;
 }
 
 .detalhes .info {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: 10px;
+  gap: 10px;
 }
 
 .detalhes .info p:first-child {
   font-size: 0.9rem;
-  border: 1px solid color-mix(in srgb, currentColor 30%, white 70%);
+  border: 1px solid color-mix(in srgb, var(--cor-cinza) 40%, white 60%);
+  font-weight: 500;
   padding: 2px 10px;
-  background-color: var(--cor-primaria-light);
-  color: var(--cor-primaria);
   border-radius: 10px;
+  color: var(--cor-subtexto);
+  background-color: color-mix(in srgb, var(--cor-cinza) 10%, white 90%)
 }
 
 .detalhes .info p:last-child {
-  padding: 5px 15px;
-  font-size: 1.2rem;
+  padding: 2px 10px;
+  font-size: 0.9rem;
   background-color: var(--cor-primaria);
   color: white;
   border-radius: 10px;
 }
 
 .detalhes h2 {
-  font-size: 1.5rem;
+  font-size: 1.2rem;
   font-weight: 500;
   margin-bottom: 20px;
 }
@@ -209,15 +219,15 @@
   background-color: white;
   border: 1px solid var(--cor-borda);
   color: var(--cor-subtexto);
-  font-weight: 500;
-  width: 32px;
-  height: 32px;
+  width: 30px;
+  height: 30px;
+  font-size: 0.9rem;
   border-radius: 50%;
 }
 
 .professorEPrazo .professorNome p {
   color: var(--cor-subtexto);
-  font-size: 1rem;
+  font-size: 0.95rem;
 }
 
 .prazoDetalhes {
@@ -225,48 +235,56 @@
   align-items: center;
   gap: 5px;
   color: var(--cor-subtexto) !important;
-  font-size: 1rem;
+  font-size: 0.95rem;
 }
 
 .descricaoDetalhes {
-  margin-bottom: 30px;
+  margin-bottom: 20px;
 }
 
 .descricaoDetalhes p {
-  font-size: 1rem;
+  font-size: 1.1rem;
   color: var(--cor-subtexto);
 }
 
 .requisitos {
-  margin-bottom: 30px;
+  margin-bottom: 20px;
 }
 
 .requisitos ul {
   display: flex;
+  flex-wrap: wrap;
   gap: 10px;
 }
 
 .requisitos ul li {
   color: var(--cor-primaria);
-  padding: 5px 10px;
+  padding: 2px 10px;
   border-radius: 10px;
-  font-size: .95rem;
+  font-size: 0.9rem;
+  background-color: var(--cor-primaria-light);
   border: 1px solid color-mix(in srgb, currentColor 30%, white 70%);
 }
 
-.anexo {
-  margin-bottom: 30px;
+.anexos {
+  margin-bottom: 50px;
 }
 
-.anexo > div {
+.anexoLista {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.anexoLista li {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 20px;
-  padding: 20px;
-  border: 1px solid var(--cor-borda);
+  padding: 10px 20px;
+  border: 1px solid color-mix(in srgb, var(--cor-perigo) 30%, white 60%);
   border-radius: 15px;
-  cursor: pointer;
+  background-color: color-mix(in srgb, var(--cor-perigo-light) 60%, white 40%);
 }
 
 .anexoItens {
@@ -274,31 +292,29 @@
   gap: 20px;
 }
 
-.anexo .icone {
+.anexoItens .icone {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 50px;
-  height: 50px;
+  width: 40px;
+  height: 40px;
+  background-color: white;
   border-radius: 10px;
-  background-color: var(--cor-perigo-light);
 }
 
-.anexo .icone svg {
+.anexoItens .icone svg {
   color: var(--cor-perigo);
-  font-size: 1.5rem;
+  font-size: 1.4rem;
 }
 
-.infoAnexo h4{
-  font-size: 1.1rem;
-  margin-bottom: 5px;
-  color: var(--cor-subtexto);
+.infoAnexo h4 {
+  font-size: .95rem;
   font-weight: 500;
 }
 
 .infoAnexo p {
   display: flex;
-  font-size: .95rem;
+  font-size: 0.9rem;
   gap: 15px;
   color: var(--cor-subtexto);
 }
@@ -309,7 +325,7 @@
 
 .infoAnexo p span::before {
   position: absolute;
-  content: "";
+  content: '';
   width: 4px;
   height: 4px;
   border-radius: 50%;
@@ -318,20 +334,97 @@
   top: 6px;
 }
 
-.anexo .iconeDawnload {
+.downloadLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  color: var(--cor-subtexto);
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.downloadLink:hover {
+  background-color: var(--cor-bt-white-hover);
+}
+
+.iconeDownload {
   font-size: 1.3rem;
 }
 
 .linkMessage {
-  background-color: var(--cor-primaria);
+  background-color: white;
   padding: 10px 20px;
+  border: 1px solid var(--cor-borda);
   text-align: center;
+  color: var(--cor-subtexto);
   font-size: 1.1rem;
-  color: white;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 15px;
   gap: 10px;
   margin-top: 50px;
+  transition: all .2s ease;
 }
+
+.linkMessage:hover {
+  background-color: var(--cor-bt-white-hover);
+  color: var(--cor-texto-destaque);
+}
+
+.statusContainer {
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 0px 0px 0px;
+  border-top: 1px solid rgb(245, 245, 245);
+}
+
+.statusContainer span {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.9rem;
+  color: var(--cor-subtexto);
+  font-weight: 500;
+  border-radius: 10px;
+  background-color: color-mix(in srgb, var(--cor-cinza) 10%, white 90%);
+  padding: 2px 10px;
+  border: 1px solid color-mix(in srgb, var(--cor-cinza) 40%, white 60%);
+  width: fit-content;
+}
+
+.statusContainer .activeSpan {
+  background-color: var(--cor-primaria-light);
+  color: var(--cor-primaria);
+  border: 1px solid color-mix(in srgb, currentColor 30%, white 70%);
+}
+
+.statusContainer p {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--cor-subtexto);
+  font-size: .9rem;
+}
+
+@media (max-width: 1024px) {
+  .telasContainer {
+    flex-direction: column;
+  }
+
+  .trabalhosContainer,
+  .detalhesContainer {
+    width: 100%;
+  }
+
+  .detalhesContainer {
+    position: static;
+    top: auto;
+    align-self: auto;
+  }
+}
+

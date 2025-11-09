@@ -94,31 +94,39 @@ export function useResponderTarefa(tarefaId: string) {
     });
   };
 
-  async function handleSubmit(event: FormEvent) {
-    event.preventDefault();
+  async function submitRespostas(options: { force?: boolean } = {}) {
+    const { force = false } = options;
     if (!submissaoId) {
-      setError('ID da submissão não encontrado. Recarregue a página.');
-      return;
+      setError('ID da submissao nao encontrado. Recarregue a pagina.');
+      return false;
     }
-    if (respostas.size !== questoes.length) {
-      setError('Por favor, responda todas as questões antes de enviar.');
-      return;
+    if (!force && respostas.size !== questoes.length) {
+      setError('Por favor, responda todas as questoes antes de enviar.');
+      return false;
     }
-  
+
     setIsLoading(true);
     setError(null);
-  
+
     try {
       const payload = { respostas: Array.from(respostas.values()) };
       await api.post(`/respostas/submissao/${submissaoId}/save`, payload);
-  
+      return true;
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Erro ao enviar suas respostas.');
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  async function handleSubmit(event: FormEvent) {
+    event.preventDefault();
+    const sucesso = await submitRespostas();
+    if (sucesso) {
       alert('Tarefa enviada com sucesso!');
       router.push('/aluno/tarefas');
       router.refresh();
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Erro ao enviar suas respostas.');
-    } finally {
-      setIsLoading(false);
     }
   }
 
@@ -128,7 +136,10 @@ export function useResponderTarefa(tarefaId: string) {
     respostas,
     isLoading,
     error,
+    submissaoId,
     handleRespostaChange,
     handleSubmit,
+    submitRespostas,
   };
 }
+

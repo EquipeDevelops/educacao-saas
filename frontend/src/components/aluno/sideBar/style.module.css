@@ -8,16 +8,6 @@
   min-height: 100vh;
 }
 
-.iconContainer {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  & h2 {
-    font-size: 2.5rem;
-    color: white;
-  }
-}
-
 .navLinksContainer {
   display: flex;
   flex-direction: column;
@@ -88,4 +78,36 @@
     background-color: var(--cor-icons-background);
     color: white;
   }
+}
+
+.titleContainer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.iconContainer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background-color: var(--cor-primaria);
+  border-radius: 10px;
+}
+
+.iconContainer svg {
+  font-size: 1.75rem ;
+  color: white;
+}
+
+.title h1 {
+  font-size: 1.2rem;
+  color: white;
+  font-weight: 400;
+}
+
+.title p {
+  color: var(--cor-icons);
+  font-size: .9rem;
 }

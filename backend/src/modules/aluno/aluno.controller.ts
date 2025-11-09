@@ -49,4 +49,61 @@ export const alunoController = {
       next(error);
     }
   },
+
+  getAgendaMensal: async (
+    req: AuthenticatedRequest,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      if (!req.user?.perfilId) {
+        return res.status(403).json({
+          message: "Perfil de aluno não encontrado para o usuário autenticado.",
+        });
+      }
+
+      const parseDate = (value: unknown) => {
+        if (!value) return null;
+        const raw = Array.isArray(value) ? value[0] : value;
+        const parsed = new Date(String(raw));
+        return Number.isNaN(parsed.getTime()) ? null : parsed;
+      };
+
+      const today = new Date();
+      const defaultStart = new Date(today.getFullYear(), today.getMonth(), 1);
+      const defaultEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+
+      const startDate = parseDate(req.query.start) ?? defaultStart;
+      const endDate = parseDate(req.query.end) ?? defaultEnd;
+
+      if (startDate > endDate) {
+        return res.status(400).json({
+          message: "A data inicial não pode ser maior que a data final.",
+        });
+      }
+
+      const eventos = await alunoService.getAgendaEventos(
+        req.user,
+        startDate,
+        endDate
+      );
+
+      res.json({ eventos });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  getProfile: async (
+    req: AuthenticatedRequest,
+    res: Response,
+    next: NextFunction,
+  ) => {
+    try {
+      const profileData = await alunoService.getProfile(req.user);
+      res.json(profileData);
+    } catch (error) {
+      next(error);
+    }
+  },
 };
