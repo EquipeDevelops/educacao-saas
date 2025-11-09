@@ -18,12 +18,18 @@ import {
   FiList,
   FiDollarSign,
   FiLayers,
+  FiUserPlus,
 } from "react-icons/fi";
 import { useAuth } from "@/contexts/AuthContext";
 
 const navLinks = [
   { href: "/gestor", text: "Início", icon: <FiHome /> },
   { href: "/gestor/usuarios", text: "Usuários", icon: <FiUsers /> },
+  {
+    href: "/gestor/responsaveis",
+    text: "Responsáveis",
+    icon: <FiUserPlus />,
+  },
   { href: "/gestor/turmas", text: "Turmas", icon: <FiGrid /> },
   { href: "/gestor/materias", text: "Matérias", icon: <FiBookOpen /> },
   { href: "/gestor/vinculos", text: "Vínculos", icon: <FiLink /> },

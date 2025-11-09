@@ -10,7 +10,7 @@ import { FiPlus, FiSearch, FiUpload, FiEdit, FiTrash2 } from "react-icons/fi";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-type PapelUsuario = "PROFESSOR" | "ALUNO";
+type PapelUsuario = "PROFESSOR" | "ALUNO" | "RESPONSAVEL";
 
 type Usuario = {
   id: string;
@@ -20,19 +20,55 @@ type Usuario = {
   status: boolean;
   perfil_professor?: { titulacao?: string };
   perfil_aluno?: { numero_matricula?: string };
+  perfil_responsavel?: { telefone?: string };
 };
 
-const initialState = {
+type ResponsavelAlunoForm = {
+  alunoId: string;
+  parentesco: string;
+  principal: boolean;
+};
+
+type AlunoOption = {
+  id: string;
+  numero_matricula: string;
+  usuario: {
+    id: string;
+    nome: string;
+  };
+};
+
+type FormState = {
+  nome: string;
+  email: string;
+  senha: string;
+  papel: PapelUsuario;
+  numero_matricula: string;
+  titulacao: string;
+  telefone: string;
+  responsavelAlunos: ResponsavelAlunoForm[];
+};
+
+const createInitialState = (): FormState => ({
   nome: "",
   email: "",
   senha: "",
-  papel: "PROFESSOR" as PapelUsuario,
+  papel: "PROFESSOR",
   numero_matricula: "",
   titulacao: "",
-};
+  telefone: "",
+  responsavelAlunos: [
+    {
+      alunoId: "",
+      parentesco: "",
+      principal: true,
+    },
+  ],
+});
 
 export default function GestorUsuariosPage() {
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
+  const [alunoOptions, setAlunoOptions] = useState<AlunoOption[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filtro, setFiltro] = useState("");
   const [filtroPapel, setFiltroPapel] = useState("TODOS");
@@ -42,16 +78,22 @@ export default function GestorUsuariosPage() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
-  const [formState, setFormState] = useState(initialState);
+  const [formState, setFormState] = useState<FormState>(() =>
+    createInitialState()
+  );
   const [editingUser, setEditingUser] = useState<Usuario | null>(null);
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
 
   const fetchUsuarios = () => {
     setIsLoading(true);
-    api
-      .get("/usuarios")
-      .then((response) => setUsuarios(response.data))
-      .catch(() => toast.error("Falha ao carregar os usuários."))
+    Promise.all([api.get<Usuario[]>("/usuarios"), api.get<AlunoOption[]>("/alunos")])
+      .then(([usuariosResponse, alunosResponse]) => {
+        setUsuarios(usuariosResponse.data);
+        setAlunoOptions(alunosResponse.data);
+      })
+      .catch(() =>
+        toast.error("Falha ao carregar os usuários ou alunos disponíveis.")
+      )
       .finally(() => setIsLoading(false));
   };
 
@@ -63,7 +105,63 @@ export default function GestorUsuariosPage() {
     e: ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
+    if (name === "papel") {
+      const novoPapel = value as PapelUsuario;
+      setFormState((prev) => ({
+        ...prev,
+        papel: novoPapel,
+        numero_matricula: "",
+        titulacao: "",
+        telefone: "",
+        responsavelAlunos:
+          novoPapel === "RESPONSAVEL"
+            ? prev.responsavelAlunos.length > 0
+              ? prev.responsavelAlunos
+              : [
+                  {
+                    alunoId: "",
+                    parentesco: "",
+                    principal: true,
+                  },
+                ]
+            : [],
+      }));
+      return;
+    }
+
     setFormState((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleResponsavelAlunoChange = (
+    index: number,
+    field: keyof ResponsavelAlunoForm,
+    value: string | boolean
+  ) => {
+    setFormState((prev) => {
+      const updated = [...prev.responsavelAlunos];
+      updated[index] = {
+        ...updated[index],
+        [field]: value,
+      } as ResponsavelAlunoForm;
+      return { ...prev, responsavelAlunos: updated };
+    });
+  };
+
+  const addResponsavelAluno = () => {
+    setFormState((prev) => ({
+      ...prev,
+      responsavelAlunos: [
+        ...prev.responsavelAlunos,
+        { alunoId: "", parentesco: "", principal: false },
+      ],
+    }));
+  };
+
+  const removeResponsavelAluno = (index: number) => {
+    setFormState((prev) => ({
+      ...prev,
+      responsavelAlunos: prev.responsavelAlunos.filter((_, i) => i !== index),
+    }));
   };
 
   const handleEditInputChange = (
@@ -87,7 +185,7 @@ export default function GestorUsuariosPage() {
   };
 
   const openCreateModal = () => {
-    setFormState(initialState);
+    setFormState(createInitialState());
     setIsCreateModalOpen(true);
   };
 
@@ -119,6 +217,19 @@ export default function GestorUsuariosPage() {
     } else if (formState.papel === "PROFESSOR") {
       payload.perfil_professor = {
         titulacao: formState.titulacao || undefined,
+      };
+    } else if (formState.papel === "RESPONSAVEL") {
+      const alunosVinculados = formState.responsavelAlunos
+        .filter((aluno) => aluno.alunoId)
+        .map((aluno) => ({
+          alunoId: aluno.alunoId,
+          parentesco: aluno.parentesco || undefined,
+          principal: aluno.principal,
+        }));
+
+      payload.perfil_responsavel = {
+        telefone: formState.telefone || undefined,
+        alunos: alunosVinculados,
       };
     }
 
@@ -314,6 +425,7 @@ export default function GestorUsuariosPage() {
             <option value="TODOS">Todos os Papéis</option>
             <option value="PROFESSOR">Professores</option>
             <option value="ALUNO">Alunos</option>
+            <option value="RESPONSAVEL">Responsáveis</option>
           </select>
           <select
             value={filtroStatus}
@@ -467,6 +579,7 @@ export default function GestorUsuariosPage() {
           >
             <option value="PROFESSOR">Professor</option>
             <option value="ALUNO">Aluno</option>
+            <option value="RESPONSAVEL">Responsável</option>
           </select>
           {formState.papel === "ALUNO" && (
             <>
@@ -490,6 +603,130 @@ export default function GestorUsuariosPage() {
               />
             </>
           )}
+          {formState.papel === "RESPONSAVEL" &&
+            (() => {
+              const remainingOptions = alunoOptions.filter(
+                (option) =>
+                  !formState.responsavelAlunos.some(
+                    (aluno) => aluno.alunoId === option.id
+                  )
+              );
+
+              return (
+                <div className={styles.responsavelSection}>
+                  <label className={styles.label}>Telefone</label>
+                  <input
+                    name="telefone"
+                    value={formState.telefone}
+                    onChange={handleInputChange}
+                    placeholder="(00) 00000-0000"
+                  />
+                  <div className={styles.responsavelAlunosHeader}>
+                    <h4>Alunos vinculados</h4>
+                    <button
+                      type="button"
+                      className={styles.addAlunoButton}
+                      onClick={addResponsavelAluno}
+                      disabled={remainingOptions.length === 0}
+                    >
+                      <FiPlus /> Adicionar aluno
+                    </button>
+                  </div>
+                  {formState.responsavelAlunos.length === 0 ? (
+                    <p className={styles.responsavelEmpty}>
+                      Nenhum aluno selecionado para este responsável.
+                    </p>
+                  ) : (
+                    formState.responsavelAlunos.map(
+                      (responsavelAluno, index) => {
+                        const availableOptions = alunoOptions.filter(
+                          (option) => {
+                            if (responsavelAluno.alunoId === option.id)
+                              return true;
+                            return !formState.responsavelAlunos.some(
+                              (aluno, alunoIndex) =>
+                                alunoIndex !== index &&
+                                aluno.alunoId === option.id
+                            );
+                          }
+                        );
+
+                        return (
+                          <div
+                            key={`${responsavelAluno.alunoId}-${index}`}
+                            className={styles.responsavelAlunoRow}
+                          >
+                            <label>
+                              Aluno
+                              <select
+                                value={responsavelAluno.alunoId}
+                                onChange={(event) =>
+                                  handleResponsavelAlunoChange(
+                                    index,
+                                    "alunoId",
+                                    event.target.value
+                                  )
+                                }
+                              >
+                                <option value="">Selecione um aluno</option>
+                                {availableOptions.map((option) => (
+                                  <option key={option.id} value={option.id}>
+                                    {option.usuario.nome} ({
+                                      option.numero_matricula
+                                    })
+                                  </option>
+                                ))}
+                              </select>
+                            </label>
+                            <label>
+                              Parentesco
+                              <input
+                                type="text"
+                                value={responsavelAluno.parentesco}
+                                onChange={(event) =>
+                                  handleResponsavelAlunoChange(
+                                    index,
+                                    "parentesco",
+                                    event.target.value
+                                  )
+                                }
+                                placeholder="Ex.: Pai, Mãe, Tio(a)"
+                              />
+                            </label>
+                            <label className={styles.checkboxContainer}>
+                              <input
+                                type="checkbox"
+                                checked={responsavelAluno.principal}
+                                onChange={(event) =>
+                                  handleResponsavelAlunoChange(
+                                    index,
+                                    "principal",
+                                    event.target.checked
+                                  )
+                                }
+                              />
+                              Principal
+                            </label>
+                            <button
+                              type="button"
+                              className={styles.removeAlunoButton}
+                              onClick={() => removeResponsavelAluno(index)}
+                              title="Remover aluno"
+                            >
+                              <FiTrash2 />
+                            </button>
+                          </div>
+                        );
+                      }
+                    )
+                  )}
+                  <span className={styles.helperText}>
+                    Você poderá gerenciar os vínculos depois na área de
+                    responsáveis.
+                  </span>
+                </div>
+              );
+            })()}
           <div className={styles.modalActions}>
             <button
               type="button"

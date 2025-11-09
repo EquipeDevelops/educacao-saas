@@ -28,9 +28,7 @@ const responsavelAlunoSchema = z.object({
 
 const responsavelProfileSchema = z.object({
   telefone: z.string().optional(),
-  alunos: z
-    .array(responsavelAlunoSchema)
-    .min(1, "Pelo menos um aluno deve ser vinculado ao responsável."),
+  alunos: z.array(responsavelAlunoSchema).optional().default([]),
 });
 
 export const createUserSchema = z.object({

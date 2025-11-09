@@ -149,11 +149,11 @@ async function createUser(
       unidadeEscolarId,
     },
   });
-  if (papel === "ALUNO" && perfil_aluno) {
+  if (papel === PapelUsuario.ALUNO && perfil_aluno) {
     await prismaClient.usuarios_aluno.create({
       data: { usuarioId: novoUsuario.id, ...perfil_aluno },
     });
-  } else if (papel === "PROFESSOR" && perfil_professor) {
+  } else if (papel === PapelUsuario.PROFESSOR && perfil_professor) {
     await prismaClient.usuarios_professor.create({
       data: { usuarioId: novoUsuario.id, ...perfil_professor },
     });
@@ -162,13 +162,16 @@ async function createUser(
       data: {
         usuarioId: novoUsuario.id,
         telefone: perfil_responsavel.telefone || null,
-        alunos: {
-          create: perfil_responsavel.alunos.map((aluno) => ({
-            aluno: { connect: { id: aluno.alunoId } },
-            parentesco: aluno.parentesco || null,
-            principal: aluno.principal ?? false,
-          })),
-        },
+        alunos:
+          perfil_responsavel.alunos && perfil_responsavel.alunos.length > 0
+            ? {
+                create: perfil_responsavel.alunos.map((aluno) => ({
+                  aluno: { connect: { id: aluno.alunoId } },
+                  parentesco: aluno.parentesco || null,
+                  principal: aluno.principal ?? false,
+                })),
+              }
+            : undefined,
       },
     });
   }
@@ -195,7 +198,11 @@ async function findAllUsers(where: Prisma.UsuariosWhereInput) {
 async function findUserById(id: string, where: Prisma.UsuariosWhereInput) {
   const usuario = await prisma.usuarios.findFirst({
     where: { id, ...where },
-    include: { perfil_aluno: true, perfil_professor: true },
+    include: {
+      perfil_aluno: true,
+      perfil_professor: true,
+      perfil_responsavel: { include: { alunos: true } },
+    },
   });
   if (!usuario) return null;
   const { senha_hash, ...usuarioSemSenha } = usuario;

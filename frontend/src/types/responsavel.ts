@@ -25,3 +25,27 @@ export type ResponsavelDashboardResponse = {
     mensagensRecentes: MensagemRecente[];
   };
 };
+
+export type ResponsavelResumo = {
+  id: string;
+  telefone?: string | null;
+  usuario: {
+    id: string;
+    nome: string;
+    email: string;
+  };
+  alunos: {
+    id: string;
+    alunoId: string;
+    parentesco?: string | null;
+    principal: boolean;
+    aluno: {
+      id: string;
+      numero_matricula: string;
+      usuario: {
+        id: string;
+        nome: string;
+      };
+    } | null;
+  }[];
+};
