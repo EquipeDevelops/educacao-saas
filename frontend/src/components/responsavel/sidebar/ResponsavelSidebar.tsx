@@ -11,9 +11,9 @@ import styles from './style.module.css';
 
 const navigationLinks = [
   { href: '/responsavel', label: 'Visão Geral', icon: <BiHomeAlt /> },
-  { href: '/responsavel#desempenho', label: 'Boletim', icon: <FiBarChart2 /> },
-  { href: '/responsavel#agenda', label: 'Agenda', icon: <LuCalendarDays /> },
-  { href: '/responsavel#atividades', label: 'Atividades', icon: <LuClipboardList /> },
+  { href: '/responsavel/boletim', label: 'Boletim', icon: <FiBarChart2 /> },
+  { href: '/responsavel/agenda', label: 'Agenda', icon: <LuCalendarDays /> },
+  { href: '/responsavel/atividades', label: 'Atividades', icon: <LuClipboardList /> },
 ];
 
 export default function ResponsavelSidebar() {
@@ -40,7 +40,8 @@ export default function ResponsavelSidebar() {
               href={link.href}
               className={
                 pathname === link.href ||
-                (pathname === '/responsavel' && link.href === '/responsavel')
+                (link.href !== '/responsavel' &&
+                  pathname.startsWith(`${link.href}/`))
                   ? styles.activeLink
                   : undefined
               }

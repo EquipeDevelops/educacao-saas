@@ -7,5 +7,8 @@ const router = Router();
 
 router.use(protect, authorize(PapelUsuario.RESPONSAVEL));
 router.get("/", responsavelDashboardController.index);
+router.get("/boletim", responsavelDashboardController.boletim);
+router.get("/agenda", responsavelDashboardController.agenda);
+router.get("/atividades", responsavelDashboardController.atividades);
 
 export { router as responsavelDashboardRoutes };

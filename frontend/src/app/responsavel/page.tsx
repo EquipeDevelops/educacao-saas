@@ -9,6 +9,7 @@ import AgendaSemanalAluno from '@/components/aluno/dashboard/agendaSemanal/Agend
 import AtividadesPendentes from '@/components/aluno/dashboard/atividadesPendentes/AtividadesPendentes';
 import styles from './page.module.css';
 import { useDashboardResponsavel } from '@/hooks/dashboardResponsavel/useDashboardResponsavel';
+import AlunoSelector from '@/components/responsavel/alunoSelector/AlunoSelector';
 
 export default function ResponsavelPage() {
   const {
@@ -41,24 +42,13 @@ export default function ResponsavelPage() {
             descricao="Acompanhe as principais informações do estudante."
           />
 
-          {alunosVinculados.length > 1 && (
-            <div className={styles.studentSelector}>
-              <label htmlFor="aluno-selecionado">Aluno</label>
-              <select
-                id="aluno-selecionado"
-                value={alunoSelecionado?.id ?? ''}
-                onChange={(event) => selecionarAluno(event.target.value)}
-                disabled={!alunoSelecionado}
-              >
-                {alunosVinculados.map((aluno) => (
-                  <option key={aluno.id} value={aluno.id}>
-                    {aluno.nome}
-                    {aluno.parentesco ? ` (${aluno.parentesco})` : ''}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
+          <AlunoSelector
+            alunos={alunosVinculados}
+            alunoSelecionadoId={alunoSelecionado?.id}
+            onChange={selecionarAluno}
+            className={styles.studentSelector}
+            disabled={!alunoSelecionado}
+          />
         </header>
 
         <div className={styles.bodyDashboard}>

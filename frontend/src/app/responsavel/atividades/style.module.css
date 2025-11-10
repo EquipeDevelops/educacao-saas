@@ -1,0 +1,80 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--cor-borda);
+}
+
+.header h1 {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.header p {
+  color: var(--cor-subtexto);
+  max-width: 520px;
+}
+
+.grid {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.card {
+  border: 1px solid var(--cor-borda);
+  border-radius: 16px;
+  background-color: var(--cor-fundo-card);
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem;
+  gap: 1.5rem;
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.cardHeader h2 {
+  font-size: 1.3rem;
+  margin-bottom: 0.35rem;
+}
+
+.cardHeader p {
+  color: var(--cor-subtexto);
+  margin: 0;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  padding: 0.4rem 0.75rem;
+  border-radius: 999px;
+  background-color: var(--cor-primaria-light);
+  color: var(--cor-primaria);
+  font-weight: 700;
+}
+
+.cardContent {
+  display: grid;
+  gap: 1rem;
+}
+
+@media (max-width: 1024px) {
+  .header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

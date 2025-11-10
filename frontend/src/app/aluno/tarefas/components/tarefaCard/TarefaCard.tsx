@@ -53,9 +53,10 @@ function getInitials(name: string | undefined): string {
 
 type TarefaCardProps = {
   tarefa: TarefaComStatus;
+  readOnly?: boolean;
 };
 
-export default function TarefaCard({ tarefa }: TarefaCardProps) {
+export default function TarefaCard({ tarefa, readOnly = false }: TarefaCardProps) {
   const totalPontos = tarefa.pontos || 0;
   const totalQuestoes = tarefa._count?.questoes || 0;
 
@@ -68,8 +69,15 @@ export default function TarefaCard({ tarefa }: TarefaCardProps) {
     },
   );
 
+  const actionLabel =
+    statusInfo.text === 'Avaliada'
+      ? 'Ver Correção'
+      : statusInfo.text === 'Enviada'
+      ? 'Ver Respostas'
+      : 'Responder';
+
   return (
-    <div className={styles.card}>
+    <div className={`${styles.card} ${readOnly ? styles.readOnlyCard : ''}`}>
       <div className={styles.statusContainer}>
         <div>
           <p className={styles.materiaName}>
@@ -105,22 +113,22 @@ export default function TarefaCard({ tarefa }: TarefaCardProps) {
         <p>
           <LuCalendar /> Prazo: {dataEntregaFormatada.slice(0, 5)}
         </p>
-        <Link
-          href={statusInfo.link}
-          className={
-            tarefa.submissao?.status === 'EM_ANDAMENTO'
-              ? styles.activeLink
-              : tarefa.submissao?.status === 'NAO_INICIADA'
-              ? styles.activeLink
-              : ''
-          }
-        >
-          {statusInfo.text === 'Avaliada'
-            ? 'Ver Correção'
-            : statusInfo.text === 'Enviada'
-            ? 'Ver Respostas'
-            : 'Responder'}
-        </Link>
+        {readOnly ? (
+          <span className={styles.readOnlyBadge}>{statusInfo.text}</span>
+        ) : (
+          <Link
+            href={statusInfo.link}
+            className={
+              tarefa.submissao?.status === 'EM_ANDAMENTO'
+                ? styles.activeLink
+                : tarefa.submissao?.status === 'NAO_INICIADA'
+                ? styles.activeLink
+                : ''
+            }
+          >
+            {actionLabel}
+          </Link>
+        )}
       </div>
     </div>
   );

@@ -1,0 +1,168 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--cor-borda);
+}
+
+.header h1 {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.header p {
+  color: var(--cor-subtexto);
+}
+
+.emptyState {
+  padding: 2rem;
+  border: 1px dashed var(--cor-borda);
+  border-radius: 12px;
+  text-align: center;
+  color: var(--cor-subtexto);
+  background-color: color-mix(in srgb, var(--cor-borda) 10%, white 90%);
+}
+
+.gridMaterias {
+  display: grid;
+  gap: 2rem;
+}
+
+.materiaCard {
+  background-color: var(--cor-fundo-card);
+  border: 1px solid var(--cor-borda);
+  border-radius: 12px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+}
+
+.materiaHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.25rem 1.5rem;
+  background-color: color-mix(in srgb, var(--cor-borda) 10%, white 90%);
+  border-bottom: 1px solid var(--cor-borda);
+}
+
+.materiaHeader h2 {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 1.3rem;
+}
+
+.mediaGeral {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  color: white;
+}
+
+.mediaGeral span {
+  font-size: 0.8rem;
+  opacity: 0.9;
+}
+
+.mediaGeral strong {
+  font-size: 1.6rem;
+  line-height: 1.2;
+}
+
+.periodosContainer {
+  display: grid;
+  gap: 1.5rem;
+  padding: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.periodoCard {
+  border: 1px solid var(--cor-borda);
+  border-radius: 10px;
+  background-color: #fff;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.periodoCard h3 {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border-bottom: 1px solid var(--cor-borda);
+  padding-bottom: 0.75rem;
+}
+
+.mediaPeriodo {
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  color: white;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.periodoCard ul {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+}
+
+.periodoCard li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.9rem;
+  text-transform: capitalize;
+}
+
+.periodoCard li span {
+  color: var(--cor-subtexto);
+}
+
+.semAvaliacoes {
+  margin: 0;
+  color: var(--cor-subtexto);
+  font-size: 0.95rem;
+}
+
+.mediaAlta {
+  background-color: var(--cor-sucesso-dark);
+}
+
+.mediaMedia {
+  background-color: #f59e0b;
+}
+
+.mediaBaixa {
+  background-color: var(--cor-perigo-dark);
+}
+
+@media (max-width: 768px) {
+  .header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .mediaGeral {
+    align-items: center;
+  }
+}
