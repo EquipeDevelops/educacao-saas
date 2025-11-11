@@ -1,0 +1,113 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 20px;
+  min-width: 220px;
+  background-color: var(--cor-primaria-dark);
+  min-height: 100vh;
+}
+
+.navLinksContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  height: 100%;
+}
+
+.navLinks {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  gap: 10px;
+  width: 100%;
+  & a {
+    color: var(--cor-icons);
+    padding: 15px 10px 15px 15px;
+    font-size: 1.05rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-radius: 10px;
+    transition: background-color 0.2s, color 0.2s;
+    position: relative;
+    &:hover {
+      background-color: var(--cor-icons-background-hover);
+    }
+
+    & svg {
+      font-size: 1.4rem;
+    }
+  }
+  & .activeLink {
+    color: white;
+    background-color: var(--cor-icons-background);
+    &:hover {
+      background-color: var(--cor-icons-background);
+    }
+
+    &::before {
+      content: '';
+      position: absolute;
+      width: 4px;
+      height: 30px;
+      background-color: white;
+      left: 0px;
+      border-radius: 0px 5px 5px 0px;
+    }
+  }
+}
+
+.navLinksContainer button {
+  padding: 15px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border-radius: 5px;
+  font-size: 1.05rem;
+  width: 100%;
+  color: var(--cor-icons);
+  background-color: transparent;
+  & svg {
+    font-size: 1.4rem;
+  }
+
+  &:hover {
+    background-color: var(--cor-icons-background);
+    color: white;
+  }
+}
+
+.titleContainer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.iconContainer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background-color: var(--cor-primaria);
+  border-radius: 10px;
+}
+
+.iconContainer svg {
+  font-size: 1.75rem ;
+  color: white;
+}
+
+.title h1 {
+  font-size: 1.2rem;
+  color: white;
+  font-weight: 400;
+}
+
+.title p {
+  color: var(--cor-icons);
+  font-size: .9rem;
+}

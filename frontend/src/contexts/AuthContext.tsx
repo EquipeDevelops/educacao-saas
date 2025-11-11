@@ -74,6 +74,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         case 'ALUNO':
           router.push('/aluno');
           break;
+        case 'RESPONSAVEL':
+          router.push('/responsavel');
+          break;
         case 'ADMINISTRADOR':
           router.push('/administrador');
           break;

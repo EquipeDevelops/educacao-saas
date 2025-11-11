@@ -3,12 +3,15 @@ import style from './style.module.css';
 
 interface FichaAlunoProps {
   alunoInfo: AlunoInfo | null;
+  titulo?: string;
+  descricao?: string;
 }
 
-export default function FichaAluno({ alunoInfo }: FichaAlunoProps) {
-  console.log(alunoInfo);
-  
-
+export default function FichaAluno({
+  alunoInfo,
+  titulo,
+  descricao,
+}: FichaAlunoProps) {
   function getInitials(name: string | undefined): string {
     if (!name) {
       return '...';
@@ -25,14 +28,21 @@ export default function FichaAluno({ alunoInfo }: FichaAlunoProps) {
     return (firstName.charAt(0) + lastName.charAt(0)).toUpperCase();
   }
 
+  const nomeAluno = alunoInfo?.nome || 'Aluno';
+  const tituloExibicao = titulo
+    ? `${titulo} ${nomeAluno}`.trim()
+    : `Olá, ${nomeAluno}!`;
+  const descricaoExibicao =
+    descricao || 'Bem vindo de volta ao seu painel educacional';
+
   return (
     <div className={style.container}>
       <div className={style.avatarAluno}>
         <span>{getInitials(alunoInfo?.nome)}</span>
       </div>
       <div className={style.informacoesAluno}>
-        <h2>Olá, {alunoInfo?.nome}!</h2>
-        <p>Bem vindo de volta ao seu painel educacional</p>
+        <h2>{tituloExibicao}</h2>
+        <p>{descricaoExibicao}</p>
         <div className={style.info}>
           <p>{alunoInfo?.turma}</p>
           <p>{alunoInfo?.escola}</p>

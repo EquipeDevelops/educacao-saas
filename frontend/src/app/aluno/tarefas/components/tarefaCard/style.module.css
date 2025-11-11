@@ -148,3 +148,16 @@
 .actionContainer .activeLink:hover {
   background-color: var(--cor-primaria-dark);
 }
+
+.readOnlyCard {
+  cursor: default;
+}
+
+.readOnlyBadge {
+  padding: 10px 20px;
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, var(--cor-borda) 40%, white 60%);
+  background-color: color-mix(in srgb, var(--cor-borda) 15%, white 85%);
+  color: var(--cor-subtexto);
+  font-weight: 600;
+}
