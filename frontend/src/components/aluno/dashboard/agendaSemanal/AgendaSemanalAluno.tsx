@@ -12,6 +12,7 @@ export type EventoCalendario = {
     | 'Aula'
     | 'Prova'
     | 'Trabalho'
+    | 'Tarefa'
     | 'Recuperação'
     | 'Reunião'
     | 'Feriado'
@@ -129,6 +130,8 @@ export default function AgendaSemanalAluno({ eventos = [] }: AgendaProps) {
               ) : evento.type === 'Prova' ? (
                 <LuClipboard />
               ) : evento.type === 'Trabalho' ? (
+                <LuClipboardList />
+              ) : evento.type === 'Tarefa' ? (
                 <LuClipboardList />
               ) : evento.type === 'Recuperação' ? (
                 <LuRefreshCcw />

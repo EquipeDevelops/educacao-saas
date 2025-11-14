@@ -50,6 +50,33 @@ export const alunoController = {
     }
   },
 
+  getBoletimPdf: async (
+    req: AuthenticatedRequest,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const { id } = req.params;
+
+      if (req.user?.papel === "ALUNO" && req.user.id !== id) {
+        return res.status(403).json({
+          message: "Você só pode baixar o seu próprio boletim.",
+        });
+      }
+
+      const pdfBytes = await alunoService.generateBoletimPdf(id);
+
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename=boletim_${id}.pdf`
+      );
+      res.send(Buffer.from(pdfBytes));
+    } catch (error) {
+      next(error);
+    }
+  },
+
   getAgendaMensal: async (
     req: AuthenticatedRequest,
     res: Response,

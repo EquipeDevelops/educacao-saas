@@ -47,7 +47,7 @@ export default function MinhasTarefasPage() {
     <Section>
       <div>
         <div className={styles.title}>
-          <h2>Terefas</h2>
+          <h2>Tarefas</h2>
           <p>Exercícios das suas disciplinas</p>
         </div>
 

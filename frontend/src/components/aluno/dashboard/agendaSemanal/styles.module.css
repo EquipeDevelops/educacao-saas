@@ -145,6 +145,9 @@
 .trabalho {
   background-color: #ff9307;
 }
+.tarefa {
+  background-color: #0a8dd9;
+}
 .reunião {
   background-color: #a857e2;
 }
@@ -157,3 +160,4 @@
 .evento_escolar {
   background-color: var(--cor-icons-background);
 }
+

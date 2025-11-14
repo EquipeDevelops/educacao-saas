@@ -21,9 +21,7 @@ export default function AlunoPage() {
     mensagensRecentes,
   } = useAlunoDashboard();
   const dataAtual = new Date();
-  console.log(agendaEventos);
   
-
   if (isLoading) {
     return <Loading />;
   }
@@ -38,7 +36,6 @@ export default function AlunoPage() {
           <div className={styles.bodyDashboard}>
             <FichaAluno alunoInfo={alunoInfo} />
             <AcoesRapidas />
-            {/* <Desempenho desempenho={performance} /> */}
             <AtividadesPendentes atividades={tarefasPendentes} />
             <MensagensRecentes mensagens={mensagensRecentes} />
             <AgendaSemanalAluno eventos={agendaEventos} />

@@ -48,7 +48,7 @@ export default function ProvasPage() {
       <div>
         <div className={styles.title}>
           <h2>Provas</h2>
-          <p>Acompanhe e realize as provas disponÃ­veis para a sua turma.</p>
+          <p>Acompanhe e realize as provas disponíveis para a sua turma.</p>
         </div>
 
         <div className={styles.filtersContainer}>

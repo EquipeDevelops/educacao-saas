@@ -35,6 +35,10 @@
   color: var(--cor-texto);
 }
 
+.filtersContainer h2 svg {
+  color: var(--cor-primaria);
+}
+
 .filtersContent {
   display: flex;
   align-items: flex-end;
@@ -91,7 +95,7 @@
 
 .cardGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  grid-template-columns: 1fr 1fr;
   gap: 20px;
 }
 
