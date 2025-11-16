@@ -1,13 +1,13 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import { api } from "@/services/api";
-import styles from "./desempenho.module.css";
-import { FiUsers, FiBarChart2, FiClipboard } from "react-icons/fi";
-import StatCard from "@/components/professor/StatCard";
-import DesempenhoTurmas from "@/components/professor/DesempenhoTurmas";
-import DesempenhoTurmaDetalhes from "@/components/professor/DesempenhoTurmaDetalhes";
-import { TurmaDashboardInfo } from "../turmas/page";
+import { useState, useEffect } from 'react';
+import { api } from '@/services/api';
+import styles from './desempenho.module.css';
+import { FiUsers, FiBarChart2, FiClipboard } from 'react-icons/fi';
+import StatCard from '@/components/professor/dashboard/StatCard/StatCard';
+import DesempenhoTurmas from '@/components/professor/dashboard/DesempenhoTurmas/DesempenhoTurmas';
+import DesempenhoTurmaDetalhes from '@/components/professor/dashboard/DesempenhoTurmaDetalhes/DesempenhoTurmaDetalhes';
+import { TurmaDashboardInfo } from '../turmas/page';
 
 type DesempenhoData = {
   desempenhoGeral: number;
@@ -27,14 +27,14 @@ export default function DesempenhoPage() {
       try {
         setLoading(true);
         const [desempenhoRes, turmasRes] = await Promise.all([
-          api.get("/professor/dashboard/desempenho-turmas"),
-          api.get("/professor/dashboard/turmas"),
+          api.get('/professor/dashboard/desempenho-turmas'),
+          api.get('/professor/dashboard/turmas'),
         ]);
         setDesempenho(desempenhoRes.data);
         setTurmas(turmasRes.data);
       } catch (err) {
-        console.error("Erro ao buscar dados de desempenho:", err);
-        setError("Não foi possível carregar os dados de desempenho.");
+        console.error('Erro ao buscar dados de desempenho:', err);
+        setError('Não foi possível carregar os dados de desempenho.');
       } finally {
         setLoading(false);
       }
@@ -54,7 +54,7 @@ export default function DesempenhoPage() {
       <div className={styles.tabs}>
         <button
           onClick={() => setSelectedTurmaId(null)}
-          className={!selectedTurmaId ? styles.activeTab : ""}
+          className={!selectedTurmaId ? styles.activeTab : ''}
         >
           Visão Geral
         </button>
@@ -63,7 +63,7 @@ export default function DesempenhoPage() {
             key={turma.componenteId}
             onClick={() => setSelectedTurmaId(turma.componenteId)}
             className={
-              selectedTurmaId === turma.componenteId ? styles.activeTab : ""
+              selectedTurmaId === turma.componenteId ? styles.activeTab : ''
             }
           >
             {turma.nomeTurma}

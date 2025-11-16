@@ -6,6 +6,7 @@ const router = Router();
 
 router.use(protect, authorize("PROFESSOR"));
 
+router.get("/", professorDashboardController.getDashboardOverview);
 router.get("/header-info", professorDashboardController.getHeaderInfo);
 
 router.get("/my-students", professorDashboardController.getMyStudents);

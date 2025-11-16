@@ -1,0 +1,107 @@
+.widget {
+  background-color: var(--cor-fundo-card);
+  padding: 20px;
+  border-radius: 15px;
+  border: 1px solid var(--cor-borda);
+  grid-column: 3 / 4;
+  grid-row: 5 / -1;
+  height: fit-content;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.2rem;
+  font-weight: 500;
+}
+
+.title span {
+  width: 5px;
+  height: 25px;
+  background-color: var(--cor-primaria);
+  border-radius: 5px;
+}
+
+.badge {
+  font-size: 0.9rem;
+  padding: 2px 10px;
+  background-color: var(--cor-primaria-light);
+  color: var(--cor-primaria);
+  border: 1px solid color-mix(in srgb, currentColor 20%, white 80%);
+  border-radius: 10px;
+  font-weight: 500;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-bottom: 20px;
+}
+
+.item {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 20px;
+  background-color: var(--cor-primaria-light);
+  border: 1px solid color-mix(in srgb, var(--cor-primaria) 20%, white 80%);
+  border-radius: 15px;
+}
+
+.infoContainer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.avatar {
+  width: 42px;
+  height: 42px;
+  background-color: color-mix(in srgb, var(--cor-primaria) 15%, white 85%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: var(--cor-primaria);
+  border: 1px solid color-mix(in srgb, currentColor 20%, white 80%);
+}
+
+.itemName {
+  font-weight: 500;
+  margin-bottom: 5px;
+}
+
+.itemPreview {
+  color: var(--cor-subtexto);
+}
+
+.time {
+  color: var(--cor-subtexto);
+  font-size: 0.9rem;
+}
+
+.viewAll {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--cor-texto);
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid var(--cor-borda);
+  font-weight: 500;
+  gap: 5px;
+  transition: all 0.2s ease;
+}
+
+.viewAll:hover {
+  background-color: var(--cor-bt-white-hover);
+}
