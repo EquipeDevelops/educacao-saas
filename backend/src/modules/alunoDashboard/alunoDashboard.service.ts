@@ -20,6 +20,15 @@ const eventTypeMap: { [key: string]: any } = {
   EVENTO_ESCOLAR: 'Evento Escolar',
 };
 
+const formatHorario = (date?: Date | null) => {
+  if (!date || Number.isNaN(date.getTime())) {
+    return undefined;
+  }
+  const horas = date.getHours().toString().padStart(2, '0');
+  const minutos = date.getMinutes().toString().padStart(2, '0');
+  return `${horas}:${minutos}`;
+};
+
 async function getPerformanceStats(user: AuthenticatedRequest['user']) {
   const { perfilId: alunoId } = user;
   if (!alunoId) {
@@ -378,16 +387,31 @@ async function getAgendaDoMes(
       }
     });
   }
+  const tarefaTipoMap: Record<string, string> = {
+    PROVA: 'Prova',
+    TRABALHO: 'Trabalho',
+    QUESTIONARIO: 'Tarefa',
+    LICAO_DE_CASA: 'Tarefa',
+  };
+
   tarefas.forEach((tarefa: any) => {
-    if (tarefa.tipo === 'PROVA' || tarefa.tipo === 'TRABALHO') {
-      processedEvents.push({
-        id: `tarefa-${tarefa.id}`,
-        date: new Date(tarefa.data_entrega),
-        type: tarefa.tipo === 'PROVA' ? 'Prova' : 'Trabalho',
-        title: tarefa.titulo,
-        details: tarefa.componenteCurricular.materia.nome,
-      });
+    const tipoNormalizado =
+      tarefaTipoMap[String(tarefa.tipo).toUpperCase()] || null;
+
+    if (!tipoNormalizado) {
+      return;
     }
+
+    const dataEntrega = new Date(tarefa.data_entrega);
+
+    processedEvents.push({
+      id: `tarefa-${tarefa.id}`,
+      date: dataEntrega,
+      type: tipoNormalizado,
+      title: tarefa.titulo,
+      details: tarefa.componenteCurricular.materia.nome,
+      time: formatHorario(dataEntrega),
+    });
   });
   eventosGerais.forEach((evento: any) => {
     processedEvents.push({

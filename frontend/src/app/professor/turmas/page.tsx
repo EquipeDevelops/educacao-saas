@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { api } from "@/services/api";
 import styles from "./turmas.module.css";
-import TurmaCard from "@/components/professor/turmas/TurmaCard";
+import TurmaCard from "@/components/professor/turmas/TurmaCard/TurmaCard";
 
 export type TurmaDashboardInfo = {
   componenteId: string;

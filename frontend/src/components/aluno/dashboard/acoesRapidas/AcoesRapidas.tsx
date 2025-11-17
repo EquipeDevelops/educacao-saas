@@ -1,23 +1,25 @@
-import { LuClipboardList, LuTrophy } from 'react-icons/lu';
+import {
+  LuBookCheck,
+  LuChartColumnIncreasing,
+  LuClipboardList,
+} from 'react-icons/lu';
 import { FiBook, FiMessageCircle } from 'react-icons/fi';
-import { VscMortarBoard } from 'react-icons/vsc';
 import { IoCalendarOutline } from 'react-icons/io5';
-import { SlEnergy } from 'react-icons/sl';
 import Link from 'next/link';
 import styles from './style.module.css';
 
 export default function AcoesRapidas() {
   const linksActions = [
+    { text: 'Notas', link: '/aluno/notas', icon: <LuChartColumnIncreasing /> },
     { text: 'Tarefas', link: '/aluno/tarefas', icon: <LuClipboardList /> },
-    { text: 'Trabalhos e provas', link: '/aluno/trabalhos', icon: <FiBook /> },
+    { text: 'Trabalhos', link: '/aluno/trabalhos', icon: <FiBook /> },
     {
-      text: 'Disciplinas',
+      text: 'Provas',
       link: '/aluno/disciplinas',
-      icon: <VscMortarBoard />,
+      icon: <LuBookCheck />,
     },
     { text: 'Grade', link: '/aluno/agenda', icon: <IoCalendarOutline /> },
     { text: 'Mensagens', link: '/aluno/mensagens', icon: <FiMessageCircle /> },
-    { text: 'Conquistas', link: '/aluno/conquistas', icon: <LuTrophy /> },
   ];
 
   return (

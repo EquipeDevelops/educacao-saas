@@ -5,10 +5,6 @@ import {
   LuCalendar,
   LuFileText,
 } from 'react-icons/lu';
-import { IoPlayOutline } from 'react-icons/io5';
-import { IoIosCheckmarkCircleOutline } from 'react-icons/io';
-import { IoEyeOutline } from 'react-icons/io5';
-import { useState } from 'react';
 
 type StatusInfo = {
   text: string;

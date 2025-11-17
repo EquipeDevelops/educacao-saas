@@ -9,7 +9,6 @@ import {
 } from 'react';
 import { useRouter } from 'next/navigation';
 import { api } from '../services/api';
-import Cookies from 'js-cookie';
 import { User } from '@/types/users';
 
 type AuthContextData = {

@@ -14,6 +14,13 @@ router.get(
 );
 
 router.get(
+  "/:id/boletim/pdf",
+  protect,
+  authorize("GESTOR", "PROFESSOR", "ALUNO"),
+  alunoController.getBoletimPdf
+);
+
+router.get(
   "/agenda",
   protect,
   authorize("ALUNO"),

@@ -3,6 +3,23 @@ import { AuthenticatedRequest } from "../../middlewares/auth";
 import { professorDashboardService } from "./professorDashboard.service";
 
 export const professorDashboardController = {
+  getDashboardOverview: async (
+    req: AuthenticatedRequest,
+    res: Response
+  ) => {
+    try {
+      const data = await professorDashboardService.getDashboardOverview(
+        req.user
+      );
+      res.status(200).json(data);
+    } catch (error: any) {
+      res.status(500).json({
+        message: "Erro ao carregar o dashboard do professor.",
+        error: error.message,
+      });
+    }
+  },
+
   getMyStudents: async (req: AuthenticatedRequest, res: Response) => {
     try {
       const students = await professorDashboardService.getMyStudents(req.user);

@@ -1,132 +1,81 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import { useAuth } from "@/contexts/AuthContext";
-import { api } from "@/services/api";
-import styles from "./home.module.css";
-import { FiUsers, FiClock, FiClipboard, FiCheckCircle } from "react-icons/fi";
-import StatCard from "@/components/professor/StatCard";
-import AgendaSemana from "@/components/professor/AgendaSemana";
-import AtividadesPendentes from "@/components/professor/AtividadesPendentes";
-import DesempenhoTurmas from "@/components/professor/DesempenhoTurmas";
-import MensagensRecentes from "@/components/professor/MensagensRecentes";
-
-type HomeStats = {
-  totalAlunos: number;
-  aulasHoje: {
-    count: number;
-    proxima: string | null;
-  };
-  atividadesParaCorrigir: number;
-  taxaDeConclusao: number;
-};
-
-type Desempenho = {
-  desempenhoGeral: number;
-  porTurma: { nome: string; media: number }[];
-  taxaConclusaoGeral: number;
-};
-
-type AtividadePendente = {
-  id: string;
-  materia: string;
-  titulo: string;
-  turma: string;
-  submissoes: number;
-  dataEntrega: string;
-};
+import { FiCheckCircle, FiClipboard, FiClock, FiUsers } from 'react-icons/fi';
+import Section from '@/components/section/Section';
+import StatCard from '@/components/professor/dashboard/StatCard/StatCard';
+import AgendaSemana from '@/components/professor/dashboard/AgendaSemana/AgendaSemana';
+import AtividadesPendentes from '@/components/professor/dashboard/AtividadesPendentes/AtividadesPendentes';
+import MensagensRecentes from '@/components/professor/dashboard/MensagensRecentes/MensagensRecentes';
+import DesempenhoTurmas from '@/components/professor/dashboard/DesempenhoTurmas/DesempenhoTurmas';
+import Loading from '@/components/loading/Loading';
+import ErrorMsg from '@/components/errorMsg/ErrorMsg';
+import { useAuth } from '@/contexts/AuthContext';
+import { useProfessorDashboard } from '@/hooks/dashboardProfessor/useProfessorDashboard';
+import styles from './home.module.css';
+import FichaProfessor from '@/components/professor/dashboard/fichaProfessor/FichaProfessor';
+import AcoesRapidas from '@/components/professor/dashboard/acoesRapidas/AcoesRapidas';
 
 export default function ProfessorHomePage() {
-  const { user, loading: authLoading } = useAuth();
+  const { user } = useAuth();
+  const { data, isLoading, error } = useProfessorDashboard();
 
-  const [stats, setStats] = useState<HomeStats | null>(null);
-  const [horarios, setHorarios] = useState([]);
-  const [atividadesPendentes, setAtividadesPendentes] = useState<
-    AtividadePendente[]
-  >([]);
-  const [desempenho, setDesempenho] = useState<Desempenho | null>(null);
-  const [conversas, setConversas] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    if (authLoading || !user) return;
-
-    async function fetchData() {
-      try {
-        const [
-          statsRes,
-          horariosRes,
-          atividadesRes,
-          desempenhoRes,
-          conversasRes,
-        ] = await Promise.all([
-          api.get("/professor/dashboard/home-stats"),
-          api.get("/horarios-aula/meus-horarios"),
-          api.get("/professor/dashboard/atividades-pendentes"),
-          api.get("/professor/dashboard/desempenho-turmas"),
-          api.get("/conversas"),
-        ]);
-
-        setStats(statsRes.data);
-        setHorarios(horariosRes.data);
-        setAtividadesPendentes(atividadesRes.data);
-        setDesempenho(desempenhoRes.data);
-        setConversas(conversasRes.data);
-      } catch (err) {
-        console.error("Erro ao buscar dados do dashboard:", err);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchData();
-  }, [authLoading, user]);
-
-  if (loading || authLoading) {
-    return <div className={styles.pageContent}>Carregando...</div>;
+  if (isLoading) {
+    return <Loading />;
   }
 
-  return (
-    <div className={styles.pageContent}>
-      <section className={styles.statsGrid}>
-        <StatCard
-          icon={<FiUsers />}
-          title="Total de Alunos"
-          value={stats?.totalAlunos?.toString() ?? "0"}
-        />
-        <StatCard
-          icon={<FiClock />}
-          title="Aulas Hoje"
-          value={stats?.aulasHoje?.count?.toString() ?? "0"}
-          subtitle={
-            stats?.aulasHoje?.proxima
-              ? `Próxima às ${stats.aulasHoje.proxima}`
-              : "Nenhuma aula hoje"
-          }
-        />
-        <StatCard
-          icon={<FiClipboard />}
-          title="Atividades para Corrigir"
-          value={stats?.atividadesParaCorrigir?.toString() ?? "0"}
-        />
-        <StatCard
-          icon={<FiCheckCircle />}
-          title="Taxa de Conclusão"
-          value={`${stats?.taxaDeConclusao ?? 0}%`}
-          subtitle="Média geral"
-        />
-      </section>
+  if (error) {
+    return <ErrorMsg text={error} />;
+  }
 
-      <main className={styles.mainContent}>
-        <div className={styles.leftColumn}>
-          <AgendaSemana horarios={horarios} />
-          <AtividadesPendentes atividades={atividadesPendentes} />
+  const stats = data?.stats ?? {
+    totalAlunos: 0,
+    aulasHoje: { count: 0, proxima: null },
+    atividadesParaCorrigir: 0,
+    taxaDeConclusao: 0,
+  };
+
+  return (
+    <Section>
+      {data && (
+        <div className={styles.pageContent}>
+          <FichaProfessor
+            headerInfo={data?.headerInfo}
+            professsorInfo={data?.professorInfo}
+          />
+          <section className={styles.statsGrid}>
+            <StatCard
+              icon={<FiUsers />}
+              title="Total de Alunos"
+              value={stats.totalAlunos.toString()}
+            />
+            <StatCard
+              icon={<FiClock />}
+              title="Aulas Hoje"
+              value={stats.aulasHoje.count.toString()}
+              subtitle={
+                stats.aulasHoje.proxima
+                  ? `Próxima às ${stats.aulasHoje.proxima}`
+                  : 'Nenhuma aula hoje'
+              }
+            />
+            <StatCard
+              icon={<FiClipboard />}
+              title="Atividades para Corrigir"
+              value={stats.atividadesParaCorrigir.toString()}
+            />
+            <StatCard
+              icon={<FiCheckCircle />}
+              title="Taxa de Conclusão"
+              value={`${stats.taxaDeConclusao}%`}
+              subtitle="Média geral"
+            />
+          </section>
+          <AgendaSemana horarios={data?.horarios ?? []} />
+          <AcoesRapidas />
+          <AtividadesPendentes atividades={data?.atividadesPendentes ?? []} />
+          <MensagensRecentes conversas={data?.conversas ?? []} />
         </div>
-        <div className={styles.rightColumn}>
-          {desempenho && <DesempenhoTurmas desempenho={desempenho} />}
-          <MensagensRecentes conversas={conversas} />
-        </div>
-      </main>
-    </div>
+      )}
+    </Section>
   );
 }

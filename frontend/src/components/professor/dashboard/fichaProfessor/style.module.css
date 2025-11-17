@@ -1,0 +1,50 @@
+.container {
+  display: flex;
+  align-items: center;
+  grid-column: 1 / -1;
+  background-color: var(--cor-primaria);
+  padding: 20px;
+  border-radius: 15px;
+  gap: 20px;
+}
+
+.titulo {
+  font-size: 1.5rem;
+  color: white;
+  font-weight: 500;
+  margin-bottom: 10px;
+}
+
+.texto {
+  color: white;
+}
+
+.avatarProfessor {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: color-mix(in srgb, var(--cor-primaria) 80%, white 20%);
+  font-size: 1.6rem;
+  border: 1px solid color-mix(in srgb, var(--cor-primaria) 70%, white 30%);
+  color: color-mix(in srgb, var(--cor-primaria) 2%, white 98%);
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  font-weight: 400;
+}
+
+.listaItens {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+.listaItens li {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background-color: color-mix(in srgb, var(--cor-primaria) 80%, white 20%);
+  color: white;
+  font-size: .9rem;
+  padding: 5px 10px;
+  border-radius: 8px;
+}

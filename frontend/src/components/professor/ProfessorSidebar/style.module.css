@@ -1,0 +1,128 @@
+.sidebar {
+  width: 250px;
+  background-color: var(--cor-primaria-dark);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 20px;
+}
+
+.logo {
+  font-size: 1.5rem;
+  font-weight: 700;
+  text-align: center;
+  padding: 1rem;
+  background: linear-gradient(
+    135deg,
+    var(--cor-primaria),
+    var(--cor-primaria-dark)
+  );
+  color: white;
+  border-radius: 8px;
+  margin-bottom: 2rem;
+}
+
+.nav {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.navSection {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.navCategory {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: rgb(175, 175, 175);
+  text-transform: uppercase;
+  padding: 0 1rem;
+  margin-bottom: 0.25rem;
+}
+
+.navLink {
+  color: var(--cor-icons);
+  padding: 15px 10px 15px 15px;
+  font-size: 1.05rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-radius: 10px;
+  transition: background-color 0.2s, color 0.2s;
+  position: relative;
+}
+
+.navLink:hover {
+  background-color: var(--cor-icons-background-hover);
+}
+
+.activeLink {
+  color: white;
+  background-color: var(--cor-icons-background);
+}
+
+.activeLink::before {
+  content: '';
+  position: absolute;
+  width: 4px;
+  height: 30px;
+  background-color: white;
+  left: 0px;
+  border-radius: 0px 5px 5px 0px;
+}
+
+.activeLink:hover {
+  background-color: var(--cor-icons-background);
+}
+
+.icon {
+  font-size: 1.2rem;
+}
+
+.sidebarFooter {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--cor-borda);
+}
+
+.logoutButton {
+  background-color: transparent;
+}
+
+.titleContainer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.iconContainer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background-color: var(--cor-primaria);
+  border-radius: 10px;
+}
+
+.iconContainer svg {
+  font-size: 1.75rem;
+  color: white;
+}
+
+.title h1 {
+  font-size: 1.2rem;
+  color: white;
+  font-weight: 400;
+}
+
+.title p {
+  color: var(--cor-icons);
+  font-size: 0.9rem;
+}

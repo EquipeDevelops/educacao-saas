@@ -13,6 +13,7 @@ import {
   LuMessageSquareText,
   LuDoorOpen,
   LuCalendarDays,
+  LuChartColumnIncreasing ,
 } from 'react-icons/lu';
 import { BsPerson } from 'react-icons/bs';
 import { PiRanking } from 'react-icons/pi';
@@ -61,10 +62,16 @@ export default function AlunoSideBar() {
             <LuClipboardCheck /> Provas
           </Link>
           <Link
+            href={'/aluno/notas'}
+            className={pathname === '/aluno/notas' ? styles.activeLink : ''}
+          >
+            <LuChartColumnIncreasing  /> Notas
+          </Link>
+          <Link
             href={'/aluno/correcoes'}
             className={pathname === '/aluno/correcoes' ? styles.activeLink : ''}
           >
-            <LuSquareCheckBig /> Correcões
+            <LuSquareCheckBig /> Correções
           </Link>
           <Link
             href={'/aluno/agenda'}
@@ -73,24 +80,10 @@ export default function AlunoSideBar() {
             <LuCalendarDays /> Agenda
           </Link>
           <Link
-            href={'/aluno/conquistas'}
-            className={
-              pathname === '/aluno/conquistas' ? styles.activeLink : ''
-            }
-          >
-            <LuTrophy /> Conquistas
-          </Link>
-          <Link
             href={'/aluno/mensagens'}
             className={pathname === '/aluno/mensagens' ? styles.activeLink : ''}
           >
             <LuMessageSquareText /> Mensagens
-          </Link>
-          <Link
-            href={'/aluno/ranking'}
-            className={pathname === '/aluno/ranking' ? styles.activeLink : ''}
-          >
-            <PiRanking /> Ranking
           </Link>
           <Link
             href={'/aluno/perfil'}

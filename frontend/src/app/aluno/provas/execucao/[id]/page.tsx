@@ -59,10 +59,12 @@ export default function ExecucaoProvaPage() {
   const [secondsLeft, setSecondsLeft] = useState<number>(tempoLimiteMinutos * 60);
   const [confirmModalOpen, setConfirmModalOpen] = useState(false);
   const [examFinished, setExamFinished] = useState(false);
+  const [fullscreenPromptVisible, setFullscreenPromptVisible] = useState(false);
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const examFinishedRef = useRef(false);
   const abandonoNotificadoRef = useRef(false);
+  const fullscreenWarningIssuedRef = useRef(false);
 
   const questoesOrdenadas = useMemo(
     () => [...questoes].sort((a, b) => a.sequencia - b.sequencia),
@@ -115,6 +117,75 @@ export default function ExecucaoProvaPage() {
       console.error('Erro ao finalizar a prova automaticamente', err);
     }
   }, [submissaoId]);
+
+  const handleFullscreenAbandon = useCallback(async () => {
+    if (!submissaoId || examFinishedRef.current) return;
+
+    abandonoNotificadoRef.current = true;
+    examFinishedRef.current = true;
+    setExamFinished(true);
+    setFullscreenPromptVisible(false);
+    setSecondsLeft(0);
+
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+
+    const respostasSalvas = await submitRespostas({ force: true });
+    if (!respostasSalvas) {
+      console.warn(
+        'Não foi possivel salvar as respostas antes de finalizar por abandono.',
+      );
+    }
+
+    try {
+      await finalizeSubmission('abandon');
+    } catch (err) {
+      console.error('Erro ao finalizar a prova por abandono de tela cheia', err);
+    }
+
+    alert('Você saiu do modo tela cheia. A prova foi encerrada com nota zero.');
+    router.push('/aluno/provas');
+    router.refresh();
+  }, [submissaoId, submitRespostas, finalizeSubmission, router]);
+
+  const enterFullscreen = useCallback(async () => {
+    if (typeof document === 'undefined') return false;
+    if (document.fullscreenElement) return true;
+
+    const element = document.documentElement;
+    if (!element) return false;
+
+    try {
+      if (element.requestFullscreen) {
+        await element.requestFullscreen();
+        return true;
+      }
+      const webkitRequest = (element as HTMLElement & {
+        webkitRequestFullscreen?: () => Promise<void> | void;
+      }).webkitRequestFullscreen;
+      if (webkitRequest) {
+        await webkitRequest.call(element);
+        return true;
+      }
+    } catch (err) {
+      console.error('Falha ao ativar o modo tela cheia', err);
+      return false;
+    }
+
+    return false;
+  }, []);
+
+  const handleReturnToFullscreen = useCallback(async () => {
+    const success = await enterFullscreen();
+    if (success) {
+      setFullscreenPromptVisible(false);
+      return;
+    }
+    alert('Não foi possivel voltar ao modo tela cheia. A prova será encerrada.');
+    await handleFullscreenAbandon();
+  }, [enterFullscreen, handleFullscreenAbandon]);
 
   const finalizarProva = useCallback(
     async ({
@@ -211,6 +282,36 @@ export default function ExecucaoProvaPage() {
   }, [hasStarted, examFinished, finalizeSubmissionKeepAlive]);
 
   useEffect(() => {
+    if (!hasStarted || examFinishedRef.current) return;
+
+    const handleFullscreenChange = () => {
+      if (typeof document === 'undefined') return;
+      const isFullscreen = Boolean(document.fullscreenElement);
+      if (isFullscreen) return;
+
+      if (!fullscreenWarningIssuedRef.current) {
+        fullscreenWarningIssuedRef.current = true;
+        setFullscreenPromptVisible(true);
+      } else {
+        handleFullscreenAbandon();
+      }
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+    };
+  }, [hasStarted, handleFullscreenAbandon]);
+
+  useEffect(() => {
+    if (!examFinished) return;
+    if (typeof document === 'undefined') return;
+    if (document.fullscreenElement && document.exitFullscreen) {
+      document.exitFullscreen().catch(() => undefined);
+    }
+  }, [examFinished]);
+
+  useEffect(() => {
     return () => {
       if (hasStarted && !examFinishedRef.current) {
         finalizeSubmissionKeepAlive();
@@ -218,7 +319,15 @@ export default function ExecucaoProvaPage() {
     };
   }, [hasStarted, finalizeSubmissionKeepAlive]);
 
-  const iniciarProva = () => {
+  const iniciarProva = async () => {
+    const fullscreenOk = await enterFullscreen();
+    if (!fullscreenOk) {
+      alert(
+        'Esta prova exige o modo tela cheia. Permita o navegador ativar a tela cheia para continuar.',
+      );
+      return;
+    }
+
     setHasStarted(true);
     setShowGuide(false);
     setSecondsLeft(tempoLimiteMinutos * 60);
@@ -243,7 +352,7 @@ export default function ExecucaoProvaPage() {
   if (isLoading) return <Loading />;
   if (error) return <ErrorMsg text={error} />;
   if (!tarefa || !questaoAtual)
-    return <ErrorMsg text="Prova nao encontrada ou sem questoes disponiveis." />;
+    return <ErrorMsg text="Prova não encontrada ou sem questões disponíveis." />;
 
   return (
     <Section>
@@ -253,8 +362,9 @@ export default function ExecucaoProvaPage() {
             <div className={styles.guideCard}>
               <h1>{tarefa.titulo}</h1>
               <p>
-                Quando a prova comecar, fique nesta pagina ate finalizar. Se voce
-                sair antes do envio, a nota sera zero.
+                Quando a prova comecar, ativaremos o modo tela cheia e você precisa
+                permanecer nesta página até finalizar. Ao sair do modo tela cheia ou
+                fechar a aba, a avaliacão é encerrada automaticamente com nota zero.
               </p>
 
               <ul>
@@ -272,8 +382,8 @@ export default function ExecucaoProvaPage() {
               <div className={styles.warning}>
                 <LucideAlertCircle />
                 <span>
-                  Fechar ou recarregar a pagina antes do envio encerra a prova com
-                  nota zero.
+                  Fechar, recarregar ou sair da tela cheia antes do envio encerra a
+                  prova com nota zero.
                 </span>
               </div>
 
@@ -391,6 +501,35 @@ export default function ExecucaoProvaPage() {
           )}
         </div>
       </div>
+
+      {fullscreenPromptVisible ? (
+        <div className={styles.fullscreenWarningOverlay}>
+          <div className={styles.fullscreenWarningCard}>
+            <h2>Modo tela cheia necessario</h2>
+            <p>
+              Detectamos que voce saiu da tela cheia. Para continuar a prova, clique em
+              &quot;Voltar para a tela cheia&quot;. Se optar por nao retornar, a nota
+              desta avaliacao sera zero.
+            </p>
+            <div className={styles.fullscreenWarningActions}>
+              <button
+                type="button"
+                className={styles.fullscreenWarningSecondary}
+                onClick={handleReturnToFullscreen}
+              >
+                Voltar para a tela cheia
+              </button>
+              <button
+                type="button"
+                className={styles.fullscreenWarningPrimary}
+                onClick={handleFullscreenAbandon}
+              >
+                Encerrar prova
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       <Modal
         isOpen={confirmModalOpen}

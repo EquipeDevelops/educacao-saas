@@ -140,6 +140,11 @@
   background-color: var(--cor-fundo);
 }
 
+.helperText {
+  font-size: 0.8rem;
+  color: var(--cor-subtexto);
+}
+
 .questionTypeButton {
   background-color: transparent;
   border: 1px solid var(--cor-borda);

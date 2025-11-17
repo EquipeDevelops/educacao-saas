@@ -31,6 +31,15 @@ type Bimestre = {
   nome?: string | null;
 };
 
+type TipoAtividade = 'PROVA' | 'TRABALHO' | 'QUESTIONARIO' | 'LICAO_DE_CASA';
+
+const tiposDisponiveis: { label: string; value: TipoAtividade }[] = [
+  { label: 'Prova', value: 'PROVA' },
+  { label: 'Trabalho', value: 'TRABALHO' },
+  { label: 'Questionario', value: 'QUESTIONARIO' },
+  { label: 'Licao de casa', value: 'LICAO_DE_CASA' },
+];
+
 const formatarData = (iso: string) =>
   new Date(iso).toLocaleDateString("pt-BR", { timeZone: "UTC" });
 
@@ -47,6 +56,9 @@ export default function NovaAtividadePage() {
   const [currentBimestre, setCurrentBimestre] = useState<Bimestre | null>(null);
   const [isBimestreLoading, setIsBimestreLoading] = useState(true);
   const [bimestreError, setBimestreError] = useState<string | null>(null);
+  const [tipoAtividade, setTipoAtividade] =
+    useState<TipoAtividade>('QUESTIONARIO');
+  const [tempoLimiteMinutos, setTempoLimiteMinutos] = useState(60);
 
 
   useEffect(() => {
@@ -91,14 +103,26 @@ export default function NovaAtividadePage() {
       return;
     }
 
+    if (tipoAtividade === "PROVA" && tempoLimiteMinutos < 5) {
+      alert("Defina um tempo limite de pelo menos 5 minutos para provas.");
+      return;
+    }
+
     try {
+      const metadataPayload =
+        tipoAtividade === "PROVA"
+          ? { tempoLimiteMinutos }
+          : undefined;
+
       const tarefaPayload = {
         titulo,
         descricao,
         data_entrega: new Date(dataEntrega).toISOString(),
         pontos: Number(pontos),
         componenteCurricularId: componenteId,
+        tipo: tipoAtividade,
         publicado,
+        ...(metadataPayload ? { metadata: metadataPayload } : {}),
       };
       const tarefaResponse = await api.post("/tarefas", tarefaPayload);
       const tarefaId = tarefaResponse.data.id;
@@ -237,6 +261,46 @@ export default function NovaAtividadePage() {
               />
             </div>
           </div>
+          <div className={styles.grid2cols}>
+            <div className={styles.field}>
+              <label htmlFor="tipoAtividade">Tipo da Atividade *</label>
+              <select
+                id="tipoAtividade"
+                value={tipoAtividade}
+                onChange={(e) =>
+                  setTipoAtividade(e.target.value as TipoAtividade)
+                }
+              >
+                {tiposDisponiveis.map((opcao) => (
+                  <option key={opcao.value} value={opcao.value}>
+                    {opcao.label}
+                  </option>
+                ))}
+              </select>
+              <span className={styles.helperText}>
+                Provas aparecem no portal do aluno e exigem tela cheia.
+              </span>
+            </div>
+            <div className={styles.field}>
+              <label htmlFor="tempoLimite">Tempo limite (minutos)</label>
+              <input
+                type="number"
+                id="tempoLimite"
+                min={5}
+                max={600}
+                value={tempoLimiteMinutos}
+                disabled={tipoAtividade !== "PROVA"}
+                onChange={(e) => {
+                  const valor = Number(e.target.value);
+                  setTempoLimiteMinutos(Number.isNaN(valor) ? 0 : valor);
+                }}
+              />
+              <span className={styles.helperText}>
+                Disponivel apenas para provas (minimo de 5 minutos).
+              </span>
+            </div>
+          </div>
+
         </section>
 
         <QuestoesBuilder questoes={questoes} setQuestoes={setQuestoes} />

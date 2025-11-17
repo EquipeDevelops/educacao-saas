@@ -129,14 +129,15 @@
 
 .actionContainer a {
   padding: 10px 20px;
-  color: var(--cor-primaria);
+  color: var(--cor-texto);
+  font-size: 1rem;
   border: 1px solid color-mix(in srgb, currentColor 20%, white 80%);
   border-radius: 10px;
   transition: all .2s ease;
 }
 
 .actionContainer a:hover {
-  background-color: var(--cor-primaria-light);
+  background-color: var(--cor-bt-white-hover);
 }
 
 .actionContainer .activeLink {
