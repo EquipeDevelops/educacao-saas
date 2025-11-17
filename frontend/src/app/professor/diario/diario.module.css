@@ -1,0 +1,292 @@
+.pageContainer {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.header h1 {
+  font-size: 2rem;
+  margin-bottom: 0.25rem;
+}
+
+.header p {
+  color: var(--cor-subtexto);
+}
+
+.card {
+  background: var(--cor-fundo-card);
+  border: 1px solid var(--cor-borda);
+  border-radius: 16px;
+  padding: 2rem;
+  box-shadow: var(--sombra-card);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.sectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.sectionHeader h2,
+.sectionHeader h3 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.2rem;
+}
+
+.turmaGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+}
+
+.lessonGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1.25rem;
+}
+
+.fullWidth {
+  grid-column: 1 / -1;
+}
+
+.form label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.4rem;
+}
+
+.form input,
+.form textarea,
+.form select {
+  width: 100%;
+  border: 1px solid var(--cor-borda);
+  border-radius: 10px;
+  background: var(--cor-fundo);
+  padding: 0.8rem 1rem;
+  font-size: 1rem;
+}
+
+.form textarea {
+  resize: vertical;
+}
+
+.selectWrapper {
+  position: relative;
+}
+
+.selectWrapper select {
+  appearance: none;
+}
+
+.selectWrapper svg {
+  position: absolute;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  color: var(--cor-subtexto);
+}
+
+.attendanceActions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.attendanceActions button,
+.attendanceButtons button,
+.selectedHabilidades button,
+.actions button,
+.bnccItem span {
+  font-weight: 600;
+}
+
+.attendanceActions button,
+.attendanceButtons button,
+.selectedHabilidades button {
+  border: 1px solid var(--cor-borda);
+  background: white;
+  color: var(--cor-texto);
+  padding: 0.45rem 0.85rem;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+}
+
+.attendanceButtons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.attendanceList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.attendanceRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.9rem 1.1rem;
+  border: 1px solid var(--cor-borda);
+  border-radius: 12px;
+  background: var(--cor-fundo);
+}
+
+.activeButton {
+  background: var(--cor-primaria);
+  color: white !important;
+  border-color: var(--cor-primaria);
+}
+
+.helperText {
+  color: var(--cor-subtexto);
+}
+
+.bnccFilters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 1rem;
+}
+
+.bnccSearch input {
+  border-radius: 999px;
+}
+
+.bnccList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-height: 340px;
+  overflow-y: auto;
+}
+
+.bnccItem {
+  border: 1px solid var(--cor-borda);
+  border-radius: 12px;
+  background: var(--cor-fundo);
+  padding: 0.85rem 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.bnccItemSelected {
+  border-color: var(--cor-primaria);
+  background: rgba(67, 97, 238, 0.08);
+}
+
+.bnccItem strong {
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+.bnccItem small {
+  display: block;
+  margin-top: 0.3rem;
+  color: var(--cor-subtexto);
+}
+
+.bnccItem span {
+  color: var(--cor-primaria);
+}
+
+.selectedHabilidades ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.selectedHabilidades li {
+  font-size: 0.95rem;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.saveButton {
+  background: var(--cor-primaria);
+  color: white;
+  border: none;
+  padding: 0.85rem 1.8rem;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 1rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  box-shadow: 0 10px 25px rgba(67, 97, 238, 0.3);
+  transition: transform 0.2s;
+}
+
+.saveButton:hover {
+  transform: translateY(-1px);
+}
+
+.success,
+.error {
+  font-weight: 600;
+}
+
+.success {
+  color: var(--cor-sucesso-dark);
+}
+
+.error {
+  color: var(--cor-perigo-dark);
+}
+
+.spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 768px) {
+  .card {
+    padding: 1.5rem;
+  }
+
+  .attendanceRow {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .attendanceActions {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
