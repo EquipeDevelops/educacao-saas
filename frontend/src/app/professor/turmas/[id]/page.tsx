@@ -4,8 +4,11 @@ import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { api } from "@/services/api";
 import styles from "../turmas.module.css";
-import TurmaDetailHeader from "@/components/professor/turmas/TurmaDetailHeader";
-import TurmaTabs from "@/components/professor/turmas/TurmaTabs";
+import TurmaDetailHeader from "../components/TurmaDetailHeader/TurmaDetailHeader";
+import TurmaTabs from "../components/TurmaTabs/TurmaTabs";
+import { useAuth } from "@/contexts/AuthContext";
+import Section from "@/components/section/Section";
+import Loading from "@/components/loading/Loading";
 
 type Aluno = {
   id: string;
@@ -49,8 +52,10 @@ export default function TurmaDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const { loading: authLoading } = useAuth();
+
   useEffect(() => {
-    if (!componenteId) return;
+    if (authLoading || !componenteId) return;
 
     async function fetchDetails() {
       try {
@@ -65,15 +70,16 @@ export default function TurmaDetailPage() {
         setLoading(false);
       }
     }
-
+    
     fetchDetails();
-  }, [componenteId]);
+  }, [componenteId, authLoading]);
 
-  if (loading)
+  
+  if (loading || authLoading)
     return (
-      <div className={styles.pageContainer}>
-        <p>Carregando detalhes da turma...</p>
-      </div>
+      <Section>
+        <Loading />
+      </Section>
     );
   if (error)
     return (
@@ -83,14 +89,16 @@ export default function TurmaDetailPage() {
     );
   if (!details) return null;
 
+  
+
   return (
-    <div className={styles.pageContainer}>
+    <Section>
       <TurmaDetailHeader {...details.headerInfo} />
       <TurmaTabs
         alunos={details.alunos}
         atividades={details.atividades}
         estatisticas={details.estatisticas}
       />
-    </div>
+    </Section>
   );
 }

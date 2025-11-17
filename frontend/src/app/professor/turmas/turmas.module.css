@@ -1,16 +1,8 @@
-.pageContainer {
-  padding: 1.5rem;
-  max-width: 1400px;
-  margin: 0 auto;
-}
-
 .header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 2.5rem;
-  padding-bottom: 1.5rem;
-  border-bottom: 1px solid var(--cor-borda);
+  margin-bottom: 20px;
 }
 
 .header h1 {
@@ -28,8 +20,94 @@
 
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 10px;
+}
+
+.filtersContainer {
+  background-color: var(--cor-fundo-card);
+  border: 1px solid var(--cor-borda);
+  border-radius: 16px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.filtersHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.filtersHeader h2 {
+  font-size: 1.15rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--cor-texto-destaque);
+}
+
+.filtersHeader svg {
+  color: var(--cor-primaria);
+}
+
+.clearButton {
+  border: 1px solid var(--cor-borda);
+  background-color: transparent;
+  color: var(--cor-texto);
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.clearButton:not(:disabled):hover {
+  background-color: var(--cor-primaria);
+  color: #fff;
+}
+
+.clearButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.filtersGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.25rem;
+}
+
+.filtersGrid label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.filtersGrid span {
+  font-size: 0.9rem;
+  color: var(--cor-subtexto);
+}
+
+.filtersGrid select,
+.filtersGrid input {
+  border: 1px solid var(--cor-borda);
+  border-radius: 10px;
+  padding: 0.65rem 0.85rem;
+  font-size: 0.95rem;
+  color: var(--cor-texto);
+  background-color: #fff;
+}
+
+.filtersGrid input[type="text"]::placeholder {
+  color: var(--cor-subtexto);
+}
+
+.paginationWrapper {
+  margin-top: 2rem;
+  display: flex;
+  justify-content: center;
 }
 
 .error {

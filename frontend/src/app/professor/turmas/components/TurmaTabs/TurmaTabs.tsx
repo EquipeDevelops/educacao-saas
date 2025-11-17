@@ -3,9 +3,9 @@
 import { useState } from 'react';
 import styles from './style.module.css';
 import { FiSearch } from 'react-icons/fi';
-import AlunoList from '../AlunoList/AlunoList';
-import AtividadesList from '../AtividadesList/AtividadesList';
-import EstatisticasTab from '../EstatisticasTab/EstatisticasTab';
+import AlunoList from '../../../../../components/professor/turmas/AlunoList/AlunoList';
+import AtividadesList from '../../../../../components/professor/turmas/AtividadesList/AtividadesList';
+import EstatisticasTab from '../../../../../components/professor/turmas/EstatisticasTab/EstatisticasTab';
 
 type Aluno = {
   id: string;

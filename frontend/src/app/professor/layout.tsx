@@ -22,7 +22,7 @@ export default function ProfessorLayout({ children }: { children: ReactNode }) {
       <ProfessorSidebar />
       <div className={styles.mainWrapper}>
         <ProfessorHeader user={user} />
-        <main className={styles.content}>{children}</main>
+        <main style={{ position: 'relative', width: '100%', flex: 1 }} className={styles.content}>{children}</main>
       </div>
     </div>
   );
