@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import styles from './style.module.css';
-import { FiSearch } from 'react-icons/fi';
 import AlunoList from './components/AlunoList/AlunoList';
 import AtividadesList from './components/AtividadesList/AtividadesList';
 import EstatisticasTab from './components/EstatisticasTab/EstatisticasTab';
@@ -19,7 +18,7 @@ type Atividade = {
   id: string;
   titulo: string;
   tipo: string;
-  dataEntrega: string;
+  data_entrega: string;
   entregas: number;
   total: number;
 };
@@ -88,22 +87,26 @@ export default function TurmaTabs({
             }`}
             onClick={() => setActiveTab('estatisticas')}
           >
-            Estatísticas
+            Estatisticas
           </button>
         </div>
-        {activeTab === 'alunos' && (
-          <div className={styles.search}>
-            <input
-              type="text"
-              placeholder="Buscar aluno..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-        )}
-        {activeTab === 'atividades' && (
-          <button className={styles.actionButton}><LuFilePlus2 /> Nova Atividade</button>
-        )}
+        <div className={styles.controls}>
+          {activeTab === 'alunos' && (
+            <div className={styles.search}>
+              <input
+                type="text"
+                placeholder="Buscar aluno..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+          )}
+          {activeTab === 'atividades' && (
+            <button className={styles.actionButton}>
+              <LuFilePlus2 /> Nova Atividade
+            </button>
+          )}
+        </div>
       </div>
 
       <div className={styles.content}>{renderContent()}</div>

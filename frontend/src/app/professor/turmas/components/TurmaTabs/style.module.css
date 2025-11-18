@@ -19,6 +19,8 @@
   align-items: center;
   justify-content: space-between;
   background-color: white;
+  flex-wrap: wrap;
+  gap: 15px;
 }
 
 .tabs {
@@ -50,8 +52,24 @@
   border-radius: 5px;
 }
 
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-left: auto;
+}
+
 .search {
-  width: 30%;
+  width: 240px;
+}
+
+.search input {
+  width: 100%;
+  border: 1px solid var(--cor-borda);
+  border-radius: 10px;
+  padding: 10px 14px;
+  background-color: white;
+  color: var(--cor-texto);
 }
 
 .actionButton {
@@ -67,4 +85,17 @@
 
 .actionButton:hover {
   background-color: var(--cor-primaria-dark);
+}
+
+@media (max-width: 900px) {
+  .controls {
+    width: 100%;
+    flex-direction: column;
+    align-items: flex-start;
+    margin-left: 0;
+  }
+
+  .search {
+    width: 100%;
+  }
 }
