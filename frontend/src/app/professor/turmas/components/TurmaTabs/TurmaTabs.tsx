@@ -3,16 +3,16 @@
 import { useState } from 'react';
 import styles from './style.module.css';
 import { FiSearch } from 'react-icons/fi';
-import AlunoList from '../../../../../components/professor/turmas/AlunoList/AlunoList';
-import AtividadesList from '../../../../../components/professor/turmas/AtividadesList/AtividadesList';
-import EstatisticasTab from '../../../../../components/professor/turmas/EstatisticasTab/EstatisticasTab';
+import AlunoList from './components/AlunoList/AlunoList';
+import AtividadesList from './components/AtividadesList/AtividadesList';
+import EstatisticasTab from './components/EstatisticasTab/EstatisticasTab';
 
 type Aluno = {
   id: string;
   nome: string;
   media: number;
   presenca: number;
-  status: 'Ativo' | 'Atenção';
+  status: 'Excelente' | 'Bom' | 'Ruim';
 };
 type Atividade = {
   id: string;
@@ -71,7 +71,7 @@ export default function TurmaTabs({
             }`}
             onClick={() => setActiveTab('alunos')}
           >
-            Alunos ({alunos.length})
+            Alunos <span>{alunos.length}</span>
           </button>
           <button
             className={`${styles.tab} ${
@@ -92,7 +92,6 @@ export default function TurmaTabs({
         </div>
         {activeTab === 'alunos' && (
           <div className={styles.search}>
-            <FiSearch />
             <input
               type="text"
               placeholder="Buscar aluno..."

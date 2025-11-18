@@ -66,8 +66,9 @@
   text-align: center;
 }
 
-.statusAtivo,
-.statusAtencao {
+.statusExcelente,
+.statusBom,
+.statusRuim {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
@@ -77,12 +78,17 @@
   border-radius: 12px;
 }
 
-.statusAtivo {
+.statusExcelente {
+  background-color: var(--cor-primaria-light);
+  color: var(--cor-primaria-dark);
+}
+
+.statusBom {
   background-color: var(--cor-sucesso-light);
   color: var(--cor-sucesso-dark);
 }
 
-.statusAtencao {
+.statusRuim {
   background-color: var(--cor-perigo-light);
   color: var(--cor-perigo-dark);
 }

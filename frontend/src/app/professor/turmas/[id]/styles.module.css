@@ -1,0 +1,19 @@
+.backLink {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  background-color: white;
+  border: 1px solid var(--cor-borda);
+  padding: 10px 20px;
+  width: fit-content;
+  color: var(--cor-texto);
+  font-weight: 500;
+  font-size: 1rem;
+  border-radius: 10px;
+  transition: all .2s ease;
+}
+
+.backLink:hover {
+  background-color: var(--cor-bt-white-hover);
+}

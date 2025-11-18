@@ -1,6 +1,7 @@
-import Link from "next/link";
-import styles from "./style.module.css";
-import { FiUsers } from "react-icons/fi";
+import Link from 'next/link';
+import styles from './style.module.css';
+import { FiUsers } from 'react-icons/fi';
+import { getTurmaIdentifier } from '../TurmaCard/TurmaCard';
 
 type HeaderProps = {
   nomeTurma: string;
@@ -17,25 +18,21 @@ export default function TurmaDetailHeader({
 }: HeaderProps) {
   return (
     <div className={styles.header}>
-      <Link href="/professor/turmas" className={styles.backLink}>
-        ← Voltar para Turmas
-      </Link>
-      <div className={styles.content}>
-        <div className={styles.info}>
-          <div className={styles.iconWrapper}>
-            <FiUsers />
-          </div>
+      <div className={styles.infoContainer}>
+        <div className={styles.identificador}>
+          <p>{getTurmaIdentifier(nomeTurma)}</p>
+        </div>
+        <div className={styles.infoTurma}>
+          <h2>{nomeTurma}</h2>
           <div>
-            <h1 className={styles.title}>{nomeTurma}</h1>
-            <p className={styles.subtitle}>
-              {materia} | {horarioResumo}
-            </p>
+            <p>{materia}</p>
+            <p>{horarioResumo}</p>
           </div>
         </div>
-        <div className={styles.media}>
-          <p>Média da Turma</p>
-          <span>{mediaGeral.toFixed(1)}</span>
-        </div>
+      </div>
+      <div className={styles.mediaContainer}>
+        <p>Média da Turma</p>
+        <h3>{mediaGeral.toFixed(2)}</h3>
       </div>
     </div>
   );

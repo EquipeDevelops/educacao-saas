@@ -11,7 +11,7 @@ type TurmaCardProps = {
   horarioResumo: string;
 };
 
-const getTurmaIdentifier = (nome: string) => {
+export const getTurmaIdentifier = (nome: string) => {
   if (!nome) return '--';
 
   const normalized = nome

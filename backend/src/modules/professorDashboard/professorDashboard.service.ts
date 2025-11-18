@@ -15,6 +15,18 @@ const dayMap: { [key: string]: number } = {
   SABADO: 6,
 };
 
+type AlunoStatus = 'Excelente' | 'Bom' | 'Ruim';
+
+function calcularStatusAluno(media: number, presenca: number): AlunoStatus {
+  if (media >= 8 && presenca >= 90) {
+    return 'Excelente';
+  }
+  if (media >= 6 && presenca >= 75) {
+    return 'Bom';
+  }
+  return 'Ruim';
+}
+
 async function getProfessorProfile(user: AuthenticatedRequest['user']) {
   if (!user.id) {
     throw new Error('Usuário não encontrado.');
@@ -652,16 +664,14 @@ async function getTurmaDetails(
       0,
       ((DIAS_LETIVOS_TOTAIS - totalFaltas) / DIAS_LETIVOS_TOTAIS) * 100,
     );
+    const status = calcularStatusAluno(media, presenca);
 
     return {
       id: m.usuarioId,
       nome: m.nome,
       media: parseFloat(media.toFixed(1)),
       presenca: Math.round(presenca),
-      status:
-        media < 6 || presenca < 75
-          ? ('Atenção' as 'Atenção')
-          : ('Ativo' as 'Ativo'),
+      status,
     };
   });
 

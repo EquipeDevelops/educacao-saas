@@ -5,6 +5,7 @@ import {
   FiTrendingUp,
   FiCheckCircle,
   FiAlertCircle,
+  FiStar,
   FiUser,
 } from "react-icons/fi";
 
@@ -13,7 +14,7 @@ type Aluno = {
   nome: string;
   media: number;
   presenca: number;
-  status: "Ativo" | "Atenção";
+  status: "Excelente" | "Bom" | "Ruim";
 };
 
 type Props = {
@@ -21,9 +22,31 @@ type Props = {
   componenteId: string;
 };
 
+type Status = "Excelente" | "Bom" | "Ruim";
+
 export default function AlunoList({ alunos, componenteId }: Props) {
-  const getStatusClass = (status: "Ativo" | "Atenção") => {
-    return status === "Ativo" ? styles.statusAtivo : styles.statusAtencao;
+  const getStatusClass = (status: Status) => {
+    switch (status) {
+      case "Excelente":
+        return styles.statusExcelente;
+      case "Bom":
+        return styles.statusBom;
+      case "Ruim":
+      default:
+        return styles.statusRuim;
+    }
+  };
+
+  const getStatusIcon = (status: Status) => {
+    switch (status) {
+      case "Excelente":
+        return <FiStar />;
+      case "Bom":
+        return <FiCheckCircle />;
+      case "Ruim":
+      default:
+        return <FiAlertCircle />;
+    }
   };
 
   return (
@@ -52,11 +75,7 @@ export default function AlunoList({ alunos, componenteId }: Props) {
               <td>{aluno.presenca}%</td>
               <td>
                 <span className={getStatusClass(aluno.status)}>
-                  {aluno.status === "Ativo" ? (
-                    <FiCheckCircle />
-                  ) : (
-                    <FiAlertCircle />
-                  )}
+                  {getStatusIcon(aluno.status)}
                   {aluno.status}
                 </span>
               </td>

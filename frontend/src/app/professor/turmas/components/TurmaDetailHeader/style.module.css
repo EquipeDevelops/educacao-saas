@@ -1,58 +1,60 @@
 .header {
+  padding: 30px 20px;
+  border-radius: 15px;
   background-color: var(--cor-primaria-dark);
-  color: white;
-  padding: 1.5rem 2rem;
-  border-radius: 12px;
-  margin-bottom: 2rem;
-}
-
-.backLink {
-  color: var(--cor-icons);
-  text-decoration: none;
-  font-size: 0.9rem;
-  margin-bottom: 1rem;
-  display: inline-block;
-}
-
-.content {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  margin-bottom: 20px;
 }
 
-.info {
+.infoContainer {
   display: flex;
   align-items: center;
-  gap: 1.5rem;
+  gap: 20px;
 }
 
-.iconWrapper {
+.identificador {
+  width: 52px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(255, 255, 255, 0.205);
+  border-radius: 10px;
+}
+
+.identificador p {
+  color: white;
   font-size: 2rem;
-  padding: 1rem;
-  background-color: var(--cor-icons-background);
-  border-radius: 50%;
 }
 
-.title {
-  margin: 0;
-  font-size: 1.8rem;
+.infoTurma h2 {
+  font-size: 1.5rem;
+  color: white;
+  font-weight: 500;
 }
 
-.subtitle {
-  margin: 0.25rem 0 0;
-  color: #bdc3c7;
+.infoTurma div {
+  display: flex;
+  margin-top: 5px;
+  gap: 10px;
 }
 
-.media {
+.infoTurma div p {
+  color: var(--cor-icons);
+  font-size: .9rem;
+}
+
+.mediaContainer {
   text-align: right;
 }
 
-.media p {
-  margin: 0;
-  color: #bdc3c7;
+.mediaContainer p {
+  color: var(--cor-icons);
 }
 
-.media span {
-  font-size: 2.5rem;
-  font-weight: bold;
+.mediaContainer h3 {
+  font-size: 2.25rem;
+  color: white;
+  font-weight: 500;
 }
