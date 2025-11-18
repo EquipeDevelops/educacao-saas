@@ -1,20 +1,20 @@
-"use client";
-import Link from "next/link";
-import styles from "./style.module.css";
+'use client';
+import Link from 'next/link';
+import styles from './style.module.css';
 import {
   FiTrendingUp,
   FiCheckCircle,
   FiAlertCircle,
   FiStar,
   FiUser,
-} from "react-icons/fi";
+} from 'react-icons/fi';
 
 type Aluno = {
   id: string;
   nome: string;
   media: number;
   presenca: number;
-  status: "Excelente" | "Bom" | "Ruim";
+  status: 'Excelente' | 'Bom' | 'Ruim';
 };
 
 type Props = {
@@ -22,16 +22,16 @@ type Props = {
   componenteId: string;
 };
 
-type Status = "Excelente" | "Bom" | "Ruim";
+type Status = 'Excelente' | 'Bom' | 'Ruim';
 
 export default function AlunoList({ alunos, componenteId }: Props) {
   const getStatusClass = (status: Status) => {
     switch (status) {
-      case "Excelente":
+      case 'Excelente':
         return styles.statusExcelente;
-      case "Bom":
+      case 'Bom':
         return styles.statusBom;
-      case "Ruim":
+      case 'Ruim':
       default:
         return styles.statusRuim;
     }
@@ -39,11 +39,11 @@ export default function AlunoList({ alunos, componenteId }: Props) {
 
   const getStatusIcon = (status: Status) => {
     switch (status) {
-      case "Excelente":
+      case 'Excelente':
         return <FiStar />;
-      case "Bom":
+      case 'Bom':
         return <FiCheckCircle />;
-      case "Ruim":
+      case 'Ruim':
       default:
         return <FiAlertCircle />;
     }
@@ -55,16 +55,20 @@ export default function AlunoList({ alunos, componenteId }: Props) {
         <thead>
           <tr>
             <th>
-              <FiUser /> Aluno
+              <p className={styles.thContent}>Aluno</p>
             </th>
             <th>
-              <FiTrendingUp /> Média Geral
+              <p className={styles.thContent}>Média Geral</p>
             </th>
             <th>
-              <FiCheckCircle /> Frequência
+              <p className={styles.thContent}>Frequência</p>
             </th>
-            <th>Status</th>
-            <th>Ações</th>
+            <th>
+              <p className={styles.thContent}>Status</p>
+            </th>
+            <th>
+              <p className={styles.thContent}>Ações</p>
+            </th>
           </tr>
         </thead>
         <tbody>

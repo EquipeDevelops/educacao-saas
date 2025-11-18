@@ -6,30 +6,25 @@
 .table {
   width: 100%;
   border-collapse: collapse;
-  min-width: 700px;
 }
 
 .table th,
 .table td {
-  padding: 1rem 1.5rem;
+  padding: 15px 20px;
   text-align: left;
   border-bottom: 1px solid var(--cor-borda);
-  vertical-align: middle;
   white-space: nowrap;
 }
 
 .table th {
-  font-size: 0.8rem;
-  color: var(--cor-subtexto);
   text-transform: uppercase;
-  font-weight: 600;
-  background-color: #fcfcfc;
+  background-color: #f7f7f7;
 }
 
 .thContent {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
+  font-weight: 600;
+  color: var(--cor-subtexto);
+  font-size: .8rem;
 }
 
 .table tbody tr:last-child td {
@@ -37,30 +32,10 @@
 }
 
 .table tbody tr:hover {
-  background-color: #f9fafb;
+  background-color: #f1f7ff;
 }
 
-.alunoInfo {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  font-weight: 500;
-  color: var(--cor-texto-destaque);
-}
 
-.avatar {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background-color: var(--cor-primaria-light);
-  color: var(--cor-primaria-dark);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: bold;
-  flex-shrink: 0;
-  font-size: 0.9rem;
-}
 
 .centerAlign {
   text-align: center;
@@ -69,23 +44,24 @@
 .statusExcelente,
 .statusBom,
 .statusRuim {
+  font-size: .85rem;
+  font-weight: 500;
+  border: 1px solid color-mix(in srgb, currentColor 20%, white 80%);
   display: inline-flex;
+  gap: 5px;
+  padding: 5px 10px;
+  border-radius: 10px;
   align-items: center;
-  gap: 0.4rem;
-  font-size: 0.8rem;
-  font-weight: bold;
-  padding: 0.25rem 0.75rem;
-  border-radius: 12px;
 }
 
 .statusExcelente {
-  background-color: var(--cor-primaria-light);
-  color: var(--cor-primaria-dark);
+  background-color: var(--cor-sucesso-light);
+  color: var(--cor-sucesso-dark);
 }
 
 .statusBom {
-  background-color: var(--cor-sucesso-light);
-  color: var(--cor-sucesso-dark);
+  background-color: var(--cor-aviso-light);
+  color: var(--cor-aviso-dark);
 }
 
 .statusRuim {
@@ -94,20 +70,16 @@
 }
 
 .actionButton {
-  background-color: transparent;
-  color: var(--cor-primaria);
+  padding: 10px 20px;
   border: 1px solid var(--cor-borda);
-  padding: 0.5rem 1rem;
-  border-radius: 6px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  text-decoration: none;
-  white-space: nowrap;
+  color: var(--cor-subtexto);
+  font-weight: 500;
+  border-radius: 10px;
+  transition: all .2s ease;
 }
 
 .actionButton:hover {
-  background-color: var(--cor-primaria-light);
+  background-color: var(--cor-primaria);
   border-color: var(--cor-primaria);
-  color: var(--cor-primaria-dark);
+  color: white;
 }

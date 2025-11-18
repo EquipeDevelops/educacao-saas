@@ -6,6 +6,7 @@ import { FiSearch } from 'react-icons/fi';
 import AlunoList from './components/AlunoList/AlunoList';
 import AtividadesList from './components/AtividadesList/AtividadesList';
 import EstatisticasTab from './components/EstatisticasTab/EstatisticasTab';
+import { LuFilePlus2 } from 'react-icons/lu';
 
 type Aluno = {
   id: string;
@@ -101,7 +102,7 @@ export default function TurmaTabs({
           </div>
         )}
         {activeTab === 'atividades' && (
-          <button className={styles.actionButton}>+ Nova Atividade</button>
+          <button className={styles.actionButton}><LuFilePlus2 /> Nova Atividade</button>
         )}
       </div>
 
