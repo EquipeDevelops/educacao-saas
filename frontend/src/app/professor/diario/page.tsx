@@ -5,14 +5,19 @@ import styles from "./diario.module.css";
 import { api } from "@/services/api";
 import { TurmaDashboardInfo } from "../turmas/page";
 import {
+  FiAlertCircle,
   FiBookOpen,
   FiCalendar,
   FiCheckCircle,
   FiChevronDown,
   FiClock,
   FiFilter,
+  FiInfo,
   FiLoader,
   FiSave,
+  FiTarget,
+  FiUserCheck,
+  FiUserX,
   FiUsers,
   FiX,
 } from "react-icons/fi";
@@ -171,6 +176,15 @@ function getAnoOptions(etapa: BnccStage) {
   if (etapa === "infantil") return infantilAnos;
   if (etapa === "medio") return medioAnos;
   return fundamentalAnos;
+}
+
+function getInitials(name: string) {
+  return name
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join("");
 }
 
 export default function DiarioPage() {
@@ -391,6 +405,21 @@ export default function DiarioPage() {
 
   const disciplinaOptions = getDisciplinaOptions(bnccStage);
   const anoOptions = getAnoOptions(bnccStage);
+  const etapaLabel = etapaOptions.find((item) => item.value === bnccStage)?.label;
+  const disciplinaLabel = disciplinaOptions.find(
+    (item) => item.value === bnccDisciplina
+  )?.label;
+  const anoLabel = anoOptions.find((item) => item.value === bnccAno)?.label;
+
+  const attendanceSummary = useMemo(() => {
+    const total = alunos.length;
+    const presentes = Object.values(frequencia).filter(
+      (status) => status === "PRESENTE"
+    ).length;
+    const ausentes = total - presentes;
+    const percentual = total > 0 ? Math.round((presentes / total) * 100) : 0;
+    return { total, presentes, ausentes, percentual };
+  }, [alunos.length, frequencia]);
 
   return (
     <div className={styles.pageContainer}>
@@ -402,14 +431,48 @@ export default function DiarioPage() {
             só lugar.
           </p>
         </div>
+        {selectedTurma && (
+          <div className={styles.headerDetails}>
+            <span>
+              <FiUsers /> {selectedTurma.nomeTurma}
+            </span>
+            <span>
+              <FiTarget /> {selectedTurma.materia}
+            </span>
+            {selectedTurma.horarioResumo && (
+              <span>
+                <FiClock /> {selectedTurma.horarioResumo}
+              </span>
+            )}
+          </div>
+        )}
       </header>
 
       {successMessage && <p className={styles.success}>{successMessage}</p>}
       {errorMessage && <p className={styles.error}>{errorMessage}</p>}
 
-      <section className={styles.card}>
-        <form onSubmit={handleSubmit} className={styles.form}>
-          <div className={styles.section}>
+      {turmasLoading && (
+        <section className={styles.card}>
+          <p>Carregando turmas...</p>
+        </section>
+      )}
+
+      {!turmasLoading && turmas.length === 0 && (
+        <section className={styles.card}>
+          <div className={styles.emptyState}>
+            <FiAlertCircle />
+            <div>
+              <h3>Você ainda não possui turmas ativas.</h3>
+              <p>Assim que uma coordenação atribuir aulas, o diário será liberado.</p>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {turmas.length > 0 && (
+        <section className={styles.card}>
+          <form onSubmit={handleSubmit} className={styles.form}>
+            <div className={styles.section}>
             <div className={styles.sectionHeader}>
               <h2>
                 <FiUsers /> Turma e Aula
@@ -517,6 +580,24 @@ export default function DiarioPage() {
                 </button>
               </div>
             </div>
+            <div className={styles.attendanceHighlights}>
+              <div>
+                <span>Total de alunos</span>
+                <strong>{attendanceSummary.total}</strong>
+              </div>
+              <div>
+                <span>Presentes</span>
+                <strong>{attendanceSummary.presentes}</strong>
+              </div>
+              <div>
+                <span>Ausentes</span>
+                <strong>{attendanceSummary.ausentes}</strong>
+              </div>
+              <div>
+                <span>Taxa de presença</span>
+                <strong>{attendanceSummary.percentual}%</strong>
+              </div>
+            </div>
             {alunosLoading ? (
               <p className={styles.helperText}>Carregando alunos da turma...</p>
             ) : alunos.length === 0 ? (
@@ -525,10 +606,16 @@ export default function DiarioPage() {
               </p>
             ) : (
               <div className={styles.attendanceList}>
-                {alunos.map((aluno) => (
+                {alunos.map((aluno, index) => (
                   <div key={aluno.id} className={styles.attendanceRow}>
-                    <div>
-                      <strong>{aluno.nome}</strong>
+                    <div className={styles.studentInfo}>
+                      <div className={styles.avatar} aria-hidden>
+                        {getInitials(aluno.nome)}
+                      </div>
+                      <div>
+                        <strong>{aluno.nome}</strong>
+                        <span>#{index + 1} na chamada</span>
+                      </div>
                     </div>
                     <div className={styles.attendanceButtons}>
                       <button
@@ -540,18 +627,18 @@ export default function DiarioPage() {
                         }
                         onClick={() => handleFrequenciaChange(aluno.id, "PRESENTE")}
                       >
-                        Presente
+                        <FiUserCheck /> Presente
                       </button>
                       <button
                         type="button"
                         className={
                           frequencia[aluno.id] === "AUSENTE"
-                            ? styles.activeButton
+                            ? styles.absentButton
                             : ""
                         }
                         onClick={() => handleFrequenciaChange(aluno.id, "AUSENTE")}
                       >
-                        Ausente
+                        <FiUserX /> Ausente
                       </button>
                     </div>
                   </div>
@@ -563,8 +650,13 @@ export default function DiarioPage() {
           <div className={styles.section}>
             <div className={styles.sectionHeader}>
               <h2>
-                <FiFilter /> BNCC
+                <FiFilter /> BNCC e competências
               </h2>
+            </div>
+            <div className={styles.bnccSummaryChips}>
+              {etapaLabel && <span>{etapaLabel}</span>}
+              {disciplinaLabel && <span>{disciplinaLabel}</span>}
+              {anoLabel && <span>{anoLabel}</span>}
             </div>
             <div className={styles.bnccFilters}>
               <div>
@@ -693,8 +785,9 @@ export default function DiarioPage() {
                 <ul>
                   {selectedHabilidades.map((habilidade) => (
                     <li key={habilidade.codigo}>
-                      <strong>{habilidade.codigo}</strong> —{' '}
-                      {habilidade.descricao || habilidade.descricao_habilidade ||
+                      <strong>{habilidade.codigo}</strong> — {" "}
+                      {habilidade.descricao ||
+                        habilidade.descricao_habilidade ||
                         "Sem descrição"}
                     </li>
                   ))}
@@ -707,9 +800,14 @@ export default function DiarioPage() {
             <button type="submit" className={styles.saveButton}>
               <FiSave /> Registrar aula
             </button>
+            <p className={styles.saveHint}>
+              <FiInfo /> As informações ficam salvas no histórico da turma e
+              podem ser editadas posteriormente.
+            </p>
           </div>
         </form>
       </section>
+      )}
     </div>
   );
 }

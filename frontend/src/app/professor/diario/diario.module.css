@@ -5,6 +5,14 @@
   gap: 1.5rem;
 }
 
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
 .header h1 {
   font-size: 2rem;
   margin-bottom: 0.25rem;
@@ -14,12 +22,41 @@
   color: var(--cor-subtexto);
 }
 
+.headerDetails {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.headerDetails span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: rgba(67, 97, 238, 0.08);
+  color: var(--cor-primaria);
+  border-radius: 999px;
+  padding: 0.35rem 0.85rem;
+  font-weight: 600;
+}
+
 .card {
   background: var(--cor-fundo-card);
   border: 1px solid var(--cor-borda);
   border-radius: 16px;
   padding: 2rem;
   box-shadow: var(--sombra-card);
+}
+
+.emptyState {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  color: var(--cor-subtexto);
+}
+
+.emptyState svg {
+  font-size: 2rem;
+  color: var(--cor-primaria);
 }
 
 .form {
@@ -133,6 +170,10 @@
   gap: 0.5rem;
 }
 
+.attendanceButtons button svg {
+  margin-right: 0.25rem;
+}
+
 .attendanceList {
   display: flex;
   flex-direction: column;
@@ -149,10 +190,62 @@
   background: var(--cor-fundo);
 }
 
+.studentInfo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.studentInfo span {
+  color: var(--cor-subtexto);
+  font-size: 0.85rem;
+}
+
+.avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: rgba(67, 97, 238, 0.1);
+  color: var(--cor-primaria);
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .activeButton {
   background: var(--cor-primaria);
   color: white !important;
   border-color: var(--cor-primaria);
+}
+
+.absentButton {
+  background: rgba(239, 71, 111, 0.12);
+  border-color: rgba(239, 71, 111, 0.3);
+  color: #ef476f;
+}
+
+.attendanceHighlights {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.85rem;
+  margin-bottom: 1rem;
+}
+
+.attendanceHighlights div {
+  background: var(--cor-fundo);
+  border-radius: 12px;
+  border: 1px dashed var(--cor-borda);
+  padding: 0.75rem 1rem;
+}
+
+.attendanceHighlights span {
+  color: var(--cor-subtexto);
+  font-size: 0.85rem;
+}
+
+.attendanceHighlights strong {
+  font-size: 1.3rem;
 }
 
 .helperText {
@@ -163,6 +256,21 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
   gap: 1rem;
+}
+
+.bnccSummaryChips {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.5rem;
+}
+
+.bnccSummaryChips span {
+  background: rgba(67, 97, 238, 0.08);
+  color: var(--cor-primaria);
+  padding: 0.35rem 0.85rem;
+  border-radius: 999px;
+  font-weight: 600;
 }
 
 .bnccSearch input {
@@ -226,7 +334,10 @@
 
 .actions {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
 }
 
 .saveButton {
@@ -252,6 +363,14 @@
 .success,
 .error {
   font-weight: 600;
+}
+
+.saveHint {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--cor-subtexto);
+  font-size: 0.9rem;
 }
 
 .success {
