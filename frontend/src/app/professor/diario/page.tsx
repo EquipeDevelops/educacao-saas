@@ -421,31 +421,66 @@ export default function DiarioPage() {
     return { total, presentes, ausentes, percentual };
   }, [alunos.length, frequencia]);
 
+  const formattedAulaDate = useMemo(() => {
+    const parsed = new Date(aulaDate);
+    if (Number.isNaN(parsed.getTime())) {
+      return aulaDate;
+    }
+    return parsed.toLocaleDateString("pt-BR", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+  }, [aulaDate]);
+
   return (
     <div className={styles.pageContainer}>
-      <header className={styles.header}>
+      <header className={styles.hero}>
         <div>
+          <p className={styles.heroEyebrow}>Registro pedagógico</p>
           <h1>Diário de Classe</h1>
           <p>
-            Organize o registro da aula, frequências e vínculos com a BNCC em um
-            só lugar.
+            Centralize planejamento, frequência e habilidades BNCC em um fluxo
+            contínuo e visual, pensado para o professor.
           </p>
-        </div>
-        {selectedTurma && (
-          <div className={styles.headerDetails}>
+          <div className={styles.heroHighlights}>
             <span>
-              <FiUsers /> {selectedTurma.nomeTurma}
+              <FiCheckCircle /> Frequência em um clique
             </span>
             <span>
-              <FiTarget /> {selectedTurma.materia}
+              <FiTarget /> BNCC conectada
             </span>
-            {selectedTurma.horarioResumo && (
-              <span>
-                <FiClock /> {selectedTurma.horarioResumo}
-              </span>
-            )}
+            <span>
+              <FiSave /> Histórico seguro
+            </span>
           </div>
-        )}
+        </div>
+        <div className={styles.heroCard}>
+          {selectedTurma ? (
+            <>
+              <h3>{selectedTurma.nomeTurma}</h3>
+              <p>{selectedTurma.materia}</p>
+              <dl>
+                <div>
+                  <dt>Horário</dt>
+                  <dd>{selectedTurma.horarioResumo || "—"}</dd>
+                </div>
+                <div>
+                  <dt>Matrículas</dt>
+                  <dd>{alunos.length || "0"} alunos</dd>
+                </div>
+              </dl>
+              <span className={styles.heroDate}>
+                <FiCalendar /> {formattedAulaDate}
+              </span>
+            </>
+          ) : (
+            <div className={styles.heroEmpty}>
+              <FiInfo />
+              <p>Selecione uma turma para visualizar o contexto da aula.</p>
+            </div>
+          )}
+        </div>
       </header>
 
       {successMessage && <p className={styles.success}>{successMessage}</p>}
@@ -469,49 +504,816 @@ export default function DiarioPage() {
         </section>
       )}
 
+
       {turmas.length > 0 && (
         <section className={styles.card}>
           <form onSubmit={handleSubmit} className={styles.form}>
-            <div className={styles.section}>
-            <div className={styles.sectionHeader}>
-              <h2>
-                <FiUsers /> Turma e Aula
-              </h2>
-            </div>
-            {turmasLoading ? (
-              <p>Carregando turmas...</p>
-            ) : (
-              <div className={styles.turmaGrid}>
-                <div>
-                  <label>Turma</label>
-                  <div className={styles.selectWrapper}>
-                    <select
-                      value={selectedComponenteId || ""}
-                      onChange={(event) =>
-                        setSelectedComponenteId(event.target.value)
-                      }
-                    >
-                      {turmas.map((turma) => (
-                        <option key={turma.componenteId} value={turma.componenteId}>
-                          {turma.nomeTurma} — {turma.materia}
-                        </option>
-                      ))}
-                    </select>
-                    <FiChevronDown />
+            <div className={styles.layoutGrid}>
+              <div className={styles.leftColumn}>
+                <div className={styles.section}>
+                  <div className={styles.sectionHeader}>
+                    <div>
+                      <span className={styles.sectionEyebrow}>Passo 1</span>
+                      <h2>
+                        <FiUsers /> Turma e aula
+                      </h2>
+                      <p className={styles.sectionDescription}>
+                        Escolha a turma, a data e descreva o tema conduzido em sala.
+                      </p>
+                    </div>
+                  </div>
+                  {turmasLoading ? (
+                    <p>Carregando turmas...</p>
+                  ) : (
+                    <div className={styles.turmaGrid}>
+                      <div>
+                        <label>Turma</label>
+                        <div className={styles.selectWrapper}>
+                          <select
+                            value={selectedComponenteId || ""}
+                            onChange={(event) =>
+                              setSelectedComponenteId(event.target.value)
+                            }
+                          >
+                            {turmas.map((turma) => (
+                              <option key={turma.componenteId} value={turma.componenteId}>
+                                {turma.nomeTurma} — {turma.materia}
+                              </option>
+                            ))}
+                          </select>
+                          <FiChevronDown />
+                        </div>
+                      </div>
+                      <div>
+                        <label>
+                          <FiCalendar /> Data
+                        </label>
+                        <input
+                          type="date"
+                          value={aulaDate}
+                          onChange={(event) => setAulaDate(event.target.value)}
+                        />
+                      </div>
+                    </div>
+                  )}
+                  {selectedTurma && (
+                    <div className={styles.turmaContextCard}>
+                      <div>
+                        <span>Matéria</span>
+                        <strong>{selectedTurma.materia}</strong>
+                      </div>
+                      <div>
+                        <span>Turma</span>
+                        <strong>{selectedTurma.nomeTurma}</strong>
+                      </div>
+                      <div>
+                        <span>Horário</span>
+                        <strong>{selectedTurma.horarioResumo || "—"}</strong>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div className={styles.section}>
+                  <div className={styles.sectionHeader}>
+                    <div>
+                      <span className={styles.sectionEyebrow}>Passo 2</span>
+                      <h2>
+                        <FiBookOpen /> Plano da aula
+                      </h2>
+                      <p className={styles.sectionDescription}>
+                        Documente objetivos, duração e recursos utilizados para replicar a
+                        experiência.
+                      </p>
+                    </div>
+                  </div>
+                  <div className={styles.lessonGrid}>
+                    <div>
+                      <label>Tema da aula</label>
+                      <input
+                        type="text"
+                        placeholder="Ex.: Frações equivalentes"
+                        value={tema}
+                        onChange={(event) => setTema(event.target.value)}
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label>
+                        <FiClock /> Duração / Período
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="2 aulas (100 minutos)"
+                        value={duracao}
+                        onChange={(event) => setDuracao(event.target.value)}
+                      />
+                    </div>
+                  </div>
+                  <div className={styles.textareaGrid}>
+                    <div>
+                      <label>Objetivos e atividades</label>
+                      <textarea
+                        placeholder="Detalhe estratégias, metodologias e combinações com a turma"
+                        value={objetivos}
+                        onChange={(event) => setObjetivos(event.target.value)}
+                        rows={4}
+                      />
+                    </div>
+                    <div>
+                      <label>Recursos e materiais</label>
+                      <textarea
+                        placeholder="Liste materiais, tecnologias e referências utilizadas"
+                        value={materiais}
+                        onChange={(event) => setMateriais(event.target.value)}
+                        rows={4}
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label>Observações gerais</label>
+                    <textarea
+                      placeholder="Anote evidências de aprendizagem, acordos e encaminhamentos"
+                      value={observacoes}
+                      onChange={(event) => setObservacoes(event.target.value)}
+                      rows={3}
+                    />
                   </div>
                 </div>
-                <div>
-                  <label>
-                    <FiCalendar /> Data
-                  </label>
-                  <input
-                    type="date"
-                    value={aulaDate}
-                    onChange={(event) => setAulaDate(event.target.value)}
-                  />
+
+                <div className={styles.section}>
+                  <div className={styles.sectionHeader}>
+                    <div>
+                      <span className={styles.sectionEyebrow}>Passo 3</span>
+                      <h2>
+                        <FiFilter /> BNCC e competências
+                      </h2>
+                      <p className={styles.sectionDescription}>
+                        Ajuste etapa, disciplina e ano para buscar habilidades e anexá-las
+                        ao registro.
+                      </p>
+                    </div>
+                  </div>
+                  <div className={styles.bnccSummaryChips}>
+                    {etapaLabel && <span>{etapaLabel}</span>}
+                    {disciplinaLabel && <span>{disciplinaLabel}</span>}
+                    {anoLabel && <span>{anoLabel}</span>}
+                  </div>
+                  <div className={styles.bnccFilters}>
+                    <div>
+                      <label>Etapa</label>
+                      <div className={styles.selectWrapper}>
+                        <select
+                          value={bnccStage}
+                          onChange={(event) =>
+                            setBnccStage(event.target.value as BnccStage)
+                          }
+                        >
+                          {etapaOptions.map((etapa) => (
+                            <option key={etapa.value} value={etapa.value}>
+                              {etapa.label}
+                            </option>
+                          ))}
+                        </select>
+                        <FiChevronDown />
+                      </div>
+                    </div>
+                    <div>
+                      <label>Matéria / Campo</label>
+                      <div className={styles.selectWrapper}>
+                        <select
+                          value={bnccDisciplina}
+                          onChange={(event) => setBnccDisciplina(event.target.value)}
+                        >
+                          {disciplinaOptions.map((disciplina) => (
+                            <option key={disciplina.value} value={disciplina.value}>
+                              {disciplina.label}
+                            </option>
+                          ))}
+                        </select>
+                        <FiChevronDown />
+                      </div>
+                    </div>
+                    <div>
+                      <label>Ano / Etapa</label>
+                      <div className={styles.selectWrapper}>
+                        <select
+                          value={bnccAno}
+                          onChange={(event) => setBnccAno(event.target.value)}
+                        >
+                          {anoOptions.map((ano) => (
+                            <option key={ano.value} value={ano.value}>
+                              {ano.label}
+                            </option>
+                          ))}
+                        </select>
+                        <FiChevronDown />
+                      </div>
+                    </div>
+                  </div>
+                  <div className={styles.bnccSearch}>
+                    <input
+                      type="text"
+                      placeholder="Busque pelo código ou por uma habilidade"
+                      value={bnccSearch}
+                      onChange={(event) => setBnccSearch(event.target.value)}
+                    />
+                  </div>
+                  <div className={styles.bnccList}>
+                    {bnccLoading ? (
+                      <p className={styles.helperText}>
+                        <FiLoader className={styles.spinner} /> Buscando habilidades na BNCC...
+                      </p>
+                    ) : bnccError ? (
+                      <p className={styles.error}>{bnccError}</p>
+                    ) : filteredHabilidades.length === 0 ? (
+                      <p className={styles.helperText}>
+                        Nenhuma habilidade encontrada para o filtro selecionado.
+                      </p>
+                    ) : (
+                      filteredHabilidades.map((habilidade) => (
+                        <button
+                          key={habilidade.codigo}
+                          type="button"
+                          className={`${styles.bnccItem} ${
+                            selectedHabilidades.some(
+                              (item) => item.codigo === habilidade.codigo
+                            )
+                              ? styles.bnccItemSelected
+                              : ""
+                          }`}
+                          onClick={() => toggleHabilidade(habilidade)}
+                        >
+                          <div>
+                            <strong>{habilidade.codigo}</strong>
+                            <p>
+                              {habilidade.descricao ||
+                                habilidade.descricao_habilidade ||
+                                habilidade.habilidade ||
+                                "Sem descrição disponível"}
+                            </p>
+                            {(habilidade.unidade_tematica ||
+                              habilidade.objeto_do_conhecimento) && (
+                              <small>
+                                {habilidade.unidade_tematica && (
+                                  <span>Unidade temática: {habilidade.unidade_tematica}</span>
+                                )}
+                                {habilidade.objeto_do_conhecimento && (
+                                  <span>
+                                    {" "}• Objeto: {habilidade.objeto_do_conhecimento}
+                                  </span>
+                                )}
+                              </small>
+                            )}
+                          </div>
+                          <span>
+                            {selectedHabilidades.some(
+                              (item) => item.codigo === habilidade.codigo
+                            )
+                              ? "Remover"
+                              : "Adicionar"}
+                          </span>
+                        </button>
+                      ))
+                    )}
+                  </div>
+                  {selectedHabilidades.length > 0 && (
+                    <div className={styles.selectedHabilidades}>
+                      <div className={styles.sectionHeader}>
+                        <div>
+                          <h3>Habilidades selecionadas</h3>
+                          <p className={styles.sectionDescription}>
+                            Clique em uma habilidade para removê-la ou limpe tudo.
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setSelectedHabilidades([])}
+                        >
+                          <FiX /> Limpar
+                        </button>
+                      </div>
+                      <div className={styles.selectedGrid}>
+                        {selectedHabilidades.map((habilidade) => (
+                          <article key={habilidade.codigo} className={styles.selectedCard}>
+                            <header>
+                              <strong>{habilidade.codigo}</strong>
+                              <button
+                                type="button"
+                                onClick={() => toggleHabilidade(habilidade)}
+                              >
+                                <FiX /> Remover
+                              </button>
+                            </header>
+                            <p>
+                              {habilidade.descricao ||
+                                habilidade.descricao_habilidade ||
+                                "Sem descrição"}
+                            </p>
+                          </article>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
-            )}
+
+              <div className={styles.rightColumn}>
+                <div className={`${styles.section} ${styles.attendanceSection}`}>
+                  <div className={styles.sectionHeader}>
+                    <div>
+                      <span className={styles.sectionEyebrow}>Passo 4</span>
+                      <h2>
+                        <FiCheckCircle /> Frequência da turma
+                      </h2>
+                      <p className={styles.sectionDescription}>
+                        Utilize as ações rápidas para preencher toda a turma ou personalize
+                        aluno a aluno.
+                      </p>
+                    </div>
+                    <div className={styles.attendanceActions}>
+                      <button type="button" onClick={() => markAll("PRESENTE")}>
+                        <FiUserCheck /> Todos presentes
+                      </button>
+                      <button type="button" onClick={() => markAll("AUSENTE")}>
+                        <FiUserX /> Zerar presença
+                      </button>
+                    </div>
+                  </div>
+                  <div className={styles.attendanceHighlights}>
+                    <div>
+                      <span>Total</span>
+                      <strong>{attendanceSummary.total}</strong>
+                    </div>
+                    <div>
+                      <span>Presentes</span>
+                      <strong>{attendanceSummary.presentes}</strong>
+                    </div>
+                    <div>
+                      <span>Ausentes</span>
+                      <strong>{attendanceSummary.ausentes}</strong>
+                    </div>
+                    <div>
+                      <span>Taxa de presença</span>
+                      <strong>{attendanceSummary.percentual}%</strong>
+                    </div>
+                  </div>
+                  <div className={styles.attendanceProgress}>
+                    <div style={{ width: `${attendanceSummary.percentual}%` }} />
+                  </div>
+                  {alunosLoading ? (
+                    <p className={styles.helperText}>Carregando alunos da turma...</p>
+                  ) : alunos.length === 0 ? (
+                    <p className={styles.helperText}>
+                      Nenhum aluno vinculado à turma selecionada.
+                    </p>
+                  ) : (
+                    <div className={styles.attendanceList}>
+                      {alunos.map((aluno, index) => (
+                        <div key={aluno.id} className={styles.attendanceRow}>
+                          <div className={styles.studentInfo}>
+                            <div className={styles.avatar} aria-hidden>
+                              {getInitials(aluno.nome)}
+                            </div>
+                            <div>
+                              <strong>{aluno.nome}</strong>
+                              <span>#{index + 1} na chamada</span>
+                            </div>
+                          </div>
+                          <div className={styles.attendanceButtons}>
+                            <button
+                              type="button"
+                              className={
+                                frequencia[aluno.id] === "PRESENTE"
+                                  ? styles.activeButton
+                                  : ""
+                              }
+                              onClick={() =>
+                                handleFrequenciaChange(aluno.id, "PRESENTE")
+                              }
+                            >
+                              <FiUserCheck /> Presente
+                            </button>
+                            <button
+                              type="button"
+                              className={
+                                frequencia[aluno.id] === "AUSENTE"
+                                  ? styles.absentButton
+                                  : ""
+                              }
+                              onClick={() =>
+                                handleFrequenciaChange(aluno.id, "AUSENTE")
+                              }
+                            >
+                              <FiUserX /> Ausente
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <div className={styles.tipBox}>
+                  <FiInfo />
+                  <p>
+                    O registro completo ficará disponível para coordenação e pode ser
+                    atualizado sempre que necessário.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className={styles.actions}>
+              <button type="submit" className={styles.saveButton}>
+                <FiSave /> Registrar aula
+              </button>
+              <p className={styles.saveHint}>
+                <FiInfo /> As informações ficam salvas no histórico da turma e podem ser
+                editadas posteriormente.
+              </p>
+            </div>
+          </form>
+        </section>
+      )}
+                  {selectedTurma && (
+                    <div className={styles.turmaContextCard}>
+                      <div>
+                        <span>Matéria</span>
+                        <strong>{selectedTurma.materia}</strong>
+                      </div>
+                      <div>
+                        <span>Turma</span>
+                        <strong>{selectedTurma.nomeTurma}</strong>
+                      </div>
+                      <div>
+                        <span>Horário</span>
+                        <strong>{selectedTurma.horarioResumo || "—"}</strong>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div className={styles.section}>
+                  <div className={styles.sectionHeader}>
+                    <div>
+                      <span className={styles.sectionEyebrow}>Passo 2</span>
+                      <h2>
+                        <FiBookOpen /> Plano da aula
+                      </h2>
+                      <p className={styles.sectionDescription}>
+                        Documente objetivos, duração e recursos utilizados para replicar a
+                        experiência.
+                      </p>
+                    </div>
+                  </div>
+                  <div className={styles.lessonGrid}>
+                    <div>
+                      <label>Tema da aula</label>
+                      <input
+                        type="text"
+                        placeholder="Ex.: Frações equivalentes"
+                        value={tema}
+                        onChange={(event) => setTema(event.target.value)}
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label>
+                        <FiClock /> Duração / Período
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="2 aulas (100 minutos)"
+                        value={duracao}
+                        onChange={(event) => setDuracao(event.target.value)}
+                      />
+                    </div>
+                  </div>
+                  <div className={styles.textareaGrid}>
+                    <div>
+                      <label>Objetivos e atividades</label>
+                      <textarea
+                        placeholder="Detalhe estratégias, metodologias e combinações com a turma"
+                        value={objetivos}
+                        onChange={(event) => setObjetivos(event.target.value)}
+                        rows={4}
+                      />
+                    </div>
+                    <div>
+                      <label>Recursos e materiais</label>
+                      <textarea
+                        placeholder="Liste materiais, tecnologias e referências utilizadas"
+                        value={materiais}
+                        onChange={(event) => setMateriais(event.target.value)}
+                        rows={4}
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label>Observações gerais</label>
+                    <textarea
+                      placeholder="Anote evidências de aprendizagem, acordos e encaminhamentos"
+                      value={observacoes}
+                      onChange={(event) => setObservacoes(event.target.value)}
+                      rows={3}
+                    />
+                  </div>
+                </div>
+
+                <div className={styles.section}>
+                  <div className={styles.sectionHeader}>
+                    <div>
+                      <span className={styles.sectionEyebrow}>Passo 3</span>
+                      <h2>
+                        <FiFilter /> BNCC e competências
+                      </h2>
+                      <p className={styles.sectionDescription}>
+                        Ajuste etapa, disciplina e ano para buscar habilidades e anexá-las
+                        ao registro.
+                      </p>
+                    </div>
+                  </div>
+                  <div className={styles.bnccSummaryChips}>
+                    {etapaLabel && <span>{etapaLabel}</span>}
+                    {disciplinaLabel && <span>{disciplinaLabel}</span>}
+                    {anoLabel && <span>{anoLabel}</span>}
+                  </div>
+                  <div className={styles.bnccFilters}>
+                    <div>
+                      <label>Etapa</label>
+                      <div className={styles.selectWrapper}>
+                        <select
+                          value={bnccStage}
+                          onChange={(event) =>
+                            setBnccStage(event.target.value as BnccStage)
+                          }
+                        >
+                          {etapaOptions.map((etapa) => (
+                            <option key={etapa.value} value={etapa.value}>
+                              {etapa.label}
+                            </option>
+                          ))}
+                        </select>
+                        <FiChevronDown />
+                      </div>
+                    </div>
+                    <div>
+                      <label>Matéria / Campo</label>
+                      <div className={styles.selectWrapper}>
+                        <select
+                          value={bnccDisciplina}
+                          onChange={(event) => setBnccDisciplina(event.target.value)}
+                        >
+                          {disciplinaOptions.map((disciplina) => (
+                            <option key={disciplina.value} value={disciplina.value}>
+                              {disciplina.label}
+                            </option>
+                          ))}
+                        </select>
+                        <FiChevronDown />
+                      </div>
+                    </div>
+                    <div>
+                      <label>Ano / Etapa</label>
+                      <div className={styles.selectWrapper}>
+                        <select
+                          value={bnccAno}
+                          onChange={(event) => setBnccAno(event.target.value)}
+                        >
+                          {anoOptions.map((ano) => (
+                            <option key={ano.value} value={ano.value}>
+                              {ano.label}
+                            </option>
+                          ))}
+                        </select>
+                        <FiChevronDown />
+                      </div>
+                    </div>
+                  </div>
+                  <div className={styles.bnccSearch}>
+                    <input
+                      type="text"
+                      placeholder="Busque pelo código ou por uma habilidade"
+                      value={bnccSearch}
+                      onChange={(event) => setBnccSearch(event.target.value)}
+                    />
+                  </div>
+                  <div className={styles.bnccList}>
+                    {bnccLoading ? (
+                      <p className={styles.helperText}>
+                        <FiLoader className={styles.spinner} /> Buscando habilidades na BNCC...
+                      </p>
+                    ) : bnccError ? (
+                      <p className={styles.error}>{bnccError}</p>
+                    ) : filteredHabilidades.length === 0 ? (
+                      <p className={styles.helperText}>
+                        Nenhuma habilidade encontrada para o filtro selecionado.
+                      </p>
+                    ) : (
+                      filteredHabilidades.map((habilidade) => (
+                        <button
+                          key={habilidade.codigo}
+                          type="button"
+                          className={`${styles.bnccItem} ${
+                            selectedHabilidades.some(
+                              (item) => item.codigo === habilidade.codigo
+                            )
+                              ? styles.bnccItemSelected
+                              : ""
+                          }`}
+                          onClick={() => toggleHabilidade(habilidade)}
+                        >
+                          <div>
+                            <strong>{habilidade.codigo}</strong>
+                            <p>
+                              {habilidade.descricao ||
+                                habilidade.descricao_habilidade ||
+                                habilidade.habilidade ||
+                                "Sem descrição disponível"}
+                            </p>
+                            {(habilidade.unidade_tematica ||
+                              habilidade.objeto_do_conhecimento) && (
+                              <small>
+                                {habilidade.unidade_tematica && (
+                                  <span>Unidade temática: {habilidade.unidade_tematica}</span>
+                                )}
+                                {habilidade.objeto_do_conhecimento && (
+                                  <span>
+                                    {' '}• Objeto: {habilidade.objeto_do_conhecimento}
+                                  </span>
+                                )}
+                              </small>
+                            )}
+                          </div>
+                          <span>
+                            {selectedHabilidades.some(
+                              (item) => item.codigo === habilidade.codigo
+                            )
+                              ? "Remover"
+                              : "Adicionar"}
+                          </span>
+                        </button>
+                      ))
+                    )}
+                  </div>
+                  {selectedHabilidades.length > 0 && (
+                    <div className={styles.selectedHabilidades}>
+                      <div className={styles.sectionHeader}>
+                        <div>
+                          <h3>Habilidades selecionadas</h3>
+                          <p className={styles.sectionDescription}>
+                            Clique em uma habilidade para removê-la ou limpe tudo.
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setSelectedHabilidades([])}
+                        >
+                          <FiX /> Limpar
+                        </button>
+                      </div>
+                      <div className={styles.selectedGrid}>
+                        {selectedHabilidades.map((habilidade) => (
+                          <article key={habilidade.codigo} className={styles.selectedCard}>
+                            <header>
+                              <strong>{habilidade.codigo}</strong>
+                              <button
+                                type="button"
+                                onClick={() => toggleHabilidade(habilidade)}
+                              >
+                                <FiX /> Remover
+                              </button>
+                            </header>
+                            <p>
+                              {habilidade.descricao ||
+                                habilidade.descricao_habilidade ||
+                                "Sem descrição"}
+                            </p>
+                          </article>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className={styles.rightColumn}>
+                <div className={`${styles.section} ${styles.attendanceSection}`}>
+                  <div className={styles.sectionHeader}>
+                    <div>
+                      <span className={styles.sectionEyebrow}>Passo 4</span>
+                      <h2>
+                        <FiCheckCircle /> Frequência da turma
+                      </h2>
+                      <p className={styles.sectionDescription}>
+                        Utilize as ações rápidas para preencher toda a turma ou personalize
+                        aluno a aluno.
+                      </p>
+                    </div>
+                    <div className={styles.attendanceActions}>
+                      <button type="button" onClick={() => markAll("PRESENTE")}>
+                        <FiUserCheck /> Todos presentes
+                      </button>
+                      <button type="button" onClick={() => markAll("AUSENTE")}>
+                        <FiUserX /> Zerar presença
+                      </button>
+                    </div>
+                  </div>
+                  <div className={styles.attendanceHighlights}>
+                    <div>
+                      <span>Total</span>
+                      <strong>{attendanceSummary.total}</strong>
+                    </div>
+                    <div>
+                      <span>Presentes</span>
+                      <strong>{attendanceSummary.presentes}</strong>
+                    </div>
+                    <div>
+                      <span>Ausentes</span>
+                      <strong>{attendanceSummary.ausentes}</strong>
+                    </div>
+                    <div>
+                      <span>Taxa de presença</span>
+                      <strong>{attendanceSummary.percentual}%</strong>
+                    </div>
+                  </div>
+                  <div className={styles.attendanceProgress}>
+                    <div style={{ width: `${attendanceSummary.percentual}%` }} />
+                  </div>
+                  {alunosLoading ? (
+                    <p className={styles.helperText}>Carregando alunos da turma...</p>
+                  ) : alunos.length === 0 ? (
+                    <p className={styles.helperText}>
+                      Nenhum aluno vinculado à turma selecionada.
+                    </p>
+                  ) : (
+                    <div className={styles.attendanceList}>
+                      {alunos.map((aluno, index) => (
+                        <div key={aluno.id} className={styles.attendanceRow}>
+                          <div className={styles.studentInfo}>
+                            <div className={styles.avatar} aria-hidden>
+                              {getInitials(aluno.nome)}
+                            </div>
+                            <div>
+                              <strong>{aluno.nome}</strong>
+                              <span>#{index + 1} na chamada</span>
+                            </div>
+                          </div>
+                          <div className={styles.attendanceButtons}>
+                            <button
+                              type="button"
+                              className={
+                                frequencia[aluno.id] === "PRESENTE"
+                                  ? styles.activeButton
+                                  : ""
+                              }
+                              onClick={() =>
+                                handleFrequenciaChange(aluno.id, "PRESENTE")
+                              }
+                            >
+                              <FiUserCheck /> Presente
+                            </button>
+                            <button
+                              type="button"
+                              className={
+                                frequencia[aluno.id] === "AUSENTE"
+                                  ? styles.absentButton
+                                  : ""
+                              }
+                              onClick={() =>
+                                handleFrequenciaChange(aluno.id, "AUSENTE")
+                              }
+                            >
+                              <FiUserX /> Ausente
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <div className={styles.tipBox}>
+                  <FiInfo />
+                  <p>
+                    O registro completo ficará disponível para coordenação e pode ser
+                    atualizado sempre que necessário.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className={styles.actions}>
+              <button type="submit" className={styles.saveButton}>
+                <FiSave /> Registrar aula
+              </button>
+              <p className={styles.saveHint}>
+                <FiInfo /> As informações ficam salvas no histórico da turma e podem ser
+                editadas posteriormente.
+              </p>
+            </div>
+          </form>
+        </section>
+      )}
             <div className={styles.lessonGrid}>
               <div>
                 <label>Tema da aula</label>

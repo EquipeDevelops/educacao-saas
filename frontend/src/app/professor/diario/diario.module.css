@@ -5,38 +5,107 @@
   gap: 1.5rem;
 }
 
-.header {
+.hero {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  gap: 1.5rem;
+  gap: 2rem;
+  padding: 2rem;
+  border-radius: 24px;
+  background: linear-gradient(135deg, rgba(67, 97, 238, 0.12), rgba(112, 193, 255, 0.2));
+  border: 1px solid rgba(67, 97, 238, 0.15);
   flex-wrap: wrap;
 }
 
-.header h1 {
-  font-size: 2rem;
+.hero h1 {
+  font-size: 2.4rem;
   margin-bottom: 0.25rem;
 }
 
-.header p {
+.hero p {
   color: var(--cor-subtexto);
+  max-width: 520px;
 }
 
-.headerDetails {
+.heroEyebrow {
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.2em;
+  color: var(--cor-primaria);
+  font-weight: 600;
+}
+
+.heroHighlights {
   display: flex;
   gap: 0.75rem;
   flex-wrap: wrap;
+  margin-top: 1rem;
 }
 
-.headerDetails span {
+.heroHighlights span {
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
-  background: rgba(67, 97, 238, 0.08);
-  color: var(--cor-primaria);
+  gap: 0.4rem;
+  padding: 0.45rem 0.9rem;
   border-radius: 999px;
-  padding: 0.35rem 0.85rem;
+  background: rgba(255, 255, 255, 0.5);
+  color: var(--cor-primaria);
   font-weight: 600;
+}
+
+.heroCard {
+  background: white;
+  border-radius: 20px;
+  padding: 1.5rem;
+  border: 1px solid var(--cor-borda);
+  box-shadow: 0 25px 60px rgba(15, 23, 42, 0.08);
+  min-width: 260px;
+  flex: 1;
+  max-width: 360px;
+}
+
+.heroCard h3 {
+  margin: 0;
+  font-size: 1.3rem;
+}
+
+.heroCard p {
+  color: var(--cor-subtexto);
+  margin-top: 0.1rem;
+}
+
+.heroCard dl {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin: 1rem 0;
+}
+
+.heroCard dt {
+  font-size: 0.8rem;
+  color: var(--cor-subtexto);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.heroCard dd {
+  font-size: 1.1rem;
+  margin: 0;
+  font-weight: 600;
+}
+
+.heroDate {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-weight: 600;
+  color: var(--cor-primaria);
+}
+
+.heroEmpty {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--cor-subtexto);
 }
 
 .card {
@@ -74,7 +143,7 @@
 .sectionHeader {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   gap: 1rem;
 }
 
@@ -84,6 +153,70 @@
   align-items: center;
   gap: 0.5rem;
   font-size: 1.2rem;
+}
+
+.sectionHeader p {
+  margin: 0.25rem 0 0;
+  color: var(--cor-subtexto);
+}
+
+.sectionEyebrow {
+  display: inline-block;
+  padding: 0.2rem 0.7rem;
+  background: rgba(67, 97, 238, 0.12);
+  border-radius: 999px;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--cor-primaria);
+  margin-bottom: 0.35rem;
+}
+
+.sectionDescription {
+  color: var(--cor-subtexto);
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+
+.layoutGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(280px, 2fr);
+  gap: 2rem;
+}
+
+.leftColumn,
+.rightColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.turmaContextCard {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.75rem;
+  border: 1px dashed rgba(67, 97, 238, 0.25);
+  border-radius: 16px;
+  padding: 0.85rem 1rem;
+  background: rgba(67, 97, 238, 0.05);
+}
+
+.turmaContextCard span {
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  color: var(--cor-subtexto);
+  letter-spacing: 0.08em;
+}
+
+.turmaContextCard strong {
+  display: block;
+  font-size: 1rem;
+}
+
+.textareaGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
 }
 
 .turmaGrid {
@@ -143,6 +276,7 @@
 .attendanceActions {
   display: flex;
   gap: 0.75rem;
+  flex-wrap: wrap;
 }
 
 .attendanceActions button,
@@ -159,7 +293,7 @@
   border: 1px solid var(--cor-borda);
   background: white;
   color: var(--cor-texto);
-  padding: 0.45rem 0.85rem;
+  padding: 0.55rem 1rem;
   border-radius: 999px;
   cursor: pointer;
   transition: background 0.2s, color 0.2s, border-color 0.2s;
@@ -225,6 +359,14 @@
   color: #ef476f;
 }
 
+.attendanceSection {
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.95), rgba(241, 245, 255, 0.9));
+  border-radius: 20px;
+  border: 1px solid var(--cor-borda);
+  box-shadow: 0 20px 45px rgba(15, 23, 42, 0.06);
+  padding: 1.5rem;
+}
+
 .attendanceHighlights {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
@@ -234,9 +376,10 @@
 
 .attendanceHighlights div {
   background: var(--cor-fundo);
-  border-radius: 12px;
-  border: 1px dashed var(--cor-borda);
-  padding: 0.75rem 1rem;
+  border-radius: 16px;
+  border: 1px solid rgba(67, 97, 238, 0.15);
+  padding: 0.85rem 1rem;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
 }
 
 .attendanceHighlights span {
@@ -246,6 +389,20 @@
 
 .attendanceHighlights strong {
   font-size: 1.3rem;
+}
+
+.attendanceProgress {
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(67, 97, 238, 0.15);
+  overflow: hidden;
+  margin-bottom: 1.25rem;
+}
+
+.attendanceProgress div {
+  height: 100%;
+  background: linear-gradient(90deg, #58ccff, #4361ee);
+  border-radius: inherit;
 }
 
 .helperText {
@@ -319,17 +476,42 @@
   color: var(--cor-primaria);
 }
 
-.selectedHabilidades ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
+.selectedGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
 }
 
-.selectedHabilidades li {
-  font-size: 0.95rem;
+.selectedCard {
+  border: 1px solid var(--cor-borda);
+  border-radius: 16px;
+  padding: 1rem;
+  background: var(--cor-fundo);
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.selectedCard header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.selectedCard header button {
+  border: none;
+  background: transparent;
+  color: var(--cor-perigo-dark);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  cursor: pointer;
+}
+
+.selectedCard p {
+  color: var(--cor-subtexto);
+  font-size: 0.9rem;
 }
 
 .actions {
@@ -381,6 +563,17 @@
   color: var(--cor-perigo-dark);
 }
 
+.tipBox {
+  display: flex;
+  gap: 0.6rem;
+  align-items: flex-start;
+  padding: 1rem 1.25rem;
+  border-radius: 14px;
+  background: rgba(67, 97, 238, 0.08);
+  color: var(--cor-primaria);
+  font-weight: 500;
+}
+
 .spinner {
   animation: spin 1s linear infinite;
 }
@@ -391,6 +584,16 @@
   }
   to {
     transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 1024px) {
+  .layoutGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .hero {
+    flex-direction: column;
   }
 }
 
@@ -407,5 +610,10 @@
   .attendanceActions {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .heroHighlights span {
+    width: 100%;
+    justify-content: center;
   }
 }
