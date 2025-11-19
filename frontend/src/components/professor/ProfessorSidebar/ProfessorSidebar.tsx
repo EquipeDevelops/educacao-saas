@@ -47,6 +47,7 @@ const navLinks = [
       { href: '/professor/correcoes', text: 'Correções', icon: <FiEdit /> },
       { href: '/professor/notas', text: 'Notas', icon: <FaFile /> },
       { href: '/professor/faltas', text: 'Lançar Faltas', icon: <FiUserX /> },
+      { href: '/professor/diario', text: 'Diário de Classe', icon: <FiFileText /> },
       {
         href: '/professor/desempenho',
         text: 'Desempenho',
