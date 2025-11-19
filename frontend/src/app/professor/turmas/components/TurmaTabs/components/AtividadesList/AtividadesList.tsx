@@ -243,7 +243,7 @@ export default function AtividadesList({ atividades }: AtividadesListProps) {
                   <div className={styles.status}>{textStatus(porcentagem)}</div>
                 </div>
                 <Link
-                  href={`professor/correcoes/${ativ.id}`}
+                  href={`/professor/correcoes/${ativ.id}`}
                   className={styles.buttonLink}
                 >
                   Ver Entregas

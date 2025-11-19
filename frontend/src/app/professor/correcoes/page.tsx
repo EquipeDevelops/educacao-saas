@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { api } from "@/services/api";
+import { useAuth } from "@/contexts/AuthContext";
 import styles from "./correcoes.module.css";
 import { FiFileText } from "react-icons/fi";
 
@@ -81,10 +82,14 @@ export default function CorrecoesPage() {
   const [activeTab, setActiveTab] = useState<"PENDENTE" | "CONCLUIDA">(
     "PENDENTE"
   );
+  const { loading: authLoading } = useAuth();
 
   useEffect(() => {
+    if (authLoading) return;
+
     async function fetchCorrecoes() {
       try {
+        setLoading(true);
         const response = await api.get("/professor/dashboard/correcoes");
         setAllCorrecoes(response.data);
       } catch (error) {
@@ -94,7 +99,7 @@ export default function CorrecoesPage() {
       }
     }
     fetchCorrecoes();
-  }, []);
+  }, [authLoading]);
 
   const filteredCorrecoes = allCorrecoes.filter((c) => c.status === activeTab);
 
@@ -122,7 +127,7 @@ export default function CorrecoesPage() {
         </button>
       </div>
 
-      {loading ? (
+      {loading || authLoading ? (
         <p>Carregando...</p>
       ) : (
         <div className={styles.grid}>

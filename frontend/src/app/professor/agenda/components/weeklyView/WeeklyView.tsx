@@ -1,4 +1,4 @@
-import styles from "../styles/agenda/WeeklyView.module.css";
+import styles from "./WeeklyView.module.css";
 
 const getWeekDays = (date: Date) => {
   const startOfWeek = new Date(date);

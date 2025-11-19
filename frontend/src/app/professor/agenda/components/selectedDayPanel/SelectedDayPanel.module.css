@@ -1,17 +1,23 @@
 .panel {
-  background-color: var(--cor-primaria-dark);
-  color: white;
-  padding: 1.5rem;
-  border-radius: 12px;
+  background-color: white;
+  padding: 20px;
+  border-radius: 15px;
   height: 100%;
   display: flex;
   flex-direction: column;
 }
-.panel h4 {
-  color: #a5b4fc;
-  font-size: 0.9rem;
-  font-weight: 500;
-  text-transform: uppercase;
+.panel h2 {
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.panel h2 span {
+  width: 5px;
+  height: 20px;
+  background-color: var(--cor-primaria);
+  border-radius: 5px;
 }
 .dateString {
   color: white;

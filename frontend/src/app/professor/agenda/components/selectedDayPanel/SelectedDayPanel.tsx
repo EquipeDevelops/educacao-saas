@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import styles from "./SelectedDayPanel.module.css";
+import styles from './SelectedDayPanel.module.css';
 import {
   FiCalendar,
   FiBook,
@@ -8,24 +8,24 @@ import {
   FiRefreshCw,
   FiUsers,
   FiAward,
-} from "react-icons/fi";
-import { CalendarEvent } from "@/app/professor/agenda/page";
+} from 'react-icons/fi';
+import { CalendarEvent } from '@/app/professor/agenda/page';
 
 type SelectedDayPanelProps = {
   selectedDate: Date;
   events: CalendarEvent[];
 };
 
-const getEventIcon = (type: CalendarEvent["type"]) => {
+const getEventIcon = (type: CalendarEvent['type']) => {
   switch (type) {
-    case "Aula":
+    case 'Aula':
       return { Icon: FiBook, className: styles.aula };
-    case "Prova":
-    case "Trabalho":
+    case 'Prova':
+    case 'Trabalho':
       return { Icon: FiClipboard, className: styles.prova };
-    case "Recuperação":
+    case 'Recuperação':
       return { Icon: FiRefreshCw, className: styles.recuperacao };
-    case "Reunião":
+    case 'Reunião':
       return { Icon: FiUsers, className: styles.reuniao };
     default:
       return { Icon: FiAward, className: styles.default };
@@ -38,17 +38,20 @@ export default function SelectedDayPanel({
 }: SelectedDayPanelProps) {
   return (
     <div className={styles.panel}>
-      <h4>Data Selecionada</h4>
-      <p className={styles.dateString}>
-        {selectedDate.toLocaleDateString("pt-BR", {
-          day: "2-digit",
-          month: "long",
-          year: "numeric",
-        })}
-      </p>
-      <p className={styles.dayOfWeek}>
-        {selectedDate.toLocaleDateString("pt-BR", { weekday: "long" })}
-      </p>
+      <h2>
+        <span></span>Data Selecionada
+      </h2>
+      <div>
+        <p>{selectedDate.toLocaleDateString('pt-BR').slice(0, 2)}</p>
+        <p>
+          {selectedDate.toLocaleDateString('pt-BR', {
+            weekday: 'long',
+            day: '2-digit',
+            month: 'long',
+            year: 'numeric',
+          })}
+        </p>
+      </div>
 
       <div className={styles.content}>
         {events.length === 0 ? (

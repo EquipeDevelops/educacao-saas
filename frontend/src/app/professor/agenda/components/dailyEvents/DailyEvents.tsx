@@ -1,6 +1,6 @@
-import styles from "../styles/agenda/DailyEvents.module.css";
-import { FiUsers } from "react-icons/fi";
-import WeeklyView from "./WeeklyView";
+import styles from './DailyEvents.module.css';
+import { FiUsers } from 'react-icons/fi';
+import WeeklyView from '../weeklyView/WeeklyView';
 
 const EventoCard = ({ evento }: { evento: any }) => (
   <div className={styles.eventoCard}>
@@ -25,13 +25,13 @@ const EventoCard = ({ evento }: { evento: any }) => (
 
 export default function DailyEvents({ selectedDate, events }: any) {
   const eventosDoDia = events.filter(
-    (e: any) => new Date(e.date).toDateString() === selectedDate.toDateString()
+    (e: any) => new Date(e.date).toDateString() === selectedDate.toDateString(),
   );
 
   return (
     <div>
       <div className={styles.header}>
-        <h2>Eventos de {selectedDate.toLocaleDateString("pt-BR")}</h2>
+        <h2>Eventos de {selectedDate.toLocaleDateString('pt-BR')}</h2>
         <span className={styles.badge}>{eventosDoDia.length} eventos</span>
       </div>
       <div className={styles.list}>

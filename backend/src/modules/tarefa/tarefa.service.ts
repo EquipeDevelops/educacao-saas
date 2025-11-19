@@ -530,10 +530,13 @@ async function gradeTrabalhoAluno(
     });
   }
 
+  const unidadeEscolarContext =
+    tarefa.unidadeEscolarId ?? user.unidadeEscolarId;
+
   return gradeSubmissao(
     submissao.id,
     { nota_total: corpo.nota, feedback: corpo.feedback },
-    user
+    { ...user, unidadeEscolarId: unidadeEscolarContext }
   );
 }
 

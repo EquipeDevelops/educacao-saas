@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { api } from "@/services/api";
+import { useAuth } from "@/contexts/AuthContext";
 import styles from "./entregas.module.css";
 import {
   FiArrowLeft,
@@ -100,6 +101,7 @@ export default function EntregasPage() {
   const [notaInput, setNotaInput] = useState("");
   const [feedbackInput, setFeedbackInput] = useState("");
   const [salvandoNota, setSalvandoNota] = useState(false);
+  const { loading: authLoading } = useAuth();
 
   const isTrabalho = tarefa?.tipo === "TRABALHO";
   const pontosMaximos = tarefa?.pontos ?? MAX_DEFAULT_POINTS;
@@ -113,7 +115,7 @@ export default function EntregasPage() {
   }, [tarefaId]);
 
   useEffect(() => {
-    if (!tarefaId) return;
+    if (!tarefaId || authLoading) return;
     let ativo = true;
 
     async function carregarDados() {
@@ -148,7 +150,7 @@ export default function EntregasPage() {
     return () => {
       ativo = false;
     };
-  }, [tarefaId, fetchTrabalhoResumo]);
+  }, [tarefaId, fetchTrabalhoResumo, authLoading]);
 
   const pendentes = submissoes.filter(
     (s) => s.status === "ENVIADA" || s.status === "ENVIADA_COM_ATRASO",
@@ -218,7 +220,7 @@ export default function EntregasPage() {
 
       {error && <div className={styles.errorBanner}>{error}</div>}
 
-      {loading ? (
+      {loading || authLoading ? (
         <p>Carregando...</p>
       ) : (
         tarefa && (
