@@ -21,6 +21,15 @@
   color: var(--cor-subtexto);
 }
 
+.errorBanner {
+  background-color: var(--cor-aviso-light);
+  border: 1px solid var(--cor-aviso-dark);
+  color: var(--cor-aviso-dark);
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+}
+
 .statsGrid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -141,4 +150,161 @@
 }
 .verButton:hover {
   background-color: #f0f0f0;
+}
+
+.trabalhoCard {
+  background-color: var(--cor-fundo-card);
+  border-radius: 8px;
+  border: 1px solid var(--cor-borda);
+  padding: 1.5rem;
+}
+
+.trabalhoHeader {
+  margin-bottom: 1rem;
+}
+
+.trabalhoHeader p {
+  margin-top: 0.3rem;
+  color: var(--cor-subtexto);
+}
+
+.tableWrapper {
+  overflow-x: auto;
+}
+
+.trabalhoTable {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.trabalhoTable th,
+.trabalhoTable td {
+  padding: 0.9rem 0.6rem;
+  border-bottom: 1px solid var(--cor-borda);
+  text-align: left;
+}
+
+.notaCell {
+  font-weight: 600;
+}
+
+.statusPill {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.statusConcluido {
+  background-color: var(--cor-sucesso-light);
+  color: var(--cor-sucesso-dark);
+}
+
+.statusPendente {
+  background-color: var(--cor-aviso-light);
+  color: var(--cor-aviso-dark);
+}
+
+.tableActions {
+  text-align: right;
+}
+
+.avaliarButton {
+  background-color: var(--cor-primaria);
+  color: #fff;
+  padding: 0.45rem 1rem;
+  border-radius: 6px;
+  font-weight: 600;
+  border: none;
+}
+
+.avaliarButton,
+.primaryButton,
+.secondaryButton,
+.corrigirButton,
+.verButton {
+  cursor: pointer;
+}
+
+.primaryButton {
+  border: none;
+}
+
+
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 20;
+}
+
+.modalContent {
+  background-color: #fff;
+  border-radius: 10px;
+  padding: 1.5rem;
+  width: min(420px, 90%);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
+}
+
+.modalField {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-bottom: 1rem;
+  font-weight: 500;
+}
+
+.modalField input,
+.modalField textarea {
+  border: 1px solid var(--cor-borda);
+  border-radius: 8px;
+  padding: 0.6rem 0.75rem;
+  font-size: 1rem;
+}
+
+.modalField textarea {
+  min-height: 90px;
+  resize: vertical;
+}
+
+.modalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+.primaryButton,
+.secondaryButton {
+  padding: 0.55rem 1.2rem;
+  border-radius: 6px;
+  font-weight: 600;
+}
+
+.primaryButton {
+  background-color: var(--cor-primaria);
+  color: #fff;
+}
+
+.secondaryButton {
+  border: 1px solid var(--cor-borda);
+  color: var(--cor-texto);
+}
+
+@media (max-width: 768px) {
+  .statsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .tableActions {
+    text-align: left;
+  }
+
+  .modalContent {
+    width: 95%;
+  }
 }

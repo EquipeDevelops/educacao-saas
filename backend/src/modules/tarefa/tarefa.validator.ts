@@ -93,7 +93,37 @@ export const findAllTarefasSchema = z.object({
 export const deleteTarefaSchema = z.object({
   params: paramsSchema,
 });
+
+export const trabalhoCorrecaoParamsSchema = z.object({
+  params: paramsSchema,
+});
+
+export const trabalhoManualGradeSchema = z.object({
+  params: paramsSchema,
+  body: z.object({
+    alunoId: z
+      .string({ required_error: "O aluno � obrigat�rio." })
+      .min(24, "ID deve ter 24 caracteres")
+      .max(24, "ID deve ter 24 caracteres")
+      .regex(/^[0-9a-fA-F]{24}$/, "Formato de ObjectId inv�lido"),
+    nota: z
+      .number({
+        required_error: "A nota � obrigat�ria.",
+        invalid_type_error: "A nota precisa ser um n�mero.",
+      })
+      .min(0, "A nota n�o pode ser negativa."),
+    feedback: z
+      .string()
+      .trim()
+      .max(500, "O feedback deve ter no m�ximo 500 caracteres.")
+      .optional(),
+  }),
+});
+
 export type CreateTarefaInput = z.infer<typeof createTarefaSchema>["body"];
 export type UpdateTarefaInput = z.infer<typeof updateTarefaSchema>;
 export type PublishTarefaInput = z.infer<typeof publishTarefaSchema>;
 export type FindAllTarefasInput = z.infer<typeof findAllTarefasSchema>["query"];
+export type TrabalhoManualGradeInput = z.infer<
+  typeof trabalhoManualGradeSchema
+>["body"];

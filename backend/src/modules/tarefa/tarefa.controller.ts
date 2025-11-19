@@ -6,6 +6,7 @@ import {
   FindAllTarefasInput,
   UpdateTarefaInput,
   PublishTarefaInput,
+  TrabalhoManualGradeInput,
 } from "./tarefa.validator";
 
 export const tarefaController = {
@@ -123,6 +124,78 @@ export const tarefaController = {
 
       return res.status(500).json({
         message: error.message || "Erro ao anexar arquivos ao trabalho.",
+      });
+    }
+  },
+
+  getTrabalhoCorrecaoResumo: async (
+    req: AuthenticatedRequest,
+    res: Response
+  ) => {
+    try {
+      const { id } = req.params;
+      const data = await tarefaService.getTrabalhoCorrecaoResumo(
+        id,
+        req.user
+      );
+      return res.status(200).json(data);
+    } catch (error: any) {
+      console.error(
+        "[TRABALHO_CORRECAO] Falha ao carregar resumo:",
+        error
+      );
+      if ((error as any).code === "FORBIDDEN") {
+        return res.status(403).json({ message: error.message });
+      }
+      if ((error as any).code === "NOT_FOUND") {
+        return res.status(404).json({ message: error.message });
+      }
+      if ((error as any).code === "INVALID_TIPO") {
+        return res.status(400).json({ message: error.message });
+      }
+      return res.status(500).json({
+        message: "Erro ao carregar os alunos do trabalho.",
+      });
+    }
+  },
+
+  gradeTrabalhoAluno: async (
+    req: AuthenticatedRequest,
+    res: Response
+  ) => {
+    try {
+      const { id } = req.params;
+      const tarefa = await tarefaService.gradeTrabalhoAluno(
+        id,
+        req.body as TrabalhoManualGradeInput,
+        req.user
+      );
+      return res.status(200).json(tarefa);
+    } catch (error: any) {
+      console.error(
+        "[TRABALHO_CORRECAO] Erro ao registrar nota manual:",
+        error
+      );
+      if ((error as any).code === "FORBIDDEN") {
+        return res.status(403).json({ message: error.message });
+      }
+      if ((error as any).code === "NOT_FOUND") {
+        return res.status(404).json({ message: error.message });
+      }
+      if ((error as any).code === "INVALID_TIPO") {
+        return res.status(400).json({ message: error.message });
+      }
+      if ((error as any).code === "INVALID_NOTE_RANGE") {
+        return res.status(400).json({ message: error.message });
+      }
+      if ((error as any).code === "MATRICULA_NOT_FOUND") {
+        return res.status(404).json({ message: error.message });
+      }
+      if ((error as any).code === "NO_ACTIVE_BIMESTRE") {
+        return res.status(400).json({ message: error.message });
+      }
+      return res.status(500).json({
+        message: "Erro ao registrar a nota do trabalho.",
       });
     }
   },

@@ -372,14 +372,18 @@ async function getCorrecoesDashboard(user: AuthenticatedRequest['user']) {
   const tarefas = await prisma.tarefas.findMany({
     where: {
       componenteCurricular: { professorId },
-      submissoes: { some: {} },
+      OR: [{ submissoes: { some: {} } }, { tipo: 'TRABALHO' }],
     },
     select: {
       id: true,
       titulo: true,
       data_entrega: true,
+      tipo: true,
       componenteCurricular: {
-        select: { turma: { select: { nome: true, serie: true } } },
+        select: {
+          turmaId: true,
+          turma: { select: { nome: true, serie: true } },
+        },
       },
     },
   });
@@ -389,6 +393,9 @@ async function getCorrecoesDashboard(user: AuthenticatedRequest['user']) {
   }
 
   const tarefaIds = tarefas.map((t) => t.id);
+  const turmaIds = [
+    ...new Set(tarefas.map((t) => t.componenteCurricular.turmaId)),
+  ];
 
   const submissionStats = await prisma.submissoes.groupBy({
     by: ['tarefaId', 'status'],
@@ -400,28 +407,73 @@ async function getCorrecoesDashboard(user: AuthenticatedRequest['user']) {
     },
   });
 
-  const statsMap = new Map();
+  const statsMap = new Map<
+    string,
+    {
+      entregas: number;
+      corrigidas: number;
+    }
+  >();
   for (const stat of submissionStats) {
     if (!statsMap.has(stat.tarefaId)) {
       statsMap.set(stat.tarefaId, { entregas: 0, corrigidas: 0 });
     }
-    const current = statsMap.get(stat.tarefaId);
+    const current = statsMap.get(stat.tarefaId)!;
     current.entregas += stat._count.id;
     if (stat.status === 'AVALIADA') {
       current.corrigidas += stat._count.id;
     }
   }
 
+  const avaliacaoRegistros =
+    tarefaIds.length > 0
+      ? await prisma.avaliacaoParcial.findMany({
+          where: { tarefaId: { in: tarefaIds } },
+          select: { tarefaId: true },
+        })
+      : [];
+  const avaliacaoMap = new Map<string, number>();
+  for (const registro of avaliacaoRegistros) {
+    if (!registro.tarefaId) continue;
+    const atual = avaliacaoMap.get(registro.tarefaId) ?? 0;
+    avaliacaoMap.set(registro.tarefaId, atual + 1);
+  }
+
+  const matriculaRegistros =
+    turmaIds.length > 0
+      ? await prisma.matriculas.findMany({
+          where: { turmaId: { in: turmaIds }, status: 'ATIVA' },
+          select: { turmaId: true },
+        })
+      : [];
+  const matriculaMap = new Map<string, number>();
+  for (const registro of matriculaRegistros) {
+    if (!registro.turmaId) continue;
+    const atual = matriculaMap.get(registro.turmaId) ?? 0;
+    matriculaMap.set(registro.turmaId, atual + 1);
+  }
+
   const correcoesComStats = tarefas.map((tarefa) => {
     const stats = statsMap.get(tarefa.id) || { entregas: 0, corrigidas: 0 };
-    const pendentes = stats.entregas - stats.corrigidas;
+    let entregas = stats.entregas;
+    let corrigidas = stats.corrigidas;
+
+    if (tarefa.tipo === 'TRABALHO') {
+      const totalMatriculas =
+        matriculaMap.get(tarefa.componenteCurricular.turmaId) ?? 0;
+      const avaliados = avaliacaoMap.get(tarefa.id) ?? 0;
+      entregas = Math.max(entregas, totalMatriculas);
+      corrigidas = Math.max(corrigidas, avaliados);
+    }
+
+    const pendentes = Math.max(entregas - corrigidas, 0);
     return {
       id: tarefa.id,
       titulo: tarefa.titulo,
       turma: `${tarefa.componenteCurricular.turma.serie} ${tarefa.componenteCurricular.turma.nome}`,
-      entregas: stats.entregas,
-      corrigidas: stats.corrigidas,
-      pendentes: pendentes,
+      entregas,
+      corrigidas,
+      pendentes,
       prazo: tarefa.data_entrega,
       status:
         pendentes > 0

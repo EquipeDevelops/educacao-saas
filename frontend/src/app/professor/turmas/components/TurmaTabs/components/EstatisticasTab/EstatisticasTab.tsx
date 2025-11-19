@@ -1,5 +1,7 @@
-import styles from "./style.module.css";
-import { FiUsers, FiBarChart2, FiClipboard } from "react-icons/fi";
+import BarraDeProgresso from '@/components/progressBar/BarraDeProgresso';
+import styles from './style.module.css';
+import { FiUsers, FiBarChart2, FiClipboard } from 'react-icons/fi';
+import { LuChartColumn, LuClipboardCheck, LuUsers } from 'react-icons/lu';
 
 type Estatisticas = {
   totalAlunos: number;
@@ -43,7 +45,7 @@ const DistribuitionBar = ({
   count: number;
   percent: number;
 }) => {
-  let colorClass = "";
+  let colorClass = '';
   const firstDigit = parseFloat(range);
   if (firstDigit >= 9) colorClass = styles.barGreen;
   else if (firstDigit >= 7) colorClass = styles.barBlue;
@@ -52,16 +54,15 @@ const DistribuitionBar = ({
 
   return (
     <div className={styles.barRow}>
-      <span className={styles.barLabel}>{range}</span>
-      <div className={styles.barContainer}>
-        <div
-          className={`${styles.bar} ${colorClass}`}
-          style={{ width: `${percent}%` }}
-        ></div>
+      <div className={styles.infoContainer}>
+        <p>{range}</p>
+        <p>
+          <span>{count}</span> Alunos ({percent}%)
+        </p>
       </div>
-      <span className={styles.barValue}>
-        {count} alunos ({percent}%)
-      </span>
+      <div className={styles.barContainer}>
+        <BarraDeProgresso className={colorClass} porcentagem={percent} />
+      </div>
     </div>
   );
 };
@@ -71,27 +72,27 @@ export default function EstatisticasTab({ stats }: EstatisticasTabProps) {
     <div className={styles.container}>
       <div className={styles.statsGrid}>
         <Stat
-          icon={<FiUsers />}
+          icon={<LuUsers />}
           value={stats.totalAlunos}
           label="Total de Alunos"
         />
         <Stat
-          icon={<FiBarChart2 />}
+          icon={<LuChartColumn />}
           value={stats.mediaGeral.toFixed(1)}
           label="Média Geral"
         />
         <Stat
-          icon={<FiClipboard />}
+          icon={<LuClipboardCheck />}
           value={stats.atividades}
           label="Atividades"
         />
       </div>
 
       <div className={styles.distribuicao}>
-        <h3 className={styles.distTitle}>Distribuição de Notas</h3>
+        <h2 className={styles.distTitle}><span></span>Distribuição de Notas</h2>
         <div className={styles.distChart}>
           {stats.distribuicao.map((item) => (
-            <DistribuitionBar key={item.range} {...item} />
+            <DistribuitionBar key={item.range} count={item.alunos} percent={item.percent} range={item.range} />
           ))}
         </div>
       </div>
