@@ -22,6 +22,10 @@ export async function create(
 ) {
   const { unidadeEscolarId } = user;
 
+  if (!unidadeEscolarId) {
+    throw new Error("Usuário não vinculado a uma unidade escolar.");
+  }
+
   const [aluno, turma] = await Promise.all([
     prisma.usuarios_aluno.findFirst({
       where: { id: data.alunoId, usuario: { unidadeEscolarId } },
@@ -30,7 +34,7 @@ export async function create(
   ]);
 
   if (!aluno || !turma) {
-    throw new Error("Aluno ou turma nao encontrada na sua unidade escolar.");
+    throw new Error("Aluno ou turma não encontrada na sua unidade escolar.");
   }
 
   const matriculaExistente = await prisma.matriculas.findFirst({
@@ -43,7 +47,7 @@ export async function create(
 
   if (matriculaExistente) {
     throw new Error(
-      "Este aluno ja possui uma matricula ativa para este ano letivo."
+      "Este aluno já possui uma matrícula ativa para este ano letivo."
     );
   }
 
@@ -60,31 +64,57 @@ export async function findAll(
   user: AuthenticatedRequest["user"],
   filters: FindAllMatriculasInput
 ) {
-  const where: Prisma.MatriculasWhereInput = {
-    turma: { unidadeEscolarId: user.unidadeEscolarId },
-  };
+  console.log("\n--- [MATRICULA SERVICE] Iniciando busca de matrículas ---");
+  console.log("USUÁRIO:", {
+    id: user.id,
+    papel: user.papel,
+    unidadeEscolarId: user.unidadeEscolarId,
+    perfilId: user.perfilId,
+  });
+  console.log("FILTROS RECEBIDOS:", filters);
+
+  const where: Prisma.MatriculasWhereInput = {};
+
+  if (user.papel === "GESTOR" || user.papel === "ADMINISTRADOR") {
+    if (user.unidadeEscolarId) {
+      console.log(
+        `[LOGIC] Aplicando filtro de escola para Gestor/Admin: ${user.unidadeEscolarId}`
+      );
+      where.turma = { unidadeEscolarId: user.unidadeEscolarId };
+    } else {
+      console.warn(
+        "[WARN] Gestor/Admin sem unidadeEscolarId. Buscando sem restrição de escola."
+      );
+    }
+  }
 
   let turmaIdFilter = filters.turmaId;
   let professorValidadoPeloComponente = false;
 
   if (filters.componenteCurricularId) {
+    console.log(
+      `[LOGIC] Validando acesso via Componente: ${filters.componenteCurricularId}`
+    );
     const componente = await prisma.componenteCurricular.findFirst({
       where: {
         id: filters.componenteCurricularId,
-        turma: { unidadeEscolarId: user.unidadeEscolarId },
-        ...(user.papel === "PROFESSOR"
-          ? { professorId: user.perfilId! }
-          : {}),
+        ...(user.papel === "PROFESSOR" ? { professorId: user.perfilId! } : {}),
       },
-      select: { turmaId: true },
+      select: { turmaId: true, professorId: true },
     });
 
     if (!componente) {
+      console.error(
+        "[ERROR] Componente não encontrado ou professor sem permissão."
+      );
       throw new Error(
-        "Voce nao tem permissao para visualizar os alunos deste componente curricular."
+        "Você não tem permissão para visualizar os alunos deste componente curricular."
       );
     }
 
+    console.log(
+      `[SUCCESS] Componente validado. Turma associada: ${componente.turmaId}`
+    );
     turmaIdFilter = componente.turmaId;
     professorValidadoPeloComponente = user.papel === "PROFESSOR";
   }
@@ -94,8 +124,13 @@ export async function findAll(
   }
 
   if (user.papel === "PROFESSOR") {
+    console.log("[LOGIC] Aplicando regras de PROFESSOR");
+
     if (turmaIdFilter) {
       if (!professorValidadoPeloComponente) {
+        console.log(
+          `[CHECK] Verificando se professor ${user.perfilId} tem acesso à turma ${turmaIdFilter}`
+        );
         const temAcesso = await prisma.componenteCurricular.findFirst({
           where: {
             professorId: user.perfilId!,
@@ -104,14 +139,15 @@ export async function findAll(
         });
 
         if (!temAcesso) {
+          console.error("[ERROR] Professor não leciona nesta turma.");
           throw new Error(
-            "Voce nao tem permissao para ver os alunos desta turma."
+            "Você não tem permissão para ver os alunos desta turma."
           );
         }
       }
-
       where.turmaId = turmaIdFilter;
     } else {
+      console.log("[LOGIC] Buscando todas as turmas do professor.");
       const componentesDoProfessor = await prisma.componenteCurricular.findMany(
         {
           where: { professorId: user.perfilId! },
@@ -127,16 +163,19 @@ export async function findAll(
         ),
       ];
 
+      console.log(`[INFO] Professor possui acesso às turmas: ${turmasIds}`);
+
       if (turmasIds.length === 0) {
+        console.warn("[WARN] Professor não possui nenhuma turma vinculada.");
         return [];
       }
 
       where.turmaId = { in: turmasIds };
     }
-  }
-
-  if (turmaIdFilter) {
-    where.turmaId = turmaIdFilter;
+  } else {
+    if (turmaIdFilter) {
+      where.turmaId = turmaIdFilter;
+    }
   }
 
   if (filters.ano_letivo) {
@@ -147,18 +186,35 @@ export async function findAll(
     where.status = filters.status;
   }
 
-  return prisma.matriculas.findMany({
+  console.log("CLAUSULA WHERE FINAL:", JSON.stringify(where, null, 2));
+
+  const result = await prisma.matriculas.findMany({
     where,
     include: fullInclude,
+    orderBy: {
+      aluno: {
+        usuario: {
+          nome: "asc",
+        },
+      },
+    },
   });
+
+  console.log(
+    `--- [MATRICULA SERVICE] Encontradas ${result.length} matrículas ---\n`
+  );
+  return result;
 }
 
 export async function findById(id: string, user: AuthenticatedRequest["user"]) {
+  const where: Prisma.MatriculasWhereInput = { id };
+
+  if (user.unidadeEscolarId && user.papel !== "PROFESSOR") {
+    where.turma = { unidadeEscolarId: user.unidadeEscolarId };
+  }
+
   return prisma.matriculas.findFirst({
-    where: {
-      id,
-      turma: { unidadeEscolarId: user.unidadeEscolarId },
-    },
+    where,
     include: fullInclude,
   });
 }
@@ -170,7 +226,7 @@ export async function updateStatus(
 ) {
   const matricula = await findById(id, user);
   if (!matricula) {
-    const error = new Error("Matricula nao encontrada.");
+    const error = new Error("Matrícula não encontrada.");
     (error as any).code = "P2025";
     throw error;
   }
@@ -185,7 +241,7 @@ export async function updateStatus(
 export async function remove(id: string, user: AuthenticatedRequest["user"]) {
   const matricula = await findById(id, user);
   if (!matricula) {
-    const error = new Error("Matricula nao encontrada.");
+    const error = new Error("Matrícula não encontrada.");
     (error as any).code = "P2025";
     throw error;
   }
