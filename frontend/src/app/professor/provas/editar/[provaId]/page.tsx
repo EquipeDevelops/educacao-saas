@@ -116,7 +116,7 @@ export default function EditarProvaPage() {
 
   const handleUpdateProva = async (publicar: boolean) => {
     if (!titulo || !dataEntrega) {
-      alert('Titulo e data de entrega sao obrigatorios.');
+      alert('Titulo e data de entrega são obrigatorios.');
       return;
     }
 

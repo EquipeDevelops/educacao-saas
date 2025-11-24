@@ -4,15 +4,6 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { api } from '@/services/api';
 import styles from './nova-prova.module.css';
-import {
-  FiInfo,
-  FiSave,
-  FiSend,
-  FiX,
-  FiCpu,
-  FiEye,
-  FiCalendar,
-} from 'react-icons/fi';
 import QuestoesBuilder, {
   validateQuestoes,
 } from '@/components/professor/criarQuestoes/QuestoesBuilder';
@@ -27,10 +18,8 @@ import {
   LuSave,
   LuSend,
   LuStar,
-  LuStarHalf,
   LuX,
 } from 'react-icons/lu';
-import { LucideStars } from 'lucide-react';
 import Loading from '@/components/loading/Loading';
 
 type Bimestre = {
@@ -283,8 +272,7 @@ export default function NovaProvaPage() {
               </span>
               <p className={styles.bannerHint}>
                 <LuCircleAlert />
-                Ao corrigir esta prova, as notas serão registradas
-                automaticamente neste bimestre.
+                Ao corrigir esta prova, as notas ficaram visíveis para atribuição da nota no bimestre.
               </p>
             </div>
           ) : (

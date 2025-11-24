@@ -19,6 +19,8 @@ export default function ProfessorHomePage() {
   const { user } = useAuth();
   const { data, isLoading, error } = useProfessorDashboard();
 
+  console.log(isLoading);
+  
   if (isLoading) {
     return <Loading />;
   }

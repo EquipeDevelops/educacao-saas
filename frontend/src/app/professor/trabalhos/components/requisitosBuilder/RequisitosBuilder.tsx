@@ -1,6 +1,6 @@
-import { useState } from "react";
-import styles from "./RequisitosBuilder.module.css";
-import { FiPlus, FiTrash2, FiUsers, FiClipboard } from "react-icons/fi";
+import { useState } from 'react';
+import styles from './RequisitosBuilder.module.css';
+import { FiPlus, FiTrash2, FiUsers, FiClipboard } from 'react-icons/fi';
 
 type Props = {
   requisitos: string[];
@@ -8,19 +8,19 @@ type Props = {
 };
 
 const SUGESTOES = [
-  "Trabalho em grupo (até 4 pessoas)",
-  "Normas ABNT",
-  "Apresentação em slides",
-  "Entregar em formato PDF",
-  "Incluir bibliografia",
-  "Mínimo de 5 páginas",
+  'Trabalho em grupo (até 4 pessoas)',
+  'Normas ABNT',
+  'Apresentação em slides',
+  'Entregar em formato PDF',
+  'Incluir bibliografia',
+  'Mínimo de 5 páginas',
 ];
 
 export default function RequisitosBuilder({
   requisitos,
   setRequisitos,
 }: Props) {
-  const [novoRequisito, setNovoRequisito] = useState("");
+  const [novoRequisito, setNovoRequisito] = useState('');
 
   const handleAddRequisito = (requisito: string) => {
     if (requisito && !requisitos.includes(requisito)) {
@@ -34,17 +34,24 @@ export default function RequisitosBuilder({
     setRequisitos(novosRequisitos);
   };
 
+  const requisitoSelecionado = (requisito: string) => {
+    if (SUGESTOES.includes(requisito)) {
+      return true;
+    }
+    return false;
+  };
+
   const handleCustomRequisito = () => {
     if (novoRequisito) {
       handleAddRequisito(novoRequisito);
-      setNovoRequisito("");
+      setNovoRequisito('');
     }
   };
 
   return (
     <section className={styles.card}>
       <h2 className={styles.cardTitle}>
-        <FiUsers /> Requisitos do Trabalho
+        <span></span>Requisitos do Trabalho
       </h2>
       <div className={styles.sugestoesContainer}>
         <p>Sugestões:</p>
@@ -54,7 +61,9 @@ export default function RequisitosBuilder({
               key={sugestao}
               type="button"
               onClick={() => handleAddRequisito(sugestao)}
-              className={styles.badge}
+              className={`${styles.badge} ${
+                requisitos.includes(sugestao) ? styles.selectBage : ''
+              }`}
             >
               <FiPlus /> {sugestao}
             </button>
