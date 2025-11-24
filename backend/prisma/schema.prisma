@@ -19,6 +19,12 @@ enum TipoTransacao {
   DESPESA
 }
 
+enum EtapaEnsino {
+  INFANTIL
+  FUNDAMENTAL
+  MEDIO
+}
+
 enum PeriodoAvaliacao {
   PRIMEIRO_BIMESTRE
   SEGUNDO_BIMESTRE
@@ -199,6 +205,11 @@ model Turmas {
   nome                     String
   serie                    String
   turno                    Turno
+  
+
+  etapa                    EtapaEnsino?           
+  anoLetivo                Int?                  
+
   unidade_escolar          Unidades_Escolares     @relation(fields: [unidadeEscolarId], references: [id])
   unidadeEscolarId         String                 @db.ObjectId
   componentes_curriculares ComponenteCurricular[]
@@ -209,7 +220,6 @@ model Turmas {
   @@map("turmas")
   @@index([unidadeEscolarId])
 }
-
 model Materias {
   id                       String                 @id @default(auto()) @map("_id") @db.ObjectId
   nome                     String

@@ -13,7 +13,7 @@ import { superAdminRoutes } from "../modules/superadmin/superadmin.routes";
 import { componenteCurricularRoutes } from "../modules/componenteCurricular/componenteCurricular.routes";
 import horarioRoutes from "../modules/horarioAula/horarioAula.routes";
 import { conquistasPorUnidadeRoutes } from "../modules/conquistasPorUnidade/conquistasPorUnidade.routes";
-
+import { bnccRoutes } from "../modules/bncc/bncc.routes";
 import { matriculaRoutes } from "../modules/matricula/matricula.routes";
 import { tarefaRoutes } from "../modules/tarefa/tarefa.routes";
 import { questaoRoutes } from "../modules/questao/questao.routes";
@@ -27,6 +27,7 @@ import { gestorDashboardRoutes } from "../modules/gestorDashboard/gestorDashboar
 import { relatoriosRoutes } from "../modules/relatorios/relatorios.routes";
 import { financeiroRoutes } from "../modules/financeiro/financeiro.routes";
 import { conquistaRoutes } from "../modules/conquista/conquista.routes";
+import { diarioRoutes } from "../modules/diario/diario.routes";
 import { conquistaUsuarioRoutes } from "../modules/conquistaUsuario/conquistaUsuario.routes";
 import { comentarioRoutes } from "../modules/comentarioTarefa/comentarioTarefa.routes";
 import { conversaRoutes } from "../modules/conversa/conversa.routes";
@@ -69,7 +70,8 @@ protectedRouter.use("/conversas", conversaRoutes);
 protectedRouter.use("/eventos", eventoRoutes);
 protectedRouter.use("/gerador-prova-ia", geradorProvaIARoutes);
 protectedRouter.use("/bimestres", bimestreRoutes);
-
+protectedRouter.use("/bncc", bnccRoutes);
+protectedRouter.use("/diarios", diarioRoutes);
 protectedRouter.use("/professor/dashboard", professorDashboardRoutes);
 protectedRouter.use("/aluno/dashboard", alunoDashboardRoutes);
 protectedRouter.use("/responsavel/dashboard", responsavelDashboardRoutes);

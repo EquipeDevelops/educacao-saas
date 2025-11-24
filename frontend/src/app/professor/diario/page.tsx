@@ -13,9 +13,14 @@ import {
   FiCheck,
   FiX,
   FiSearch,
+  FiFilter,
 } from "react-icons/fi";
 
-const BNCC_BASE_URL = "https://cientificar1992.pythonanywhere.com";
+interface ExtendedTurma extends TurmaDashboardInfo {
+  etapa?: "INFANTIL" | "FUNDAMENTAL" | "MEDIO" | null;
+  anoLetivo?: number;
+  serie?: string;
+}
 
 type BnccStage = "infantil" | "fundamental" | "medio";
 
@@ -101,23 +106,36 @@ const normalize = (str: string) =>
     .toLowerCase()
     .trim();
 
-function inferAnoSlug(nomeTurma: string, stage: BnccStage): string {
-  const nome = nomeTurma.toLowerCase();
+function inferAnoSlug(
+  textoSerie: string,
+  textoNome: string,
+  stage: BnccStage
+): string {
+  const textoCompleto = `${textoSerie} ${textoNome}`.toLowerCase();
 
   if (stage === "infantil") {
-    if (nome.includes("bebê") || nome.includes("bebe")) return "bebes";
+    if (textoCompleto.includes("bebê") || textoCompleto.includes("bebe"))
+      return "bebes";
     if (
-      nome.includes("pré") ||
-      nome.includes("4 anos") ||
-      nome.includes("5 anos")
+      textoCompleto.includes("pré") ||
+      textoCompleto.includes("4 anos") ||
+      textoCompleto.includes("5 anos")
     )
       return "pequenas";
     return "bem_pequenas";
   }
 
-  const match = nome.match(/(\d+)/);
-  if (!match) return "primeiro";
-  const num = parseInt(match[1]);
+  const match = textoCompleto.match(/(\d+)/);
+  const num = match ? parseInt(match[1]) : null;
+
+  if (stage === "medio") {
+    const mapMedio: Record<number, string> = {
+      1: "primeiro",
+      2: "segundo",
+      3: "terceiro",
+    };
+    return num && mapMedio[num] ? mapMedio[num] : "primeiro";
+  }
 
   const mapNum: Record<number, string> = {
     1: "primeiro",
@@ -130,7 +148,7 @@ function inferAnoSlug(nomeTurma: string, stage: BnccStage): string {
     8: "oitavo",
     9: "nono",
   };
-  return mapNum[num] || "primeiro";
+  return num && mapNum[num] ? mapNum[num] : "primeiro";
 }
 
 function inferDisciplinaSlug(materiaNome: string, stage: BnccStage): string {
@@ -140,25 +158,30 @@ function inferDisciplinaSlug(materiaNome: string, stage: BnccStage): string {
 
   if (stage === "medio") {
     if (norm.includes("matematica")) return "matematica_medio";
-    if (norm.includes("portugues")) return "lingua_portuguesa_medio";
-    if (norm.includes("computacao")) return "computacao_medio";
+    if (norm.includes("portugues") || norm.includes("gramatica"))
+      return "lingua_portuguesa_medio";
+    if (norm.includes("computacao") || norm.includes("informatica"))
+      return "computacao_medio";
     if (
       norm.includes("fisica") ||
       norm.includes("quimica") ||
-      norm.includes("biologia")
+      norm.includes("biologia") ||
+      norm.includes("ciencias")
     )
       return "ciencias_natureza";
     if (
       norm.includes("historia") ||
       norm.includes("geografia") ||
-      norm.includes("sociologia")
+      norm.includes("sociologia") ||
+      norm.includes("filosofia")
     )
       return "ciencias_humanas";
     return "linguagens";
   }
 
   if (norm.includes("matematica")) return "matematica";
-  if (norm.includes("portugues")) return "lingua_portuguesa";
+  if (norm.includes("portugues") || norm.includes("redacao"))
+    return "lingua_portuguesa";
   if (norm.includes("ciencias")) return "ciencias";
   if (norm.includes("historia")) return "historia";
   if (norm.includes("geografia")) return "geografia";
@@ -166,7 +189,8 @@ function inferDisciplinaSlug(materiaNome: string, stage: BnccStage): string {
   if (norm.includes("arte")) return "arte";
   if (norm.includes("religioso")) return "ensino_religioso";
   if (norm.includes("computacao")) return "computacao";
-  if (norm.includes("fisica")) return "educacao_fisica";
+  if (norm.includes("fisica")) return "ciencias";
+  if (norm.includes("educacao fisica")) return "educacao_fisica";
 
   return "matematica";
 }
@@ -186,7 +210,7 @@ export default function DiarioWizardPage() {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [turmas, setTurmas] = useState<TurmaDashboardInfo[]>([]);
+  const [turmas, setTurmas] = useState<ExtendedTurma[]>([]);
   const [alunos, setAlunos] = useState<AlunoMatriculado[]>([]);
   const [bnccSkills, setBnccSkills] = useState<BnccHabilidade[]>([]);
 
@@ -201,10 +225,11 @@ export default function DiarioWizardPage() {
   const [bnccStage, setBnccStage] = useState<BnccStage>("fundamental");
   const [bnccDisciplina, setBnccDisciplina] = useState("matematica");
   const [bnccAno, setBnccAno] = useState("sexto");
+
   const [selectedSkills, setSelectedSkills] = useState<BnccHabilidade[]>([]);
   const [skillSearch, setSkillSearch] = useState("");
   const [bnccLoading, setBnccLoading] = useState(false);
-
+  const [showFilters, setShowFilters] = useState(false);
   const [frequencia, setFrequencia] = useState<
     Record<string, FrequenciaStatus>
   >({});
@@ -214,6 +239,7 @@ export default function DiarioWizardPage() {
     async function loadTurmas() {
       try {
         const res = await api.get("/professor/dashboard/turmas");
+        console.log("Turmas carregadas:", res.data);
         setTurmas(res.data);
         if (res.data.length > 0) setSelectedTurmaId(res.data[0].componenteId);
       } catch (err) {
@@ -232,23 +258,52 @@ export default function DiarioWizardPage() {
 
   useEffect(() => {
     if (selectedTurma) {
-      const nomeLower = selectedTurma.nomeTurma.toLowerCase();
+      console.log("--- TURMA SELECIONADA ---");
+      console.log("Dados:", selectedTurma);
+
       let stage: BnccStage = "fundamental";
 
-      if (
-        nomeLower.includes("médio") ||
-        nomeLower.includes("medio") ||
-        nomeLower.includes("em") ||
-        nomeLower.includes("série")
-      ) {
-        stage = "medio";
-      } else if (nomeLower.includes("infantil") || nomeLower.includes("pré")) {
-        stage = "infantil";
+      if (selectedTurma.etapa) {
+        const etapaBanco = selectedTurma.etapa;
+        console.log("Etapa vinda do banco:", etapaBanco);
+
+        if (etapaBanco === "MEDIO") stage = "medio";
+        else if (etapaBanco === "INFANTIL") stage = "infantil";
+        else stage = "fundamental";
+      } else {
+        const textoAnalise = `${selectedTurma.serie || ""} ${
+          selectedTurma.nomeTurma || ""
+        }`.toLowerCase();
+
+        if (
+          textoAnalise.includes("médio") ||
+          textoAnalise.includes("medio") ||
+          textoAnalise.includes("em")
+        ) {
+          stage = "medio";
+        } else if (
+          textoAnalise.includes("infantil") ||
+          textoAnalise.includes("pré") ||
+          textoAnalise.includes("creche")
+        ) {
+          stage = "infantil";
+        }
+        console.log("Etapa inferida (Fallback):", stage);
       }
 
+      const autoAno = inferAnoSlug(
+        selectedTurma.serie || "",
+        selectedTurma.nomeTurma || "",
+        stage
+      );
+
+      const autoDisciplina = inferDisciplinaSlug(selectedTurma.materia, stage);
+
+      console.log("Filtros Aplicados:", { stage, autoAno, autoDisciplina });
+
       setBnccStage(stage);
-      setBnccAno(inferAnoSlug(selectedTurma.nomeTurma, stage));
-      setBnccDisciplina(inferDisciplinaSlug(selectedTurma.materia, stage));
+      setBnccAno(autoAno);
+      setBnccDisciplina(autoDisciplina);
     }
   }, [selectedTurma]);
 
@@ -282,42 +337,47 @@ export default function DiarioWizardPage() {
       setBnccSkills([]);
 
       try {
-        let url = "";
-        if (bnccStage === "infantil") {
-          url = `${BNCC_BASE_URL}/bncc_infantil/campo/${bnccDisciplina}/${bnccAno}/info_habilidades/`;
-        } else if (bnccStage === "medio") {
-          url = `${BNCC_BASE_URL}/bncc_medio/disciplina/${bnccDisciplina}/${bnccAno}/info_habilidades/`;
-        } else {
-          url = `${BNCC_BASE_URL}/bncc_fundamental/disciplina/${bnccDisciplina}/${bnccAno}/info_habilidades/`;
-        }
-
-        const response = await fetch(url);
-        if (!response.ok) {
-          setBnccSkills([]);
+        const invalidMedio =
+          bnccStage === "medio" &&
+          !["primeiro", "segundo", "terceiro"].includes(bnccAno);
+        if (invalidMedio) {
+          console.warn(
+            "Filtro inválido detectado (Médio + Fundamental). Abortando request."
+          );
+          setBnccLoading(false);
           return;
         }
 
-        const data = await response.json();
-        const habilidades = Array.isArray(data) ? data : data.habilidades || [];
+        const response = await api.get("/bncc", {
+          params: {
+            stage: bnccStage,
+            disciplina: bnccDisciplina,
+            ano: bnccAno,
+          },
+        });
 
+        const data = response.data;
+        const habilidades = Array.isArray(data) ? data : data.habilidades || [];
         const habilidadesValidas = habilidades.filter(
           (h: any) => h && h.codigo && typeof h.codigo === "string"
         );
 
         setBnccSkills(habilidadesValidas);
-      } catch (err) {
+      } catch (err: any) {
         console.error("Erro fetch BNCC:", err);
         setBnccSkills([]);
       } finally {
         setBnccLoading(false);
       }
     }
-    fetchBncc();
+
+    if (bnccStage && bnccDisciplina && bnccAno) {
+      fetchBncc();
+    }
   }, [step, bnccStage, bnccDisciplina, bnccAno]);
 
   const toggleSkill = (skill: BnccHabilidade) => {
     if (!skill.codigo) return;
-
     setSelectedSkills((prev) => {
       const exists = prev.find((s) => s.codigo === skill.codigo);
       return exists
@@ -337,22 +397,41 @@ export default function DiarioWizardPage() {
   };
 
   const handleSubmit = async () => {
+    if (!selectedTurmaId) {
+      alert("Selecione uma turma.");
+      return;
+    }
+
     const payload = {
       componenteCurricularId: selectedTurmaId,
       data: dataAula,
       tema,
       conteudo,
       duracao: parseInt(duracao),
-      habilidades: selectedSkills.map((s) => s.codigo),
+      habilidades: selectedSkills.map((s) => ({
+        codigo: s.codigo,
+        descricao:
+          s.descricao ||
+          s.descricao_habilidade ||
+          s.habilidade ||
+          "Sem descrição",
+      })),
       frequencia: Object.entries(frequencia).map(([alunoId, status]) => ({
         alunoId,
         status,
       })),
     };
-    console.log("Payload:", payload);
-    alert("Diário salvo com sucesso!");
-  };
 
+    try {
+      console.log("Enviando Diário:", payload);
+      await api.post("/diarios", payload);
+
+      alert("Diário salvo com sucesso!");
+    } catch (err) {
+      console.error("Erro ao salvar diário:", err);
+      alert("Erro ao salvar o diário. Tente novamente.");
+    }
+  };
   const renderStep1 = () => (
     <div className={styles.formGrid}>
       <div>
@@ -377,16 +456,16 @@ export default function DiarioWizardPage() {
         />
       </div>
       <div className={styles.fullWidth}>
-        <label>Tema</label>
+        <label>Tema da Aula</label>
         <input
           type="text"
-          placeholder="Ex: Introdução..."
           value={tema}
           onChange={(e) => setTema(e.target.value)}
+          placeholder="Ex: Introdução..."
         />
       </div>
       <div className={styles.fullWidth}>
-        <label>Conteúdo</label>
+        <label>Conteúdo Detalhado</label>
         <textarea
           rows={4}
           value={conteudo}
@@ -404,105 +483,171 @@ export default function DiarioWizardPage() {
     </div>
   );
 
-  const renderStep2 = () => (
-    <div>
-      <div className={styles.bnccFilters}>
-        <div>
-          <label>Etapa</label>
-          <select
-            value={bnccStage}
-            onChange={(e) => {
-              setBnccStage(e.target.value as any);
+  const renderStep2 = () => {
+    const stageLabel = etapaOptions.find((o) => o.value === bnccStage)?.label;
+    const discLabel =
+      slugsPorEtapa[bnccStage]?.find((o: any) => o.value === bnccDisciplina)
+        ?.label || bnccDisciplina;
+    const anoLabel =
+      anosPorEtapa[bnccStage]?.find((o: any) => o.value === bnccAno)?.label ||
+      bnccAno;
+
+    return (
+      <div>
+        <div
+          className={styles.bnccContextBar}
+          style={{
+            marginBottom: "1rem",
+            padding: "0.75rem",
+            backgroundColor: "#f8f9fa",
+            borderRadius: "6px",
+            border: "1px solid #e9ecef",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <div>
+            <strong>Filtrando por:</strong> {discLabel} • {anoLabel}{" "}
+            <span style={{ fontSize: "0.85em", color: "#666" }}>
+              ({stageLabel})
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowFilters(!showFilters)}
+            className={styles.btnNav}
+            style={{
+              fontSize: "0.8rem",
+              padding: "0.3rem 0.6rem",
+              height: "auto",
+              backgroundColor: "#6c757d",
             }}
           >
-            {etapaOptions.map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </select>
+            <FiFilter /> {showFilters ? "Ocultar Filtros" : "Ajustar Filtros"}
+          </button>
         </div>
-        <div>
-          <label>{bnccStage === "infantil" ? "Campo" : "Disciplina"}</label>
-          <select
-            value={bnccDisciplina}
-            onChange={(e) => setBnccDisciplina(e.target.value)}
+
+        {showFilters && (
+          <div
+            className={styles.bnccFilters}
+            style={{ animation: "fadeIn 0.3s" }}
           >
-            {(slugsPorEtapa[bnccStage] || []).map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label>Ano/Série</label>
-          <select value={bnccAno} onChange={(e) => setBnccAno(e.target.value)}>
-            {(anosPorEtapa[bnccStage] || []).map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
-
-      <div className={styles.searchWrapper}>
-        <FiSearch className={styles.searchIcon} />
-        <input
-          type="text"
-          placeholder="Filtrar habilidades..."
-          value={skillSearch}
-          onChange={(e) => setSkillSearch(e.target.value)}
-        />
-      </div>
-
-      <div className={styles.bnccList}>
-        {bnccLoading && <p className={styles.loading}>Carregando BNCC...</p>}
-        {!bnccLoading && bnccSkills.length === 0 && (
-          <p className={styles.loading}>Nenhuma habilidade encontrada.</p>
+            <div>
+              <label>Etapa</label>
+              <select
+                value={bnccStage}
+                onChange={(e) => {
+                  const newStage = e.target.value as BnccStage;
+                  setBnccStage(newStage);
+                  setBnccDisciplina(slugsPorEtapa[newStage]?.[0]?.value || "");
+                  setBnccAno(anosPorEtapa[newStage]?.[0]?.value || "");
+                }}
+              >
+                {etapaOptions.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label>{bnccStage === "infantil" ? "Campo" : "Disciplina"}</label>
+              <select
+                value={bnccDisciplina}
+                onChange={(e) => setBnccDisciplina(e.target.value)}
+              >
+                {(slugsPorEtapa[bnccStage] || []).map((o: any) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label>Ano/Série</label>
+              <select
+                value={bnccAno}
+                onChange={(e) => setBnccAno(e.target.value)}
+              >
+                {(anosPorEtapa[bnccStage] || []).map((o: any) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
         )}
 
-        {bnccSkills
-          .filter(
-            (s) =>
-              !skillSearch ||
-              s.codigo.toLowerCase().includes(skillSearch.toLowerCase())
-          )
-          .map((skill, index) => {
-            const uniqueKey = skill.codigo || `skill-${index}`;
-            const isSel = selectedSkills.some((s) => s.codigo === skill.codigo);
+        <div className={styles.searchWrapper}>
+          <FiSearch className={styles.searchIcon} />
+          <input
+            type="text"
+            placeholder="Buscar código ou descrição..."
+            value={skillSearch}
+            onChange={(e) => setSkillSearch(e.target.value)}
+          />
+        </div>
 
-            const texto =
-              skill.descricao ||
-              skill.descricao_habilidade ||
-              skill.habilidade ||
-              "Descrição indisponível";
-
-            return (
-              <div
-                key={uniqueKey}
-                className={`${styles.bnccItem} ${isSel ? styles.selected : ""}`}
-                onClick={() => toggleSkill(skill)}
-              >
-                <span className={styles.bnccCode}>{skill.codigo || "S/C"}</span>
-                <p>{texto}</p>
-                {isSel && (
-                  <FiCheckCircle
-                    style={{
-                      color: "#22c55e",
-                      position: "absolute",
-                      top: "1rem",
-                      right: "1rem",
-                    }}
-                  />
-                )}
-              </div>
-            );
-          })}
+        <div className={styles.bnccList}>
+          {bnccLoading && (
+            <p className={styles.loading}>Buscando na base BNCC...</p>
+          )}
+          {!bnccLoading && bnccSkills.length === 0 && (
+            <div
+              style={{ textAlign: "center", padding: "2rem", color: "#666" }}
+            >
+              <p>Nenhuma habilidade encontrada.</p>
+              <small>
+                Stage: {bnccStage} | Ano: {bnccAno}
+              </small>
+            </div>
+          )}
+          {bnccSkills
+            .filter(
+              (s) =>
+                !skillSearch ||
+                s.codigo.toLowerCase().includes(skillSearch.toLowerCase()) ||
+                (s.descricao &&
+                  s.descricao.toLowerCase().includes(skillSearch.toLowerCase()))
+            )
+            .map((skill, index) => {
+              const uniqueKey = skill.codigo || `skill-${index}`;
+              const isSel = selectedSkills.some(
+                (s) => s.codigo === skill.codigo
+              );
+              return (
+                <div
+                  key={uniqueKey}
+                  className={`${styles.bnccItem} ${
+                    isSel ? styles.selected : ""
+                  }`}
+                  onClick={() => toggleSkill(skill)}
+                >
+                  <span className={styles.bnccCode}>
+                    {skill.codigo || "S/C"}
+                  </span>
+                  <p>{skill.descricao}</p>
+                  {isSel && (
+                    <FiCheckCircle
+                      className={styles.checkIcon}
+                      style={{
+                        color: "#22c55e",
+                        position: "absolute",
+                        top: "1rem",
+                        right: "1rem",
+                        fontSize: "1.2rem",
+                      }}
+                    />
+                  )}
+                </div>
+              );
+            })}
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   const renderStep3 = () => (
     <div>
