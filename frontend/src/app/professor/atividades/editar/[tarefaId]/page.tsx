@@ -14,7 +14,9 @@ import {
   FiX,
   FiTrash2,
 } from "react-icons/fi";
-import QuestoesBuilder from "@/components/professor/atividades/QuestoesBuilder";
+import QuestoesBuilder, {
+  validateQuestoes,
+} from "@/components/professor/criarQuestoes/QuestoesBuilder";
 import { Questao } from "@/types/tarefas";
 
 export type Componente = {
@@ -57,7 +59,15 @@ export default function EditarAtividadePage() {
           new Date(tarefa.data_entrega).toISOString().slice(0, 16)
         );
         setPontos(tarefa.pontos);
-        setQuestoes(questoesRes.data);
+        const questoesFormatadas = questoesRes.data.map((questao: Questao) => ({
+          ...questao,
+          enunciado: questao.enunciado || questao.titulo || "",
+          titulo: questao.titulo || questao.enunciado || "",
+          respostaEsperada:
+            (questao.payload as Record<string, any> | null)?.respostaEsperada ??
+            "",
+        }));
+        setQuestoes(questoesFormatadas);
       } catch (err) {
         console.error("Erro ao carregar dados da atividade", err);
         alert("Não foi possível carregar os dados para edição.");
@@ -69,6 +79,12 @@ export default function EditarAtividadePage() {
   }, [tarefaId]);
 
   const handleUpdateActivity = async (publicado: boolean) => {
+    const validationError = validateQuestoes(questoes);
+    if (validationError) {
+      alert(validationError);
+      return;
+    }
+
     try {
       await api.put(`/tarefas/${tarefaId}`, {
         titulo,
@@ -84,16 +100,34 @@ export default function EditarAtividadePage() {
       }
 
       for (const questao of questoes) {
-        const questaoPayload = { ...questao, tarefaId };
+        const {
+          opcoes_multipla_escolha,
+          respostaEsperada,
+          payload: _,
+          ...restante
+        } = questao;
+        const questaoPayload: Record<string, any> = {
+          ...restante,
+          titulo: restante.titulo || restante.enunciado,
+          enunciado: restante.enunciado || restante.titulo,
+          tarefaId,
+        };
+
+        if (questao.tipo === "DISCURSIVA" && respostaEsperada?.trim()) {
+          questaoPayload.payload = {
+            respostaEsperada: respostaEsperada.trim(),
+          };
+        }
+
         const questaoResponse = await api.post("/questoes", questaoPayload);
         const questaoId = questaoResponse.data.id;
 
         if (
           questao.tipo === "MULTIPLA_ESCOLHA" &&
-          questao.opcoes_multipla_escolha
+          opcoes_multipla_escolha
         ) {
           await api.post(`/opcoes/questao/${questaoId}`, {
-            opcoes: questao.opcoes_multipla_escolha,
+            opcoes: opcoes_multipla_escolha,
           });
         }
       }

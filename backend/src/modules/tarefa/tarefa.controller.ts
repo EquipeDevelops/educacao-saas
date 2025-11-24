@@ -66,6 +66,8 @@ export const tarefaController = {
         return res.status(403).json({ message: error.message });
       if ((error as any).code === "P2025")
         return res.status(404).json({ message: "Tarefa não encontrada." });
+      if ((error as any).code === "HAS_SUBMISSIONS")
+        return res.status(400).json({ message: error.message });
       return res.status(500).json({ message: "Erro ao atualizar tarefa." });
     }
   },
@@ -95,6 +97,8 @@ export const tarefaController = {
         return res.status(403).json({ message: error.message });
       if ((error as any).code === "P2025")
         return res.status(404).json({ message: "Tarefa não encontrada." });
+      if ((error as any).code === "HAS_SUBMISSIONS")
+        return res.status(400).json({ message: error.message });
       return res.status(500).json({ message: "Erro ao deletar tarefa." });
     }
   },
@@ -200,3 +204,4 @@ export const tarefaController = {
     }
   },
 };
+

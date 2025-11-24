@@ -14,7 +14,9 @@ import {
   FiSend,
   FiX,
 } from "react-icons/fi";
-import QuestoesBuilder from "@/components/professor/atividades/QuestoesBuilder";
+import QuestoesBuilder, {
+  validateQuestoes,
+} from "@/components/professor/criarQuestoes/QuestoesBuilder";
 import { Questao } from "@/types/tarefas";
 
 export type Componente = {
@@ -93,6 +95,13 @@ export default function NovaAtividadePage() {
       return;
     }
 
+
+    const validationError = validateQuestoes(questoes);
+    if (validationError) {
+      alert(validationError);
+      return;
+    }
+
     try {
       const tarefaPayload = {
         titulo,
@@ -107,8 +116,24 @@ export default function NovaAtividadePage() {
       const tarefaId = tarefaResponse.data.id;
 
       for (const questao of questoes) {
-        const { opcoes_multipla_escolha, ...restOfQuestao } = questao;
-        const questaoPayload = { ...restOfQuestao, tarefaId };
+        const {
+          opcoes_multipla_escolha,
+          respostaEsperada,
+          payload: _,
+          ...restOfQuestao
+        } = questao;
+        const questaoPayload: Record<string, any> = {
+          ...restOfQuestao,
+          titulo: restOfQuestao.titulo || restOfQuestao.enunciado,
+          enunciado: restOfQuestao.enunciado || restOfQuestao.titulo,
+          tarefaId,
+        };
+
+        if (questao.tipo === "DISCURSIVA" && respostaEsperada?.trim()) {
+          questaoPayload.payload = {
+            respostaEsperada: respostaEsperada.trim(),
+          };
+        }
 
         const questaoResponse = await api.post("/questoes", questaoPayload);
         const questaoId = questaoResponse.data.id;

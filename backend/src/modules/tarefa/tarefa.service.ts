@@ -16,14 +16,22 @@ const prisma = new PrismaClient();
 const fullInclude = {
   componenteCurricular: {
     include: {
-      turma: { select: { nome: true, serie: true } },
+      turma: {
+        select: {
+          nome: true,
+          serie: true,
+          _count: {
+            select: { matriculas: true },
+          },
+        },
+      },
       materia: { select: { nome: true } },
       professor: { select: { usuario: { select: { nome: true } } } },
     },
   },
   bimestre: true,
   _count: {
-    select: { questoes: true },
+    select: { questoes: true, submissoes: true },
   },
 };
 
@@ -46,6 +54,35 @@ async function verifyOwnership(tarefaId: string, professorId: string) {
       "Você não tem permissão para modificar esta tarefa."
     );
     (error as any).code = "FORBIDDEN";
+    throw error;
+  }
+}
+
+async function ensureProvaSemSubmissoes(id: string) {
+  const tarefa = await prisma.tarefas.findUnique({
+    where: { id },
+    select: { tipo: true },
+  });
+
+  if (!tarefa) {
+    const error = new Error("Tarefa nao encontrada.");
+    (error as any).code = "P2025";
+    throw error;
+  }
+
+  if (tarefa.tipo !== TipoTarefa.PROVA) {
+    return;
+  }
+
+  const entregas = await prisma.submissoes.count({
+    where: { tarefaId: id },
+  });
+
+  if (entregas > 0) {
+    const error = new Error(
+      "Esta prova ja possui entregas e nao pode ser alterada."
+    );
+    (error as any).code = "HAS_SUBMISSIONS";
     throw error;
   }
 }
@@ -200,6 +237,7 @@ export async function update(
     throw error;
   }
   await verifyOwnership(id, user.perfilId);
+  await ensureProvaSemSubmissoes(id);
   return prisma.tarefas.update({ where: { id }, data });
 }
 
@@ -564,6 +602,7 @@ export async function remove(id: string, user: AuthenticatedRequest["user"]) {
   }
 
   await verifyOwnership(id, user.perfilId);
+  await ensureProvaSemSubmissoes(id);
   console.log("[DEBUG] Ownership verificada com sucesso");
 
   try {

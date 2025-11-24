@@ -6,6 +6,7 @@ export type Questao = {
   pontos: number;
   tipo: "MULTIPLA_ESCOLHA" | "DISCURSIVA";
   opcoes_multipla_escolha: { id: string; texto: string; correta: boolean }[];
+  payload?: { respostaEsperada?: string } | null;
 };
 
 export type Resposta = {

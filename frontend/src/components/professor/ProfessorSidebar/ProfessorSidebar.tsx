@@ -4,19 +4,23 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import styles from './style.module.css';
 import {
-  FiHome,
-  FiUsers,
-  FiClipboard,
-  FiCalendar,
-  FiBarChart2,
-  FiMessageSquare,
-  FiSettings,
-  FiEdit,
-  FiUserX,
-  FiFileText,
-  FiLogOut,
-  FiBookOpen,
-} from 'react-icons/fi';
+  LuHouse,
+  LuUsers,
+  LuClipboard,
+  LuCalendar,
+  LuChartBar,
+  LuMessageSquare,
+  LuSettings,
+  LuUser,
+  LuUserX,
+  LuFileText,
+  LuLogOut,
+  LuBookOpen,
+  LuFile,
+  LuClipboardCheck,
+  LuBriefcase,
+  LuCopyCheck,
+} from 'react-icons/lu';
 import { useAuth } from '@/contexts/AuthContext';
 import { FaFile } from 'react-icons/fa';
 import { VscMortarBoard } from 'react-icons/vsc';
@@ -25,32 +29,32 @@ const navLinks = [
   {
     category: 'Geral',
     links: [
-      { href: '/professor', text: 'Início', icon: <FiHome /> },
-      { href: '/professor/turmas', text: 'Minhas Turmas', icon: <FiUsers /> },
-      { href: '/professor/agenda', text: 'Agenda', icon: <FiCalendar /> },
+      { href: '/professor', text: 'Início', icon: <LuHouse /> },
+      { href: '/professor/turmas', text: 'Minhas Turmas', icon: <LuUsers /> },
+      { href: '/professor/agenda', text: 'Agenda', icon: <LuCalendar /> },
     ],
   },
   {
     category: 'Acadêmico',
     links: [
-      { href: '/professor/provas', text: 'Provas', icon: <FiFileText /> },
+      { href: '/professor/provas', text: 'Provas', icon: <LuClipboardCheck /> },
       {
         href: '/professor/trabalhos',
         text: 'Trabalhos',
-        icon: <FiClipboard />,
+        icon: <LuBriefcase />,
       },
       {
         href: '/professor/atividades',
         text: 'Atividades',
-        icon: <FiBookOpen />,
+        icon: <LuBookOpen />,
       },
-      { href: '/professor/correcoes', text: 'Correções', icon: <FiEdit /> },
-      { href: '/professor/notas', text: 'Notas', icon: <FaFile /> },
-      { href: '/professor/faltas', text: 'Lançar Faltas', icon: <FiUserX /> },
+      { href: '/professor/correcoes', text: 'Correções', icon: <LuCopyCheck /> },
+      { href: '/professor/notas', text: 'Lançar Notas', icon: <LuFile /> },
+      { href: '/professor/faltas', text: 'Lançar Faltas', icon: <LuUserX /> },
       {
         href: '/professor/desempenho',
         text: 'Desempenho',
-        icon: <FiBarChart2 />,
+        icon: <LuChartBar />,
       },
     ],
   },
@@ -60,7 +64,7 @@ const navLinks = [
       {
         href: '/professor/mensagens',
         text: 'Mensagens',
-        icon: <FiMessageSquare />,
+        icon: <LuMessageSquare />,
       },
     ],
   },
@@ -116,14 +120,14 @@ export default function ProfessorSidebar() {
             pathname === '/professor/configuracoes' ? styles.activeLink : ''
           }`}
         >
-          <FiSettings className={styles.icon} />
+          <LuSettings className={styles.icon} />
           <span>Configurações</span>
         </Link>
         <button
           onClick={signOut}
           className={`${styles.navLink} ${styles.logoutButton}`}
         >
-          <FiLogOut className={styles.icon} />
+          <LuLogOut className={styles.icon} />
           <span>Sair</span>
         </button>
       </div>

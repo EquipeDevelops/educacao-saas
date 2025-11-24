@@ -33,12 +33,17 @@ export type ApiTarefa = {
   data_entrega: string;
   componenteCurricular: {
     materia: { nome: string };
-    turma: { nome: string; serie: string };
+    turma: {
+      nome: string;
+      serie: string;
+      _count?: { matriculas: number };
+    };
     professor: { usuario: { nome: string } };
   };
   pontos: number;
   _count: {
     questoes: number;
+    submissoes?: number;
   };
   metadata?: TarefaMetadata;
 };
@@ -74,5 +79,7 @@ export type Questao = {
   titulo: string;
   enunciado: string;
   pontos: number;
+  respostaEsperada?: string;
+  payload?: Record<string, any> | null;
   opcoes_multipla_escolha?: Opcao[];
 };

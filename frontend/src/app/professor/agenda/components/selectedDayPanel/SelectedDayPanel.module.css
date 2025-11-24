@@ -2,6 +2,7 @@
   background-color: white;
   padding: 20px;
   border-radius: 15px;
+  border: 1px solid var(--cor-borda);
   height: 100%;
   display: flex;
   flex-direction: column;
@@ -19,19 +20,27 @@
   background-color: var(--cor-primaria);
   border-radius: 5px;
 }
-.dateString {
+
+.dateInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 20px;
+  background-color: var(--cor-primaria-dark);
+  margin-top: 10px;
+  border-radius: 15px;
+}
+
+.dateDay {
+  font-size: 1.75rem;
   color: white;
-  margin: 0;
-  font-size: 1.2rem;
   font-weight: 500;
 }
-.dayOfWeek {
+
+.dateLong {
   font-size: 1rem;
-  font-weight: normal;
-  color: #c7d2fe;
-  margin: 0;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  text-transform: capitalize;
 }
 
 .content {
@@ -64,13 +73,23 @@
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 10px;
+  overflow-y: scroll;
+  height: 500px;
 }
 
 .eventItem {
   display: flex;
-  align-items: center;
-  gap: 1rem;
+  align-items: start;
+  justify-content: space-between;
+  padding: 20px;
+  border-radius: 15px;
+  border: 1px solid var(--cor-borda);
+}
+
+.contentItem {
+  display: flex;
+  gap: 20px;
 }
 
 .iconWrapper {
@@ -89,30 +108,41 @@
   flex-direction: column;
 }
 
-.eventTitle {
-  font-weight: 500;
+.eventInfo h4 {
+  font-size: 1rem;
 }
 
-.eventInfo small {
-  font-size: 0.8rem;
-  color: #c7d2fe;
+.eventInfo p {
+  font-size: .9rem;
+  color: var(--cor-subtexto);
 }
 
 /* Cores dos ícones */
 .aula {
-  background-color: #60a5fa;
+  background-color: var(--cor-primaria);
   color: white;
 }
 .prova {
-  background-color: #f87171;
+  background-color: var(--cor-perigo);
   color: white;
 }
+
+.trabalho {
+  background-color: var(--cor-sucesso);
+  color: white;
+}
+
+.atividade {
+  background-color: var(--cor-aviso);
+  color: white;
+}
+
 .recuperacao {
-  background-color: #facc15;
+  background-color: var(--cor-aviso);
   color: white;
 }
 .reuniao {
-  background-color: #a78bfa;
+  background-color: var(--cor-envio);
   color: white;
 }
 .default {

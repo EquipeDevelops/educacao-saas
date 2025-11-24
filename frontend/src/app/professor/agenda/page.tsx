@@ -242,7 +242,7 @@ export default function AgendaPage() {
           />
         </div>
 
-        <DailyEvents selectedDate={selectedDate} events={allEvents} />
+        {/* <DailyEvents selectedDate={selectedDate} events={allEvents} /> */}
       </div>
     </Section>
   );
