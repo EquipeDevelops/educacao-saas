@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState } from "react";
 import { api } from "@/services/api";
 import Link from "next/link";
 import styles from "./home.module.css";
@@ -20,6 +20,8 @@ import {
   FiTrendingDown,
   FiDollarSign,
   FiLayers,
+  FiFilter,
+  FiCalendar,
 } from "react-icons/fi";
 import Loading from "@/components/loading/Loading";
 import { toast, ToastContainer } from "react-toastify";
@@ -165,143 +167,174 @@ export default function GestorHomePage() {
 
   return (
     <div className={styles.container}>
-      <ToastContainer position="top-right" />
+      <ToastContainer position="top-right" theme="colored" />
+
       <header className={styles.header}>
-        <div>
-          <h1>Dashboard do Gestor</h1>
-          <p>
-            Visão geral e atalhos para as principais funcionalidades do sistema.
-          </p>
+        <div className={styles.welcomeSection}>
+          <h1>Painel de Controle</h1>
+          <p>Visão geral estratégica da instituição.</p>
+        </div>
+        <div className={styles.dateDisplay}>
+          <FiCalendar />
+          <span>
+            {new Date().toLocaleDateString("pt-BR", {
+              weekday: "long",
+              day: "numeric",
+              month: "long",
+            })}
+          </span>
         </div>
       </header>
 
-      <section className={styles.statsGrid}>
-        <StatCard
-          icon={<FiUsers />}
-          label="Total de Alunos"
-          value={stats?.totalAlunos ?? 0}
-          color="blue"
-        />
-        <StatCard
-          icon={<FiBriefcase />}
-          label="Total de Professores"
-          value={stats?.totalProfessores ?? 0}
-          color="blue"
-        />
-        <StatCard
-          icon={<FiHome />}
-          label="Total de Turmas"
-          value={stats?.totalTurmas ?? 0}
-          color="blue"
-        />
-
-        <StatCard
-          icon={<FiTrendingUp />}
-          label="Receita do Mês"
-          value={(stats?.receitaMes ?? 0).toLocaleString("pt-BR", {
-            style: "currency",
-            currency: "BRL",
-          })}
-          color="green"
-        />
-        <StatCard
-          icon={<FiTrendingDown />}
-          label="Despesa do Mês"
-          value={(stats?.despesaMes ?? 0).toLocaleString("pt-BR", {
-            style: "currency",
-            currency: "BRL",
-          })}
-          color="orange"
-        />
-        <StatCard
-          icon={<FiDollarSign />}
-          label="Inadimplência"
-          value={(stats?.inadimplencia ?? 0).toLocaleString("pt-BR", {
-            style: "currency",
-            currency: "BRL",
-          })}
-          color="orange"
-        />
-      </section>
-
-      <section className={styles.filtersContainer}>
-        <div className={styles.filterGroup}>
-          <label htmlFor="ano-select">Ano Letivo</label>
-          <select
-            id="ano-select"
-            value={anoSelecionado}
-            onChange={(e) => setAnoSelecionado(Number(e.target.value))}
-            className={styles.filterSelect}
-          >
-            {anosDisponiveis.map((ano) => (
-              <option key={ano} value={ano}>
-                {ano}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className={styles.filterGroup}>
-          <label htmlFor="periodo-select">Período</label>
-          <select
-            id="periodo-select"
-            value={periodoSelecionado}
-            onChange={(e) => setPeriodoSelecionado(e.target.value)}
-            className={styles.filterSelect}
-          >
-            {periodosDisponiveis.map((p) => (
-              <option key={p.value} value={p.value}>
-                {p.label}
-              </option>
-            ))}
-          </select>
+      <section className={styles.kpiSection}>
+        <h2 className={styles.sectionLabel}>Indicadores Gerais</h2>
+        <div className={styles.statsGrid}>
+          <StatCard
+            icon={<FiUsers />}
+            label="Alunos Ativos"
+            value={stats?.totalAlunos ?? 0}
+            type="primary"
+          />
+          <StatCard
+            icon={<FiBriefcase />}
+            label="Professores"
+            value={stats?.totalProfessores ?? 0}
+            type="info"
+          />
+          <StatCard
+            icon={<FiHome />}
+            label="Turmas"
+            value={stats?.totalTurmas ?? 0}
+            type="info"
+          />
+          <StatCard
+            icon={<FiTrendingUp />}
+            label="Receita Mensal"
+            value={(stats?.receitaMes ?? 0).toLocaleString("pt-BR", {
+              style: "currency",
+              currency: "BRL",
+            })}
+            type="success"
+            isCurrency
+          />
+          <StatCard
+            icon={<FiTrendingDown />}
+            label="Despesa Mensal"
+            value={(stats?.despesaMes ?? 0).toLocaleString("pt-BR", {
+              style: "currency",
+              currency: "BRL",
+            })}
+            type="warning"
+            isCurrency
+          />
+          <StatCard
+            icon={<FiDollarSign />}
+            label="Inadimplência"
+            value={(stats?.inadimplencia ?? 0).toLocaleString("pt-BR", {
+              style: "currency",
+              currency: "BRL",
+            })}
+            type="danger"
+            isCurrency
+          />
         </div>
       </section>
 
-      <section className={styles.chartsGrid}>
-        {isLoadingCharts ? (
-          <Loading />
-        ) : (
-          <>
-            <AttendanceChart data={chartData?.frequenciaTurmas} />
-            <ClassPerformanceChart
-              data={chartData?.desempenhoTurmas}
-              onBarClick={handlePerformanceBarClick}
-            />
-          </>
-        )}
+      <section className={styles.analyticsSection}>
+        <div className={styles.sectionHeader}>
+          <h2 className={styles.sectionLabel}>Análise Acadêmica</h2>
+          <div className={styles.filtersContainer}>
+            <div className={styles.filterItem}>
+              <FiCalendar className={styles.filterIcon} />
+              <select
+                value={anoSelecionado}
+                onChange={(e) => setAnoSelecionado(Number(e.target.value))}
+              >
+                {anosDisponiveis.map((ano) => (
+                  <option key={ano} value={ano}>
+                    {ano}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className={styles.filterItem}>
+              <FiFilter className={styles.filterIcon} />
+              <select
+                value={periodoSelecionado}
+                onChange={(e) => setPeriodoSelecionado(e.target.value)}
+              >
+                {periodosDisponiveis.map((p) => (
+                  <option key={p.value} value={p.value}>
+                    {p.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div className={styles.chartsGrid}>
+          {isLoadingCharts ? (
+            <div className={styles.loadingContainer}>
+              <Loading />
+            </div>
+          ) : (
+            <>
+              <div className={styles.chartWrapper}>
+                <AttendanceChart data={chartData?.frequenciaTurmas || []} />
+              </div>
+              <div className={styles.chartWrapper}>
+                <ClassPerformanceChart
+                  data={chartData?.desempenhoTurmas || []}
+                  onBarClick={handlePerformanceBarClick}
+                />
+              </div>
+            </>
+          )}
+        </div>
       </section>
 
-      <main className={styles.mainContentGrid}>
-        <section>
-          <h2 className={styles.sectionTitle}>Acesso Rápido</h2>
+      <div className={styles.bottomGrid}>
+        <section className={styles.shortcutsSection}>
+          <h2 className={styles.sectionLabel}>Acesso Rápido</h2>
           <div className={styles.shortcutsGrid}>
             <Link href="/gestor/usuarios" className={styles.shortcutCard}>
-              <FiUsers />
+              <div className={styles.shortcutIcon}>
+                <FiUsers />
+              </div>
               <span>Gerenciar Usuários</span>
             </Link>
             <Link href="/gestor/matriculas" className={styles.shortcutCard}>
-              <FiUserPlus />
-              <span>Realizar Matrícula</span>
+              <div className={styles.shortcutIcon}>
+                <FiUserPlus />
+              </div>
+              <span>Nova Matrícula</span>
             </Link>
             <Link href="/gestor/turmas" className={styles.shortcutCard}>
-              <FiPlusSquare />
-              <span>Criar/Ver Turmas</span>
+              <div className={styles.shortcutIcon}>
+                <FiPlusSquare />
+              </div>
+              <span>Turmas</span>
             </Link>
             <Link href="/gestor/vinculos" className={styles.shortcutCard}>
-              <FiLink />
-              <span>Vincular Professores</span>
+              <div className={styles.shortcutIcon}>
+                <FiLink />
+              </div>
+              <span>Vínculos</span>
             </Link>
             <Link href="/gestor/bimestres" className={styles.shortcutCard}>
-              <FiLayers />
-              <span>Gerir Bimestres</span>
+              <div className={styles.shortcutIcon}>
+                <FiLayers />
+              </div>
+              <span>Bimestres</span>
             </Link>
           </div>
         </section>
 
-        <section>
+        <section className={styles.eventsSection}>
           <UpcomingEvents events={events} />
         </section>
-      </main>
+      </div>
 
       <PerformanceDetailModal
         isOpen={isModalOpen}
