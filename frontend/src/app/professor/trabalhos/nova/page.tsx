@@ -6,10 +6,11 @@ import { api } from '@/services/api';
 import styles from './novo-trabalho.module.css';
 import { FiSave, FiSend, FiX, FiPaperclip, FiTrash2 } from 'react-icons/fi';
 import RequisitosBuilder from '@/app/professor/trabalhos/components/requisitosBuilder/RequisitosBuilder';
-import { Componente } from '../../atividades/nova/page';
+import { Componente } from '../../atividades/nova/page'; // Verifique se este caminho está correto no seu projeto, senão ajuste
 import Section from '@/components/section/Section';
 import { LuCalendar, LuCircleAlert, LuUpload } from 'react-icons/lu';
 import Loading from '@/components/loading/Loading';
+import { useAuth } from '@/contexts/AuthContext'; // 1. Importar AuthContext
 
 type Bimestre = {
   id: string;
@@ -47,6 +48,8 @@ function formatFileSize(bytes: number) {
 
 export default function NovoTrabalhoPage() {
   const router = useRouter();
+  // 2. Obter user e loading do contexto
+  const { user, loading: authLoading } = useAuth();
 
   const [componentes, setComponentes] = useState<Componente[]>([]);
   const [titulo, setTitulo] = useState('');
@@ -55,7 +58,7 @@ export default function NovoTrabalhoPage() {
   const [dataEntrega, setDataEntrega] = useState('');
   const [pontos, setPontos] = useState(10);
   const [tipoTrabalho, setTipoTrabalho] = useState('PESQUISA');
-  const [permiteAnexos, setPermiteAnexos] = useState(true);
+  // const [permiteAnexos, setPermiteAnexos] = useState(true);
   const [requisitos, setRequisitos] = useState<string[]>([]);
   const [anexos, setAnexos] = useState<File[]>([]);
   const [isSaving, setIsSaving] = useState(false);
@@ -64,16 +67,20 @@ export default function NovoTrabalhoPage() {
   const [bimestreError, setBimestreError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (authLoading || !user) return;
+
     api.get('/componentes-curriculares').then((response) => {
       setComponentes(response.data);
       if (response.data.length > 0) {
         setComponenteId(response.data[0].id);
       }
     });
-  }, []);
+  }, [authLoading, user]);
 
   useEffect(() => {
     async function fetchBimestreVigente() {
+      if (authLoading || !user) return;
+
       setIsBimestreLoading(true);
       try {
         const res = await api.get('/bimestres/vigente');
@@ -97,7 +104,7 @@ export default function NovoTrabalhoPage() {
     }
 
     fetchBimestreVigente();
-  }, []);
+  }, [authLoading, user]);
 
   const handleSaveTrabalho = async (publicado: boolean) => {
     if (!titulo || !componenteId || !dataEntrega) {
@@ -119,7 +126,7 @@ export default function NovoTrabalhoPage() {
         tipo: 'TRABALHO',
         metadata: {
           tipoTrabalho,
-          permiteAnexos,
+          // permiteAnexos,
           requisitos,
           anexos: [],
         },
@@ -207,7 +214,7 @@ export default function NovoTrabalhoPage() {
     setAnexos((prev) => prev.filter((_, i) => i !== index));
   };
 
-  if (isBimestreLoading) {
+  if (authLoading || isBimestreLoading) {
     return (
       <Section>
         <Loading />
@@ -228,9 +235,7 @@ export default function NovoTrabalhoPage() {
         <div className={styles.bimestreIcon}>
           <LuCalendar />
         </div>
-        {isBimestreLoading ? (
-          <span>Identificando bimestre vigente...</span>
-        ) : currentBimestre ? (
+        {currentBimestre ? (
           <div>
             <h2>
               {currentBimestre.nome ||

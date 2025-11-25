@@ -94,9 +94,9 @@
   background-color: var(--cor-perigo-light);
   border: 1px solid var(--cor-perigo-light);
   color: var(--cor-perigo-dark);
-  padding: 0.75rem 1.5rem;
-  border-radius: 8px;
-  font-weight: 600;
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-weight: 500;
   display: flex;
   align-items: center;
   gap: 0.5rem;

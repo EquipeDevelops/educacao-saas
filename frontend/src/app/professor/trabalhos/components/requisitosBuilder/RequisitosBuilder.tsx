@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import styles from './RequisitosBuilder.module.css';
 import { FiPlus, FiTrash2, FiUsers, FiClipboard } from 'react-icons/fi';
+import { LuCheck, LuPlus, LuTrash, LuTrash2 } from 'react-icons/lu';
 
 type Props = {
   requisitos: string[];
@@ -65,7 +66,8 @@ export default function RequisitosBuilder({
                 requisitos.includes(sugestao) ? styles.selectBage : ''
               }`}
             >
-              <FiPlus /> {sugestao}
+              {requisitos.includes(sugestao) ? <LuCheck /> : <LuPlus />}{' '}
+              {sugestao}
             </button>
           ))}
         </div>
@@ -87,20 +89,24 @@ export default function RequisitosBuilder({
       </div>
 
       <div className={styles.requisitosList}>
-        {requisitos.length > 0 && <h4>Requisitos Selecionados:</h4>}
-        <ul>
-          {requisitos.map((req, index) => (
-            <li key={index}>
-              <span>{req}</span>
-              <button
-                type="button"
-                onClick={() => handleRemoveRequisito(index)}
-              >
-                <FiTrash2 />
-              </button>
-            </li>
-          ))}
-        </ul>
+        {requisitos.length > 0 && (
+          <>
+            <h4>Requisitos Selecionados:</h4>
+            <ul>
+              {requisitos.map((req, index) => (
+                <li key={index}>
+                  <span>{req}</span>
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveRequisito(index)}
+                  >
+                    <LuTrash2 />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
       </div>
     </section>
   );

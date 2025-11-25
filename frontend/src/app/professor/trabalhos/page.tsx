@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo, ChangeEvent } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation'; // 1. Importar useRouter
 import { api } from '@/services/api';
 import styles from './trabalhos.module.css';
 import { FiEdit2, FiTrash2 } from 'react-icons/fi';
@@ -12,12 +13,14 @@ import Pagination from '@/components/paginacao/Paginacao';
 import {
   LuCalendar,
   LuClipboard,
-  LuFileText,
+  LuFileText, // Importado mas não usado no original, mantido
   LuFilter,
   LuPlus,
   LuTarget,
 } from 'react-icons/lu';
 import BarraDeProgresso from '@/components/progressBar/BarraDeProgresso';
+// 2. Importar o contexto de autenticação
+import { useAuth } from '@/contexts/AuthContext';
 
 const TRABALHOS_PER_PAGE = 6;
 
@@ -45,6 +48,10 @@ type Tarefa = {
 };
 
 export default function TrabalhosPage() {
+  const router = useRouter();
+  // 3. Obter status da autenticação (renomeando loading para authLoading para não conflitar)
+  const { user, loading: authLoading } = useAuth();
+
   const [trabalhos, setTrabalhos] = useState<Tarefa[]>([]);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -58,6 +65,9 @@ export default function TrabalhosPage() {
   const [page, setPage] = useState(1);
 
   const fetchTrabalhos = useCallback(async () => {
+    // 4. Se a auth ainda está carregando ou não tem usuário, aborta para evitar 401
+    if (authLoading || !user) return;
+
     setLoading(true);
     try {
       const response = await api.get('/tarefas');
@@ -66,17 +76,26 @@ export default function TrabalhosPage() {
       );
       setTrabalhos(filteredTrabalhos);
       setErrorMessage(null);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao buscar trabalhos', error);
-      setErrorMessage('Nao foi possivel carregar os trabalhos no momento.');
+
+      // Tratamento específico para 401
+      if (error.response?.status === 401) {
+        setErrorMessage('Sessão expirada. Por favor, faça login novamente.');
+      } else {
+        setErrorMessage('Não foi possível carregar os trabalhos no momento.');
+      }
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [user, authLoading]); // Adicionado dependências de auth
 
   useEffect(() => {
-    fetchTrabalhos();
-  }, [fetchTrabalhos]);
+    // 5. Só busca os dados se a auth terminou de carregar e temos um usuário
+    if (!authLoading && user) {
+      fetchTrabalhos();
+    }
+  }, [fetchTrabalhos, authLoading, user]);
 
   const handleDeleteTrabalho = async (trabalho: Tarefa) => {
     const totalEntregas = trabalho._count?.submissoes ?? 0;
@@ -204,7 +223,8 @@ export default function TrabalhosPage() {
     ? 'Ajuste ou limpe os filtros para visualizar outros trabalhos.'
     : 'Clique em "Novo Trabalho" para comecar.';
 
-  if (loading) {
+  // 6. Atualizar a condição de loading para incluir o authLoading
+  if (loading || authLoading) {
     return (
       <Section>
         <Loading />
@@ -332,7 +352,18 @@ export default function TrabalhosPage() {
                     <LuClipboard />
                   </div>
                   <div className={styles.trabalhoInfo}>
-                    <h3>{trabalho.titulo}</h3>
+                    <h3>
+                      {trabalho.titulo}{' '}
+                      <span
+                        className={
+                          trabalho.publicado
+                            ? styles.publicado
+                            : styles.rascunho
+                        }
+                      >
+                        {trabalho.publicado ? 'Publicado' : 'Rascunho'}
+                      </span>
+                    </h3>
                     <p>{getTurmaLabel(trabalho)}</p>
                     <ul className={styles.listItens}>
                       <li>

@@ -78,13 +78,15 @@
 }
 
 .addButton {
-  padding: 0.75rem 1.5rem;
-  background-color: var(--cor-primaria-light);
-  color: var(--cor-primaria);
+  padding: 10px 20px;
+  background-color: var(--cor-primaria);
+  color: white;
+  font-weight: 500;
   border: 1px solid var(--cor-primaria);
-  font-weight: 600;
-  border-radius: 8px;
-  cursor: pointer;
+}
+
+.addButton:hover {
+  background-color: var(--cor-primaria-dark);
 }
 
 .requisitosList h4 {
@@ -123,7 +125,12 @@
   align-items: center;
   justify-content: center;
   padding: 10px;
-  color: var(--cor-subtexto);
+  color: var(--cor-perigo);
   cursor: pointer;
   font-size: 1.1rem;
+}
+
+.requisitosList button:hover {
+  background-color: var(--cor-perigo);
+  color: var(--cor-perigo-light);
 }

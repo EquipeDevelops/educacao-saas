@@ -1,23 +1,24 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { api } from "@/services/api";
-import styles from "./nova-atividade.module.css";
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { api } from '@/services/api';
+import styles from './nova-atividade.module.css';
 import {
   FiInfo,
-  FiPaperclip,
   FiCalendar,
-  FiSettings,
   FiSave,
-  FiEye,
   FiSend,
   FiX,
-} from "react-icons/fi";
+} from 'react-icons/fi';
 import QuestoesBuilder, {
   validateQuestoes,
-} from "@/components/professor/criarQuestoes/QuestoesBuilder";
-import { Questao } from "@/types/tarefas";
+} from '@/components/professor/criarQuestoes/QuestoesBuilder';
+import { Questao } from '@/types/tarefas';
+import Section from '@/components/section/Section';
+import Loading from '@/components/loading/Loading';
+import { useAuth } from '@/contexts/AuthContext';
+import { LuCalendar, LuCircleAlert } from 'react-icons/lu';
 
 export type Componente = {
   id: string;
@@ -36,49 +37,54 @@ type Bimestre = {
 const TIPO_ATIVIDADE_PADRAO = 'QUESTIONARIO' as const;
 
 const formatarData = (iso: string) =>
-  new Date(iso).toLocaleDateString("pt-BR", { timeZone: "UTC" });
+  new Date(iso).toLocaleDateString('pt-BR', { timeZone: 'UTC' });
 
 export default function NovaAtividadePage() {
   const router = useRouter();
+  const { user, loading: authLoading } = useAuth();
 
   const [componentes, setComponentes] = useState<Componente[]>([]);
-  const [titulo, setTitulo] = useState("");
-  const [componenteId, setComponenteId] = useState("");
-  const [descricao, setDescricao] = useState("");
-  const [dataEntrega, setDataEntrega] = useState("");
-  const [pontos, setPontos] = useState(10);
+  const [titulo, setTitulo] = useState('');
+  const [componenteId, setComponenteId] = useState('');
+  const [descricao, setDescricao] = useState('');
+  const [dataEntrega, setDataEntrega] = useState('');
+  const [pontos, setPontos] = useState(0);
   const [questoes, setQuestoes] = useState<Questao[]>([]);
   const [currentBimestre, setCurrentBimestre] = useState<Bimestre | null>(null);
   const [isBimestreLoading, setIsBimestreLoading] = useState(true);
   const [bimestreError, setBimestreError] = useState<string | null>(null);
-
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    api.get("/componentes-curriculares").then((response) => {
+    if (authLoading || !user) return;
+
+    api.get('/componentes-curriculares').then((response) => {
       setComponentes(response.data);
       if (response.data.length > 0) {
         setComponenteId(response.data[0].id);
       }
     });
-  }, []);
+  }, [authLoading, user]);
 
   useEffect(() => {
     async function fetchBimestreVigente() {
+      if (authLoading || !user) return;
+
       setIsBimestreLoading(true);
       try {
-        const res = await api.get("/bimestres/vigente");
+        const res = await api.get('/bimestres/vigente');
         setCurrentBimestre(res.data);
         setBimestreError(null);
       } catch (err: any) {
         if (err.response?.status === 404) {
           setCurrentBimestre(null);
           setBimestreError(
-            "Nenhum bimestre vigente configurado. Solicite ao gestor para cadastrar o periodo."
+            'Nenhum bimestre vigente configurado. Solicite ao gestor para cadastrar o periodo.',
           );
         } else {
           setBimestreError(
             err.response?.data?.message ||
-              "Falha ao identificar o bimestre vigente."
+              'Falha ao identificar o bimestre vigente.',
           );
         }
       } finally {
@@ -87,20 +93,31 @@ export default function NovaAtividadePage() {
     }
 
     fetchBimestreVigente();
-  }, []);
+  }, [authLoading, user]);
+
+  useEffect(() => {
+    const pontosCalculados = questoes.reduce(
+      (total, questao) => total + (questao.pontos || 0),
+      0,
+    );
+    if (pontosCalculados > 0) {
+        setPontos(pontosCalculados);
+    }
+  }, [questoes]);
 
   const handleSaveActivity = async (publicado: boolean) => {
     if (!titulo || !componenteId || !dataEntrega) {
-      alert("Título, Turma e Data de Entrega são obrigatórios.");
+      alert('Título, Turma e Data de Entrega são obrigatórios.');
       return;
     }
-
 
     const validationError = validateQuestoes(questoes);
     if (validationError) {
       alert(validationError);
       return;
     }
+
+    setLoading(true);
 
     try {
       const tarefaPayload = {
@@ -110,10 +127,14 @@ export default function NovaAtividadePage() {
         pontos: Number(pontos),
         componenteCurricularId: componenteId,
         tipo: TIPO_ATIVIDADE_PADRAO,
-        publicado,
       };
-      const tarefaResponse = await api.post("/tarefas", tarefaPayload);
+      
+      const tarefaResponse = await api.post('/tarefas', tarefaPayload);
       const tarefaId = tarefaResponse.data.id;
+
+      if (publicado) {
+        await api.patch(`/tarefas/${tarefaId}/publish`, { publicado: true });
+      }
 
       for (const questao of questoes) {
         const {
@@ -129,98 +150,112 @@ export default function NovaAtividadePage() {
           tarefaId,
         };
 
-        if (questao.tipo === "DISCURSIVA" && respostaEsperada?.trim()) {
+        if (questao.tipo === 'DISCURSIVA' && respostaEsperada?.trim()) {
           questaoPayload.payload = {
             respostaEsperada: respostaEsperada.trim(),
           };
         }
 
-        const questaoResponse = await api.post("/questoes", questaoPayload);
+        const questaoResponse = await api.post('/questoes', questaoPayload);
         const questaoId = questaoResponse.data.id;
 
-        if (questao.tipo === "MULTIPLA_ESCOLHA" && opcoes_multipla_escolha) {
+        if (questao.tipo === 'MULTIPLA_ESCOLHA' && opcoes_multipla_escolha) {
+          const opcoesLimpas = opcoes_multipla_escolha.map(
+            ({ texto, correta, sequencia }) => ({
+              texto,
+              correta,
+              sequencia,
+            }),
+          );
           await api.post(`/opcoes/questao/${questaoId}`, {
-            opcoes: opcoes_multipla_escolha,
+            opcoes: opcoesLimpas,
           });
         }
       }
       const nomeBimestre =
         currentBimestre?.nome ||
-        currentBimestre?.periodo.replace(/_/g, " ");
-      alert(`Atividade "${titulo}" foi salva com sucesso! As notas serão registradas no ${nomeBimestre} apos a correcao.`);
+        currentBimestre?.periodo.replace(/_/g, ' ');
+      
+      alert(
+        `Atividade "${titulo}" foi salva com sucesso! As notas serão registradas no ${nomeBimestre} após a correção.`,
+      );
       router.push(`/professor/atividades`);
     } catch (error) {
-      console.error("Erro ao salvar atividade", error);
+      console.error('Erro ao salvar atividade', error);
       alert(
-        "Falha ao salvar a atividade. Verifique os campos e tente novamente."
+        'Falha ao salvar a atividade. Verifique os campos e tente novamente.',
       );
+    } finally {
+      setLoading(false);
     }
   };
 
+  if (authLoading || isBimestreLoading) {
+    return (
+      <Section>
+        <Loading />
+      </Section>
+    );
+  }
+
   return (
-    <div className={styles.pageContainer}>
+    <Section maxWidth={1200}>
       <header className={styles.header}>
         <div>
           <h1>Criar Nova Atividade</h1>
           <p>Defina questões, critérios e anexos para sua atividade</p>
         </div>
-        <div className={styles.headerActions}>
-          <button className={styles.previewButton}>
-            <FiEye /> Pré-visualizar
-          </button>
-          <button
-            onClick={() => handleSaveActivity(true)}
-            className={styles.saveButton}
-          >
-            <FiSend /> Salvar e Publicar
-          </button>
-        </div>
       </header>
 
-      <div className={styles.bimestreBanner}>
-        <FiCalendar />
-        {isBimestreLoading ? (
-          <span>Identificando bimestre vigente...</span>
-        ) : currentBimestre ? (
-          <div>
-            <strong>
-              {currentBimestre.nome || currentBimestre.periodo.replace(/_/g, " ")}
-            </strong>
-            <span>
-              {formatarData(currentBimestre.dataInicio)} - {formatarData(currentBimestre.dataFim)}
-            </span>
-            <small className={styles.bannerHint}>
-              Ao corrigir esta atividade, as notas serão registradas automaticamente neste bimestre.
-            </small>
+        <div className={styles.bimestreBanner}>
+          <div className={styles.bimestreIcon}>
+            <LuCalendar />
           </div>
-        ) : (
-          <div>
-            <strong>Nenhum bimestre vigente</strong>
-            <span>
-              {bimestreError || "Cadastre um periodo com o gestor para habilitar a atribuicao automatica."}
-            </span>
-          </div>
-        )}
-      </div>
+          {currentBimestre ? (
+            <div>
+              <h2>
+                {currentBimestre.nome ||
+                  currentBimestre.periodo.replace(/_/g, ' ')}
+              </h2>
+              <span>
+                {formatarData(currentBimestre.dataInicio)} -{' '}
+                {formatarData(currentBimestre.dataFim)}
+              </span>
+              <p className={styles.bannerHint}>
+                <LuCircleAlert />
+                Ao corrigir esta atividade, as notas ficaram visíveis para
+                atribuição da nota no bimestre.
+              </p>
+            </div>
+          ) : (
+            <div>
+              <strong>Nenhum bimestre vigente</strong>
+              <span>
+                {bimestreError ||
+                  'Cadastre um periodo com o gestor para habilitar a atribuicao automatica.'}
+              </span>
+            </div>
+          )}
+        </div>
 
       <form className={styles.form} onSubmit={(e) => e.preventDefault()}>
         <section className={styles.card}>
           <h2 className={styles.cardTitle}>
-            <FiInfo /> Informações Básicas
+            <span></span> Informações Básicas
           </h2>
           <div className={styles.grid2cols}>
             <div className={styles.field}>
-              <label htmlFor="titulo">Título da Atividade *</label>
+              <label htmlFor="titulo">Título da Atividade <span>*</span></label>
               <input
                 type="text"
                 id="titulo"
                 value={titulo}
                 onChange={(e) => setTitulo(e.target.value)}
-                placeholder="Ex: Prova de Matemática - Equações"
+                placeholder="Ex: Atividade de Matemática - Equações"
               />
             </div>
             <div className={styles.field}>
-              <label htmlFor="turma">Turma *</label>
+              <label htmlFor="turma">Turma <span>*</span></label>
               <select
                 id="turma"
                 value={componenteId}
@@ -246,7 +281,7 @@ export default function NovaAtividadePage() {
           </div>
           <div className={styles.grid2cols}>
             <div className={styles.field}>
-              <label htmlFor="dataEntrega">Data de Entrega *</label>
+              <label htmlFor="dataEntrega">Data de Entrega <span>*</span></label>
               <input
                 type="datetime-local"
                 id="dataEntrega"
@@ -262,6 +297,7 @@ export default function NovaAtividadePage() {
                 value={pontos}
                 onChange={(e) => setPontos(Number(e.target.value))}
                 placeholder="pontos"
+                disabled
               />
             </div>
           </div>
@@ -271,18 +307,7 @@ export default function NovaAtividadePage() {
 
         <section className={styles.card}>
           <h2 className={styles.cardTitle}>
-            <FiPaperclip /> Anexos e Materiais de Apoio
-          </h2>
-          <div className={styles.dropzone}>
-            <FiPaperclip />
-            <p>Clique para adicionar ou arraste arquivos aqui</p>
-            <small>PDF, DOC, DOCX, XLS, XLSX, PNG, JPG (max. 10MB)</small>
-          </div>
-        </section>
-
-        <section className={styles.card}>
-          <h2 className={styles.cardTitle}>
-            <FiSettings /> Configurações e Feedback
+            <span></span> Configurações e Feedback
           </h2>
           <div className={styles.switchRow}>
             <div>
@@ -309,7 +334,7 @@ export default function NovaAtividadePage() {
               defaultChecked
             />
           </div>
-          <div className={styles.field}>
+          <div className={styles.field} style={{ marginTop: '1rem' }}>
             <label htmlFor="anotacoes">Anotações Pessoais (Privadas)</label>
             <textarea
               id="anotacoes"
@@ -324,6 +349,7 @@ export default function NovaAtividadePage() {
             type="button"
             onClick={() => router.back()}
             className={styles.cancelButton}
+            disabled={loading}
           >
             <FiX /> Cancelar
           </button>
@@ -331,29 +357,20 @@ export default function NovaAtividadePage() {
             type="button"
             onClick={() => handleSaveActivity(false)}
             className={styles.draftButton}
+            disabled={loading}
           >
-            <FiSave /> Salvar como Rascunho
+            {loading ? 'Salvando...' : <><FiSave /> Salvar como Rascunho</>}
           </button>
           <button
             type="button"
             onClick={() => handleSaveActivity(true)}
             className={styles.publishButton}
+            disabled={loading}
           >
-            <FiSend /> Publicar Atividade
+            {loading ? 'Publicando...' : <><FiSend /> Publicar Atividade</>}
           </button>
         </footer>
       </form>
-    </div>
+    </Section>
   );
 }
-
-
-
-
-
-
-
-
-
-
-

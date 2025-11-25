@@ -1,13 +1,8 @@
 ﻿'use client';
 
-import {
-  useState,
-  useEffect,
-  useCallback,
-  useMemo,
-  ChangeEvent,
-} from 'react';
+import { useState, useEffect, useCallback, useMemo, ChangeEvent } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation'; // 1. Importar useRouter
 import { api } from '@/services/api';
 import styles from './provas.module.css';
 import { FiFileText, FiEdit2, FiTrash2 } from 'react-icons/fi';
@@ -24,6 +19,8 @@ import {
   LuTarget,
 } from 'react-icons/lu';
 import BarraDeProgresso from '@/components/progressBar/BarraDeProgresso';
+// 2. Importe seu contexto de autenticação (ajuste o caminho conforme seu projeto)
+import { useAuth } from '@/contexts/AuthContext';
 
 const PROVAS_PER_PAGE = 6;
 
@@ -51,6 +48,9 @@ type Tarefa = {
 };
 
 export default function ProvasPage() {
+  const router = useRouter();
+  const { user, loading: authLoading } = useAuth();
+
   const [provas, setProvas] = useState<Tarefa[]>([]);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -64,6 +64,8 @@ export default function ProvasPage() {
   const [page, setPage] = useState(1);
 
   const fetchProvas = useCallback(async () => {
+    if (authLoading || !user) return;
+
     setLoading(true);
     try {
       const response = await api.get('/tarefas');
@@ -72,17 +74,25 @@ export default function ProvasPage() {
       );
       setProvas(filteredProvas);
       setErrorMessage(null);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao buscar provas', error);
-      setErrorMessage('Nao foi possivel carregar as provas no momento.');
+
+      if (error.response?.status === 401) {
+        router.push('/auth/login')
+        setErrorMessage('Sessão expirada. Por favor, faça login novamente.');
+      } else {
+        setErrorMessage('Não foi possível carregar as provas no momento.');
+      }
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [user, authLoading]);
 
   useEffect(() => {
-    fetchProvas();
-  }, [fetchProvas]);
+    if (!authLoading && user) {
+      fetchProvas();
+    }
+  }, [fetchProvas, authLoading, user]);
 
   const handleDeleteProva = async (prova: Tarefa) => {
     const totalEntregas = prova._count?.submissoes ?? 0;
@@ -210,7 +220,7 @@ export default function ProvasPage() {
     ? 'Ajuste ou limpe os filtros para visualizar outras provas.'
     : 'Clique em "Nova Prova" para comecar.';
 
-  if (loading) {
+  if (loading || authLoading) {
     return (
       <Section>
         <Loading />
@@ -308,7 +318,7 @@ export default function ProvasPage() {
       <div className={styles.gridContainer}>
         {vazio ? (
           <div className={styles.emptyState}>
-            <FiFileText size={50} />
+            <LuClipboardCheck size={50} />
             <p>{emptyTitle}</p>
             <span>{emptySubtitle}</span>
           </div>
@@ -338,7 +348,10 @@ export default function ProvasPage() {
                     <LuClipboardCheck />
                   </div>
                   <div className={styles.provaInfo}>
-                    <h3>{prova.titulo}</h3>
+                    <h3>
+                      {prova.titulo}{' '}
+                      <span className={prova.publicado ? styles.publicado : styles.rascunho}>{prova.publicado ? 'Publicado' : 'Rascunho'}</span>
+                    </h3>
                     <p>{getTurmaLabel(prova)}</p>
                     <ul className={styles.listItens}>
                       <li>

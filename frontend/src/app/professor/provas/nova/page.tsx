@@ -21,6 +21,7 @@ import {
   LuX,
 } from 'react-icons/lu';
 import Loading from '@/components/loading/Loading';
+import { useAuth } from '@/contexts/AuthContext'; // 1. Importar AuthContext
 
 type Bimestre = {
   id: string;
@@ -35,6 +36,8 @@ const formatarData = (iso: string) =>
 
 export default function NovaProvaPage() {
   const router = useRouter();
+  // 2. Obter user e loading do contexto
+  const { user, loading: authLoading } = useAuth();
 
   const [componentes, setComponentes] = useState<Componente[]>([]);
   const [titulo, setTitulo] = useState('');
@@ -44,7 +47,7 @@ export default function NovaProvaPage() {
   const [pontos, setPontos] = useState(10);
   const [tempoLimiteMinutos, setTempoLimiteMinutos] = useState(60);
   const [questoes, setQuestoes] = useState<Questao[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(false); // Loading para salvar
 
   const [isIAModalOpen, setIsIAModalOpen] = useState(false);
   const [promptIA, setPromptIA] = useState('');
@@ -54,17 +57,23 @@ export default function NovaProvaPage() {
   const [isBimestreLoading, setIsBimestreLoading] = useState(true);
   const [bimestreError, setBimestreError] = useState<string | null>(null);
 
+  // 3. Effect dos Componentes: Só roda se tiver user e não estiver carregando auth
   useEffect(() => {
+    if (authLoading || !user) return;
+
     api.get('/componentes-curriculares').then((response) => {
       setComponentes(response.data);
       if (response.data.length > 0) {
         setComponenteId(response.data[0].id);
       }
     });
-  }, []);
+  }, [authLoading, user]);
 
+  // 4. Effect do Bimestre: Só roda se tiver user e não estiver carregando auth
   useEffect(() => {
     async function fetchBimestreVigente() {
+      if (authLoading || !user) return;
+
       setIsBimestreLoading(true);
       try {
         const res = await api.get('/bimestres/vigente');
@@ -88,7 +97,7 @@ export default function NovaProvaPage() {
     }
 
     fetchBimestreVigente();
-  }, []);
+  }, [authLoading, user]);
 
   // Calcula automaticamente os pontos totais somando os pontos de todas as questões
   useEffect(() => {
@@ -122,6 +131,8 @@ export default function NovaProvaPage() {
       alert(validationError);
       return;
     }
+
+    setLoading(true);
 
     try {
       const metadata: Record<string, number> = {};
@@ -190,6 +201,8 @@ export default function NovaProvaPage() {
     } catch (error) {
       console.error('Erro ao salvar prova', error);
       alert('Falha ao salvar a prova. Verifique os campos e tente novamente.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -225,7 +238,8 @@ export default function NovaProvaPage() {
     }
   };
 
-  if (isBimestreLoading) {
+  // 5. Loading global: enquanto carrega auth ou bimestre
+  if (authLoading || isBimestreLoading) {
     return (
       <Section>
         <Loading />
@@ -258,9 +272,7 @@ export default function NovaProvaPage() {
           <div className={styles.bimestreIcon}>
             <LuCalendar />
           </div>
-          {isBimestreLoading ? (
-            <span>Identificando bimestre vigente...</span>
-          ) : currentBimestre ? (
+          {currentBimestre ? (
             <div>
               <h2>
                 {currentBimestre.nome ||
@@ -272,7 +284,8 @@ export default function NovaProvaPage() {
               </span>
               <p className={styles.bannerHint}>
                 <LuCircleAlert />
-                Ao corrigir esta prova, as notas ficaram visíveis para atribuição da nota no bimestre.
+                Ao corrigir esta prova, as notas ficaram visíveis para
+                atribuição da nota no bimestre.
               </p>
             </div>
           ) : (
@@ -390,6 +403,7 @@ export default function NovaProvaPage() {
               type="button"
               onClick={() => router.back()}
               className={styles.cancelButton}
+              disabled={loading}
             >
               <LuX /> Cancelar
             </button>
@@ -397,13 +411,21 @@ export default function NovaProvaPage() {
               type="button"
               onClick={() => handleSaveProva(false)}
               className={styles.draftButton}
+              disabled={loading}
             >
-              <LuSave /> Salvar como Rascunho
+              {loading ? (
+                'Salvando...'
+              ) : (
+                <>
+                  <LuSave /> Salvar como Rascunho
+                </>
+              )}
             </button>
             <button
               type="button"
               onClick={handlePreview}
               className={styles.previewButton}
+              disabled={loading}
             >
               <LuEye /> Visualizar
             </button>
@@ -411,8 +433,15 @@ export default function NovaProvaPage() {
               type="button"
               onClick={() => handleSaveProva(true)}
               className={styles.publishButton}
+              disabled={loading}
             >
-              <LuSend /> Publicar Prova
+              {loading ? (
+                'Publicando...'
+              ) : (
+                <>
+                  <LuSend /> Publicar Prova
+                </>
+              )}
             </button>
           </footer>
         </form>

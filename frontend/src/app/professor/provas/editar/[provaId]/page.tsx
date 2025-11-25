@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { api } from '@/services/api';
 import styles from '../../nova/nova-prova.module.css';
-import { FiInfo, FiSave, FiSend, FiEye, FiX, FiTrash2 } from 'react-icons/fi';
+import { FiSave, FiSend, FiEye, FiX, FiTrash2 } from 'react-icons/fi';
 import QuestoesBuilder, {
   validateQuestoes,
 } from '@/components/professor/criarQuestoes/QuestoesBuilder';
@@ -12,6 +12,7 @@ import { Questao } from '@/types/tarefas';
 import { TEMPOS_PROVA } from '../../constants';
 import Section from '@/components/section/Section';
 import Loading from '@/components/loading/Loading';
+import { LuEye, LuSave, LuSend, LuX } from 'react-icons/lu';
 
 type Componente = {
   id: string;
@@ -57,11 +58,8 @@ export default function EditarProvaPage() {
         setTitulo(prova.titulo);
         setDescricao(prova.descricao || '');
         setComponenteId(prova.componenteCurricularId);
-        // Garante formato correto para input datetime-local (YYYY-MM-DDTHH:mm)
         setDataEntrega(new Date(prova.data_entrega).toISOString().slice(0, 16));
 
-        // Nota: O setPontos aqui pode ser sobrescrito pelo useEffect de cálculo abaixo
-        // mas serve para inicialização visual imediata
         setPontos(prova.pontos);
 
         setMetadata(prova.metadata || {});
@@ -92,8 +90,6 @@ export default function EditarProvaPage() {
     fetchData();
   }, [provaId, router]);
 
-  // CORREÇÃO: Dependência alterada para [questoes].
-  // Agora, ao adicionar/remover questões, o total atualiza.
   useEffect(() => {
     const pontosCalculados = questoes.reduce(
       (total, questao) => total + (Number(questao.pontos) || 0),
@@ -126,7 +122,7 @@ export default function EditarProvaPage() {
       return;
     }
 
-    // Confirmação de segurança para evitar sobrescrever com lista vazia acidentalmente
+
     if (
       questoes.length === 0 &&
       !window.confirm('Esta prova não tem questões. Deseja salvar mesmo assim?')
@@ -389,28 +385,28 @@ export default function EditarProvaPage() {
             onClick={() => router.back()}
             className={styles.cancelButton}
           >
-            <FiX /> Cancelar
+            <LuX /> Cancelar
           </button>
           <button
             type="button"
             onClick={() => handleUpdateProva(false)}
             className={styles.draftButton}
           >
-            <FiSave /> Salvar como Rascunho
+            <LuSave /> Salvar como Rascunho
           </button>
           <button
             type="button"
             onClick={handlePreview}
             className={styles.previewButton}
           >
-            <FiEye /> Visualizar
+            <LuEye /> Visualizar
           </button>
           <button
             type="button"
             onClick={() => handleUpdateProva(true)}
             className={styles.publishButton}
           >
-            <FiSend /> Salvar e Publicar
+            <LuSend /> Salvar e Publicar
           </button>
         </footer>
       </form>
