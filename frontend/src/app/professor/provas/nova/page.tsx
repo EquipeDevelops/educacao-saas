@@ -238,7 +238,6 @@ export default function NovaProvaPage() {
     }
   };
 
-  // 5. Loading global: enquanto carrega auth ou bimestre
   if (authLoading || isBimestreLoading) {
     return (
       <Section>

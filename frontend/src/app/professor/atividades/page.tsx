@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useMemo, ChangeEvent } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { api } from '@/services/api';
-import styles from './atividades.module.css'; // Certifique-se de ter este CSS atualizado igual ao de provas/trabalhos
+import styles from './atividades.module.css';
 import { FiEdit2, FiTrash2 } from 'react-icons/fi';
 import Section from '@/components/section/Section';
 import Loading from '@/components/loading/Loading';

@@ -18,7 +18,7 @@ import { Questao } from '@/types/tarefas';
 import Section from '@/components/section/Section';
 import Loading from '@/components/loading/Loading';
 import { useAuth } from '@/contexts/AuthContext';
-import { LuCalendar, LuCircleAlert } from 'react-icons/lu';
+import { LuCalendar, LuCircleAlert, LuStar } from 'react-icons/lu';
 
 export type Componente = {
   id: string;
@@ -54,6 +54,12 @@ export default function NovaAtividadePage() {
   const [isBimestreLoading, setIsBimestreLoading] = useState(true);
   const [bimestreError, setBimestreError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  // Estados para IA
+  const [isIAModalOpen, setIsIAModalOpen] = useState(false);
+  const [promptIA, setPromptIA] = useState('');
+  const [isGerando, setIsGerando] = useState(false);
+  const [erroIA, setErroIA] = useState<string | null>(null);
 
   useEffect(() => {
     if (authLoading || !user) return;
@@ -190,6 +196,38 @@ export default function NovaAtividadePage() {
     }
   };
 
+  const handleGerarQuestoesComIA = async () => {
+    if (!promptIA) {
+      setErroIA('Por favor, descreva o que você precisa na atividade.');
+      return;
+    }
+    setIsGerando(true);
+    setErroIA(null);
+
+    try {
+      const response = await api.post('/gerador-prova-ia/gerar-questoes', {
+        prompt: promptIA,
+      });
+      const questoesGeradas = (response.data as Questao[]).map((questao) => ({
+        ...questao,
+        respostaEsperada:
+          questao.tipo === 'DISCURSIVA'
+            ? questao.respostaEsperada || ''
+            : undefined,
+      }));
+      setQuestoes(questoesGeradas);
+      setIsIAModalOpen(false);
+      setPromptIA('');
+    } catch (err: any) {
+      const message =
+        err.response?.data?.message || 'Ocorreu um erro ao gerar as questões.';
+      setErroIA(message);
+      console.error(err);
+    } finally {
+      setIsGerando(false);
+    }
+  };
+
   if (authLoading || isBimestreLoading) {
     return (
       <Section>
@@ -199,178 +237,224 @@ export default function NovaAtividadePage() {
   }
 
   return (
-    <Section maxWidth={1200}>
-      <header className={styles.header}>
-        <div>
-          <h1>Criar Nova Atividade</h1>
-          <p>Defina questões, critérios e anexos para sua atividade</p>
-        </div>
-      </header>
-
-        <div className={styles.bimestreBanner}>
-          <div className={styles.bimestreIcon}>
-            <LuCalendar />
+    <>
+      <Section maxWidth={1200}>
+        <header className={styles.header}>
+          <div>
+            <h1>Criar Nova Atividade</h1>
+            <p>Defina questões, critérios e anexos para sua atividade</p>
           </div>
-          {currentBimestre ? (
-            <div>
-              <h2>
-                {currentBimestre.nome ||
-                  currentBimestre.periodo.replace(/_/g, ' ')}
-              </h2>
-              <span>
-                {formatarData(currentBimestre.dataInicio)} -{' '}
-                {formatarData(currentBimestre.dataFim)}
-              </span>
-              <p className={styles.bannerHint}>
-                <LuCircleAlert />
-                Ao corrigir esta atividade, as notas ficaram visíveis para
-                atribuição da nota no bimestre.
-              </p>
-            </div>
-          ) : (
-            <div>
-              <strong>Nenhum bimestre vigente</strong>
-              <span>
-                {bimestreError ||
-                  'Cadastre um periodo com o gestor para habilitar a atribuicao automatica.'}
-              </span>
-            </div>
-          )}
-        </div>
+          <div className={styles.headerActions}>
+            <button
+              type="button"
+              onClick={() => setIsIAModalOpen(true)}
+              className={styles.actionButton}
+            >
+              <LuStar /> Gerar com IA
+            </button>
+          </div>
+        </header>
 
-      <form className={styles.form} onSubmit={(e) => e.preventDefault()}>
-        <section className={styles.card}>
-          <h2 className={styles.cardTitle}>
-            <span></span> Informações Básicas
-          </h2>
-          <div className={styles.grid2cols}>
+          <div className={styles.bimestreBanner}>
+            <div className={styles.bimestreIcon}>
+              <LuCalendar />
+            </div>
+            {currentBimestre ? (
+              <div>
+                <h2>
+                  {currentBimestre.nome ||
+                    currentBimestre.periodo.replace(/_/g, ' ')}
+                </h2>
+                <span>
+                  {formatarData(currentBimestre.dataInicio)} -{' '}
+                  {formatarData(currentBimestre.dataFim)}
+                </span>
+                <p className={styles.bannerHint}>
+                  <LuCircleAlert />
+                  Ao corrigir esta atividade, as notas ficaram visíveis para
+                  atribuição da nota no bimestre.
+                </p>
+              </div>
+            ) : (
+              <div>
+                <strong>Nenhum bimestre vigente</strong>
+                <span>
+                  {bimestreError ||
+                    'Cadastre um periodo com o gestor para habilitar a atribuicao automatica.'}
+                </span>
+              </div>
+            )}
+          </div>
+
+        <form className={styles.form} onSubmit={(e) => e.preventDefault()}>
+          <section className={styles.card}>
+            <h2 className={styles.cardTitle}>
+              <span></span> Informações Básicas
+            </h2>
+            <div className={styles.grid2cols}>
+              <div className={styles.field}>
+                <label htmlFor="titulo">Título da Atividade <span>*</span></label>
+                <input
+                  type="text"
+                  id="titulo"
+                  value={titulo}
+                  onChange={(e) => setTitulo(e.target.value)}
+                  placeholder="Ex: Atividade de Matemática - Equações"
+                />
+              </div>
+              <div className={styles.field}>
+                <label htmlFor="turma">Turma <span>*</span></label>
+                <select
+                  id="turma"
+                  value={componenteId}
+                  onChange={(e) => setComponenteId(e.target.value)}
+                >
+                  {componentes.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.turma.serie} {c.turma.nome} ({c.materia.nome})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
             <div className={styles.field}>
-              <label htmlFor="titulo">Título da Atividade <span>*</span></label>
+              <label htmlFor="descricao">Descrição</label>
+              <textarea
+                id="descricao"
+                value={descricao}
+                onChange={(e) => setDescricao(e.target.value)}
+                placeholder="Descreva os objetivos e instruções da atividade..."
+                rows={3}
+              ></textarea>
+            </div>
+            <div className={styles.grid2cols}>
+              <div className={styles.field}>
+                <label htmlFor="dataEntrega">Data de Entrega <span>*</span></label>
+                <input
+                  type="datetime-local"
+                  id="dataEntrega"
+                  value={dataEntrega}
+                  onChange={(e) => setDataEntrega(e.target.value)}
+                />
+              </div>
+              <div className={styles.field}>
+                <label htmlFor="pontos">Pontuação Total</label>
+                <input
+                  type="number"
+                  id="pontos"
+                  value={pontos}
+                  onChange={(e) => setPontos(Number(e.target.value))}
+                  placeholder="pontos"
+                  disabled
+                />
+              </div>
+            </div>
+          </section>
+
+          <QuestoesBuilder questoes={questoes} setQuestoes={setQuestoes} />
+
+          <section className={styles.card}>
+            <h2 className={styles.cardTitle}>
+              <span></span> Configurações e Feedback
+            </h2>
+            <div className={styles.switchRow}>
+              <div>
+                <label htmlFor="entregaAtrasada">Permitir Entrega Atrasada</label>
+                <p>Alunos poderão entregar após a data limite.</p>
+              </div>
               <input
-                type="text"
-                id="titulo"
-                value={titulo}
-                onChange={(e) => setTitulo(e.target.value)}
-                placeholder="Ex: Atividade de Matemática - Equações"
+                type="checkbox"
+                id="entregaAtrasada"
+                className={styles.switch}
               />
             </div>
-            <div className={styles.field}>
-              <label htmlFor="turma">Turma <span>*</span></label>
-              <select
-                id="turma"
-                value={componenteId}
-                onChange={(e) => setComponenteId(e.target.value)}
+            <div className={styles.switchRow}>
+              <div>
+                <label htmlFor="feedbackAutomatico">
+                  Mostrar Feedback Automático
+                </label>
+                <p>Exibir respostas corretas após correção.</p>
+              </div>
+              <input
+                type="checkbox"
+                id="feedbackAutomatico"
+                className={styles.switch}
+                defaultChecked
+              />
+            </div>
+            <div className={styles.field} style={{ marginTop: '1rem' }}>
+              <label htmlFor="anotacoes">Anotações Pessoais (Privadas)</label>
+              <textarea
+                id="anotacoes"
+                placeholder="Adicione anotações ou lembretes sobre esta atividade que apenas você verá..."
+                rows={3}
+              ></textarea>
+            </div>
+          </section>
+
+          <footer className={styles.footer}>
+            <button
+              type="button"
+              onClick={() => router.back()}
+              className={styles.cancelButton}
+              disabled={loading}
+            >
+              <FiX /> Cancelar
+            </button>
+            <button
+              type="button"
+              onClick={() => handleSaveActivity(false)}
+              className={styles.draftButton}
+              disabled={loading}
+            >
+              {loading ? 'Salvando...' : <><FiSave /> Salvar como Rascunho</>}
+            </button>
+            <button
+              type="button"
+              onClick={() => handleSaveActivity(true)}
+              className={styles.publishButton}
+              disabled={loading}
+            >
+              {loading ? 'Publicando...' : <><FiSend /> Publicar Atividade</>}
+            </button>
+          </footer>
+        </form>
+      </Section>
+
+      {isIAModalOpen && (
+        <div className={styles.overlay}>
+          <div className={styles.modal}>
+            <h2>Gerar Questões com Inteligência Artificial</h2>
+            <p>
+              Descreva o conteúdo da atividade. A IA irá criar as questões e
+              adicioná-las ao formulário abaixo para você revisar.
+            </p>
+            <textarea
+              value={promptIA}
+              onChange={(e) => setPromptIA(e.target.value)}
+              rows={6}
+              placeholder="Ex: Crie 3 questões de múltipla escolha e 2 discursivas sobre a Revolução Francesa para o 8º ano."
+              className={styles.modalTextarea}
+            />
+            {erroIA && <p className={styles.modalError}>{erroIA}</p>}
+            <div className={styles.modalActions}>
+              <button
+                onClick={() => setIsIAModalOpen(false)}
+                className={styles.cancelButton}
               >
-                {componentes.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.turma.serie} {c.turma.nome} ({c.materia.nome})
-                  </option>
-                ))}
-              </select>
+                Cancelar
+              </button>
+              <button
+                onClick={handleGerarQuestoesComIA}
+                disabled={isGerando}
+                className={styles.publishButton}
+              >
+                {isGerando ? 'Gerando...' : 'Gerar Questões'}
+              </button>
             </div>
           </div>
-          <div className={styles.field}>
-            <label htmlFor="descricao">Descrição</label>
-            <textarea
-              id="descricao"
-              value={descricao}
-              onChange={(e) => setDescricao(e.target.value)}
-              placeholder="Descreva os objetivos e instruções da atividade..."
-              rows={3}
-            ></textarea>
-          </div>
-          <div className={styles.grid2cols}>
-            <div className={styles.field}>
-              <label htmlFor="dataEntrega">Data de Entrega <span>*</span></label>
-              <input
-                type="datetime-local"
-                id="dataEntrega"
-                value={dataEntrega}
-                onChange={(e) => setDataEntrega(e.target.value)}
-              />
-            </div>
-            <div className={styles.field}>
-              <label htmlFor="pontos">Pontuação Total</label>
-              <input
-                type="number"
-                id="pontos"
-                value={pontos}
-                onChange={(e) => setPontos(Number(e.target.value))}
-                placeholder="pontos"
-                disabled
-              />
-            </div>
-          </div>
-        </section>
-
-        <QuestoesBuilder questoes={questoes} setQuestoes={setQuestoes} />
-
-        <section className={styles.card}>
-          <h2 className={styles.cardTitle}>
-            <span></span> Configurações e Feedback
-          </h2>
-          <div className={styles.switchRow}>
-            <div>
-              <label htmlFor="entregaAtrasada">Permitir Entrega Atrasada</label>
-              <p>Alunos poderão entregar após a data limite.</p>
-            </div>
-            <input
-              type="checkbox"
-              id="entregaAtrasada"
-              className={styles.switch}
-            />
-          </div>
-          <div className={styles.switchRow}>
-            <div>
-              <label htmlFor="feedbackAutomatico">
-                Mostrar Feedback Automático
-              </label>
-              <p>Exibir respostas corretas após correção.</p>
-            </div>
-            <input
-              type="checkbox"
-              id="feedbackAutomatico"
-              className={styles.switch}
-              defaultChecked
-            />
-          </div>
-          <div className={styles.field} style={{ marginTop: '1rem' }}>
-            <label htmlFor="anotacoes">Anotações Pessoais (Privadas)</label>
-            <textarea
-              id="anotacoes"
-              placeholder="Adicione anotações ou lembretes sobre esta atividade que apenas você verá..."
-              rows={3}
-            ></textarea>
-          </div>
-        </section>
-
-        <footer className={styles.footer}>
-          <button
-            type="button"
-            onClick={() => router.back()}
-            className={styles.cancelButton}
-            disabled={loading}
-          >
-            <FiX /> Cancelar
-          </button>
-          <button
-            type="button"
-            onClick={() => handleSaveActivity(false)}
-            className={styles.draftButton}
-            disabled={loading}
-          >
-            {loading ? 'Salvando...' : <><FiSave /> Salvar como Rascunho</>}
-          </button>
-          <button
-            type="button"
-            onClick={() => handleSaveActivity(true)}
-            className={styles.publishButton}
-            disabled={loading}
-          >
-            {loading ? 'Publicando...' : <><FiSend /> Publicar Atividade</>}
-          </button>
-        </footer>
-      </form>
-    </Section>
+        </div>
+      )}
+    </>
   );
 }

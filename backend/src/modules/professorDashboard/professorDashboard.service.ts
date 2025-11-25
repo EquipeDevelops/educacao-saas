@@ -383,6 +383,7 @@ async function getCorrecoesDashboard(user: AuthenticatedRequest['user']) {
         select: {
           turmaId: true,
           turma: { select: { nome: true, serie: true } },
+          materia: { select: { nome: true } },
         },
       },
     },
@@ -471,6 +472,8 @@ async function getCorrecoesDashboard(user: AuthenticatedRequest['user']) {
       id: tarefa.id,
       titulo: tarefa.titulo,
       turma: `${tarefa.componenteCurricular.turma.serie} ${tarefa.componenteCurricular.turma.nome}`,
+      materia: tarefa.componenteCurricular.materia.nome,
+      tipo: tarefa.tipo,
       entregas,
       corrigidas,
       pendentes,

@@ -1,149 +1,164 @@
-.pageContainer {
-  padding: 1.5rem;
-}
-
 .header {
-  margin-bottom: 2rem;
+  margin-bottom: 20px;
 }
 .header h1 {
-  font-size: 1.8rem;
+  font-size: 1.5rem;
+  font-weight: 500;
+  margin-bottom: 5px;
 }
 .header p {
   color: var(--cor-subtexto);
-  margin-top: 0.25rem;
 }
 
 .grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
-.card {
+.emptyState {
+  text-align: center;
+  padding: 4rem;
+  color: var(--cor-subtexto);
+  background-color: white;
+  border: 1px dashed var(--cor-borda);
+  border-radius: 15px;
+}
+
+.emptyState svg {
+  margin-bottom: 1rem;
+  color: #adb5bd;
+}
+
+.filtersContainer {
   background-color: var(--cor-fundo-card);
   border: 1px solid var(--cor-borda);
-  border-radius: 12px;
-  display: flex;
-  flex-direction: column;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  border-radius: 15px;
+  padding: 20px;
+  margin-bottom: 20px;
 }
 
-.cardHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  padding: 1rem 1.5rem;
-}
-
-.cardIcon {
-  background-color: #ffedd5;
-  color: #f97316;
-  width: 40px;
-  height: 40px;
-  border-radius: 8px;
+.filtersHeader {
   display: flex;
   align-items: center;
-  justify-content: center;
-  font-size: 1.2rem;
-}
-
-.cardBadge {
-  background-color: var(--cor-perigo-light);
-  color: var(--cor-perigo-dark);
-  padding: 0.25rem 0.75rem;
-  border-radius: 12px;
-  font-size: 0.75rem;
-  font-weight: 600;
-}
-
-.cardBody {
-  padding: 0 1.5rem;
-  flex-grow: 1;
-}
-
-.cardBody h3 {
-  font-size: 1.1rem;
-  margin: 0;
-}
-.cardBody p {
-  font-size: 0.9rem;
-  color: var(--cor-subtexto);
-  margin: 0.25rem 0 1rem;
-}
-.cardBody ul {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+  justify-content: space-between;
+  gap: 1rem;
   margin-bottom: 1rem;
 }
-.cardBody li {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.9rem;
-  color: var(--cor-subtexto);
-}
 
-.cardFooter {
-  padding: 0 1.5rem 1rem;
-  font-size: 0.8rem;
-  color: var(--cor-subtexto);
-}
-
-.progressBarContainer {
-  width: 100%;
-  height: 8px;
-  background-color: #e9ecef;
-  border-radius: 4px;
-  overflow: hidden;
-  margin-bottom: 0.5rem;
-}
-
-.progressBar {
-  height: 100%;
-  background-color: var(--cor-sucesso);
-}
-
-.cardButton {
-  background-color: var(--cor-primaria-dark);
-  color: white;
-  text-align: center;
-  padding: 0.8rem;
-  border-bottom-left-radius: 12px;
-  border-bottom-right-radius: 12px;
-  text-decoration: none;
+.filtersHeader h2 {
+  font-size: 1.1rem;
   font-weight: 600;
-  transition: background-color 0.2s;
-}
-.cardButton:hover {
-  background-color: #000;
-}
-
-.tabs {
   display: flex;
-  gap: 0.5rem;
-  border-bottom: 2px solid var(--cor-borda);
-  margin-bottom: 1.5rem;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--cor-texto-destaque);
 }
 
-.tabs button {
-  padding: 0.75rem 1rem;
-  border: none;
-  background-color: transparent;
-  font-weight: 600;
-  color: var(--cor-subtexto);
-  cursor: pointer;
-  border-bottom: 2px solid transparent;
-  transform: translateY(2px);
-}
-
-.tabs .activeTab {
+.filtersHeader svg {
   color: var(--cor-primaria);
-  border-bottom-color: var(--cor-primaria);
 }
 
-.emptyMessage {
-  grid-column: 1 / -1;
-  text-align: center;
+.clearButton {
+  border: 1px solid var(--cor-borda);
+  background-color: transparent;
+  color: var(--cor-texto);
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.clearButton:not(:disabled):hover {
+  background-color: var(--cor-primaria);
+  color: #fff;
+}
+
+.clearButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.filtersGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.filtersGrid label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  font-size: 0.9rem;
+}
+
+.filtersGrid span {
   color: var(--cor-subtexto);
-  padding: 2rem;
+}
+
+.filtersGrid select,
+.filtersGrid input {
+  border: 1px solid var(--cor-borda);
+  border-radius: 10px;
+  padding: 0.65rem 0.85rem;
+  font-size: 0.95rem;
+  color: var(--cor-texto);
+  background-color: #fff;
+}
+
+.filtersGrid input::placeholder {
+  color: var(--cor-subtexto);
+}
+
+.checkboxLabel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.checkboxContainer {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  height: 42px;
+  padding: 0 0.5rem;
+  background-color: #fff;
+  border: 1px solid var(--cor-borda);
+  border-radius: 10px;
+}
+
+.checkboxContainer input[type='checkbox'] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  border: 1px solid var(--cor-borda);
+  border-radius: 4px;
+}
+
+.checkboxContainer span {
+  font-size: 0.95rem;
+  color: var(--cor-texto);
+}
+
+.paginationWrapper {
+  margin-top: 2rem;
+  display: flex;
+  justify-content: center;
+}
+
+@media (max-width: 768px) {
+  .filtersGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .filtersHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .clearButton {
+    width: 100%;
+    text-align: center;
+  }
 }
