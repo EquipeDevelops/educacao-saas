@@ -15,6 +15,8 @@ import {
   LuAward,
   LuChartBar,
   LuCalendar,
+  LuSchool,
+  LuBook,
 } from 'react-icons/lu';
 import BarraDeProgresso from '@/components/progressBar/BarraDeProgresso';
 import Section from '@/components/section/Section';
@@ -28,14 +30,16 @@ type Tarefa = {
   pontos: number | null;
   componenteCurricular: {
     turma: { serie: string; nome: string };
+    materia: { nome: string };
   };
+  data_entrega: string;
 };
 
 type Submissao = {
   id: string;
   status: string;
   enviado_em: string;
-  nota: number | null;
+  nota_total: number | null;
   aluno: { usuario: { nome: string } };
 };
 
@@ -210,7 +214,9 @@ export default function EntregasPage() {
     pendentesCount = trabalhoResumo.resumo.pendentes;
   } else {
     totalEntregas = submissoes.length;
-    corrigidasCount = submissoes.filter((s) => s.status === 'AVALIADA').length;
+    corrigidasCount = submissoes.filter(
+      (s) => s.status === 'AVALIADA' || s.nota_total !== null,
+    ).length;
     pendentesCount = submissoes.filter(
       (s) => s.status === 'ENVIADA' || s.status === 'ENVIADA_COM_ATRASO',
     ).length;
@@ -239,6 +245,8 @@ export default function EntregasPage() {
     );
   }
 
+  console.log(tarefa);
+
   return (
     <Section>
       <Link href="/professor/correcoes" className={styles.backLink}>
@@ -249,50 +257,58 @@ export default function EntregasPage() {
         <>
           <header className={styles.header}>
             <div>
-              <h1>{tarefa.titulo}</h1>
-              <p>
-                {tarefa.componenteCurricular.turma.serie}{' '}
-                {tarefa.componenteCurricular.turma.nome}
-              </p>
+              <div className={styles.headerTitle}>
+                <h1>{tarefa.titulo}</h1>
+                <p>
+                  <span>{pontosMaximos.toFixed(1)}</span>
+                  Nota máxima
+                </p>
+              </div>
+              <ul className={styles.headerList}>
+                <li className={styles.tipoTarefa}>
+                  {tarefa.tipo === 'TRABALHO'
+                    ? 'Trabalho'
+                    : tarefa.tipo === 'QUESTIONARIO'
+                    ? 'Questionário'
+                    : 'Prova'}
+                </li>
+                <li className={styles.materia}>
+                  {tarefa.componenteCurricular.materia.nome}
+                </li>
+                <li className={styles.turma}>
+                  <LuSchool />
+                  {tarefa.componenteCurricular.turma.serie}{' '}
+                  {tarefa.componenteCurricular.turma.nome}
+                </li>
+                <li className={styles.dataEntrega}>
+                  <LuCalendar /> Prazo:{' '}
+                  {new Date(tarefa.data_entrega).toLocaleDateString('pt-BR')}
+                </li>
+              </ul>
             </div>
             <div className={styles.statsGrid}>
               <div className={styles.statCard}>
-                <div className={`${styles.statIcon} ${styles.iconBlue}`}>
-                  <LuFileText />
-                </div>
                 <div>
                   <div className={styles.statValue}>{totalEntregas}</div>
                   <div className={styles.statLabel}>Total de Entregas</div>
                 </div>
               </div>
               <div className={styles.statCard}>
-                <div className={`${styles.statIcon} ${styles.iconGreen}`}>
-                  <LuCircleCheck />
-                </div>
                 <div>
                   <div className={styles.statValue}>{corrigidasCount}</div>
                   <div className={styles.statLabel}>Corrigidas</div>
                 </div>
               </div>
               <div className={styles.statCard}>
-                <div className={`${styles.statIcon} ${styles.iconOrange}`}>
-                  <LuClock />
-                </div>
                 <div>
                   <div className={styles.statValue}>{pendentesCount}</div>
                   <div className={styles.statLabel}>Pendentes</div>
                 </div>
               </div>
               <div className={styles.statCard}>
-                <div className={`${styles.statIcon} ${styles.iconPurple}`}>
-                  <LuChartBar />
-                </div>
-                <div style={{ width: '100%' }}>
-                  <div className={styles.statHeader}>
-                    <div className={styles.statLabel}>Progresso</div>
-                    <div className={styles.statValueSmall}>{progresso}%</div>
-                  </div>
-                  <BarraDeProgresso porcentagem={progresso} />
+                <div>
+                  <div className={styles.statValue}>{progresso}%</div>
+                  <div className={styles.statLabel}>Progresso de conclusão</div>
                 </div>
               </div>
             </div>
@@ -302,7 +318,6 @@ export default function EntregasPage() {
             <div className={styles.contentCard}>
               <div className={styles.cardHeader}>
                 <h2>Atribuir notas</h2>
-                <p>Valor máximo: {pontosMaximos.toFixed(1)} pts.</p>
               </div>
               {trabalhoResumo && trabalhoResumo.alunos.length === 0 ? (
                 <div className={styles.emptyState}>
@@ -373,7 +388,9 @@ export default function EntregasPage() {
           ) : (
             <div className={styles.contentCard}>
               <div className={styles.cardHeader}>
-                <h2>Entregas dos Alunos</h2>
+                <h2>
+                  <span></span> Entregas dos Alunos
+                </h2>
               </div>
 
               {allSubmissoes.length === 0 ? (
@@ -383,7 +400,8 @@ export default function EntregasPage() {
               ) : (
                 <div className={styles.listContainer}>
                   {allSubmissoes.map((s) => {
-                    const isAvaliada = s.status === 'AVALIADA';
+                    const isAvaliada =
+                      s.status === 'AVALIADA' || s.nota_total !== null;
                     return (
                       <div key={s.id} className={styles.entregaRow}>
                         <div className={styles.alunoInfo}>
@@ -394,11 +412,12 @@ export default function EntregasPage() {
                             <p>{s.aluno.usuario.nome}</p>
                             <small className={styles.dateTimeInfo}>
                               <span>
-                                <LuCalendar size={14} />{' '}
+                                <LuCalendar size={14} /> Dia:{' '}
                                 {formatDate(s.enviado_em)}
                               </span>
                               <span>
-                                <LuClock size={14} /> {formatTime(s.enviado_em)}
+                                <LuClock size={14} /> Hora:{' '}
+                                {formatTime(s.enviado_em)}
                               </span>
                             </small>
                           </div>
@@ -408,39 +427,34 @@ export default function EntregasPage() {
                           {isAvaliada ? (
                             <>
                               <div className={styles.gradeDisplay}>
-                                <span className={styles.gradeValue}>
-                                  {s.nota !== null ? s.nota : '-'}
-                                </span>
-                                <span className={styles.gradeMax}>
-                                  de {pontosMaximos}
-                                </span>
+                                <h4 className={styles.gradeValue}>
+                                  <span>
+                                    {s.nota_total !== null
+                                      ? s.nota_total.toFixed(1)
+                                      : '-'}
+                                  </span>
+                                  /{pontosMaximos}
+                                </h4>
+                                <p>Nota atribuida</p>
                               </div>
-                              <button
-                                onClick={() =>
-                                  router.push(
-                                    `/professor/correcoes/${tarefaId}/${s.id}`,
-                                  )
-                                }
+                              <Link
+                                href={`/professor/correcoes/${tarefaId}/${s.id}`}
                                 className={styles.verButton}
                               >
                                 Ver Correção
-                              </button>
+                              </Link>
                             </>
                           ) : (
                             <>
                               <span className={styles.badgePendente}>
                                 Pendente
                               </span>
-                              <button
-                                onClick={() =>
-                                  router.push(
-                                    `/professor/correcoes/${tarefaId}/${s.id}`,
-                                  )
-                                }
+                              <Link
+                                href={`/professor/correcoes/${tarefaId}/${s.id}`}
                                 className={styles.corrigirButton}
                               >
-                                Corrigir
-                              </button>
+                                Iniciar Correção
+                              </Link>
                             </>
                           )}
                         </div>

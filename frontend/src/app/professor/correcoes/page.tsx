@@ -1,11 +1,9 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import Link from 'next/link';
 import { api } from '@/services/api';
 import { useAuth } from '@/contexts/AuthContext';
 import styles from './correcoes.module.css';
-import { FiFileText } from 'react-icons/fi';
 import { LuBox, LuFilter } from 'react-icons/lu';
 import Section from '@/components/section/Section';
 import CorrecaoCard, {
