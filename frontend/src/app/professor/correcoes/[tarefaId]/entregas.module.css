@@ -123,23 +123,23 @@
 }
 
 
-.statCard:nth-child(1) {
+.statCard:nth-child(2) {
   background-color: rgb(252, 252, 252);
   color: var(--cor-subtexto) !important;
 }
 
-.statCard:nth-child(2) {
-  background-color: var(--cor-sucesso-light);
-  color: var(--cor-sucesso-dark) !important;
+.statCard:nth-child(1) {
+  background-color: var(--cor-primaria-light);
+  color: var(--cor-primaria) !important;
 }
-
-.statCard:nth-child(3) {
-  background-color: var(--cor-perigo-light);
-  color: var(--cor-perigo) !important;
-}
-
 
 .statCard:nth-child(4) {
+  background-color: var(--cor-primaria);
+  color: white !important;
+}
+
+
+.statCard:nth-child(3) {
   background-color: var(--cor-primaria-light);
   color: var(--cor-primaria) !important;
 }
@@ -189,9 +189,10 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px;
+  padding: 10px 20px;
   border: 1px solid var(--cor-borda);
   border-radius: 15px;
+  background-color: #F9FAFB;
 }
 
 .entregaRow:last-child {
@@ -219,7 +220,7 @@
 
 .alunoInfo p {
   margin: 0;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--cor-texto);
   font-size: 1rem;
   margin-bottom: 4px;
@@ -228,30 +229,31 @@
 .dateTimeInfo {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 20px;
   color: var(--cor-subtexto);
-  font-size: 0.85rem;
+  font-size: 0.9rem;
 }
 
 .dateTimeInfo span {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: 5px;
 }
 
 .actionArea {
   display: flex;
   align-items: center;
-  gap: 1.5rem;
+  gap: 20px;
 }
 
 .badgePendente {
-  background-color: #fff9db;
-  color: #f08c00;
-  padding: 0.4rem 1rem;
-  border-radius: 8px;
-  font-size: 0.85rem;
-  font-weight: 600;
+  background-color: var(--cor-primaria-light);
+  color: var(--cor-primaria);
+  border: 1px solid color-mix(in srgb, currentColor 20%, white 80%);
+  padding: 5px 10px;
+  border-radius: 10px;
+  font-size: .9rem;
+  font-weight: 500;
 }
 
 .gradeDisplay {
@@ -268,12 +270,13 @@
 .gradeValue {
   font-size: 1.2rem;
   font-weight: 400;
+  color: var(--cor-subtexto);
 }
 
 .gradeValue span {
   font-size: 1.8rem;
   font-weight: 500;
-  color: var(--cor-sucesso-dark);
+  color: var(--cor-primaria);
 }
 
 .gradeMax {
@@ -316,8 +319,23 @@
 }
 
 .emptyState {
+  grid-column: 1 / -1;
   text-align: center;
-  padding: 3rem;
+  padding: 4rem;
+  color: var(--cor-subtexto);
+  background-color: white;
+  border: 1px dashed var(--cor-borda);
+  border-radius: 12px;
+}
+
+.emptyState svg {
+  margin-bottom: 1rem;
+  color: #adb5bd;
+}
+
+.emptyState p {
+  display: block;
+  font-size: 1rem;
   color: var(--cor-subtexto);
 }
 

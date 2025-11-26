@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { useEffect, useMemo, useState } from "react";
-import { FiSave, FiAlertTriangle, FiCheckCircle, FiInfo } from "react-icons/fi";
-import { api } from "@/services/api";
-import styles from "./notas.module.css";
+import { useEffect, useMemo, useState } from 'react';
+import { FiSave, FiAlertTriangle, FiCheckCircle, FiInfo } from 'react-icons/fi';
+import { api } from '@/services/api';
+import styles from './notas.module.css';
 
 type Componente = {
   id: string;
@@ -52,47 +52,47 @@ type GradeRow = {
   bimestres: Record<string, number | null>;
   recuperacao: number | null;
   media: number | null;
-  status: "APROVADO" | "REPROVADO" | "PENDENTE";
+  status: 'APROVADO' | 'REPROVADO' | 'PENDENTE';
 };
 
 const periodoLabels: Record<string, string> = {
-  PRIMEIRO_BIMESTRE: "1º Bimestre",
-  SEGUNDO_BIMESTRE: "2º Bimestre",
-  TERCEIRO_BIMESTRE: "3º Bimestre",
-  QUARTO_BIMESTRE: "4º Bimestre",
-  RECUPERACAO_FINAL: "Recuperação",
+  PRIMEIRO_BIMESTRE: '1º Bimestre',
+  SEGUNDO_BIMESTRE: '2º Bimestre',
+  TERCEIRO_BIMESTRE: '3º Bimestre',
+  QUARTO_BIMESTRE: '4º Bimestre',
+  RECUPERACAO_FINAL: 'Recuperação',
 };
 
 const tarefaTipoLabels: Record<string, string> = {
-  PROVA: "Prova",
-  TRABALHO: "Trabalho",
-  QUESTIONARIO: "Questionário",
-  LICAO_DE_CASA: "Lição de Casa",
-  ATIVIDADE_EM_SALA: "Atividade em Sala",
-  PARTICIPACAO: "Participação",
-  OUTRO: "Outro",
+  PROVA: 'Prova',
+  TRABALHO: 'Trabalho',
+  QUESTIONARIO: 'Questionário',
+  LICAO_DE_CASA: 'Lição de Casa',
+  ATIVIDADE_EM_SALA: 'Atividade em Sala',
+  PARTICIPACAO: 'Participação',
+  OUTRO: 'Outro',
 };
 
 const periodoOrdem: string[] = [
-  "PRIMEIRO_BIMESTRE",
-  "SEGUNDO_BIMESTRE",
-  "TERCEIRO_BIMESTRE",
-  "QUARTO_BIMESTRE",
+  'PRIMEIRO_BIMESTRE',
+  'SEGUNDO_BIMESTRE',
+  'TERCEIRO_BIMESTRE',
+  'QUARTO_BIMESTRE',
 ];
 
-const dateFormatter = new Intl.DateTimeFormat("pt-BR", {
-  day: "2-digit",
-  month: "2-digit",
-  year: "numeric",
+const dateFormatter = new Intl.DateTimeFormat('pt-BR', {
+  day: '2-digit',
+  month: '2-digit',
+  year: 'numeric',
 });
 
 const notaFormatter = (value: number | null) => {
-  if (value === null || Number.isNaN(value)) return "--";
+  if (value === null || Number.isNaN(value)) return '--';
   return value.toFixed(1);
 };
 
 const getPeriodoLabel = (periodo: string) =>
-  periodoLabels[periodo] ?? periodo.replace(/_/g, " ");
+  periodoLabels[periodo] ?? periodo.replace(/_/g, ' ');
 
 export default function ProfessorNotasPage() {
   const [componentes, setComponentes] = useState<Componente[]>([]);
@@ -100,11 +100,11 @@ export default function ProfessorNotasPage() {
   const [matriculas, setMatriculas] = useState<Matricula[]>([]);
   const [avaliacoes, setAvaliacoes] = useState<Avaliacao[]>([]);
 
-  const [selectedComponenteId, setSelectedComponenteId] = useState<string>("");
-  const [selectedTurmaId, setSelectedTurmaId] = useState<string>("");
-  const [selectedAlunoId, setSelectedAlunoId] = useState<string>("");
-  const [selectedBimestreId, setSelectedBimestreId] = useState<string>("");
-  const [notaInput, setNotaInput] = useState<string>("");
+  const [selectedComponenteId, setSelectedComponenteId] = useState<string>('');
+  const [selectedTurmaId, setSelectedTurmaId] = useState<string>('');
+  const [selectedAlunoId, setSelectedAlunoId] = useState<string>('');
+  const [selectedBimestreId, setSelectedBimestreId] = useState<string>('');
+  const [notaInput, setNotaInput] = useState<string>('');
 
   const [loadingComponentes, setLoadingComponentes] = useState(true);
   const [loadingBimestres, setLoadingBimestres] = useState(true);
@@ -120,7 +120,9 @@ export default function ProfessorNotasPage() {
     async function carregarComponentes() {
       setLoadingComponentes(true);
       try {
-        const { data } = await api.get<Componente[]>("/componentes-curriculares");
+        const { data } = await api.get<Componente[]>(
+          '/componentes-curriculares',
+        );
         if (!ativo) return;
         setComponentes(data);
         if (data.length > 0) {
@@ -129,7 +131,7 @@ export default function ProfessorNotasPage() {
         }
       } catch (error) {
         if (!ativo) return;
-        setFeedbackError("Falha ao carregar seus componentes curriculares.");
+        setFeedbackError('Falha ao carregar seus componentes curriculares.');
       } finally {
         if (ativo) setLoadingComponentes(false);
       }
@@ -146,14 +148,15 @@ export default function ProfessorNotasPage() {
     async function carregarBimestres() {
       setLoadingBimestres(true);
       try {
-        const { data } = await api.get<Bimestre[]>("/bimestres");
+        const { data } = await api.get<Bimestre[]>('/bimestres');
         if (!ativo) return;
         const hoje = new Date();
         const filtrados = data
           .filter((b) => new Date(b.dataInicio) <= hoje)
           .sort(
             (a, b) =>
-              new Date(a.dataInicio).getTime() - new Date(b.dataInicio).getTime(),
+              new Date(a.dataInicio).getTime() -
+              new Date(b.dataInicio).getTime(),
           );
         setBimestres(filtrados);
 
@@ -164,10 +167,10 @@ export default function ProfessorNotasPage() {
             return inicio <= hoje && fim >= hoje;
           }) ?? filtrados[filtrados.length - 1];
 
-        setSelectedBimestreId(vigente?.id ?? "");
+        setSelectedBimestreId(vigente?.id ?? '');
       } catch (error) {
         if (!ativo) return;
-        setFeedbackError("Falha ao carregar os bimestres disponíveis.");
+        setFeedbackError('Falha ao carregar os bimestres disponíveis.');
       } finally {
         if (ativo) setLoadingBimestres(false);
       }
@@ -183,7 +186,7 @@ export default function ProfessorNotasPage() {
     if (!selectedComponenteId) {
       setMatriculas([]);
       setAvaliacoes([]);
-      setSelectedAlunoId("");
+      setSelectedAlunoId('');
       return;
     }
 
@@ -197,10 +200,10 @@ export default function ProfessorNotasPage() {
     async function carregarDadosDaTurma() {
       try {
         const [matriculasRes, avaliacoesRes] = await Promise.all([
-          api.get<Matricula[]>("/matriculas", {
+          api.get<Matricula[]>('/matriculas', {
             params: { componenteCurricularId: selectedComponenteId },
           }),
-          api.get<Avaliacao[]>("/avaliacoes", {
+          api.get<Avaliacao[]>('/avaliacoes', {
             params: { componenteCurricularId: selectedComponenteId },
           }),
         ]);
@@ -208,7 +211,7 @@ export default function ProfessorNotasPage() {
         if (!ativo) return;
 
         const alunosOrdenados = [...matriculasRes.data].sort((a, b) =>
-          a.aluno.usuario.nome.localeCompare(b.aluno.usuario.nome, "pt-BR"),
+          a.aluno.usuario.nome.localeCompare(b.aluno.usuario.nome, 'pt-BR'),
         );
 
         setMatriculas(alunosOrdenados);
@@ -217,17 +220,17 @@ export default function ProfessorNotasPage() {
 
         setSelectedAlunoId((prev) => {
           if (prev && alunosOrdenados.some((m) => m.id === prev)) return prev;
-          return alunosOrdenados[0]?.id ?? "";
+          return alunosOrdenados[0]?.id ?? '';
         });
       } catch (error: any) {
         if (!ativo) return;
         const message =
           error?.response?.data?.message ||
-          "Falha ao carregar os dados da turma.";
+          'Falha ao carregar os dados da turma.';
         setFeedbackError(message);
         setMatriculas([]);
         setAvaliacoes([]);
-        setSelectedAlunoId("");
+        setSelectedAlunoId('');
       } finally {
         if (ativo) setLoadingDadosTurma(false);
       }
@@ -241,7 +244,7 @@ export default function ProfessorNotasPage() {
 
   useEffect(() => {
     if (!selectedAlunoId || !selectedBimestreId) {
-      setNotaInput("");
+      setNotaInput('');
       return;
     }
     const manual = avaliacoes.find(
@@ -256,7 +259,7 @@ export default function ProfessorNotasPage() {
     if (manual) {
       setNotaInput(manual.nota.toFixed(1));
     } else {
-      setNotaInput("");
+      setNotaInput('');
     }
   }, [selectedAlunoId, selectedBimestreId, avaliacoes, bimestres]);
 
@@ -265,11 +268,14 @@ export default function ProfessorNotasPage() {
 
     return matriculas.map((matricula) => {
       const avaliacoesDoAluno = avaliacoes.filter(
-        (avaliacao) => avaliacao.matricula.id === matricula.id,
+        (avaliacao) =>
+          avaliacao.matricula.id === matricula.id && !avaliacao.tarefa,
       );
 
-      const mediasPorPeriodo: Record<string, { soma: number; quantidade: number }> =
-        {};
+      const mediasPorPeriodo: Record<
+        string,
+        { soma: number; quantidade: number }
+      > = {};
 
       avaliacoesDoAluno.forEach((avaliacao) => {
         const periodo = avaliacao.periodo;
@@ -289,7 +295,7 @@ export default function ProfessorNotasPage() {
           : null;
       });
 
-      const resumoRecuperacao = mediasPorPeriodo["RECUPERACAO_FINAL"];
+      const resumoRecuperacao = mediasPorPeriodo['RECUPERACAO_FINAL'];
       const recuperacao = resumoRecuperacao
         ? parseFloat(
             (resumoRecuperacao.soma / resumoRecuperacao.quantidade).toFixed(1),
@@ -311,13 +317,13 @@ export default function ProfessorNotasPage() {
           )
         : null;
 
-      const status: GradeRow["status"] = !todasNotasPresentes
-        ? "PENDENTE"
+      const status: GradeRow['status'] = !todasNotasPresentes
+        ? 'PENDENTE'
         : mediaFinal !== null && mediaFinal >= 7
-        ? "APROVADO"
+        ? 'APROVADO'
         : recuperacao !== null && recuperacao >= 7
-        ? "APROVADO"
-        : "REPROVADO";
+        ? 'APROVADO'
+        : 'REPROVADO';
 
       return {
         matriculaId: matricula.id,
@@ -334,10 +340,7 @@ export default function ProfessorNotasPage() {
     if (!selectedAlunoId) return [];
     return avaliacoes
       .filter((avaliacao) => avaliacao.matricula.id === selectedAlunoId)
-      .sort(
-        (a, b) =>
-          new Date(b.data).getTime() - new Date(a.data).getTime(),
-      );
+      .sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime());
   }, [avaliacoes, selectedAlunoId]);
 
   const correcoesAlunoSelecionado = useMemo(() => {
@@ -364,23 +367,23 @@ export default function ProfessorNotasPage() {
     setFeedbackSuccess(null);
 
     if (!selectedComponenteId || !selectedTurmaId) {
-      setFeedbackError("Selecione uma turma para registrar a nota.");
+      setFeedbackError('Selecione uma turma para registrar a nota.');
       return;
     }
 
     if (!selectedAlunoId) {
-      setFeedbackError("Escolha um aluno para registrar a nota.");
+      setFeedbackError('Escolha um aluno para registrar a nota.');
       return;
     }
 
     if (!selectedBimestreId || !bimestreSelecionado) {
-      setFeedbackError("Escolha um bimestre válido.");
+      setFeedbackError('Escolha um bimestre válido.');
       return;
     }
 
-    const valorNota = parseFloat(notaInput.replace(",", "."));
+    const valorNota = parseFloat(notaInput.replace(',', '.'));
     if (Number.isNaN(valorNota) || valorNota < 0 || valorNota > 10) {
-      setFeedbackError("Informe uma nota entre 0 e 10.");
+      setFeedbackError('Informe uma nota entre 0 e 10.');
       return;
     }
 
@@ -411,11 +414,11 @@ export default function ProfessorNotasPage() {
             avaliacao.id === data.id ? data : avaliacao,
           ),
         );
-        setFeedbackSuccess("Nota atualizada com sucesso.");
+        setFeedbackSuccess('Nota atualizada com sucesso.');
       } else {
-        const { data } = await api.post<Avaliacao>("/avaliacoes", {
+        const { data } = await api.post<Avaliacao>('/avaliacoes', {
           nota: valorNota,
-          tipo: "PROVA",
+          tipo: 'PROVA',
           data: dataReferencia,
           matriculaId: selectedAlunoId,
           componenteCurricularId: selectedComponenteId,
@@ -423,12 +426,12 @@ export default function ProfessorNotasPage() {
         });
 
         setAvaliacoes((prev) => [...prev, data]);
-        setFeedbackSuccess("Nota registrada com sucesso.");
+        setFeedbackSuccess('Nota registrada com sucesso.');
       }
     } catch (error: any) {
       const message =
         error?.response?.data?.message ||
-        "Não foi possível registrar a nota. Tente novamente.";
+        'Não foi possível registrar a nota. Tente novamente.';
       setFeedbackError(message);
     } finally {
       setSavingNota(false);
@@ -479,7 +482,7 @@ export default function ProfessorNotasPage() {
             >
               {componentes.map((componente) => (
                 <option key={componente.id} value={componente.id}>
-                  {componente.turma.serie} - {componente.turma.nome} ·{" "}
+                  {componente.turma.serie} - {componente.turma.nome} ·{' '}
                   {componente.materia.nome}
                 </option>
               ))}
@@ -544,11 +547,11 @@ export default function ProfessorNotasPage() {
               loadingDadosTurma ||
               !selectedAlunoId ||
               !selectedBimestreId ||
-              notaInput.trim() === ""
+              notaInput.trim() === ''
             }
           >
             <FiSave />
-            {savingNota ? "Salvando..." : "Registrar nota"}
+            {savingNota ? 'Salvando...' : 'Registrar nota'}
           </button>
         </section>
 
@@ -565,10 +568,11 @@ export default function ProfessorNotasPage() {
 
         <section className={styles.correcoesSection}>
           <header className={styles.sectionHeader}>
-            <h2>Correções registradas automaticamente</h2>
+            <h2>Atividades Corrigidas</h2>
             <p>
-              Toda correção feita nas submissões aparece aqui e é considerada na
-              média do bimestre.
+              Visualize as notas das atividades para auxiliar na atribuição da
+              nota final do bimestre. Estas notas não entram automaticamente no
+              cálculo da média.
             </p>
           </header>
 
@@ -600,7 +604,9 @@ export default function ProfessorNotasPage() {
                           avaliacao.bimestre?.periodo ?? avaliacao.periodo,
                         )}
                       </span>
-                      <span>{dateFormatter.format(new Date(avaliacao.data))}</span>
+                      <span>
+                        {dateFormatter.format(new Date(avaliacao.data))}
+                      </span>
                     </div>
                   </li>
                 ))}
@@ -627,7 +633,7 @@ export default function ProfessorNotasPage() {
             <h2>Quadro de notas da turma</h2>
             {turmaSelecionada && (
               <p>
-                {turmaSelecionada.turma.serie} - {turmaSelecionada.turma.nome} ·{" "}
+                {turmaSelecionada.turma.serie} - {turmaSelecionada.turma.nome} ·{' '}
                 {turmaSelecionada.materia.nome}
               </p>
             )}
@@ -652,7 +658,7 @@ export default function ProfessorNotasPage() {
                     {periodoOrdem.map((periodo) => (
                       <th key={periodo}>{getPeriodoLabel(periodo)}</th>
                     ))}
-                    <th>{getPeriodoLabel("RECUPERACAO_FINAL")}</th>
+                    <th>{getPeriodoLabel('RECUPERACAO_FINAL')}</th>
                     <th>Média</th>
                     <th>Status</th>
                   </tr>
@@ -662,25 +668,27 @@ export default function ProfessorNotasPage() {
                     <tr key={linha.matriculaId}>
                       <td className={styles.alunoCell}>{linha.alunoNome}</td>
                       {periodoOrdem.map((periodo) => (
-                        <td key={periodo}>{notaFormatter(linha.bimestres[periodo])}</td>
+                        <td key={periodo}>
+                          {notaFormatter(linha.bimestres[periodo])}
+                        </td>
                       ))}
                       <td>{notaFormatter(linha.recuperacao)}</td>
                       <td>{notaFormatter(linha.media)}</td>
                       <td>
                         <span
                           className={`${styles.statusPill} ${
-                            linha.status === "APROVADO"
+                            linha.status === 'APROVADO'
                               ? styles.statusSuccess
-                              : linha.status === "REPROVADO"
+                              : linha.status === 'REPROVADO'
                               ? styles.statusDanger
                               : styles.statusNeutral
                           }`}
                         >
-                          {linha.status === "PENDENTE"
-                            ? "Em andamento"
-                            : linha.status === "APROVADO"
-                            ? "Aprovado"
-                            : "Reprovado"}
+                          {linha.status === 'PENDENTE'
+                            ? 'Em andamento'
+                            : linha.status === 'APROVADO'
+                            ? 'Aprovado'
+                            : 'Reprovado'}
                         </span>
                       </td>
                     </tr>

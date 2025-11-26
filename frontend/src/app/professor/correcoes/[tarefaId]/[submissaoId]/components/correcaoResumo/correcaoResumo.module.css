@@ -1,0 +1,86 @@
+.resumoCard {
+  background-color: var(--cor-primaria-dark);
+  color: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  position: sticky;
+  top: 1.5rem;
+}
+
+.resumoAluno {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.avatar {
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  background-color: var(--cor-primaria);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.resumoAluno p {
+  margin: 0;
+  font-weight: 500;
+}
+.resumoAluno small {
+  color: #bdc3c7;
+}
+
+.notaCalculada {
+  text-align: center;
+  padding: 1.5rem 0;
+}
+.notaCalculada p {
+  margin: 0;
+  color: #bdc3c7;
+}
+.notaCalculada strong {
+  font-size: 3rem;
+  line-height: 1;
+  display: block;
+  margin: 0.5rem 0;
+}
+.notaCalculada span {
+  font-size: 0.9rem;
+  color: #bdc3c7;
+}
+
+.resumoStats {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1.5rem 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+.resumoStats li {
+  display: flex;
+  justify-content: space-between;
+}
+
+.resumoActions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.rascunhoButton,
+.finalizarButton {
+  padding: 0.8rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.rascunhoButton {
+  background-color: rgba(255, 255, 255, 0.2);
+  color: white;
+}
+.finalizarButton {
+  background-color: var(--cor-sucesso);
+  color: white;
+}
+

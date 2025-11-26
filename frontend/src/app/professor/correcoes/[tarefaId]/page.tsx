@@ -17,6 +17,7 @@ import {
   LuCalendar,
   LuSchool,
   LuBook,
+  LuBox,
 } from 'react-icons/lu';
 import BarraDeProgresso from '@/components/progressBar/BarraDeProgresso';
 import Section from '@/components/section/Section';
@@ -395,6 +396,7 @@ export default function EntregasPage() {
 
               {allSubmissoes.length === 0 ? (
                 <div className={styles.emptyState}>
+                  <LuBox size={50} />
                   <p>Nenhuma entrega encontrada para esta atividade.</p>
                 </div>
               ) : (
