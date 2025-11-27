@@ -1,15 +1,20 @@
-import { Prisma, PrismaClient, StatusSubmissao, TipoTarefa } from "@prisma/client";
+import {
+  Prisma,
+  PrismaClient,
+  StatusSubmissao,
+  TipoTarefa,
+} from '@prisma/client';
 import {
   CreateTarefaInput,
   FindAllTarefasInput,
   TrabalhoManualGradeInput,
-} from "./tarefa.validator";
-import { AuthenticatedRequest } from "../../middlewares/auth";
+} from './tarefa.validator';
+import { AuthenticatedRequest } from '../../middlewares/auth';
 import {
   googleDriveService,
   GoogleDriveFile,
-} from "../../services/googleDrive.service";
-import { grade as gradeSubmissao } from "../submissao/submissao.service";
+} from '../../services/googleDrive.service';
+import { grade as gradeSubmissao } from '../submissao/submissao.service';
 
 const prisma = new PrismaClient();
 
@@ -44,16 +49,16 @@ async function verifyOwnership(tarefaId: string, professorId: string) {
   });
 
   if (!tarefa) {
-    const error = new Error("Tarefa não encontrada.");
-    (error as any).code = "P2025";
+    const error = new Error('Tarefa não encontrada.');
+    (error as any).code = 'P2025';
     throw error;
   }
 
   if (tarefa.componenteCurricular.professorId !== professorId) {
     const error = new Error(
-      "Você não tem permissão para modificar esta tarefa."
+      'Você não tem permissão para modificar esta tarefa.',
     );
-    (error as any).code = "FORBIDDEN";
+    (error as any).code = 'FORBIDDEN';
     throw error;
   }
 }
@@ -65,8 +70,8 @@ async function ensureProvaSemSubmissoes(id: string) {
   });
 
   if (!tarefa) {
-    const error = new Error("Tarefa nao encontrada.");
-    (error as any).code = "P2025";
+    const error = new Error('Tarefa nao encontrada.');
+    (error as any).code = 'P2025';
     throw error;
   }
 
@@ -80,20 +85,20 @@ async function ensureProvaSemSubmissoes(id: string) {
 
   if (entregas > 0) {
     const error = new Error(
-      "Esta prova ja possui entregas e nao pode ser alterada."
+      'Esta prova ja possui entregas e nao pode ser alterada.',
     );
-    (error as any).code = "HAS_SUBMISSIONS";
+    (error as any).code = 'HAS_SUBMISSIONS';
     throw error;
   }
 }
 
 export async function create(
   data: CreateTarefaInput,
-  user: AuthenticatedRequest["user"]
+  user: AuthenticatedRequest['user'],
 ) {
   if (!user.perfilId) {
-    const error = new Error("Professor não autenticado corretamente.");
-    (error as any).code = "FORBIDDEN";
+    const error = new Error('Professor não autenticado corretamente.');
+    (error as any).code = 'FORBIDDEN';
     throw error;
   }
   const professorId = user.perfilId;
@@ -111,9 +116,9 @@ export async function create(
 
   if (!componente) {
     const error = new Error(
-      "Você não tem permissão para criar tarefas para este componente curricular."
+      'Você não tem permissão para criar tarefas para este componente curricular.',
     );
-    (error as any).code = "FORBIDDEN";
+    (error as any).code = 'FORBIDDEN';
     throw error;
   }
 
@@ -128,14 +133,14 @@ export async function create(
       dataInicio: { lte: referencia },
       dataFim: { gte: referencia },
     },
-    orderBy: { dataInicio: "asc" },
+    orderBy: { dataInicio: 'asc' },
   });
 
   if (!bimestreVigente) {
     const error = new Error(
-      "Nenhum bimestre vigente configurado para esta unidade escolar e ano letivo. Solicite ao gestor o cadastro."
+      'Nenhum bimestre vigente configurado para esta unidade escolar e ano letivo. Solicite ao gestor o cadastro.',
     );
-    (error as any).code = "NO_ACTIVE_BIMESTRE";
+    (error as any).code = 'NO_ACTIVE_BIMESTRE';
     throw error;
   }
 
@@ -158,12 +163,12 @@ export async function create(
 }
 
 export async function findAll(
-  user: AuthenticatedRequest["user"],
-  filters: FindAllTarefasInput
+  user: AuthenticatedRequest['user'],
+  filters: FindAllTarefasInput,
 ) {
   const where: Prisma.TarefasWhereInput = {};
 
-  if (user.papel === "GESTOR") {
+  if (user.papel === 'GESTOR') {
     where.unidadeEscolarId = user.unidadeEscolarId;
   }
 
@@ -175,11 +180,11 @@ export async function findAll(
     where.bimestreId = filters.bimestreId;
   }
 
-  if (user.papel === "ALUNO") {
+  if (user.papel === 'ALUNO') {
     const matricula = await prisma.matriculas.findFirst({
       where: {
         aluno: { usuarioId: user.id },
-        status: "ATIVA",
+        status: 'ATIVA',
       },
       select: { turmaId: true },
     });
@@ -194,14 +199,14 @@ export async function findAll(
     };
   }
 
-  if (user.papel === "PROFESSOR") {
+  if (user.papel === 'PROFESSOR') {
     where.componenteCurricular = { professorId: user.perfilId! };
   }
 
   return prisma.tarefas.findMany({ where, include: fullInclude });
 }
 
-export async function findById(id: string, user: AuthenticatedRequest["user"]) {
+export async function findById(id: string, user: AuthenticatedRequest['user']) {
   const tarefa = await prisma.tarefas.findUnique({
     where: { id },
     include: fullInclude,
@@ -210,14 +215,14 @@ export async function findById(id: string, user: AuthenticatedRequest["user"]) {
   if (!tarefa) return null;
 
   if (
-    user.papel === "PROFESSOR" &&
+    user.papel === 'PROFESSOR' &&
     tarefa.componenteCurricular.professorId !== user.perfilId
   ) {
     return null;
   }
 
   if (
-    (user.papel === "GESTOR" || user.papel === "ALUNO") &&
+    (user.papel === 'GESTOR' || user.papel === 'ALUNO') &&
     tarefa.unidadeEscolarId !== user.unidadeEscolarId
   ) {
     return null;
@@ -229,11 +234,11 @@ export async function findById(id: string, user: AuthenticatedRequest["user"]) {
 export async function update(
   id: string,
   data: Prisma.TarefasUpdateInput,
-  user: AuthenticatedRequest["user"]
+  user: AuthenticatedRequest['user'],
 ) {
   if (!user.perfilId) {
-    const error = new Error("Professor não autenticado corretamente.");
-    (error as any).code = "FORBIDDEN";
+    const error = new Error('Professor não autenticado corretamente.');
+    (error as any).code = 'FORBIDDEN';
     throw error;
   }
   await verifyOwnership(id, user.perfilId);
@@ -244,11 +249,11 @@ export async function update(
 export async function addAttachments(
   id: string,
   files: Express.Multer.File[],
-  user: AuthenticatedRequest["user"]
+  user: AuthenticatedRequest['user'],
 ) {
   if (!user.perfilId) {
-    const error = new Error("Professor não autenticado corretamente.");
-    (error as any).code = "FORBIDDEN";
+    const error = new Error('Professor não autenticado corretamente.');
+    (error as any).code = 'FORBIDDEN';
     throw error;
   }
 
@@ -260,8 +265,8 @@ export async function addAttachments(
   });
 
   if (!tarefa) {
-    const error = new Error("Tarefa não encontrada.");
-    (error as any).code = "P2025";
+    const error = new Error('Tarefa não encontrada.');
+    (error as any).code = 'P2025';
     throw error;
   }
 
@@ -298,13 +303,11 @@ export async function addAttachments(
 
 async function getTrabalhoCorrecaoResumo(
   id: string,
-  user: AuthenticatedRequest["user"]
+  user: AuthenticatedRequest['user'],
 ) {
   if (!user.perfilId) {
-    const error = new Error(
-      "Voc� n�o tem permiss�o para acessar esta tarefa."
-    );
-    (error as any).code = "FORBIDDEN";
+    const error = new Error('Você não tem permissão para acessar esta tarefa.');
+    (error as any).code = 'FORBIDDEN';
     throw error;
   }
 
@@ -328,23 +331,17 @@ async function getTrabalhoCorrecaoResumo(
   });
 
   if (!tarefa) {
-    const error = new Error("Tarefa n�o encontrada.");
-    (error as any).code = "NOT_FOUND";
+    const error = new Error('Tarefa não encontrada.');
+    (error as any).code = 'NOT_FOUND';
     throw error;
   }
 
-  if (tarefa.tipo !== TipoTarefa.TRABALHO) {
-    const error = new Error(
-      "As avalia��es manuais est�o dispon�veis apenas para trabalhos."
-    );
-    (error as any).code = "INVALID_TIPO";
-    throw error;
-  }
+  // Restriction removed to allow viewing pending students for all task types
 
   const matriculas = await prisma.matriculas.findMany({
     where: {
       turmaId: tarefa.componenteCurricular.turmaId,
-      status: "ATIVA",
+      status: 'ATIVA',
     },
     select: {
       id: true,
@@ -358,7 +355,7 @@ async function getTrabalhoCorrecaoResumo(
     orderBy: {
       aluno: {
         usuario: {
-          nome: "asc",
+          nome: 'asc',
         },
       },
     },
@@ -366,13 +363,13 @@ async function getTrabalhoCorrecaoResumo(
 
   const alunoIds = matriculas
     .map((matricula) => matricula.alunoId)
-    .filter((id): id is string => typeof id === "string" && id.length > 0);
+    .filter((id): id is string => typeof id === 'string' && id.length > 0);
   const usuarioIds = matriculas
     .map((matricula) => matricula.aluno?.usuarioId)
-    .filter((id): id is string => typeof id === "string" && id.length > 0);
+    .filter((id): id is string => typeof id === 'string' && id.length > 0);
   const matriculaIds = matriculas
     .map((matricula) => matricula.id)
-    .filter((id): id is string => typeof id === "string" && id.length > 0);
+    .filter((id): id is string => typeof id === 'string' && id.length > 0);
 
   const [submissoes, avaliacoes] = await Promise.all([
     alunoIds.length
@@ -420,9 +417,9 @@ async function getTrabalhoCorrecaoResumo(
     const usuarioId = matricula.aluno?.usuarioId ?? null;
 
     const nota =
-      typeof avaliacao?.nota === "number"
+      typeof avaliacao?.nota === 'number'
         ? avaliacao.nota
-        : typeof submissao?.nota_total === "number"
+        : typeof submissao?.nota_total === 'number'
         ? submissao.nota_total
         : null;
 
@@ -437,16 +434,16 @@ async function getTrabalhoCorrecaoResumo(
 
     const status =
       nota !== null || submissao?.status === StatusSubmissao.AVALIADA
-        ? "AVALIADO"
-        : "PENDENTE";
+        ? 'AVALIADO'
+        : 'PENDENTE';
 
     const nomeAluno =
-      (usuarioId ? usuarioMap.get(usuarioId) : null) ?? "Aluno sem cadastro";
+      (usuarioId ? usuarioMap.get(usuarioId) : null) ?? 'Aluno sem cadastro';
 
     return {
       matriculaId: matricula.id,
       alunoPerfilId: matricula.alunoId,
-      alunoUsuarioId: usuarioId ?? "",
+      alunoUsuarioId: usuarioId ?? '',
       nome: nomeAluno,
       nota,
       ultimaAtualizacao,
@@ -456,7 +453,9 @@ async function getTrabalhoCorrecaoResumo(
     };
   });
 
-  const avaliados = alunos.filter((aluno) => aluno.status === "AVALIADO").length;
+  const avaliados = alunos.filter(
+    (aluno) => aluno.status === 'AVALIADO',
+  ).length;
 
   return {
     tarefa: {
@@ -464,8 +463,8 @@ async function getTrabalhoCorrecaoResumo(
       titulo: tarefa.titulo,
       tipo: tarefa.tipo,
       pontos: tarefa.pontos,
-      turma: `${tarefa.componenteCurricular.turma?.serie ?? ""} ${
-        tarefa.componenteCurricular.turma?.nome ?? ""
+      turma: `${tarefa.componenteCurricular.turma?.serie ?? ''} ${
+        tarefa.componenteCurricular.turma?.nome ?? ''
       }`.trim(),
     },
     resumo: {
@@ -480,13 +479,13 @@ async function getTrabalhoCorrecaoResumo(
 async function gradeTrabalhoAluno(
   id: string,
   corpo: TrabalhoManualGradeInput,
-  user: AuthenticatedRequest["user"]
+  user: AuthenticatedRequest['user'],
 ) {
   if (!user.perfilId || !user.unidadeEscolarId) {
     const error = new Error(
-      "Voc� n�o tem permiss�o para registrar notas nesta tarefa."
+      'Voc� n�o tem permiss�o para registrar notas nesta tarefa.',
     );
-    (error as any).code = "FORBIDDEN";
+    (error as any).code = 'FORBIDDEN';
     throw error;
   }
 
@@ -505,25 +504,25 @@ async function gradeTrabalhoAluno(
   });
 
   if (!tarefa) {
-    const error = new Error("Tarefa n�o encontrada.");
-    (error as any).code = "NOT_FOUND";
+    const error = new Error('Tarefa n�o encontrada.');
+    (error as any).code = 'NOT_FOUND';
     throw error;
   }
 
   if (tarefa.tipo !== TipoTarefa.TRABALHO) {
     const error = new Error(
-      "Somente trabalhos podem ser avaliados manualmente."
+      'Somente trabalhos podem ser avaliados manualmente.',
     );
-    (error as any).code = "INVALID_TIPO";
+    (error as any).code = 'INVALID_TIPO';
     throw error;
   }
 
   const notaMaxima = tarefa.pontos ?? 10;
   if (corpo.nota > notaMaxima) {
     const error = new Error(
-      `A nota n�o pode ser maior que ${notaMaxima.toFixed(1)} pontos.`
+      `A nota n�o pode ser maior que ${notaMaxima.toFixed(1)} pontos.`,
     );
-    (error as any).code = "INVALID_NOTE_RANGE";
+    (error as any).code = 'INVALID_NOTE_RANGE';
     throw error;
   }
 
@@ -531,16 +530,16 @@ async function gradeTrabalhoAluno(
     where: {
       alunoId: corpo.alunoId,
       turmaId: tarefa.componenteCurricular.turmaId,
-      status: "ATIVA",
+      status: 'ATIVA',
     },
     select: { id: true },
   });
 
   if (!matricula) {
     const error = new Error(
-      "N�o foi poss�vel localizar uma matr�cula ativa deste aluno para a turma do trabalho."
+      'N�o foi poss�vel localizar uma matr�cula ativa deste aluno para a turma do trabalho.',
     );
-    (error as any).code = "MATRICULA_NOT_FOUND";
+    (error as any).code = 'MATRICULA_NOT_FOUND';
     throw error;
   }
 
@@ -552,7 +551,7 @@ async function gradeTrabalhoAluno(
   if (!submissao) {
     const metadados: Prisma.JsonObject = {
       criadoManualmente: true,
-      origem: "correcao_trabalho_presencial",
+      origem: 'correcao_trabalho_presencial',
     };
 
     submissao = await prisma.submissoes.create({
@@ -574,46 +573,46 @@ async function gradeTrabalhoAluno(
   return gradeSubmissao(
     submissao.id,
     { nota_total: corpo.nota, feedback: corpo.feedback },
-    { ...user, unidadeEscolarId: unidadeEscolarContext }
+    { ...user, unidadeEscolarId: unidadeEscolarContext },
   );
 }
 
 export async function publish(
   id: string,
   publicado: boolean,
-  user: AuthenticatedRequest["user"]
+  user: AuthenticatedRequest['user'],
 ) {
   if (!user.perfilId) {
-    const error = new Error("Professor não autenticado corretamente.");
-    (error as any).code = "FORBIDDEN";
+    const error = new Error('Professor não autenticado corretamente.');
+    (error as any).code = 'FORBIDDEN';
     throw error;
   }
   await verifyOwnership(id, user.perfilId);
   return prisma.tarefas.update({ where: { id }, data: { publicado } });
 }
 
-export async function remove(id: string, user: AuthenticatedRequest["user"]) {
-  console.log("[DEBUG] Tentando deletar tarefa com ID:", id);
+export async function remove(id: string, user: AuthenticatedRequest['user']) {
+  console.log('[DEBUG] Tentando deletar tarefa com ID:', id);
 
   if (!user.perfilId) {
-    const error = new Error("Professor não autenticado corretamente.");
-    (error as any).code = "FORBIDDEN";
+    const error = new Error('Professor não autenticado corretamente.');
+    (error as any).code = 'FORBIDDEN';
     throw error;
   }
 
   await verifyOwnership(id, user.perfilId);
   await ensureProvaSemSubmissoes(id);
-  console.log("[DEBUG] Ownership verificada com sucesso");
+  console.log('[DEBUG] Ownership verificada com sucesso');
 
   try {
     const result = await prisma.tarefas.delete({
       where: { id },
     });
 
-    console.log("[DEBUG] Tarefa deletada com sucesso via cascade");
+    console.log('[DEBUG] Tarefa deletada com sucesso via cascade');
     return result;
   } catch (error) {
-    console.log("[DEBUG] Erro ao deletar tarefa:", error);
+    console.log('[DEBUG] Erro ao deletar tarefa:', error);
     throw error;
   }
 }

@@ -104,7 +104,6 @@
   border-radius: 10px;
 }
 
-
 .statValue {
   font-size: 1.8rem;
   font-weight: 500;
@@ -122,7 +121,6 @@
   margin-bottom: 0.5rem;
 }
 
-
 .statCard:nth-child(2) {
   background-color: rgb(252, 252, 252);
   color: var(--cor-subtexto) !important;
@@ -137,7 +135,6 @@
   background-color: var(--cor-primaria);
   color: white !important;
 }
-
 
 .statCard:nth-child(3) {
   background-color: var(--cor-primaria-light);
@@ -221,9 +218,9 @@
   justify-content: space-between;
   align-items: center;
   padding: 10px 20px;
-  border: 1px solid var(--cor-borda);
+  border: 1px solid var(--cor-borda) !important;
   border-radius: 15px;
-  background-color: #F9FAFB;
+  background-color: #f9fafb;
 }
 
 .entregaRow:last-child {
@@ -260,7 +257,7 @@
 .dateTimeInfo {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 10px;
   color: var(--cor-subtexto);
   font-size: 0.9rem;
 }
@@ -283,7 +280,7 @@
   border: 1px solid color-mix(in srgb, currentColor 20%, white 80%);
   padding: 5px 10px;
   border-radius: 10px;
-  font-size: .9rem;
+  font-size: 0.9rem;
   font-weight: 500;
 }
 
@@ -331,6 +328,33 @@
 
 .corrigirButton:hover {
   background-color: var(--cor-primaria-hover);
+}
+
+.messageButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background-color: white;
+  color: var(--cor-texto);
+  border: 1px solid var(--cor-borda);
+  padding: 8px 16px;
+  border-radius: 10px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.messageButton:hover {
+  background-color: var(--cor-bt-white-hover);
+  border-color: var(--cor-primaria);
+  color: var(--cor-primaria);
+}
+
+.badgeNaoEntregue {
+  background-color: #ffebee;
+  color: #c62828;
+  border-color: #ffcdd2;
 }
 
 .verButton {

@@ -119,9 +119,17 @@
   border: 1px solid var(--cor-borda);
 }
 
+.rascunhoButton:hover {
+  background-color: var(--cor-bt-white-hover);
+}
+
 .finalizarButton {
   background-color: var(--cor-primaria);
   color: white;
+}
+
+.finalizarButton:hover {
+  background-color: var(--cor-primaria-hover);
 }
 
 .rascunhoButton:disabled,

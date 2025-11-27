@@ -1,42 +1,39 @@
-import { DiaDaSemana, PrismaClient } from "@prisma/client";
-import { PDFDocument, PDFFont, StandardFonts, rgb } from "pdf-lib";
-import { AuthenticatedRequest } from "../../middlewares/auth";
+import { DiaDaSemana, PrismaClient } from '@prisma/client';
+import { PDFDocument, PDFFont, StandardFonts, rgb } from 'pdf-lib';
+import { AuthenticatedRequest } from '../../middlewares/auth';
 
 const prisma = new PrismaClient();
 
 const PERIODOS_PADRAO = [
-  "PRIMEIRO_BIMESTRE",
-  "SEGUNDO_BIMESTRE",
-  "TERCEIRO_BIMESTRE",
-  "QUARTO_BIMESTRE",
-  "ATIVIDADES_CONTINUAS",
-  "RECUPERACAO_FINAL",
+  'PRIMEIRO_BIMESTRE',
+  'SEGUNDO_BIMESTRE',
+  'TERCEIRO_BIMESTRE',
+  'QUARTO_BIMESTRE',
+  'ATIVIDADES_CONTINUAS',
+  'RECUPERACAO_FINAL',
 ] as const;
 
-const PERIODOS_LABEL: Record<
-  (typeof PERIODOS_PADRAO)[number],
-  string
-> = {
-  PRIMEIRO_BIMESTRE: "1Âº Bimestre",
-  SEGUNDO_BIMESTRE: "2Âº Bimestre",
-  TERCEIRO_BIMESTRE: "3Âº Bimestre",
-  QUARTO_BIMESTRE: "4Âº Bimestre",
-  ATIVIDADES_CONTINUAS: "Atividades ContÃ­nuas",
-  RECUPERACAO_FINAL: "RecuperaÃ§Ã£o Final",
+const PERIODOS_LABEL: Record<(typeof PERIODOS_PADRAO)[number], string> = {
+  PRIMEIRO_BIMESTRE: '1Âº Bimestre',
+  SEGUNDO_BIMESTRE: '2Âº Bimestre',
+  TERCEIRO_BIMESTRE: '3Âº Bimestre',
+  QUARTO_BIMESTRE: '4Âº Bimestre',
+  ATIVIDADES_CONTINUAS: 'Atividades ContÃ­nuas',
+  RECUPERACAO_FINAL: 'RecuperaÃ§Ã£o Final',
 };
 
 const PERIODOS_PDF_ORDEM: (typeof PERIODOS_PADRAO)[number][] = [
-  "PRIMEIRO_BIMESTRE",
-  "SEGUNDO_BIMESTRE",
-  "TERCEIRO_BIMESTRE",
-  "QUARTO_BIMESTRE",
-  "RECUPERACAO_FINAL",
+  'PRIMEIRO_BIMESTRE',
+  'SEGUNDO_BIMESTRE',
+  'TERCEIRO_BIMESTRE',
+  'QUARTO_BIMESTRE',
+  'RECUPERACAO_FINAL',
 ];
 
 const findAllPerfis = (unidadeEscolarId: string) => {
   console.log(
-    "[SERVICE] Buscando todos os perfis de alunos para a unidade:",
-    unidadeEscolarId
+    '[SERVICE] Buscando todos os perfis de alunos para a unidade:',
+    unidadeEscolarId,
   );
   return prisma.usuarios_aluno.findMany({
     where: { usuario: { unidadeEscolarId: unidadeEscolarId, status: true } },
@@ -45,7 +42,7 @@ const findAllPerfis = (unidadeEscolarId: string) => {
       numero_matricula: true,
       usuario: { select: { id: true, nome: true } },
     },
-    orderBy: { usuario: { nome: "asc" } },
+    orderBy: { usuario: { nome: 'asc' } },
   });
 };
 
@@ -56,7 +53,7 @@ const findOneByUserId = async (usuarioId: string) => {
       id: true,
       usuario: { select: { id: true, nome: true, email: true } },
       matriculas: {
-        where: { status: "ATIVA" },
+        where: { status: 'ATIVA' },
         select: { id: true },
         take: 1,
       },
@@ -65,7 +62,7 @@ const findOneByUserId = async (usuarioId: string) => {
 };
 async function getBoletim(usuarioId: string) {
   console.log(
-    `\n--- [BOLETIM SERVICE] Iniciando para o usuÃ¡rio ID: ${usuarioId} ---`
+    `\n--- [BOLETIM SERVICE] Iniciando para o usuÃ¡rio ID: ${usuarioId} ---`,
   );
 
   const perfilAluno = await prisma.usuarios_aluno.findUnique({
@@ -75,20 +72,20 @@ async function getBoletim(usuarioId: string) {
 
   if (!perfilAluno) {
     console.error(
-      `[BOLETIM SERVICE] ERRO: Perfil de aluno nÃ£o encontrado para o usuÃ¡rio ID: ${usuarioId}`
+      `[BOLETIM SERVICE] ERRO: Perfil de aluno nÃ£o encontrado para o usuÃ¡rio ID: ${usuarioId}`,
     );
-    throw new Error("Perfil de aluno nÃ£o encontrado para este usuÃ¡rio.");
+    throw new Error('Perfil de aluno nÃ£o encontrado para este usuÃ¡rio.');
   }
   const alunoPerfilId = perfilAluno.id;
   console.log(
-    `[BOLETIM SERVICE] Perfil de aluno encontrado. ID do Perfil: ${alunoPerfilId}`
+    `[BOLETIM SERVICE] Perfil de aluno encontrado. ID do Perfil: ${alunoPerfilId}`,
   );
 
   const materiasEsperadas = new Set<string>();
 
   const [avaliacoes, submissoes, matriculaAtiva] = await Promise.all([
     prisma.avaliacaoParcial.findMany({
-      where: { matricula: { alunoId: alunoPerfilId, status: "ATIVA" } },
+      where: { matricula: { alunoId: alunoPerfilId, status: 'ATIVA' } },
       select: {
         nota: true,
         periodo: true,
@@ -101,7 +98,7 @@ async function getBoletim(usuarioId: string) {
     prisma.submissoes.findMany({
       where: {
         alunoId: alunoPerfilId,
-        status: "AVALIADA",
+        status: 'AVALIADA',
         nota_total: { not: null },
       },
       select: {
@@ -117,7 +114,7 @@ async function getBoletim(usuarioId: string) {
       },
     }),
     prisma.matriculas.findFirst({
-      where: { alunoId: alunoPerfilId, status: "ATIVA" },
+      where: { alunoId: alunoPerfilId, status: 'ATIVA' },
       select: {
         id: true,
         turma: {
@@ -133,7 +130,7 @@ async function getBoletim(usuarioId: string) {
     }),
   ]);
   console.log(
-    `[BOLETIM SERVICE] Encontradas ${avaliacoes.length} avaliaÃ§Ãµes parciais e ${submissoes.length} submissÃµes.`
+    `[BOLETIM SERVICE] Encontradas ${avaliacoes.length} avaliaÃ§Ãµes parciais e ${submissoes.length} submissÃµes.`,
   );
 
   matriculaAtiva?.turma?.componentes_curriculares?.forEach((componente) => {
@@ -160,7 +157,7 @@ async function getBoletim(usuarioId: string) {
       });
     } else {
       console.warn(
-        "[BOLETIM SERVICE] Aviso: Ignorando avaliaÃ§Ã£o parcial sem matÃ©ria associada."
+        '[BOLETIM SERVICE] Aviso: Ignorando avaliaÃ§Ã£o parcial sem matÃ©ria associada.',
       );
     }
   });
@@ -170,18 +167,18 @@ async function getBoletim(usuarioId: string) {
       materiasEsperadas.add(sub.tarefa.componenteCurricular.materia.nome);
       todasAsNotas.push({
         materia: sub.tarefa.componenteCurricular.materia.nome,
-        periodo: "ATIVIDADES_CONTINUAS",
+        periodo: 'ATIVIDADES_CONTINUAS',
         tipo: String(sub.tarefa.tipo),
         nota: sub.nota_total!,
       });
     } else {
       console.warn(
-        "[BOLETIM SERVICE] Aviso: Ignorando submissÃ£o sem matÃ©ria associada."
+        '[BOLETIM SERVICE] Aviso: Ignorando submissÃ£o sem matÃ©ria associada.',
       );
     }
   });
   console.log(
-    `[BOLETIM SERVICE] Total de notas vÃ¡lidas processadas: ${todasAsNotas.length}`
+    `[BOLETIM SERVICE] Total de notas vÃ¡lidas processadas: ${todasAsNotas.length}`,
   );
 
   const boletimFinal = todasAsNotas.reduce((acc: Record<string, any>, nota) => {
@@ -216,15 +213,19 @@ async function getBoletim(usuarioId: string) {
     let notasDaMateria: number[] = [];
     for (const periodo in boletimFinal[materia]) {
       const notasDoPeriodo = boletimFinal[materia][periodo].avaliacoes.map(
-        (av: any) => av.nota
+        (av: any) => av.nota,
       );
-      notasDaMateria.push(...notasDoPeriodo);
+
+      // Exclude ATIVIDADES_CONTINUAS from the final average calculation
+      if (periodo !== 'ATIVIDADES_CONTINUAS') {
+        notasDaMateria.push(...notasDoPeriodo);
+      }
       if (notasDoPeriodo.length > 0) {
         const mediaPeriodo =
           notasDoPeriodo.reduce((a: number, b: number) => a + b, 0) /
           notasDoPeriodo.length;
         boletimFinal[materia][periodo].media = parseFloat(
-          mediaPeriodo.toFixed(2)
+          mediaPeriodo.toFixed(2),
         );
       }
     }
@@ -232,7 +233,7 @@ async function getBoletim(usuarioId: string) {
       const mediaFinalMateria =
         notasDaMateria.reduce((a, b) => a + b, 0) / notasDaMateria.length;
       boletimFinal[materia].mediaFinalGeral = parseFloat(
-        mediaFinalMateria.toFixed(2)
+        mediaFinalMateria.toFixed(2),
       );
     } else {
       boletimFinal[materia].mediaFinalGeral = null;
@@ -240,20 +241,20 @@ async function getBoletim(usuarioId: string) {
   }
 
   console.log(
-    "[BOLETIM SERVICE] Boletim finalizado e pronto para ser enviado."
+    '[BOLETIM SERVICE] Boletim finalizado e pronto para ser enviado.',
   );
   return boletimFinal;
 }
 
 type AgendaEventoTipo =
-  | "Aula"
-  | "Prova"
-  | "Trabalho"
-  | "Tarefa"
-  | "RecuperaÃ§Ã£o"
-  | "ReuniÃ£o"
-  | "Feriado"
-  | "Evento Escolar";
+  | 'Aula'
+  | 'Prova'
+  | 'Trabalho'
+  | 'Tarefa'
+  | 'RecuperaÃ§Ã£o'
+  | 'ReuniÃ£o'
+  | 'Feriado'
+  | 'Evento Escolar';
 
 type AgendaEvento = {
   id: string;
@@ -275,15 +276,15 @@ const diaSemanaMap: Record<DiaDaSemana, number> = {
 };
 
 const tipoMap: Record<string, AgendaEventoTipo> = {
-  AULA: "Aula",
-  PROVA: "Prova",
-  TRABALHO: "Trabalho",
-  TAREFA: "Tarefa",
-  RECUPERACAO: "RecuperaÃ§Ã£o",
-  RECUPERACAO_FINAL: "RecuperaÃ§Ã£o",
-  REUNIAO: "ReuniÃ£o",
-  FERIADO: "Feriado",
-  EVENTO_ESCOLAR: "Evento Escolar",
+  AULA: 'Aula',
+  PROVA: 'Prova',
+  TRABALHO: 'Trabalho',
+  TAREFA: 'Tarefa',
+  RECUPERACAO: 'RecuperaÃ§Ã£o',
+  RECUPERACAO_FINAL: 'RecuperaÃ§Ã£o',
+  REUNIAO: 'ReuniÃ£o',
+  FERIADO: 'Feriado',
+  EVENTO_ESCOLAR: 'Evento Escolar',
 };
 
 const startOfDay = (date: Date) => {
@@ -312,9 +313,9 @@ const formatTime = (date: Date | null | undefined) => {
 };
 
 async function getAgendaEventos(
-  user: AuthenticatedRequest["user"],
+  user: AuthenticatedRequest['user'],
   rangeStart: Date,
-  rangeEnd: Date
+  rangeEnd: Date,
 ) {
   if (!user?.perfilId) {
     return [];
@@ -324,7 +325,7 @@ async function getAgendaEventos(
   const end = endOfDay(rangeEnd);
 
   const matriculaAtiva = await prisma.matriculas.findFirst({
-    where: { alunoId: user.perfilId, status: "ATIVA" },
+    where: { alunoId: user.perfilId, status: 'ATIVA' },
     select: { turmaId: true },
   });
 
@@ -387,11 +388,11 @@ async function getAgendaEventos(
         eventos.push({
           id: `aula-${horario.id}-${formatDateKey(current)}`,
           date: new Date(current),
-          type: "Aula",
+          type: 'Aula',
           title:
             horario.componenteCurricular?.materia?.nome ||
             horario.turma?.nome ||
-            "Aula",
+            'Aula',
           details: horario.turma?.nome || undefined,
           time: `${horario.hora_inicio} - ${horario.hora_fim}`,
         });
@@ -403,11 +404,11 @@ async function getAgendaEventos(
     const entrega = new Date(tarefa.data_entrega);
     const tipo =
       tipoMap[String(tarefa.tipo).toUpperCase()] ||
-      (tarefa.tipo === "PROVA"
-        ? "Prova"
-        : tarefa.tipo === "TRABALHO"
-        ? "Trabalho"
-        : "Tarefa");
+      (tarefa.tipo === 'PROVA'
+        ? 'Prova'
+        : tarefa.tipo === 'TRABALHO'
+        ? 'Trabalho'
+        : 'Tarefa');
 
     eventos.push({
       id: `tarefa-${tarefa.id}`,
@@ -439,13 +440,14 @@ async function getAgendaEventos(
       eventos.push({
         id: `evento-${evento.id}-${formatDateKey(dia)}`,
         date: new Date(dia),
-        type: tipoMap[String(evento.tipo).toUpperCase()] || "Evento Escolar",
+        type: tipoMap[String(evento.tipo).toUpperCase()] || 'Evento Escolar',
         title: evento.titulo,
         details:
-          [evento.descricao, evento.turma?.nome].filter(Boolean).join(" â€¢ ") ||
-          undefined,
+          [evento.descricao, evento.turma?.nome]
+            .filter(Boolean)
+            .join(' â€¢ ') || undefined,
         time: evento.dia_inteiro
-          ? "Dia inteiro"
+          ? 'Dia inteiro'
           : isPrimeiroDia
           ? formatTime(inicioOriginal)
           : undefined,
@@ -457,8 +459,8 @@ async function getAgendaEventos(
     const diff = a.date.getTime() - b.date.getTime();
     if (diff !== 0) return diff;
 
-    const horaA = a.time?.slice(0, 5) || "";
-    const horaB = b.time?.slice(0, 5) || "";
+    const horaA = a.time?.slice(0, 5) || '';
+    const horaB = b.time?.slice(0, 5) || '';
     return horaA.localeCompare(horaB);
   });
 
@@ -469,7 +471,7 @@ async function getAgendaEventos(
 }
 
 const formatNotaPdf = (nota?: number | null) =>
-  typeof nota === "number" ? nota.toFixed(1).replace(".", ",") : "--";
+  typeof nota === 'number' ? nota.toFixed(1).replace('.', ',') : '--';
 
 async function generateBoletimPdf(usuarioId: string) {
   const [boletim, perfilAluno] = await Promise.all([
@@ -485,7 +487,7 @@ async function generateBoletimPdf(usuarioId: string) {
           },
         },
         matriculas: {
-          where: { status: "ATIVA" },
+          where: { status: 'ATIVA' },
           select: {
             ano_letivo: true,
             turma: { select: { nome: true, serie: true } },
@@ -497,7 +499,7 @@ async function generateBoletimPdf(usuarioId: string) {
   ]);
 
   if (!perfilAluno) {
-    throw new Error("Perfil de aluno nǜo encontrado.");
+    throw new Error('Perfil de aluno nǜo encontrado.');
   }
 
   const doc = await PDFDocument.create();
@@ -524,43 +526,42 @@ async function generateBoletimPdf(usuarioId: string) {
     white: rgb(1, 1, 1),
   };
   const formatDateBr = (date: Date) =>
-    `${String(date.getDate()).padStart(2, "0")}/${String(
-      date.getMonth() + 1
-    ).padStart(2, "0")}/${date.getFullYear()}`;
+    `${String(date.getDate()).padStart(2, '0')}/${String(
+      date.getMonth() + 1,
+    ).padStart(2, '0')}/${date.getFullYear()}`;
 
-  const alunoNome = perfilAluno.usuario?.nome ?? "Aluno";
+  const alunoNome = perfilAluno.usuario?.nome ?? 'Aluno';
   const unidadeNome =
-    perfilAluno.usuario?.unidade_escolar?.nome ?? "Unidade escolar";
+    perfilAluno.usuario?.unidade_escolar?.nome ?? 'Unidade escolar';
   const matriculaInfo = perfilAluno.matriculas[0];
   const turmaInfo = matriculaInfo?.turma
     ? `${matriculaInfo.turma.serie} - ${matriculaInfo.turma.nome}`
-    : "Turma nǜo informada";
+    : 'Turma nǜo informada';
   const materias = Object.entries(boletim).sort(([a], [b]) =>
-    a.localeCompare(b, "pt-BR")
+    a.localeCompare(b, 'pt-BR'),
   );
   const mediaGlobal =
     materias.length > 0
-      ?
-          materias.reduce(
-            (acc, [, materia]) => acc + (materia.mediaFinalGeral || 0),
-            0
-          ) / materias.length
+      ? materias.reduce(
+          (acc, [, materia]) => acc + (materia.mediaFinalGeral || 0),
+          0,
+        ) / materias.length
       : null;
 
   const sanitizePdfText = (value?: string | number | null) => {
     if (value === undefined || value === null) {
-      return "";
+      return '';
     }
-    const normalized = String(value).normalize("NFKC").replace(/\uFFFD/g, "");
-    let result = "";
+    const normalized = String(value)
+      .normalize('NFKC')
+      .replace(/\uFFFD/g, '');
+    let result = '';
     for (const char of normalized) {
       if (char.charCodeAt(0) <= 0xff) {
         result += char;
         continue;
       }
-      const fallback = char
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "");
+      const fallback = char.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
       if (fallback) {
         for (const fbChar of fallback) {
           if (fbChar.charCodeAt(0) <= 0xff) {
@@ -599,7 +600,7 @@ async function generateBoletimPdf(usuarioId: string) {
       color?: ReturnType<typeof rgb>;
       indent?: number;
       spacing?: number;
-    } = {}
+    } = {},
   ) => {
     const totalHeight = size + spacing;
     ensureSpace(totalHeight);
@@ -626,7 +627,7 @@ async function generateBoletimPdf(usuarioId: string) {
       color: colors.primary,
     });
 
-    page.drawText(sanitizePdfText("Boletim Escolar"), {
+    page.drawText(sanitizePdfText('Boletim Escolar'), {
       x: marginX + 18,
       y: headerBottomY + headerHeight - 28,
       size: 20,
@@ -642,7 +643,7 @@ async function generateBoletimPdf(usuarioId: string) {
       color: colors.white,
     });
 
-    const anoText = `Ano letivo: ${matriculaInfo?.ano_letivo ?? "--"}`;
+    const anoText = `Ano letivo: ${matriculaInfo?.ano_letivo ?? '--'}`;
     page.drawText(sanitizePdfText(anoText), {
       x: marginX + 18,
       y: headerBottomY + 16,
@@ -656,10 +657,10 @@ async function generateBoletimPdf(usuarioId: string) {
 
   const drawInfoCard = () => {
     const infoItems = [
-      { label: "Aluno", value: alunoNome },
-      { label: "Matr��cula", value: perfilAluno.numero_matricula ?? "--" },
-      { label: "Turma", value: turmaInfo },
-      { label: "Unidade", value: unidadeNome },
+      { label: 'Aluno', value: alunoNome },
+      { label: 'Matr��cula', value: perfilAluno.numero_matricula ?? '--' },
+      { label: 'Turma', value: turmaInfo },
+      { label: 'Unidade', value: unidadeNome },
     ];
 
     const columns = 2;
@@ -714,12 +715,12 @@ async function generateBoletimPdf(usuarioId: string) {
 
   const drawSummaryChips = () => {
     const summaryItems = [
-      { label: "Total de disciplinas", value: String(materias.length) },
+      { label: 'Total de disciplinas', value: String(materias.length) },
       {
-        label: "M��dia global",
-        value: mediaGlobal != null ? formatNotaPdf(mediaGlobal) : "--",
+        label: 'M��dia global',
+        value: mediaGlobal != null ? formatNotaPdf(mediaGlobal) : '--',
       },
-      { label: "Gerado em", value: formatDateBr(new Date()) },
+      { label: 'Gerado em', value: formatDateBr(new Date()) },
     ];
 
     const chipGap = 12;
@@ -768,24 +769,24 @@ async function generateBoletimPdf(usuarioId: string) {
     key: string;
     label: string;
     width: number;
-    align: "left" | "center";
+    align: 'left' | 'center';
   };
 
   const tableColumns: TableColumn[] = [
-    { key: "disciplina", label: "Disciplina", width: 130, align: "left" },
+    { key: 'disciplina', label: 'Disciplina', width: 130, align: 'left' },
     ...PERIODOS_PDF_ORDEM.map((periodo) => ({
       key: periodo,
       label: PERIODOS_LABEL[periodo],
-      width: periodo === "RECUPERACAO_FINAL" ? 58 : 52,
-      align: "center" as const,
+      width: periodo === 'RECUPERACAO_FINAL' ? 58 : 52,
+      align: 'center' as const,
     })),
-    { key: "mediaFinal", label: "M��dia final", width: 60, align: "center" },
-    { key: "status", label: "Situa��ǜo", width: 70, align: "center" },
+    { key: 'mediaFinal', label: 'M��dia final', width: 60, align: 'center' },
+    { key: 'status', label: 'Situa��ǜo', width: 70, align: 'center' },
   ];
 
   const totalTableWidth = tableColumns.reduce(
     (acc, column) => acc + column.width,
-    0
+    0,
   );
 
   if (totalTableWidth > contentWidth) {
@@ -796,7 +797,7 @@ async function generateBoletimPdf(usuarioId: string) {
 
     const adjustedWidth = tableColumns.reduce(
       (acc, column) => acc + column.width,
-      0
+      0,
     );
     const diff = contentWidth - adjustedWidth;
     tableColumns[tableColumns.length - 1].width += diff;
@@ -806,7 +807,7 @@ async function generateBoletimPdf(usuarioId: string) {
     rawText: string,
     width: number,
     font: PDFFont,
-    size: number
+    size: number,
   ) => {
     const text = sanitizePdfText(rawText);
     if (font.widthOfTextAtSize(text, size) <= width - 8) {
@@ -833,7 +834,7 @@ async function generateBoletimPdf(usuarioId: string) {
       header?: boolean;
       stripe?: boolean;
       cellColors?: Record<string, ReturnType<typeof rgb>>;
-    } = {}
+    } = {},
   ) => {
     const rowHeight = header ? 30 : 24;
     ensureSpace(rowHeight + 4);
@@ -859,24 +860,23 @@ async function generateBoletimPdf(usuarioId: string) {
 
       const font = header ? boldFont : regularFont;
       const fontSize = 10;
-      const cellText = header ? column.label : data[column.key] ?? "";
+      const cellText = header ? column.label : data[column.key] ?? '';
       const processedText =
-        !header && column.align === "left"
+        !header && column.align === 'left'
           ? truncateToWidth(cellText, column.width, font, fontSize)
           : sanitizePdfText(cellText);
 
       const textWidth = font.widthOfTextAtSize(processedText, fontSize);
       let textX =
-        column.align === "center"
+        column.align === 'center'
           ? cellX + column.width / 2 - textWidth / 2
           : cellX + 6;
-      if (column.align === "center" && textWidth > column.width - 6) {
+      if (column.align === 'center' && textWidth > column.width - 6) {
         textX = cellX + 3;
       }
 
       const textColor =
-        cellColors[column.key] ||
-        (header ? colors.primaryDark : colors.text);
+        cellColors[column.key] || (header ? colors.primaryDark : colors.text);
 
       const textY = rowBottomY + (rowHeight - fontSize) / 2 + 1;
       page.drawText(processedText, {
@@ -894,16 +894,16 @@ async function generateBoletimPdf(usuarioId: string) {
   };
 
   const getStatusData = (media?: number | null) => {
-    if (typeof media !== "number") {
-      return { label: "Em andamento", color: colors.warning };
+    if (typeof media !== 'number') {
+      return { label: 'Em andamento', color: colors.warning };
     }
     if (media >= 7) {
-      return { label: "Aprovado", color: colors.approved };
+      return { label: 'Aprovado', color: colors.approved };
     }
     if (media < 5) {
-      return { label: "Reprovado", color: colors.danger };
+      return { label: 'Reprovado', color: colors.danger };
     }
-    return { label: "Recupera��ǜo", color: colors.warning };
+    return { label: 'Recupera��ǜo', color: colors.warning };
   };
 
   drawHeader();
@@ -912,8 +912,8 @@ async function generateBoletimPdf(usuarioId: string) {
 
   if (materias.length === 0) {
     writeLine(
-      "Ainda nǜo hǭ notas registradas para este aluno neste ano letivo.",
-      { size: 12 }
+      'Ainda nǜo hǭ notas registradas para este aluno neste ano letivo.',
+      { size: 12 },
     );
   } else {
     drawTableRow({}, { header: true });
@@ -937,7 +937,7 @@ async function generateBoletimPdf(usuarioId: string) {
     });
   }
 
-  writeLine("", { spacing: 2 });
+  writeLine('', { spacing: 2 });
   writeLine(`Documento gerado em ${formatDateBr(new Date())}`, {
     size: 10,
     color: colors.lightText,
@@ -947,9 +947,14 @@ async function generateBoletimPdf(usuarioId: string) {
   return pdfBytes;
 }
 
-async function getProfile(user: AuthenticatedRequest["user"]) {
-  if (!user || user.papel !== "ALUNO" || !user.perfilId || !user.unidadeEscolarId) {
-    throw new Error("UsuÃ¡rio nÃ£o Ã© um aluno vÃ¡lido.");
+async function getProfile(user: AuthenticatedRequest['user']) {
+  if (
+    !user ||
+    user.papel !== 'ALUNO' ||
+    !user.perfilId ||
+    !user.unidadeEscolarId
+  ) {
+    throw new Error('UsuÃ¡rio nÃ£o Ã© um aluno vÃ¡lido.');
   }
 
   const { id: usuarioId, perfilId: alunoPerfilId, unidadeEscolarId } = user;
@@ -969,7 +974,7 @@ async function getProfile(user: AuthenticatedRequest["user"]) {
       select: { numero_matricula: true, email_responsavel: true },
     }),
     prisma.matriculas.findFirst({
-      where: { alunoId: alunoPerfilId, status: "ATIVA" },
+      where: { alunoId: alunoPerfilId, status: 'ATIVA' },
       select: {
         ano_letivo: true,
         turma: { select: { nome: true, serie: true } },
@@ -978,21 +983,21 @@ async function getProfile(user: AuthenticatedRequest["user"]) {
   ]);
 
   if (!usuario || !perfilAluno || !matriculaAtiva) {
-    throw new Error("Dados essenciais do aluno nÃ£o encontrados.");
+    throw new Error('Dados essenciais do aluno nÃ£o encontrados.');
   }
 
   const [totalEntregas, provasFeitas] = await Promise.all([
     prisma.submissoes.count({
       where: {
         alunoId: alunoPerfilId,
-        status: { in: ["ENVIADA", "ENVIADA_COM_ATRASO", "AVALIADA"] },
+        status: { in: ['ENVIADA', 'ENVIADA_COM_ATRASO', 'AVALIADA'] },
       },
     }),
     prisma.submissoes.count({
       where: {
         alunoId: alunoPerfilId,
-        tarefa: { tipo: "PROVA" },
-        status: { in: ["ENVIADA", "ENVIADA_COM_ATRASO", "AVALIADA"] },
+        tarefa: { tipo: 'PROVA' },
+        status: { in: ['ENVIADA', 'ENVIADA_COM_ATRASO', 'AVALIADA'] },
       },
     }),
   ]);
@@ -1003,7 +1008,7 @@ async function getProfile(user: AuthenticatedRequest["user"]) {
   if (materias.length > 0) {
     const somaMedias = materias.reduce(
       (acc, materia) => acc + (materia.mediaFinalGeral || 0),
-      0
+      0,
     );
     mediaGlobal = somaMedias / materias.length;
   }
@@ -1024,7 +1029,6 @@ async function getProfile(user: AuthenticatedRequest["user"]) {
   };
 }
 
-
 export const alunoService = {
   findAllPerfis,
   findOne: findOneByUserId,
@@ -1033,6 +1037,3 @@ export const alunoService = {
   generateBoletimPdf,
   getProfile,
 };
-
-
-

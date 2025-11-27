@@ -17,9 +17,10 @@ import {
   LuClipboardCheck,
   LuBriefcase,
   LuCopyCheck,
+  LuFilePenLine,
+  LuUserCheck,
 } from 'react-icons/lu';
 import { useAuth } from '@/contexts/AuthContext';
-import { FaFile } from 'react-icons/fa';
 import { VscMortarBoard } from 'react-icons/vsc';
 
 const navLinks = [
@@ -46,8 +47,8 @@ const navLinks = [
         icon: <LuBookOpen />,
       },
       { href: '/professor/correcoes', text: 'Correções', icon: <LuCopyCheck /> },
-      { href: '/professor/notas', text: 'Lançar Notas', icon: <LuFile /> },
-      { href: '/professor/faltas', text: 'Lançar Faltas', icon: <LuUserX /> },
+      { href: '/professor/notas', text: 'Lançar Notas', icon: <LuFilePenLine /> },
+      { href: '/professor/frequencia', text: 'Fazer Frequência', icon: <LuUserCheck /> },
       {
         href: '/professor/desempenho',
         text: 'Desempenho',

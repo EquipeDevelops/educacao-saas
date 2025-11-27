@@ -1,11 +1,11 @@
-// ... (imports e tipos permanecem os mesmos)
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import { api } from "@/services/api";
-import styles from "./boletimProfessor.module.css";
-import { FiBookOpen, FiClipboard } from "react-icons/fi";
-import Link from "next/link";
+import { useEffect, useState } from 'react';
+import { api } from '@/services/api';
+import styles from './boletimProfessor.module.css';
+import { FiBookOpen, FiClipboard } from 'react-icons/fi';
+import Link from 'next/link';
+import { useParams } from 'next/navigation';
 
 // (Os tipos aqui são os mesmos que definimos para o boletim do aluno)
 type Avaliacao = {
@@ -25,26 +25,22 @@ type BoletimData = {
 };
 
 const periodosMap: { [key: string]: string } = {
-  PRIMEIRO_BIMESTRE: "1º Bimestre",
-  SEGUNDO_BIMESTRE: "2º Bimestre",
-  TERCEIRO_BIMESTRE: "3º Bimestre",
-  QUARTO_BIMESTRE: "4º Bimestre",
-  ATIVIDADES_CONTINUAS: "Atividades Contínuas", // Chave atualizada
-  RECUPERACAO_FINAL: "Recuperação Final",
+  PRIMEIRO_BIMESTRE: '1º Bimestre',
+  SEGUNDO_BIMESTRE: '2º Bimestre',
+  TERCEIRO_BIMESTRE: '3º Bimestre',
+  QUARTO_BIMESTRE: '4º Bimestre',
+  ATIVIDADES_CONTINUAS: 'Atividades Contínuas', // Chave atualizada
+  RECUPERACAO_FINAL: 'Recuperação Final',
 };
 
 // Componente da página
-export default function BoletimAlunoParaProfessorPage({
-  params,
-}: {
-  params: { id: string };
-}) {
-  // CORREÇÃO: Desestruturamos o 'id' aqui fora
-  const { id: alunoId } = params;
+export default function BoletimAlunoParaProfessorPage() {
+  const params = useParams();
+  const alunoId = params.id as string;
 
   const [boletim, setBoletim] = useState<BoletimData | null>(null);
   const [aluno, setAluno] = useState<{ usuario: { nome: string } } | null>(
-    null
+    null,
   );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -66,7 +62,7 @@ export default function BoletimAlunoParaProfessorPage({
         } catch (err: any) {
           setError(
             err.response?.data?.message ||
-              "Não foi possível carregar os dados do aluno."
+              'Não foi possível carregar os dados do aluno.',
           );
           console.error(err);
         } finally {
@@ -102,7 +98,7 @@ export default function BoletimAlunoParaProfessorPage({
   return (
     <div className={styles.container}>
       <header className={styles.header}>
-        <h1>Boletim de {aluno?.usuario.nome || "Aluno"}</h1>
+        <h1>Boletim de {aluno?.usuario.nome || 'Aluno'}</h1>
         <p>Desempenho acadêmico detalhado por matéria e bimestre.</p>
       </header>
 
@@ -118,33 +114,33 @@ export default function BoletimAlunoParaProfessorPage({
                 </h2>
                 <div
                   className={`${styles.mediaGeral} ${getMediaColor(
-                    materiaData.mediaFinalGeral
+                    materiaData.mediaFinalGeral,
                   )}`}
                 >
                   <span>Média Final</span>
-                  <strong>{materiaData.mediaFinalGeral.toFixed(2)}</strong>
+                  <strong>{materiaData.mediaFinalGeral}</strong>
                 </div>
               </div>
               <div className={styles.periodosContainer}>
                 {Object.entries(materiaData)
-                  .filter(([key]) => key !== "mediaFinalGeral")
+                  .filter(([key]) => key !== 'mediaFinalGeral')
                   .map(([periodoKey, periodoData]) => (
                     <div key={periodoKey} className={styles.periodo}>
                       <h3 className={styles.periodoTitle}>
                         <FiClipboard /> {periodosMap[periodoKey] || periodoKey}
                         <span
                           className={`${styles.mediaPeriodo} ${getMediaColor(
-                            periodoData.media
+                            periodoData.media,
                           )}`}
                         >
-                          {periodoData.media.toFixed(2)}
+                          {periodoData.media}
                         </span>
                       </h3>
                       <ul className={styles.avaliacoesList}>
                         {periodoData.avaliacoes.map((av, index) => (
                           <li key={index}>
                             <span>
-                              {av.tipo.replace(/_/g, " ").toLowerCase()}
+                              {av.tipo.replace(/_/g, ' ').toLowerCase()}
                             </span>
                             <strong>{av.nota.toFixed(2)}</strong>
                           </li>

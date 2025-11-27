@@ -18,6 +18,7 @@ import {
   LuSchool,
   LuBook,
   LuBox,
+  LuMessageSquare,
 } from 'react-icons/lu';
 import BarraDeProgresso from '@/components/progressBar/BarraDeProgresso';
 import Section from '@/components/section/Section';
@@ -34,14 +35,6 @@ type Tarefa = {
     materia: { nome: string };
   };
   data_entrega: string;
-};
-
-type Submissao = {
-  id: string;
-  status: string;
-  enviado_em: string;
-  nota_total: number | null;
-  aluno: { usuario: { nome: string } };
 };
 
 type TrabalhoAluno = {
@@ -96,7 +89,6 @@ export default function EntregasPage() {
   const tarefaId = params.tarefaId as string;
 
   const [tarefa, setTarefa] = useState<Tarefa | null>(null);
-  const [submissoes, setSubmissoes] = useState<Submissao[]>([]);
   const [trabalhoResumo, setTrabalhoResumo] =
     useState<TrabalhoCorrecaoResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -106,9 +98,16 @@ export default function EntregasPage() {
   const [notaInput, setNotaInput] = useState('');
   const [feedbackInput, setFeedbackInput] = useState('');
   const [salvandoNota, setSalvandoNota] = useState(false);
+
+  // Messaging State
+  const [modalMensagem, setModalMensagem] = useState<TrabalhoAluno | null>(
+    null,
+  );
+  const [mensagemInput, setMensagemInput] = useState('');
+  const [enviandoMensagem, setEnviandoMensagem] = useState(false);
+
   const { loading: authLoading } = useAuth();
 
-  const isTrabalho = tarefa?.tipo === 'TRABALHO';
   const pontosMaximos = tarefa?.pontos ?? MAX_DEFAULT_POINTS;
 
   const fetchTrabalhoResumo = useCallback(async () => {
@@ -131,15 +130,8 @@ export default function EntregasPage() {
         if (!ativo) return;
         setTarefa(tarefaResponse.data);
 
-        if (tarefaResponse.data.tipo === 'TRABALHO') {
-          await fetchTrabalhoResumo();
-        } else {
-          const submissoesResponse = await api.get<Submissao[]>(
-            `/submissoes?tarefaId=${tarefaId}`,
-          );
-          if (!ativo) return;
-          setSubmissoes(submissoesResponse.data);
-        }
+        // Always fetch the summary now, as we enabled it for all types in backend
+        await fetchTrabalhoResumo();
       } catch (err: any) {
         if (!ativo) return;
         setError(
@@ -204,31 +196,61 @@ export default function EntregasPage() {
     }
   };
 
+  const abrirModalMensagem = (aluno: TrabalhoAluno) => {
+    setModalMensagem(aluno);
+    setMensagemInput('');
+  };
+
+  const fecharModalMensagem = () => {
+    setModalMensagem(null);
+    setMensagemInput('');
+  };
+
+  const handleEnviarMensagem = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!modalMensagem || !mensagemInput.trim()) return;
+
+    try {
+      setEnviandoMensagem(true);
+
+      // 1. Find or create conversation
+      const conversaRes = await api.post('/conversas', {
+        destinatarioId: modalMensagem.alunoUsuarioId,
+      });
+      const conversaId = conversaRes.data.id;
+
+      // 2. Send message
+      await api.post(`/conversas/${conversaId}/mensagens`, {
+        conteudo: mensagemInput,
+      });
+
+      alert(`Mensagem enviada para ${modalMensagem.nome}!`);
+      fecharModalMensagem();
+    } catch (err: any) {
+      console.error(err);
+      alert('Erro ao enviar mensagem. Tente novamente.');
+    } finally {
+      setEnviandoMensagem(false);
+    }
+  };
+
   // Stats Calculation
   let totalEntregas = 0;
   let corrigidasCount = 0;
   let pendentesCount = 0;
 
-  if (isTrabalho && trabalhoResumo) {
+  if (trabalhoResumo) {
     totalEntregas = trabalhoResumo.resumo.totalAlunos;
     corrigidasCount = trabalhoResumo.resumo.avaliados;
     pendentesCount = trabalhoResumo.resumo.pendentes;
-  } else {
-    totalEntregas = submissoes.length;
-    corrigidasCount = submissoes.filter(
-      (s) => s.status === 'AVALIADA' || s.nota_total !== null,
-    ).length;
-    pendentesCount = submissoes.filter(
-      (s) => s.status === 'ENVIADA' || s.status === 'ENVIADA_COM_ATRASO',
-    ).length;
   }
 
   const progresso =
     totalEntregas > 0 ? Math.round((corrigidasCount / totalEntregas) * 100) : 0;
 
-  const allSubmissoes = [...submissoes].sort((a, b) =>
-    a.aluno.usuario.nome.localeCompare(b.aluno.usuario.nome),
-  );
+  const alunosSorted = trabalhoResumo?.alunos
+    ? [...trabalhoResumo.alunos].sort((a, b) => a.nome.localeCompare(b.nome))
+    : [];
 
   if (loading || authLoading) {
     return (
@@ -312,13 +334,13 @@ export default function EntregasPage() {
               <div className={styles.statCard}>
                 <div>
                   <div className={styles.statValue}>{totalEntregas}</div>
-                  <div className={styles.statLabel}>Total de Entregas</div>
+                  <div className={styles.statLabel}>Total de Alunos</div>
                 </div>
               </div>
               <div className={styles.statCard}>
                 <div>
                   <div className={styles.statValue}>{corrigidasCount}</div>
-                  <div className={styles.statLabel}>Corrigidas</div>
+                  <div className={styles.statLabel}>Avaliados</div>
                 </div>
               </div>
               <div className={styles.statCard}>
@@ -336,7 +358,7 @@ export default function EntregasPage() {
             </div>
           </header>
 
-          {isTrabalho ? (
+          {tarefa.tipo === 'TRABALHO' ? (
             <div className={styles.contentCard}>
               <div className={styles.cardHeader}>
                 <h2>Atribuir notas</h2>
@@ -415,33 +437,48 @@ export default function EntregasPage() {
                 </h2>
               </div>
 
-              {allSubmissoes.length === 0 ? (
+              {alunosSorted.length === 0 ? (
                 <div className={styles.emptyState}>
                   <LuBox size={50} />
-                  <p>Nenhuma entrega encontrada para esta atividade.</p>
+                  <p>Nenhum aluno encontrado para esta turma.</p>
                 </div>
               ) : (
                 <div className={styles.listContainer}>
-                  {allSubmissoes.map((s) => {
-                    const isAvaliada =
-                      s.status === 'AVALIADA' || s.nota_total !== null;
+                  {alunosSorted.map((aluno) => {
+                    const isAvaliada = aluno.status === 'AVALIADO';
+                    const hasSubmissao = !!aluno.submissaoId;
+
                     return (
-                      <div key={s.id} className={styles.entregaRow}>
+                      <div
+                        key={aluno.matriculaId}
+                        className={styles.entregaRow}
+                      >
                         <div className={styles.alunoInfo}>
                           <div className={styles.avatar}>
-                            {s.aluno.usuario.nome.substring(0, 2).toUpperCase()}
+                            {aluno.nome.substring(0, 2).toUpperCase()}
                           </div>
                           <div>
-                            <p>{s.aluno.usuario.nome}</p>
+                            <p>{aluno.nome}</p>
                             <small className={styles.dateTimeInfo}>
-                              <span>
-                                <LuCalendar size={14} /> Dia:{' '}
-                                {formatDate(s.enviado_em)}
-                              </span>
-                              <span>
-                                <LuClock size={14} /> Hora:{' '}
-                                {formatTime(s.enviado_em)}
-                              </span>
+                              {aluno.ultimaAtualizacao ? (
+                                <>
+                                  Entregue em:{' '}
+                                  <span>
+                                    <LuCalendar size={14} />{' '}
+                                    {formatDate(aluno.ultimaAtualizacao)}
+                                  </span>
+                                  <span>
+                                    <LuClock size={14} />{' '}
+                                    {formatTime(aluno.ultimaAtualizacao)}
+                                  </span>
+                                </>
+                              ) : (
+                                <span
+                                  style={{ color: 'var(--cor-aviso-dark)' }}
+                                >
+                                  Não entregue
+                                </span>
+                              )}
                             </small>
                           </div>
                         </div>
@@ -452,32 +489,50 @@ export default function EntregasPage() {
                               <div className={styles.gradeDisplay}>
                                 <h4 className={styles.gradeValue}>
                                   <span>
-                                    {s.nota_total !== null
-                                      ? s.nota_total.toFixed(1)
+                                    {aluno.nota !== null
+                                      ? aluno.nota.toFixed(1)
                                       : '-'}
                                   </span>
                                   /{pontosMaximos}
                                 </h4>
                                 <p>Nota atribuida</p>
                               </div>
-                              <Link
-                                href={`/professor/correcoes/${tarefaId}/${s.id}`}
-                                className={styles.verButton}
-                              >
-                                Ver Correção
-                              </Link>
+                              {aluno.submissaoId && (
+                                <Link
+                                  href={`/professor/correcoes/${tarefaId}/${aluno.submissaoId}`}
+                                  className={styles.verButton}
+                                >
+                                  Ver Correção
+                                </Link>
+                              )}
                             </>
-                          ) : (
+                          ) : hasSubmissao ? (
                             <>
                               <span className={styles.badgePendente}>
-                                Pendente
+                                Aguardando Correção
                               </span>
                               <Link
-                                href={`/professor/correcoes/${tarefaId}/${s.id}`}
+                                href={`/professor/correcoes/${tarefaId}/${aluno.submissaoId}`}
                                 className={styles.corrigirButton}
                               >
                                 Iniciar Correção
                               </Link>
+                            </>
+                          ) : (
+                            <>
+                              <span
+                                className={`${styles.badgePendente} ${styles.badgeNaoEntregue}`}
+                              >
+                                Pendente
+                              </span>
+                              <button
+                                className={styles.messageButton}
+                                onClick={() => abrirModalMensagem(aluno)}
+                                title="Enviar mensagem de cobrança"
+                              >
+                                <LuMessageSquare size={18} />
+                                Cobrar
+                              </button>
                             </>
                           )}
                         </div>
@@ -533,6 +588,44 @@ export default function EntregasPage() {
                   disabled={salvandoNota}
                 >
                   {salvandoNota ? 'Salvando...' : 'Salvar nota'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {modalMensagem && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modalContent}>
+            <h3>Enviar mensagem para {modalMensagem.nome}</h3>
+            <form onSubmit={handleEnviarMensagem}>
+              <label className={styles.modalField}>
+                Mensagem
+                <textarea
+                  value={mensagemInput}
+                  onChange={(e) => setMensagemInput(e.target.value)}
+                  placeholder="Escreva sua mensagem de cobrança ou dúvida..."
+                  required
+                  autoFocus
+                />
+              </label>
+
+              <div className={styles.modalActions}>
+                <button
+                  type="button"
+                  className={styles.secondaryButton}
+                  onClick={fecharModalMensagem}
+                  disabled={enviandoMensagem}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className={styles.primaryButton}
+                  disabled={enviandoMensagem}
+                >
+                  {enviandoMensagem ? 'Enviando...' : 'Enviar Mensagem'}
                 </button>
               </div>
             </form>

@@ -199,14 +199,32 @@ async function getHomeStats(user: AuthenticatedRequest['user']) {
   let ranking = { position: 1, total: 1 };
 
   if (matriculaAtiva) {
-    const totalFaltas = await prisma.registroFalta.count({
-      where: { matriculaId: matriculaAtiva.id, justificada: false },
+    // Tenta calcular a frequência baseada no Diário de Aula (novo sistema)
+    const totalRegistrosDiario = await prisma.diarioAulaPresenca.count({
+      where: { matriculaId: matriculaAtiva.id },
     });
-    const DIAS_LETIVOS_TOTAIS = 100;
-    attendancePercentage = Math.max(
-      0,
-      ((DIAS_LETIVOS_TOTAIS - totalFaltas) / DIAS_LETIVOS_TOTAIS) * 100,
-    );
+
+    if (totalRegistrosDiario > 0) {
+      const totalFaltasDiario = await prisma.diarioAulaPresenca.count({
+        where: {
+          matriculaId: matriculaAtiva.id,
+          situacao: { not: 'PRESENTE' },
+        },
+      });
+      attendancePercentage =
+        ((totalRegistrosDiario - totalFaltasDiario) / totalRegistrosDiario) *
+        100;
+    } else {
+      // Fallback para o sistema antigo (RegistroFalta)
+      const totalFaltas = await prisma.registroFalta.count({
+        where: { matriculaId: matriculaAtiva.id, justificada: false },
+      });
+      const DIAS_LETIVOS_TOTAIS = 100;
+      attendancePercentage = Math.max(
+        0,
+        ((DIAS_LETIVOS_TOTAIS - totalFaltas) / DIAS_LETIVOS_TOTAIS) * 100,
+      );
+    }
 
     const submissoesDaTurma = await prisma.submissoes.findMany({
       where: {
@@ -502,7 +520,7 @@ async function getMensagensRecentes(user: AuthenticatedRequest['user']) {
             select: {
               id: true,
               nome: true,
-              papel: true
+              papel: true,
             },
           },
         },

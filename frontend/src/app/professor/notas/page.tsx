@@ -3,7 +3,16 @@
 import { useEffect, useMemo, useState } from 'react';
 import { FiSave, FiAlertTriangle, FiCheckCircle, FiInfo } from 'react-icons/fi';
 import { api } from '@/services/api';
+import { useAuth } from '@/contexts/AuthContext';
 import styles from './notas.module.css';
+import Section from '@/components/section/Section';
+import Loading from '@/components/loading/Loading';
+import {
+  LuCircleAlert,
+  LuCircleCheck,
+  LuInfo,
+  LuCalendar,
+} from 'react-icons/lu';
 
 type Componente = {
   id: string;
@@ -95,10 +104,12 @@ const getPeriodoLabel = (periodo: string) =>
   periodoLabels[periodo] ?? periodo.replace(/_/g, ' ');
 
 export default function ProfessorNotasPage() {
+  const { loading: authLoading } = useAuth();
   const [componentes, setComponentes] = useState<Componente[]>([]);
   const [bimestres, setBimestres] = useState<Bimestre[]>([]);
   const [matriculas, setMatriculas] = useState<Matricula[]>([]);
   const [avaliacoes, setAvaliacoes] = useState<Avaliacao[]>([]);
+  const [currentBimestre, setCurrentBimestre] = useState<Bimestre | null>(null);
 
   const [selectedComponenteId, setSelectedComponenteId] = useState<string>('');
   const [selectedTurmaId, setSelectedTurmaId] = useState<string>('');
@@ -115,6 +126,7 @@ export default function ProfessorNotasPage() {
   const [feedbackSuccess, setFeedbackSuccess] = useState<string | null>(null);
 
   useEffect(() => {
+    if (authLoading) return;
     let ativo = true;
 
     async function carregarComponentes() {
@@ -141,9 +153,10 @@ export default function ProfessorNotasPage() {
     return () => {
       ativo = false;
     };
-  }, []);
+  }, [authLoading]);
 
   useEffect(() => {
+    if (authLoading) return;
     let ativo = true;
     async function carregarBimestres() {
       setLoadingBimestres(true);
@@ -167,6 +180,7 @@ export default function ProfessorNotasPage() {
             return inicio <= hoje && fim >= hoje;
           }) ?? filtrados[filtrados.length - 1];
 
+        setCurrentBimestre(vigente ?? null);
         setSelectedBimestreId(vigente?.id ?? '');
       } catch (error) {
         if (!ativo) return;
@@ -180,7 +194,7 @@ export default function ProfessorNotasPage() {
     return () => {
       ativo = false;
     };
-  }, []);
+  }, [authLoading]);
 
   useEffect(() => {
     if (!selectedComponenteId) {
@@ -438,12 +452,11 @@ export default function ProfessorNotasPage() {
     }
   };
 
-  if (loadingComponentes && componentes.length === 0) {
+  if (loadingComponentes) {
     return (
-      <div className={styles.loadingBox}>
-        <FiInfo />
-        <span>Carregando seus componentes curriculares...</span>
-      </div>
+      <Section>
+        <Loading />
+      </Section>
     );
   }
 
@@ -460,15 +473,124 @@ export default function ProfessorNotasPage() {
   }
 
   return (
-    <div className={styles.pageContainer}>
+    <Section>
       <div className={styles.card}>
         <header className={styles.headerBlock}>
           <h1>Lançar notas</h1>
           <p>
-            Gerencie as notas da turma e acompanhe as correções registradas
-            automaticamente ao corrigir provas, atividades ou trabalhos.
+            Gerencie as notas da turma e acompanhe as correções registradas de
+            provas, atividades ou trabalhos.
           </p>
         </header>
+
+        <div className={styles.bimestreBanner}>
+          <div className={styles.bimestreIcon}>
+            <LuCalendar />
+          </div>
+          {currentBimestre ? (
+            <div>
+              <h2>
+                {currentBimestre.nome ||
+                  currentBimestre.periodo.replace(/_/g, ' ')}
+              </h2>
+              <span>
+                {dateFormatter.format(new Date(currentBimestre.dataInicio))} -{' '}
+                {dateFormatter.format(new Date(currentBimestre.dataFim))}
+              </span>
+              <p className={styles.bannerHint}>
+                <LuCircleAlert />
+                As notas lançadas aqui serão atribuídas a este bimestre.
+              </p>
+            </div>
+          ) : (
+            <div>
+              <h2>Nenhum bimestre vigente</h2>
+              <span>
+                Cadastre um periodo com o gestor para habilitar a atribuicao
+                automatica.
+              </span>
+            </div>
+          )}
+        </div>
+
+        {(feedbackError || feedbackSuccess) && (
+          <div
+            className={`${styles.feedback} ${
+              feedbackError ? styles.feedbackError : styles.feedbackSuccess
+            }`}
+          >
+            {feedbackError ? <LuCircleAlert /> : <LuCircleCheck />}
+            <span>{feedbackError ?? feedbackSuccess}</span>
+          </div>
+        )}
+
+        <section className={styles.correcoesSection}>
+          <header className={styles.sectionHeader}>
+            <h2>
+              <span></span>Atividades Corrigidas
+            </h2>
+            <p>
+              Visualize as notas das atividades para auxiliar na atribuição da
+              nota final do bimestre. Estas notas não entram automaticamente no
+              cálculo da média.
+            </p>
+          </header>
+
+          {loadingDadosTurma ? (
+            <div className={styles.emptyState}>
+              <LuInfo />
+              <span>Carregando correções da turma...</span>
+            </div>
+          ) : alunoSelecionado ? (
+            correcoesAlunoSelecionado.length > 0 ? (
+              <ul className={styles.correcoesList}>
+                {correcoesAlunoSelecionado.map((avaliacao) => (
+                  <li key={avaliacao.id} className={styles.correcoesItem}>
+                    <div>
+                      <div className={styles.correcoesMain}>
+                        <h3>{avaliacao.tarefa?.titulo}</h3>
+                      </div>
+                      <div className={styles.correcoesMeta}>
+                        <span>
+                          {avaliacao.tarefa
+                            ? tarefaTipoLabels[avaliacao.tarefa.tipo] ??
+                              avaliacao.tarefa.tipo
+                            : tarefaTipoLabels[avaliacao.tipo] ??
+                              avaliacao.tipo}
+                        </span>
+                        <span>
+                          {getPeriodoLabel(
+                            avaliacao.bimestre?.periodo ?? avaliacao.periodo,
+                          )}
+                        </span>
+                        <span>
+                          Entregue em:{' '}
+                          {dateFormatter.format(new Date(avaliacao.data))}
+                        </span>
+                      </div>
+                    </div>
+                    <p className={styles.correcoesNota}>
+                      Nota: <span>{notaFormatter(avaliacao.nota)}</span>
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <div className={styles.emptyState}>
+                <LuInfo />
+                <span>
+                  Nenhuma correção automática foi registrada para o aluno
+                  selecionado ainda.
+                </span>
+              </div>
+            )
+          ) : (
+            <div className={styles.emptyState}>
+              <LuInfo />
+              <span>Selecione um aluno para visualizar as correções.</span>
+            </div>
+          )}
+        </section>
 
         <section className={styles.selectionPanel}>
           <div className={styles.field}>
@@ -555,82 +677,11 @@ export default function ProfessorNotasPage() {
           </button>
         </section>
 
-        {(feedbackError || feedbackSuccess) && (
-          <div
-            className={`${styles.feedback} ${
-              feedbackError ? styles.feedbackError : styles.feedbackSuccess
-            }`}
-          >
-            {feedbackError ? <FiAlertTriangle /> : <FiCheckCircle />}
-            <span>{feedbackError ?? feedbackSuccess}</span>
-          </div>
-        )}
-
-        <section className={styles.correcoesSection}>
-          <header className={styles.sectionHeader}>
-            <h2>Atividades Corrigidas</h2>
-            <p>
-              Visualize as notas das atividades para auxiliar na atribuição da
-              nota final do bimestre. Estas notas não entram automaticamente no
-              cálculo da média.
-            </p>
-          </header>
-
-          {loadingDadosTurma ? (
-            <div className={styles.emptyState}>
-              <FiInfo />
-              <span>Carregando correções da turma...</span>
-            </div>
-          ) : alunoSelecionado ? (
-            correcoesAlunoSelecionado.length > 0 ? (
-              <ul className={styles.correcoesList}>
-                {correcoesAlunoSelecionado.map((avaliacao) => (
-                  <li key={avaliacao.id} className={styles.correcoesItem}>
-                    <div className={styles.correcoesMain}>
-                      <strong>{avaliacao.tarefa?.titulo}</strong>
-                      <span className={styles.correcoesNota}>
-                        Nota: {notaFormatter(avaliacao.nota)}
-                      </span>
-                    </div>
-                    <div className={styles.correcoesMeta}>
-                      <span>
-                        {avaliacao.tarefa
-                          ? tarefaTipoLabels[avaliacao.tarefa.tipo] ??
-                            avaliacao.tarefa.tipo
-                          : tarefaTipoLabels[avaliacao.tipo] ?? avaliacao.tipo}
-                      </span>
-                      <span>
-                        {getPeriodoLabel(
-                          avaliacao.bimestre?.periodo ?? avaliacao.periodo,
-                        )}
-                      </span>
-                      <span>
-                        {dateFormatter.format(new Date(avaliacao.data))}
-                      </span>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <div className={styles.emptyState}>
-                <FiInfo />
-                <span>
-                  Nenhuma correção automática foi registrada para o aluno
-                  selecionado ainda.
-                </span>
-              </div>
-            )
-          ) : (
-            <div className={styles.emptyState}>
-              <FiInfo />
-              <span>Selecione um aluno para visualizar as correções.</span>
-            </div>
-          )}
-        </section>
-
         <section className={styles.tableSection}>
           <header className={styles.sectionHeader}>
-            <h2>Quadro de notas da turma</h2>
+            <h2>
+              <span></span>Quadro de notas da turma
+            </h2>
             {turmaSelecionada && (
               <p>
                 {turmaSelecionada.turma.serie} - {turmaSelecionada.turma.nome} ·{' '}
@@ -699,6 +750,6 @@ export default function ProfessorNotasPage() {
           )}
         </section>
       </div>
-    </div>
+    </Section>
   );
 }

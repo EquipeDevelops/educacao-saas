@@ -16,7 +16,7 @@ type Componente = {
 };
 
 type Aluno = {
-  id: string; // matriculaId
+  id: string;
   nome: string;
 };
 
@@ -112,14 +112,11 @@ export default function FrequenciaPage() {
 
         setPresencas(novasPresencas);
         setObservacoes(novasObservacoes);
-      } catch (error: any) {
+      } catch (error) {
         console.error('Erro ao carregar dados', error);
-        const message =
-          error.response?.data?.message ||
-          'Falha ao carregar lista de alunos e frequência.';
         setFeedback({
           type: 'error',
-          message,
+          message: 'Falha ao carregar lista de alunos e frequência.',
         });
       } finally {
         setLoadingDados(false);
@@ -306,7 +303,7 @@ export default function FrequenciaPage() {
                             handlePresencaChange(aluno.id, 'FALTA_JUSTIFICADA')
                           }
                         />
-                        <span className={styles.badge}>FT</span>
+                        <span className={styles.badge}>FJ</span>
                         <span className={styles.label}>Justificada</span>
                       </label>
                     </div>
