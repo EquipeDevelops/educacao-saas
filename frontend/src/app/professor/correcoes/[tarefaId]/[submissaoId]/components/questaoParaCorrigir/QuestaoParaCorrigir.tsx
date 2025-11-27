@@ -1,12 +1,31 @@
-import { LuThumbsDown, LuThumbsUp } from 'react-icons/lu';
+import {
+  LuCircleCheck,
+  LuCircleX,
+  LuThumbsDown,
+  LuThumbsUp,
+} from 'react-icons/lu';
 import styles from './questaoParaCorrigir.module.css';
 
 export default function QuestaoParaCorrigir({
   item,
   notaItem,
   onNotaChange,
-}: any) {
+  readOnly,
+}: {
+  item: any;
+  notaItem: any;
+  onNotaChange: any;
+  readOnly?: boolean;
+}) {
   const { questao, resposta } = item;
+
+  // Debug log
+  // console.log(`Questao ${questao.sequencia} - Resposta ID: ${resposta?.id}`, {
+  //   notaItem,
+  //   respostaNota: resposta?.nota,
+  //   value: notaItem?.nota ?? item.resposta?.nota ?? ''
+  // });
+
   const isCorrect =
     resposta &&
     questao.opcoes_multipla_escolha?.find((opt: any) => opt.correta)?.id ===
@@ -33,6 +52,14 @@ export default function QuestaoParaCorrigir({
 
       {questao.tipo === 'MULTIPLA_ESCOLHA' && (
         <>
+          <h4>Alternativas</h4>
+          <ul className={styles.alternativas}>
+            {questao.opcoes_multipla_escolha.map((opt: any, index: number) => (
+              <li key={index}>
+                {index + 1}. {opt.texto}
+              </li>
+            ))}
+          </ul>
           <h4>Resposta Correta</h4>
           <div className={styles.respostaCorreta}>
             {
@@ -46,7 +73,13 @@ export default function QuestaoParaCorrigir({
       <h4>Resposta do Aluno</h4>
       <div
         className={`${styles.respostaAluno} ${
-          !resposta ? '' : isCorrect ? styles.respCerta : styles.respErrada
+          !resposta
+            ? ''
+            : questao.tipo === 'DISCURSIVA'
+            ? ''
+            : isCorrect
+            ? styles.respCerta
+            : styles.respErrada
         }`}
       >
         {!resposta ? (
@@ -61,7 +94,10 @@ export default function QuestaoParaCorrigir({
                 )?.texto
               : resposta.resposta_texto}
             {questao.tipo === 'MULTIPLA_ESCOLHA' && (
-              <span>{isCorrect ? 'Correta' : 'Incorreta'}</span>
+              <span>
+                {isCorrect ? <LuCircleCheck /> : <LuCircleX />}{' '}
+                {isCorrect ? 'Correta' : 'Incorreta'}
+              </span>
             )}
           </>
         )}
@@ -69,39 +105,39 @@ export default function QuestaoParaCorrigir({
 
       <div className={styles.correcaoForm}>
         <div className={styles.field}>
-          <label>Pontuação Atribuída</label>
+          <h4>Atribua uma nota:</h4>
           <div>
             <input
               type="number"
               max={questao.pontos}
               min={0}
               step="0.5"
-              value={notaItem?.nota ?? ''}
+              value={notaItem?.nota ?? item.resposta?.nota ?? ''}
               onChange={(e) => onNotaChange('nota', parseFloat(e.target.value))}
-              disabled={!resposta}
+              disabled={!resposta || readOnly}
             />
             <span>/ {questao.pontos}</span>
             <button
               onClick={() => onNotaChange('nota', questao.pontos)}
-              disabled={!resposta}
+              disabled={!resposta || readOnly}
             >
-              <LuThumbsUp />
+              <LuThumbsUp /> Correto
             </button>
             <button
               onClick={() => onNotaChange('nota', 0)}
-              disabled={!resposta}
+              disabled={!resposta || readOnly}
             >
-              <LuThumbsDown />
+              <LuThumbsDown /> Incorreto
             </button>
           </div>
         </div>
         <div className={styles.field}>
-          <label>Feedback para o Aluno (opcional)</label>
+          <h4>Feedback para o Aluno (opcional)</h4>
           <textarea
-            value={notaItem?.feedback ?? ''}
+            value={notaItem?.feedback ?? item.resposta?.feedback ?? ''}
             onChange={(e) => onNotaChange('feedback', e.target.value)}
             placeholder="Deixe um comentário sobre a resposta do aluno..."
-            disabled={!resposta}
+            disabled={!resposta || readOnly}
           ></textarea>
         </div>
       </div>

@@ -1,54 +1,83 @@
 .resumoCard {
-  background-color: var(--cor-primaria-dark);
-  color: white;
+  background-color: white;
+  color: var(--cor-texto);
   border-radius: 12px;
-  padding: 1.5rem;
-  position: sticky;
-  top: 1.5rem;
+  border: 1px solid var(--cor-borda);
+  padding: 20px;
+  border-radius: 15px;
+}
+
+.resumoCard h2 {
+  font-size: 1.2rem;
+  margin-bottom: 20px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.resumoCard h2 span {
+  background-color: var(--cor-primaria);
+  width: 5px;
+  height: 25px;
+  border-radius: 5px;
 }
 
 .resumoAluno {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  padding-bottom: 1.5rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  gap: 20px;
+  padding-bottom: 20px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--cor-borda);
 }
 
 .avatar {
-  width: 45px;
-  height: 45px;
+  width: 42px;
+  height: 42px;
   border-radius: 50%;
   background-color: var(--cor-primaria);
+  color: white;
   display: flex;
   align-items: center;
   justify-content: center;
 }
-.resumoAluno p {
-  margin: 0;
-  font-weight: 500;
+
+.resumoAlunoInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
 }
-.resumoAluno small {
-  color: #bdc3c7;
+
+.resumoAlunoInfoText {
+  color: var(--cor-subtexto);
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.resumoAlunoInfoText span {
+  display: flex;
+  align-items: center;
+  gap: 5px;
 }
 
 .notaCalculada {
   text-align: center;
-  padding: 1.5rem 0;
+  padding: 10px 0px;
 }
 .notaCalculada p {
   margin: 0;
-  color: #bdc3c7;
+  color: var(--cor-subtexto);
 }
-.notaCalculada strong {
+.notaCalculada h3 {
   font-size: 3rem;
-  line-height: 1;
-  display: block;
-  margin: 0.5rem 0;
+  color: var(--cor-primaria);
 }
-.notaCalculada span {
-  font-size: 0.9rem;
-  color: #bdc3c7;
+.notaCalculada p {
+  font-size: 1rem;
+  color: var(--cor-subtexto);
 }
 
 .resumoStats {
@@ -63,24 +92,55 @@
   justify-content: space-between;
 }
 
+.resumoStats li strong {
+  color: var(--cor-primaria);
+}
+
 .resumoActions {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 10px;
 }
+
 .rascunhoButton,
 .finalizarButton {
-  padding: 0.8rem;
-  border-radius: 8px;
-  font-weight: 600;
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-weight: 500;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  justify-content: center;
 }
 .rascunhoButton {
-  background-color: rgba(255, 255, 255, 0.2);
-  color: white;
+  background-color: white;
+  color: var(--cor-texto);
+  border: 1px solid var(--cor-borda);
 }
+
 .finalizarButton {
-  background-color: var(--cor-sucesso);
+  background-color: var(--cor-primaria);
   color: white;
 }
 
+.rascunhoButton:disabled,
+.finalizarButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background-color: #ccc;
+  border-color: #ccc;
+  color: #666;
+}
+
+.expiredMessage {
+  background-color: var(--cor-aviso-light);
+  color: var(--cor-aviso-dark);
+  padding: 10px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  text-align: center;
+  margin-bottom: 15px;
+  border: 1px solid var(--cor-aviso);
+  font-weight: 500;
+}

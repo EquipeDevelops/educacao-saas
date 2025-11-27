@@ -246,13 +246,34 @@ export default function EntregasPage() {
     );
   }
 
-  console.log(tarefa);
+  const dataEntrega = tarefa?.data_entrega
+    ? new Date(tarefa.data_entrega)
+    : null;
+
+  const now = new Date();
+
+  const isLate = dataEntrega ? now > dataEntrega : false;
 
   return (
     <Section>
       <Link href="/professor/correcoes" className={styles.backLink}>
         <LuArrowLeft /> Voltar para Correções
       </Link>
+
+      {isLate && (
+        <div className={styles.warningCard}>
+          <div className={styles.warningIcon}>
+            <LuClock />
+          </div>
+          <div className={styles.warningContent}>
+            <h3>Prazo de entrega encerrado</h3>
+            <p>
+              A data de entrega desta atividade já passou. Você tem até 7 dias
+              de tolerância após o prazo para realizar a correção.
+            </p>
+          </div>
+        </div>
+      )}
 
       {tarefa && (
         <>

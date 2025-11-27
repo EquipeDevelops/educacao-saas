@@ -29,17 +29,27 @@ export default function CorrecaoIndividualPage() {
   const [notas, setNotas] = useState<NotasState>({});
 
   useEffect(() => {
-    if (submissao) {
-      const initialNotas: NotasState = {};
-      for (const item of correcaoMap) {
-        if (item.resposta) {
-          initialNotas[item.resposta.id] = {
-            nota: item.resposta.nota ?? 0,
-            feedback: item.resposta.feedback ?? null,
-          };
+    if (submissao && correcaoMap.length > 0) {
+      setNotas((prev) => {
+        if (Object.keys(prev).length > 0) return prev;
+
+        console.log('Populating notas from correcaoMap', correcaoMap);
+        const initialNotas: NotasState = {};
+        for (const item of correcaoMap) {
+          if (item.resposta) {
+            console.log(
+              `Resposta ${item.resposta.id}: nota=${
+                item.resposta.nota
+              } (type: ${typeof item.resposta.nota})`,
+            );
+            initialNotas[item.resposta.id] = {
+              nota: item.resposta.nota ?? 0,
+              feedback: item.resposta.feedback ?? null,
+            };
+          }
         }
-      }
-      setNotas(initialNotas);
+        return initialNotas;
+      });
     }
   }, [submissao, correcaoMap]);
 
@@ -57,11 +67,21 @@ export default function CorrecaoIndividualPage() {
     }));
   };
 
+  const saveAnswers = async () => {
+    console.log('Saving answers...', notas);
+    for (const respostaId in notas) {
+      const payload = {
+        nota: notas[respostaId].nota ?? 0,
+        feedback: notas[respostaId].feedback ?? '',
+      };
+      console.log(`Saving resposta ${respostaId}`, payload);
+      await api.patch(`/respostas/${respostaId}/grade`, payload);
+    }
+  };
+
   const handleSaveRascunho = async () => {
     try {
-      for (const respostaId in notas) {
-        await api.patch(`/respostas/${respostaId}/grade`, notas[respostaId]);
-      }
+      await saveAnswers();
       alert('Rascunho salvo com sucesso!');
     } catch (err) {
       console.error(err);
@@ -80,7 +100,7 @@ export default function CorrecaoIndividualPage() {
       return;
 
     try {
-      await handleSaveRascunho();
+      await saveAnswers();
 
       await api.patch(`/submissoes/${submissaoId}/grade`, {
         nota_total: notaFinal,
@@ -110,6 +130,26 @@ export default function CorrecaoIndividualPage() {
     );
   }
 
+  const dataEntrega = tarefa?.data_entrega
+    ? new Date(tarefa.data_entrega)
+    : null;
+
+  const now = new Date();
+
+  const isLate = dataEntrega ? now > dataEntrega : false;
+
+  const dataLimiteComTolerancia = tarefa?.data_entrega
+    ? new Date(tarefa.data_entrega)
+    : new Date();
+
+  dataLimiteComTolerancia.setDate(dataLimiteComTolerancia.getDate() + 60);
+
+  dataLimiteComTolerancia.setHours(23, 59, 59, 999);
+
+  const isExpired = tarefa?.data_entrega
+    ? new Date() > dataLimiteComTolerancia
+    : false;
+
   return (
     <Section maxWidth={1200}>
       <Link
@@ -118,6 +158,22 @@ export default function CorrecaoIndividualPage() {
       >
         <FiArrowLeft /> Voltar para correções
       </Link>
+
+      {isLate && submissao?.status !== 'AVALIADA' && (
+        <div className={styles.warningCard}>
+          <div className={styles.warningIcon}>
+            <LuClock />
+          </div>
+          <div className={styles.warningContent}>
+            <h3>Prazo de entrega encerrado</h3>
+            <p>
+              A data de entrega desta atividade já passou. Você tem até 7 dias
+              de tolerância após o prazo para realizar a correção.
+            </p>
+          </div>
+        </div>
+      )}
+
       <header className={styles.header}>
         <div className={styles.headerContent}>
           <div className={styles.headerTitle}>
@@ -141,7 +197,7 @@ export default function CorrecaoIndividualPage() {
             </ul>
           </div>
           <div className={styles.headerNota}>
-            <h3>{submissao?.tarefa.pontos.toFixed(1)}</h3>
+            <h3>{submissao?.tarefa.pontos}</h3>
             <p>Nota máxima da atividade</p>
           </div>
         </div>
@@ -152,11 +208,17 @@ export default function CorrecaoIndividualPage() {
           </div>
           <div className={styles.headerAlunoData}>
             <p>Entrega:</p>
-            <p><LuCalendar /> {new Date(submissao?.enviado_em).toLocaleDateString('pt-BR')}</p>
-            <p><LuClock /> {new Date(submissao?.enviado_em).toLocaleTimeString('pt-BR', {
-              hour: '2-digit',
-              minute: '2-digit',
-            })}</p>
+            <p>
+              <LuCalendar />{' '}
+              {new Date(submissao?.enviado_em).toLocaleDateString('pt-BR')}
+            </p>
+            <p>
+              <LuClock />{' '}
+              {new Date(submissao?.enviado_em).toLocaleTimeString('pt-BR', {
+                hour: '2-digit',
+                minute: '2-digit',
+              })}
+            </p>
           </div>
         </div>
       </header>
@@ -168,6 +230,7 @@ export default function CorrecaoIndividualPage() {
               key={item.questao.id}
               item={item}
               notaItem={notas[item.resposta?.id || '']}
+              readOnly={isExpired}
               onNotaChange={(
                 field: 'nota' | 'feedback',
                 value: number | string,
@@ -183,6 +246,7 @@ export default function CorrecaoIndividualPage() {
             submissao={submissao}
             questoes={correcaoMap.map((i) => i.questao)}
             notas={notas}
+            readOnly={isExpired}
             onSaveRascunho={handleSaveRascunho}
             onFinalizar={handleFinalizarCorrecao}
           />

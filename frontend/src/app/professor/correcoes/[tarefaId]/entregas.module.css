@@ -185,6 +185,37 @@
   gap: 10px;
 }
 
+.warningCard {
+  background-color: var(--cor-aviso-light);
+  border: 1px solid color-mix(in srgb, var(--cor-aviso) 20%, white 80%);
+  color: var(--cor-aviso);
+  padding: 1rem;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: flex-start;
+  gap: 15px;
+}
+
+.warningIcon {
+  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+  margin-top: 2px;
+}
+
+.warningContent h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 5px;
+}
+
+.warningContent p {
+  font-size: 0.9rem;
+  margin: 0;
+  opacity: 0.9;
+}
+
 .entregaRow {
   display: flex;
   justify-content: space-between;
