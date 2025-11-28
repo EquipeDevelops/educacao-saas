@@ -51,30 +51,45 @@ const findOneByUserId = async (usuarioId: string) => {
     where: { usuarioId: usuarioId },
     select: {
       id: true,
+      numero_matricula: true,
       usuario: { select: { id: true, nome: true, email: true } },
       matriculas: {
         where: { status: 'ATIVA' },
-        select: { id: true },
+        select: {
+          id: true,
+          ano_letivo: true,
+          turma: { select: { nome: true, serie: true } },
+        },
         take: 1,
       },
     },
   });
 };
-async function getBoletim(usuarioId: string) {
-  console.log(
-    `\n--- [BOLETIM SERVICE] Iniciando para o usuÃ¡rio ID: ${usuarioId} ---`,
-  );
+async function getBoletim(
+  usuarioId: string,
+  user?: AuthenticatedRequest['user'],
+) {
+  console.log(`[BOLETIM SERVICE] Iniciando para o usuário ID: ${usuarioId}`);
 
   const perfilAluno = await prisma.usuarios_aluno.findUnique({
     where: { usuarioId },
-    select: { id: true },
+    select: {
+      id: true,
+      numero_matricula: true,
+      usuario: {
+        select: {
+          unidadeEscolarId: true,
+          unidade_escolar: { select: { nome: true } },
+        },
+      },
+    },
   });
 
   if (!perfilAluno) {
     console.error(
-      `[BOLETIM SERVICE] ERRO: Perfil de aluno nÃ£o encontrado para o usuÃ¡rio ID: ${usuarioId}`,
+      `[BOLETIM SERVICE] ERRO: Perfil de aluno não encontrado para o usuário ID: ${usuarioId}`,
     );
-    throw new Error('Perfil de aluno nÃ£o encontrado para este usuÃ¡rio.');
+    throw new Error('Perfil de aluno não encontrado para este usuário.');
   }
   const alunoPerfilId = perfilAluno.id;
   console.log(
@@ -117,11 +132,14 @@ async function getBoletim(usuarioId: string) {
       where: { alunoId: alunoPerfilId, status: 'ATIVA' },
       select: {
         id: true,
+        ano_letivo: true,
         turma: {
           select: {
+            id: true,
             componentes_curriculares: {
               select: {
                 materia: { select: { nome: true } },
+                id: true,
               },
             },
           },
@@ -130,14 +148,110 @@ async function getBoletim(usuarioId: string) {
     }),
   ]);
   console.log(
-    `[BOLETIM SERVICE] Encontradas ${avaliacoes.length} avaliaÃ§Ãµes parciais e ${submissoes.length} submissÃµes.`,
+    `[BOLETIM SERVICE] Encontradas ${avaliacoes.length} avaliações parciais e ${submissoes.length} submissões.`,
   );
+
+  // --- LÓGICA DE FREQUÊNCIA ---
+  const unidadeEscolarId = perfilAluno.usuario.unidadeEscolarId;
+  let dataInicioAno: Date | undefined;
+  let dataFimAno: Date | undefined;
+
+  if (unidadeEscolarId) {
+    const bimestres = await prisma.bimestres.findMany({
+      where: { unidadeEscolarId },
+      orderBy: { dataInicio: 'asc' },
+    });
+
+    if (bimestres.length > 0) {
+      dataInicioAno = bimestres[0].dataInicio;
+      // Encontrar a maior data fim
+      const datasFim = bimestres.map((b) => b.dataFim);
+      dataFimAno = new Date(Math.max(...datasFim.map((d) => d.getTime())));
+
+      console.log(
+        `[BOLETIM SERVICE] Período letivo definido por bimestres: ${dataInicioAno.toISOString()} até ${dataFimAno.toISOString()}`,
+      );
+    }
+  }
+
+  const frequenciaPorMateria: Record<
+    string,
+    { aulasDadas: number; presencas: number; porcentagem: number }
+  > = {};
+
+  if (matriculaAtiva && dataInicioAno && dataFimAno) {
+    const componentes = matriculaAtiva.turma?.componentes_curriculares || [];
+
+    await Promise.all(
+      componentes.map(async (comp) => {
+        if (!comp.materia?.nome) return;
+
+        const totalAulas = await prisma.diarioAula.count({
+          where: {
+            componenteCurricularId: comp.id,
+            data: {
+              gte: dataInicioAno,
+              lte: dataFimAno,
+            },
+          },
+        });
+
+        const presencas = await prisma.diarioAulaPresenca.count({
+          where: {
+            matriculaId: matriculaAtiva.id,
+            situacao: 'PRESENTE',
+            diarioAula: {
+              componenteCurricularId: comp.id,
+              data: {
+                gte: dataInicioAno,
+                lte: dataFimAno,
+              },
+            },
+          },
+        });
+
+        frequenciaPorMateria[comp.materia.nome] = {
+          aulasDadas: totalAulas,
+          presencas,
+          porcentagem: totalAulas > 0 ? (presencas / totalAulas) * 100 : 100,
+        };
+      }),
+    );
+  }
+  // -----------------------------
 
   matriculaAtiva?.turma?.componentes_curriculares?.forEach((componente) => {
     if (componente.materia?.nome) {
       materiasEsperadas.add(componente.materia.nome);
     }
   });
+
+  // --- FILTRO PARA PROFESSOR ---
+  if (user?.papel === 'PROFESSOR' && user.perfilId) {
+    console.log(
+      '[BOLETIM SERVICE] Filtrando matérias para o professor:',
+      user.perfilId,
+    );
+    const componentesProfessor = await prisma.componenteCurricular.findMany({
+      where: {
+        professorId: user.perfilId,
+        turmaId: matriculaAtiva?.turma?.id,
+      },
+      select: { materia: { select: { nome: true } } },
+    });
+
+    const materiasProfessor = new Set(
+      componentesProfessor.map((c) => c.materia.nome),
+    );
+
+    // Manter apenas as matérias que o professor leciona
+    for (const materia of materiasEsperadas) {
+      if (!materiasProfessor.has(materia)) {
+        materiasEsperadas.delete(materia);
+      }
+    }
+  }
+  // -----------------------------
 
   const todasAsNotas: {
     materia: string;
@@ -157,7 +271,7 @@ async function getBoletim(usuarioId: string) {
       });
     } else {
       console.warn(
-        '[BOLETIM SERVICE] Aviso: Ignorando avaliaÃ§Ã£o parcial sem matÃ©ria associada.',
+        '[BOLETIM SERVICE] Aviso: Ignorando avaliação parcial sem matéria associada.',
       );
     }
   });
@@ -173,12 +287,12 @@ async function getBoletim(usuarioId: string) {
       });
     } else {
       console.warn(
-        '[BOLETIM SERVICE] Aviso: Ignorando submissÃ£o sem matÃ©ria associada.',
+        '[BOLETIM SERVICE] Aviso: Ignorando submissão sem matéria associada.',
       );
     }
   });
   console.log(
-    `[BOLETIM SERVICE] Total de notas vÃ¡lidas processadas: ${todasAsNotas.length}`,
+    `[BOLETIM SERVICE] Total de notas válidas processadas: ${todasAsNotas.length}`,
   );
 
   const boletimFinal = todasAsNotas.reduce((acc: Record<string, any>, nota) => {
@@ -238,12 +352,135 @@ async function getBoletim(usuarioId: string) {
     } else {
       boletimFinal[materia].mediaFinalGeral = null;
     }
+
+    // Adicionar frequência
+    if (frequenciaPorMateria[materia]) {
+      boletimFinal[materia].frequencia = frequenciaPorMateria[materia];
+    } else {
+      boletimFinal[materia].frequencia = {
+        aulasDadas: 0,
+        presencas: 0,
+        porcentagem: 100,
+      };
+    }
+  }
+
+  // --- NOVOS DADOS ---
+  // 1. Comentários
+  const comentariosDb = await prisma.comentarioBoletim.findMany({
+    where: { matriculaId: matriculaAtiva?.id },
+    include: {
+      componenteCurricular: { select: { materia: { select: { nome: true } } } },
+    },
+  });
+
+  const comentarios: Record<string, string> = {};
+  comentariosDb.forEach((c) => {
+    if (c.componenteCurricular?.materia?.nome) {
+      comentarios[c.componenteCurricular.materia.nome] = c.comentario;
+    }
+  });
+
+  // 2. Média Geral por Bimestre
+  const mediaGeralBimestre: Record<string, number | null> = {};
+  PERIODOS_PADRAO.forEach((periodo) => {
+    if (periodo === 'ATIVIDADES_CONTINUAS') return;
+
+    let somaMedias = 0;
+    let countMaterias = 0;
+
+    for (const materia in boletimFinal) {
+      const mediaMateria = boletimFinal[materia][periodo]?.media;
+      if (typeof mediaMateria === 'number') {
+        somaMedias += mediaMateria;
+        countMaterias++;
+      }
+    }
+
+    mediaGeralBimestre[periodo] =
+      countMaterias > 0
+        ? parseFloat((somaMedias / countMaterias).toFixed(2))
+        : null;
+  });
+
+  // 3. Frequência Geral
+  let totalAulasGeral = 0;
+  let totalPresencasGeral = 0;
+  for (const materia in frequenciaPorMateria) {
+    totalAulasGeral += frequenciaPorMateria[materia].aulasDadas;
+    totalPresencasGeral += frequenciaPorMateria[materia].presencas;
+  }
+  const frequenciaGeral =
+    totalAulasGeral > 0 ? (totalPresencasGeral / totalAulasGeral) * 100 : 100;
+
+  // --- ESTATÍSTICAS DA TURMA ---
+  const statsTurma: {
+    mediasBimestre: Record<string, number>;
+    mediasPorMateria: Record<string, number>;
+  } = { mediasBimestre: {}, mediasPorMateria: {} };
+
+  if (matriculaAtiva) {
+    // 1. Médias por Bimestre da Turma
+    const mediasBimestreDb = await prisma.avaliacaoParcial.groupBy({
+      by: ['periodo'],
+      where: {
+        matricula: {
+          turmaId: matriculaAtiva.turma.id,
+          status: 'ATIVA',
+          ano_letivo: matriculaAtiva.ano_letivo,
+        },
+      },
+      _avg: { nota: true },
+    });
+    mediasBimestreDb.forEach((m) => {
+      if (m._avg.nota) {
+        statsTurma.mediasBimestre[m.periodo] = m._avg.nota;
+      }
+    });
+
+    // 2. Médias por Matéria da Turma
+    const mediasMateriaDb = await prisma.avaliacaoParcial.groupBy({
+      by: ['componenteCurricularId'],
+      where: {
+        matricula: {
+          turmaId: matriculaAtiva.turma.id,
+          status: 'ATIVA',
+          ano_letivo: matriculaAtiva.ano_letivo,
+        },
+      },
+      _avg: { nota: true },
+    });
+
+    const componentesMap = new Map<string, string>();
+    matriculaAtiva.turma.componentes_curriculares.forEach((c) => {
+      if (c.materia?.nome) componentesMap.set(c.id, c.materia.nome);
+    });
+
+    mediasMateriaDb.forEach((m) => {
+      const nome = componentesMap.get(m.componenteCurricularId);
+      if (nome && m._avg.nota) {
+        statsTurma.mediasPorMateria[nome] = m._avg.nota;
+      }
+    });
   }
 
   console.log(
     '[BOLETIM SERVICE] Boletim finalizado e pronto para ser enviado.',
   );
-  return boletimFinal;
+
+  return {
+    boletim: boletimFinal,
+    dadosAluno: {
+      matricula: perfilAluno.numero_matricula,
+      escola:
+        perfilAluno.usuario.unidade_escolar?.nome || 'Escola não informada',
+      anoLetivo: matriculaAtiva?.ano_letivo,
+    },
+    mediaGeralBimestre,
+    frequenciaGeral,
+    comentarios,
+    statsTurma,
+  };
 }
 
 type AgendaEventoTipo =
@@ -251,8 +488,8 @@ type AgendaEventoTipo =
   | 'Prova'
   | 'Trabalho'
   | 'Tarefa'
-  | 'RecuperaÃ§Ã£o'
-  | 'ReuniÃ£o'
+  | 'Recuperação'
+  | 'Reunião'
   | 'Feriado'
   | 'Evento Escolar';
 
@@ -280,9 +517,9 @@ const tipoMap: Record<string, AgendaEventoTipo> = {
   PROVA: 'Prova',
   TRABALHO: 'Trabalho',
   TAREFA: 'Tarefa',
-  RECUPERACAO: 'RecuperaÃ§Ã£o',
-  RECUPERACAO_FINAL: 'RecuperaÃ§Ã£o',
-  REUNIAO: 'ReuniÃ£o',
+  RECUPERACAO: 'Recuperação',
+  RECUPERACAO_FINAL: 'Recuperação',
+  REUNIAO: 'Reunião',
   FERIADO: 'Feriado',
   EVENTO_ESCOLAR: 'Evento Escolar',
 };
@@ -311,6 +548,62 @@ const formatTime = (date: Date | null | undefined) => {
   if (!date || Number.isNaN(date.getTime())) return undefined;
   return date.toISOString().slice(11, 16);
 };
+
+async function saveComentario(
+  usuarioId: string,
+  materiaNome: string,
+  comentario: string,
+  user: AuthenticatedRequest['user'],
+) {
+  if (user?.papel !== 'PROFESSOR' || !user.perfilId) {
+    throw new Error('Apenas professores podem adicionar comentários.');
+  }
+
+  const perfilAluno = await prisma.usuarios_aluno.findUnique({
+    where: { usuarioId },
+    select: { id: true },
+  });
+
+  if (!perfilAluno) {
+    throw new Error('Aluno não encontrado.');
+  }
+
+  const matriculaAtiva = await prisma.matriculas.findFirst({
+    where: { alunoId: perfilAluno.id, status: 'ATIVA' },
+    select: { id: true, turmaId: true },
+  });
+
+  if (!matriculaAtiva) {
+    throw new Error('Matrícula ativa não encontrada.');
+  }
+
+  const componente = await prisma.componenteCurricular.findFirst({
+    where: {
+      turmaId: matriculaAtiva.turmaId,
+      materia: { nome: materiaNome },
+      professorId: user.perfilId, // Ensure the professor teaches this subject
+    },
+  });
+
+  if (!componente) {
+    throw new Error('Você não leciona esta matéria para este aluno.');
+  }
+
+  return prisma.comentarioBoletim.upsert({
+    where: {
+      matriculaId_componenteCurricularId: {
+        matriculaId: matriculaAtiva.id,
+        componenteCurricularId: componente.id,
+      },
+    },
+    update: { comentario },
+    create: {
+      matriculaId: matriculaAtiva.id,
+      componenteCurricularId: componente.id,
+      comentario,
+    },
+  });
+}
 
 async function getAgendaEventos(
   user: AuthenticatedRequest['user'],
@@ -474,7 +767,7 @@ const formatNotaPdf = (nota?: number | null) =>
   typeof nota === 'number' ? nota.toFixed(1).replace('.', ',') : '--';
 
 async function generateBoletimPdf(usuarioId: string) {
-  const [boletim, perfilAluno] = await Promise.all([
+  const [boletimData, perfilAluno] = await Promise.all([
     getBoletim(usuarioId),
     prisma.usuarios_aluno.findFirst({
       where: { usuarioId },
@@ -497,6 +790,8 @@ async function generateBoletimPdf(usuarioId: string) {
       },
     }),
   ]);
+
+  const boletim = boletimData.boletim;
 
   if (!perfilAluno) {
     throw new Error('Perfil de aluno nǜo encontrado.');
@@ -1002,8 +1297,8 @@ async function getProfile(user: AuthenticatedRequest['user']) {
     }),
   ]);
 
-  const boletimData = await getBoletim(usuarioId);
-  const materias = Object.values(boletimData);
+  const boletimResponse = await getBoletim(usuarioId);
+  const materias = Object.values(boletimResponse.boletim);
   let mediaGlobal = 0;
   if (materias.length > 0) {
     const somaMedias = materias.reduce(
@@ -1036,4 +1331,5 @@ export const alunoService = {
   getAgendaEventos,
   generateBoletimPdf,
   getProfile,
+  saveComentario,
 };

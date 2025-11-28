@@ -290,6 +290,7 @@ model Matriculas {
   @@map("matriculas")
   @@index([alunoId, ano_letivo])
   mensalidade Mensalidade[]
+  comentarios_boletim ComentarioBoletim[]
 }
 
 model ComponenteCurricular {
@@ -310,6 +311,7 @@ model ComponenteCurricular {
   @@map("componentes_curriculares")
   @@unique([turmaId, materiaId, ano_letivo])
   @@index([professorId])
+  comentarios_boletim ComentarioBoletim[]
 }
 
 model Bimestres {
@@ -831,6 +833,20 @@ model CategoriaTransacao {
 
   @@unique([nome, unidadeEscolarId])
   @@map("categorias_transacao")
+}
+
+model ComentarioBoletim {
+  id                     String               @id @default(auto()) @map("_id") @db.ObjectId
+  comentario             String
+  criado_em              DateTime             @default(now())
+  atualizado_em          DateTime             @updatedAt
+  matricula              Matriculas           @relation(fields: [matriculaId], references: [id])
+  matriculaId            String               @db.ObjectId
+  componenteCurricular   ComponenteCurricular @relation(fields: [componenteCurricularId], references: [id])
+  componenteCurricularId String               @db.ObjectId
+
+  @@unique([matriculaId, componenteCurricularId])
+  @@map("comentarios_boletim")
 }
 
 

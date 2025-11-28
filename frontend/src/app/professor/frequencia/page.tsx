@@ -70,7 +70,6 @@ export default function FrequenciaPage() {
       setLoadingDados(true);
       setFeedback(null);
       try {
-        // 1. Buscar alunos (matriculas)
         const { data: matriculas } = await api.get('/matriculas', {
           params: { componenteCurricularId: selectedComponenteId },
         });
@@ -84,7 +83,6 @@ export default function FrequenciaPage() {
 
         setAlunos(listaAlunos);
 
-        // 2. Buscar diário existente
         const { data: diario } = await api.get('/diarios-aula', {
           params: {
             componenteCurricularId: selectedComponenteId,
@@ -95,12 +93,10 @@ export default function FrequenciaPage() {
         const novasPresencas: Record<string, Situacao> = {};
         const novasObservacoes: Record<string, string> = {};
 
-        // Inicializa todos como PRESENTE por padrão
         listaAlunos.forEach((aluno: Aluno) => {
           novasPresencas[aluno.id] = 'PRESENTE';
         });
 
-        // Se já houver registro, sobrescreve
         if (diario && diario.registros_presenca) {
           diario.registros_presenca.forEach((reg: any) => {
             novasPresencas[reg.matriculaId] = reg.situacao;

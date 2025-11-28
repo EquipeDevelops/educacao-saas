@@ -6,42 +6,77 @@ import Link from 'next/link';
 import { usePathname, useParams } from 'next/navigation';
 import styles from './layout.module.css';
 import { FiUser, FiArrowLeft } from 'react-icons/fi';
+import { useAuth } from '@/contexts/AuthContext';
+import { LuImport } from 'react-icons/lu';
+import Section from '@/components/section/Section';
 
 export default function AlunoProfileLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const { user, loading: authLoading } = useAuth();
+
   const pathname = usePathname();
   const params = useParams();
   const alunoId = params.id as string;
-  const [aluno, setAluno] = useState<{ usuario: { nome: string } } | null>(
-    null,
-  );
+  const [aluno, setAluno] = useState<{
+    usuario: { nome: string };
+    numero_matricula: string;
+    matriculas: {
+      ano_letivo: number;
+      turma: { nome: string; serie: string };
+    }[];
+  } | null>(null);
 
   useEffect(() => {
-    if (alunoId) {
-      api.get(`/alunos/${alunoId}`).then((res) => setAluno(res.data));
+    if (authLoading) return;
+
+    if (user && alunoId) {
+      api
+        .get(`/alunos/${alunoId}`)
+        .then((res) => setAluno(res.data))
+        .catch((err) =>
+          console.error('Erro ao carregar aluno no layout:', err),
+        );
     }
-  }, [alunoId]);
+  }, [alunoId, authLoading, user]);
 
   const tabs = [
-    { href: `/professor/aluno/${alunoId}`, text: 'Boletim' },
+    { href: `/professor/aluno/${alunoId}/boletim`, text: 'Notas e Desempenho' },
     { href: `/professor/aluno/${alunoId}/frequencia`, text: 'Frequência' },
   ];
 
+  const matriculaAtiva = aluno?.matriculas?.[0];
+
   return (
-    <div className={styles.container}>
+    <Section maxWidth={1200}>
       <Link href="/professor/turmas" className={styles.backLink}>
         <FiArrowLeft /> Voltar para Turmas
       </Link>
       <header className={styles.profileHeader}>
-        <div className={styles.avatar}>
-          <FiUser />
+        <div className={styles.profileInfo}>
+          <div className={styles.avatar}>
+            <FiUser />
+          </div>
+          <div className={styles.info}>
+            <h1>{aluno?.usuario.nome}</h1>
+            <ul>
+              <li>Matrícula: {aluno?.numero_matricula}</li>
+              {matriculaAtiva && (
+                <>
+                  <li>
+                    Turma: {matriculaAtiva.turma.serie} -{' '}
+                    {matriculaAtiva.turma.nome}
+                  </li>
+                  <li>Ano Letivo: {matriculaAtiva.ano_letivo}</li>
+                </>
+              )}
+            </ul>
+          </div>
         </div>
-        <div>
-          <h1>{aluno?.usuario.nome || 'Carregando...'}</h1>
-          <p>Perfil do Aluno</p>
+        <div className={styles.actions}>
+          <button><LuImport /> Exportar em PDF</button>
         </div>
       </header>
       <nav className={styles.tabs}>
@@ -56,6 +91,6 @@ export default function AlunoProfileLayout({
         ))}
       </nav>
       <main className={styles.content}>{children}</main>
-    </div>
+    </Section>
   );
 }

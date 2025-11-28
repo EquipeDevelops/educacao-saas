@@ -3,25 +3,74 @@
 import { useEffect, useState } from 'react';
 import { api } from '@/services/api';
 import styles from './boletimProfessor.module.css';
-import { FiBookOpen, FiClipboard } from 'react-icons/fi';
-import Link from 'next/link';
+import {
+  FiBookOpen,
+  FiClipboard,
+  FiMessageSquare,
+  FiSave,
+} from 'react-icons/fi';
 import { useParams } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
+import Section from '@/components/section/Section';
+import ErrorMsg from '@/components/errorMsg/ErrorMsg';
+import Loading from '@/components/loading/Loading';
+import { toast } from 'react-toastify';
 
-// (Os tipos aqui são os mesmos que definimos para o boletim do aluno)
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+} from 'recharts';
+
 type Avaliacao = {
   tipo: string;
   nota: number;
 };
+
 type Periodo = {
   avaliacoes: Avaliacao[];
-  media: number;
+  media: number | null;
 };
+
+type Frequencia = {
+  aulasDadas: number;
+  presencas: number;
+  porcentagem: number;
+};
+
 type Materia = {
-  [periodo: string]: Periodo;
-  mediaFinalGeral: number;
+  mediaFinalGeral: number | null;
+  frequencia?: Frequencia;
+  [key: string]: Periodo | number | Frequencia | null | undefined;
 };
+
 type BoletimData = {
   [materia: string]: Materia;
+};
+
+type DadosAluno = {
+  matricula: string;
+  escola: string;
+  anoLetivo: number;
+};
+
+type BoletimResponse = {
+  boletim: BoletimData;
+  dadosAluno: DadosAluno;
+  mediaGeralBimestre: Record<string, number | null>;
+  frequenciaGeral: number;
+  comentarios: Record<string, string>;
+  statsTurma: {
+    mediasBimestre: Record<string, number>;
+    mediasPorMateria: Record<string, number>;
+  };
 };
 
 const periodosMap: { [key: string]: string } = {
@@ -29,36 +78,46 @@ const periodosMap: { [key: string]: string } = {
   SEGUNDO_BIMESTRE: '2º Bimestre',
   TERCEIRO_BIMESTRE: '3º Bimestre',
   QUARTO_BIMESTRE: '4º Bimestre',
-  ATIVIDADES_CONTINUAS: 'Atividades Contínuas', // Chave atualizada
+  ATIVIDADES_CONTINUAS: 'Atividades Contínuas',
   RECUPERACAO_FINAL: 'Recuperação Final',
 };
 
-// Componente da página
 export default function BoletimAlunoParaProfessorPage() {
   const params = useParams();
   const alunoId = params.id as string;
+  const { user, loading: authLoading } = useAuth();
 
-  const [boletim, setBoletim] = useState<BoletimData | null>(null);
-  const [aluno, setAluno] = useState<{ usuario: { nome: string } } | null>(
-    null,
-  );
+  const [boletimData, setBoletimData] = useState<BoletimResponse | null>(null);
+  const [alunoNome, setAlunoNome] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [savingComment, setSavingComment] = useState<Record<string, boolean>>(
+    {},
+  );
+  const [comments, setComments] = useState<Record<string, string>>({});
 
   useEffect(() => {
+    if (authLoading) return;
+
+    if (!user) {
+      setError('Você precisa estar logado para ver esta página.');
+      setLoading(false);
+      return;
+    }
+
     if (alunoId) {
       const fetchBoletim = async () => {
         try {
           setLoading(true);
 
-          // ** CHAMADA DA API CORRIGIDA **
           const [boletimRes, alunoRes] = await Promise.all([
             api.get(`/alunos/${alunoId}/boletim`),
             api.get(`/alunos/${alunoId}`),
           ]);
 
-          setBoletim(boletimRes.data);
-          setAluno(alunoRes.data);
+          setBoletimData(boletimRes.data);
+          setComments(boletimRes.data.comentarios || {});
+          setAlunoNome(alunoRes.data.usuario.nome);
         } catch (err: any) {
           setError(
             err.response?.data?.message ||
@@ -71,88 +130,303 @@ export default function BoletimAlunoParaProfessorPage() {
       };
       fetchBoletim();
     }
-  }, [alunoId]); // A dependência agora é a variável 'alunoId'
+  }, [alunoId, authLoading, user]);
 
-  const getMediaColor = (media: number) => {
+  const handleCommentChange = (materia: string, value: string) => {
+    setComments((prev) => ({ ...prev, [materia]: value }));
+  };
+
+  const handleSaveComment = async (materia: string) => {
+    try {
+      setSavingComment((prev) => ({ ...prev, [materia]: true }));
+      await api.post(`/alunos/${alunoId}/boletim/comentario`, {
+        materiaNome: materia,
+        comentario: comments[materia],
+      });
+      toast.success('Comentário salvo com sucesso!');
+    } catch (err) {
+      console.error(err);
+      toast.error('Erro ao salvar comentário.');
+    } finally {
+      setSavingComment((prev) => ({ ...prev, [materia]: false }));
+    }
+  };
+
+  const getMediaColor = (media: number | null | undefined) => {
+    if (media === null || media === undefined) return '';
     if (media >= 7) return styles.mediaAlta;
     if (media >= 5) return styles.mediaMedia;
     return styles.mediaBaixa;
   };
-  //... (o resto do componente JSX permanece o mesmo)
+
   if (loading) {
     return (
-      <div className={styles.container}>
-        <p>Carregando boletim do aluno...</p>
-      </div>
+      <Section>
+        <Loading />
+      </Section>
     );
   }
 
   if (error) {
     return (
-      <div className={styles.container}>
-        <p className={styles.error}>{error}</p>
-      </div>
+      <Section>
+        <ErrorMsg text={error} />
+      </Section>
     );
   }
 
   return (
-    <div className={styles.container}>
-      <header className={styles.header}>
-        <h1>Boletim de {aluno?.usuario.nome || 'Aluno'}</h1>
-        <p>Desempenho acadêmico detalhado por matéria e bimestre.</p>
-      </header>
-
-      {!boletim || Object.keys(boletim).length === 0 ? (
-        <p>Nenhuma nota lançada para este aluno ainda.</p>
-      ) : (
-        <div className={styles.gridMaterias}>
-          {Object.entries(boletim).map(([materiaNome, materiaData]) => (
-            <div key={materiaNome} className={styles.materiaCard}>
-              <div className={styles.materiaHeader}>
-                <h2>
-                  <FiBookOpen /> {materiaNome}
-                </h2>
-                <div
-                  className={`${styles.mediaGeral} ${getMediaColor(
-                    materiaData.mediaFinalGeral,
-                  )}`}
-                >
-                  <span>Média Final</span>
-                  <strong>{materiaData.mediaFinalGeral}</strong>
-                </div>
+    <div>
+      {boletimData && (
+        <>
+          <div className={styles.statsGrid}>
+            <div className={styles.statCard}>
+              <h3>Média Geral</h3>
+              <div className={`${styles.statValue}`}>
+                {(() => {
+                  const materias = Object.values(boletimData.boletim);
+                  const notas = materias
+                    .map((m) => m.mediaFinalGeral)
+                    .filter((n): n is number => typeof n === 'number');
+                  return notas.length > 0
+                    ? (notas.reduce((a, b) => a + b, 0) / notas.length).toFixed(
+                        2,
+                      )
+                    : '--';
+                })()}
               </div>
-              <div className={styles.periodosContainer}>
-                {Object.entries(materiaData)
-                  .filter(([key]) => key !== 'mediaFinalGeral')
-                  .map(([periodoKey, periodoData]) => (
-                    <div key={periodoKey} className={styles.periodo}>
-                      <h3 className={styles.periodoTitle}>
-                        <FiClipboard /> {periodosMap[periodoKey] || periodoKey}
-                        <span
-                          className={`${styles.mediaPeriodo} ${getMediaColor(
-                            periodoData.media,
-                          )}`}
-                        >
-                          {periodoData.media}
-                        </span>
-                      </h3>
-                      <ul className={styles.avaliacoesList}>
-                        {periodoData.avaliacoes.map((av, index) => (
-                          <li key={index}>
-                            <span>
-                              {av.tipo.replace(/_/g, ' ').toLowerCase()}
-                            </span>
-                            <strong>{av.nota.toFixed(2)}</strong>
-                          </li>
-                        ))}
-                      </ul>
+              <p>Média geral de todas as matérias</p>
+            </div>
+            <div className={styles.statCard}>
+              <h3>Frequência Geral</h3>
+              <div className={styles.statValue}>
+                {boletimData.frequenciaGeral.toFixed(1)}%
+              </div>
+              <p>Frequência geral de todas as matérias</p>
+            </div>
+            {Object.entries(boletimData.mediaGeralBimestre).map(
+              ([bimestre, media]) =>
+                media !== null && (
+                  <div key={bimestre} className={styles.statCard}>
+                    <h3>Média Geral - {periodosMap[bimestre] || bimestre}</h3>
+                    <div className={`${styles.statValue}`}>
+                      {media.toFixed(2)}
                     </div>
-                  ))}
+                    <p>Média geral de todas as matérias</p>
+                  </div>
+                ),
+            )}
+          </div>
+
+          <div className={styles.chartsContainer}>
+            <div className={styles.chartWrapper}>
+              <h3>
+                <span></span> Evolução do Desempenho (Bimestre)
+              </h3>
+              <p>Comparação com a média da turma</p>
+              <div className={styles.chartArea}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart
+                    data={Object.entries(periodosMap)
+                      .filter(
+                        ([key]) =>
+                          key !== 'ATIVIDADES_CONTINUAS' &&
+                          key !== 'RECUPERACAO_FINAL',
+                      )
+                      .map(([key, label]) => ({
+                        name: label.split(' ')[0], // '1º', '2º', etc.
+                        Aluno: boletimData.mediaGeralBimestre[key] || 0,
+                        Turma:
+                          parseFloat(
+                            (
+                              boletimData.statsTurma?.mediasBimestre?.[key] || 0
+                            ).toFixed(2),
+                          ) || 0,
+                      }))}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="name" />
+                    <YAxis domain={[0, 10]} />
+                    <Tooltip />
+                    <Legend />
+                    <Line
+                      type="monotone"
+                      dataKey="Aluno"
+                      stroke="#016be4"
+                      strokeWidth={2}
+                      activeDot={{ r: 8 }}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="Turma"
+                      stroke="#acacacff"
+                      strokeWidth={2}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
               </div>
             </div>
-          ))}
-        </div>
+
+            <div className={styles.chartWrapper}>
+              <h3>
+                <span></span> Comparativo por Disciplina
+              </h3>
+              <p>Comparação com a média da turma</p>
+              <div className={styles.chartArea}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={Object.entries(boletimData.boletim).map(
+                      ([materia, data]) => ({
+                        name:
+                          materia.length > 10
+                            ? materia.slice(0, 10) + '...'
+                            : materia,
+                        fullName: materia,
+                        Aluno: data.mediaFinalGeral || 0,
+                        Turma:
+                          parseFloat(
+                            (
+                              boletimData.statsTurma?.mediasPorMateria?.[
+                                materia
+                              ] || 0
+                            ).toFixed(2),
+                          ) || 0,
+                      }),
+                    )}
+                    margin={{ left: 0, bottom: 20 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                    <XAxis
+                      dataKey="name"
+                      angle={-45}
+                      textAnchor="end"
+                      height={60}
+                      interval={0}
+                      tick={{ fontSize: 12 }}
+                    />
+                    <YAxis domain={[0, 10]} />
+                    <Tooltip
+                      labelFormatter={(value, payload) => {
+                        if (payload && payload.length > 0) {
+                          return payload[0].payload.fullName;
+                        }
+                        return value;
+                      }}
+                    />
+                    <Legend verticalAlign="top" height={36} />
+                    <Bar dataKey="Aluno" fill="#016be4" radius={[4, 4, 0, 0]} />
+                    <Bar
+                      dataKey="Turma"
+                      fill="#acacacff"
+                      radius={[4, 4, 0, 0]}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </div>
+
+          <div className={styles.gridMaterias}>
+            {Object.entries(boletimData.boletim).map(
+              ([materiaNome, materiaData]) => (
+                <div key={materiaNome} className={styles.materiaCard}>
+                  <div className={styles.materiaHeader}>
+                    <h2>
+                      <FiBookOpen /> {materiaNome}
+                    </h2>
+                    <div className={styles.headerStats}>
+                      <div className={styles.frequenciaStat}>
+                        <span>Freq.</span>
+                        <strong>
+                          {materiaData.frequencia?.porcentagem.toFixed(0)}%
+                        </strong>
+                      </div>
+                      <div
+                        className={`${styles.mediaGeral} ${getMediaColor(
+                          materiaData.mediaFinalGeral,
+                        )}`}
+                      >
+                        <span>Média Final</span>
+                        <strong>
+                          {materiaData.mediaFinalGeral !== null
+                            ? materiaData.mediaFinalGeral
+                            : '--'}
+                        </strong>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className={styles.periodosContainer}>
+                    {Object.entries(materiaData)
+                      .filter(
+                        ([key]) =>
+                          key !== 'mediaFinalGeral' && key !== 'frequencia',
+                      )
+                      .map(([periodoKey, data]) => {
+                        const periodoData = data as Periodo;
+                        return (
+                          <div key={periodoKey} className={styles.periodo}>
+                            <h3 className={styles.periodoTitle}>
+                              <FiClipboard />{' '}
+                              {periodosMap[periodoKey] || periodoKey}
+                              <span
+                                className={`${
+                                  styles.mediaPeriodo
+                                } ${getMediaColor(periodoData.media)}`}
+                              >
+                                {periodoData.media !== null
+                                  ? periodoData.media
+                                  : '--'}
+                              </span>
+                            </h3>
+                            <ul className={styles.avaliacoesList}>
+                              {periodoData.avaliacoes.map((av, index) => (
+                                <li key={index}>
+                                  <span>
+                                    {av.tipo.replace(/_/g, ' ').toLowerCase()}
+                                  </span>
+                                  <strong>{av.nota.toFixed(2)}</strong>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        );
+                      })}
+                  </div>
+
+                  <div className={styles.commentSection}>
+                    <h3>
+                      <FiMessageSquare /> Comentário do Professor
+                    </h3>
+                    <textarea
+                      className={styles.commentInput}
+                      placeholder="Escreva um comentário sobre o desempenho do aluno nesta matéria..."
+                      value={comments[materiaNome] || ''}
+                      onChange={(e) =>
+                        handleCommentChange(materiaNome, e.target.value)
+                      }
+                    />
+                    <button
+                      className={styles.saveButton}
+                      onClick={() => handleSaveComment(materiaNome)}
+                      disabled={savingComment[materiaNome]}
+                    >
+                      <FiSave />{' '}
+                      {savingComment[materiaNome]
+                        ? 'Salvando...'
+                        : 'Salvar Comentário'}
+                    </button>
+                  </div>
+                </div>
+              ),
+            )}
+          </div>
+        </>
       )}
+
+      {(!boletimData || Object.keys(boletimData.boletim).length === 0) &&
+        !loading &&
+        !error && <p>Nenhuma nota lançada para este aluno ainda.</p>}
     </div>
   );
 }
