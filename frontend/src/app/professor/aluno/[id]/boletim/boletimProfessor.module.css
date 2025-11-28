@@ -20,43 +20,43 @@
 
 .materiaHeader {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 20px;
-  background-color: var(--cor-fundo);
-  border-bottom: 1px solid var(--cor-borda);
+  justify-content: space-between;
 }
 
 .materiaHeader h2 {
-  font-size: 1.3rem;
+  font-size: 1.2rem;
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  color: var(--cor-texto-destaque);
+  gap: 10px;
+  color: var(--cor-texto);
+}
+
+.materiaHeader h2 svg {
+  color: var(--cor-primaria);
 }
 
 .mediaGeral {
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
-  padding: 0.5rem 1rem;
-  border-radius: var(--raio-borda-md);
+  gap: 2px;
   color: white;
+  padding: 10px;
+  border-radius: 10px;
+  text-align: center;
 }
 .mediaGeral span {
-  font-size: 0.8rem;
-  opacity: 0.9;
+  font-size: 0.9rem;
 }
 .mediaGeral strong {
-  font-size: 1.5rem;
-  font-weight: 700;
+  font-size: 1.3rem;
+  font-weight: 500;
 }
 
 .periodosContainer {
-  padding: 1.5rem;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fit , minmax(250px, 1fr));
+  gap: 20px;
 }
 
 .periodo {
@@ -87,6 +87,13 @@
   color: white;
 }
 
+.frequenciaBimestre {
+  font-size: 0.75rem;
+  color: var(--cor-subtexto);
+  margin-top: 0.25rem;
+  font-weight: 500;
+}
+
 .avaliacoesList {
   list-style: none;
   padding: 0;
@@ -111,13 +118,13 @@
 }
 
 .mediaAlta {
-  background-color: var(--cor-sucesso-dark);
+  background-color: var(--cor-sucesso);
 }
 .mediaMedia {
-  background-color: var(--cor-aviso-hover);
+  background-color: var(--cor-aviso);
 }
 .mediaBaixa {
-  background-color: var(--cor-perigo-dark);
+  background-color: var(--cor-perigo);
 }
 
 .infoCard {
@@ -231,17 +238,14 @@
 .headerStats {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 20px;
 }
 
 .frequenciaStat {
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
-  padding: 0.5rem 1rem;
-  background-color: var(--cor-fundo-subtil);
-  border-radius: var(--raio-borda-md);
-  border: 1px solid var(--cor-borda);
+  gap: 2px;
+  text-align: right;
 }
 
 .frequenciaStat span {
@@ -251,7 +255,7 @@
 
 .frequenciaStat strong {
   font-size: 1.2rem;
-  font-weight: 700;
+  font-weight: 500;
   color: var(--cor-texto);
 }
 

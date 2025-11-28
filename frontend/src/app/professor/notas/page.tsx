@@ -256,27 +256,6 @@ export default function ProfessorNotasPage() {
     };
   }, [selectedComponenteId, componentes]);
 
-  useEffect(() => {
-    if (!selectedAlunoId || !selectedBimestreId) {
-      setNotaInput('');
-      return;
-    }
-    const manual = avaliacoes.find(
-      (avaliacao) =>
-        avaliacao.matricula.id === selectedAlunoId &&
-        (avaliacao.bimestre?.id === selectedBimestreId ||
-          avaliacao.periodo ===
-            bimestres.find((b) => b.id === selectedBimestreId)?.periodo) &&
-        !avaliacao.tarefa,
-    );
-
-    if (manual) {
-      setNotaInput(manual.nota.toFixed(1));
-    } else {
-      setNotaInput('');
-    }
-  }, [selectedAlunoId, selectedBimestreId, avaliacoes, bimestres]);
-
   const linhaDeNotas = useMemo<GradeRow[]>(() => {
     if (matriculas.length === 0) return [];
 
@@ -286,34 +265,27 @@ export default function ProfessorNotasPage() {
           avaliacao.matricula.id === matricula.id && !avaliacao.tarefa,
       );
 
-      const mediasPorPeriodo: Record<
-        string,
-        { soma: number; quantidade: number }
-      > = {};
-
-      avaliacoesDoAluno.forEach((avaliacao) => {
-        const periodo = avaliacao.periodo;
-        if (!mediasPorPeriodo[periodo]) {
-          mediasPorPeriodo[periodo] = { soma: 0, quantidade: 0 };
-        }
-        mediasPorPeriodo[periodo].soma += avaliacao.nota;
-        mediasPorPeriodo[periodo].quantidade += 1;
-      });
+      // Sort by date descending to ensure we get the latest grade if there are duplicates
+      avaliacoesDoAluno.sort(
+        (a, b) => new Date(b.data).getTime() - new Date(a.data).getTime(),
+      );
 
       const notasBimestres: Record<string, number | null> = {};
 
       periodoOrdem.forEach((periodo) => {
-        const resumo = mediasPorPeriodo[periodo];
-        notasBimestres[periodo] = resumo
-          ? parseFloat((resumo.soma / resumo.quantidade).toFixed(1))
-          : null;
+        const avaliacao = avaliacoesDoAluno.find(
+          (av) =>
+            av.periodo === periodo ||
+            (av.bimestre && av.bimestre.periodo === periodo),
+        );
+        notasBimestres[periodo] = avaliacao ? avaliacao.nota : null;
       });
 
-      const resumoRecuperacao = mediasPorPeriodo['RECUPERACAO_FINAL'];
-      const recuperacao = resumoRecuperacao
-        ? parseFloat(
-            (resumoRecuperacao.soma / resumoRecuperacao.quantidade).toFixed(1),
-          )
+      const avaliacaoRecuperacao = avaliacoesDoAluno.find(
+        (av) => av.periodo === 'RECUPERACAO_FINAL',
+      );
+      const recuperacao = avaliacaoRecuperacao
+        ? avaliacaoRecuperacao.nota
         : null;
 
       const todasNotasPresentes = periodoOrdem.every(
@@ -403,7 +375,7 @@ export default function ProfessorNotasPage() {
 
     const dataReferencia = new Date(bimestreSelecionado.dataFim).toISOString();
 
-    const avaliacaoManualExistente = avaliacoes.find(
+    const avaliacoesManuaisExistentes = avaliacoes.filter(
       (avaliacao) =>
         avaliacao.matricula.id === selectedAlunoId &&
         (avaliacao.bimestre?.id === selectedBimestreId ||
@@ -413,35 +385,33 @@ export default function ProfessorNotasPage() {
 
     setSavingNota(true);
     try {
-      if (avaliacaoManualExistente) {
-        const { data } = await api.put<Avaliacao>(
-          `/avaliacoes/${avaliacaoManualExistente.id}`,
-          {
-            nota: valorNota,
-            data: dataReferencia,
-            bimestreId: selectedBimestreId,
-          },
-        );
-
-        setAvaliacoes((prev) =>
-          prev.map((avaliacao) =>
-            avaliacao.id === data.id ? data : avaliacao,
+      // Delete all existing manual evaluations for this bimester to ensure only one prevails
+      if (avaliacoesManuaisExistentes.length > 0) {
+        await Promise.all(
+          avaliacoesManuaisExistentes.map((av) =>
+            api.delete(`/avaliacoes/${av.id}`),
           ),
         );
-        setFeedbackSuccess('Nota atualizada com sucesso.');
-      } else {
-        const { data } = await api.post<Avaliacao>('/avaliacoes', {
-          nota: valorNota,
-          tipo: 'PROVA',
-          data: dataReferencia,
-          matriculaId: selectedAlunoId,
-          componenteCurricularId: selectedComponenteId,
-          bimestreId: selectedBimestreId,
-        });
-
-        setAvaliacoes((prev) => [...prev, data]);
-        setFeedbackSuccess('Nota registrada com sucesso.');
       }
+
+      // Create the new evaluation
+      const { data } = await api.post<Avaliacao>('/avaliacoes', {
+        nota: valorNota,
+        tipo: 'PROVA',
+        data: dataReferencia,
+        matriculaId: selectedAlunoId,
+        componenteCurricularId: selectedComponenteId,
+        bimestreId: selectedBimestreId,
+      });
+
+      setAvaliacoes((prev) => {
+        // Remove deleted ones and add the new one
+        const filtered = prev.filter(
+          (av) => !avaliacoesManuaisExistentes.some((old) => old.id === av.id),
+        );
+        return [...filtered, data];
+      });
+      setFeedbackSuccess('Nota registrada com sucesso (anteriores removidas).');
     } catch (error: any) {
       const message =
         error?.response?.data?.message ||

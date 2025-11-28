@@ -28,6 +28,7 @@ import {
   BarChart,
   Bar,
 } from 'recharts';
+import { LuBookOpen } from 'react-icons/lu';
 
 type Avaliacao = {
   tipo: string;
@@ -37,6 +38,7 @@ type Avaliacao = {
 type Periodo = {
   avaliacoes: Avaliacao[];
   media: number | null;
+  frequencia?: number;
 };
 
 type Frequencia = {
@@ -71,6 +73,7 @@ type BoletimResponse = {
     mediasBimestre: Record<string, number>;
     mediasPorMateria: Record<string, number>;
   };
+  materiasDoProfessor?: string[];
 };
 
 const periodosMap: { [key: string]: string } = {
@@ -81,6 +84,14 @@ const periodosMap: { [key: string]: string } = {
   ATIVIDADES_CONTINUAS: 'Atividades Contínuas',
   RECUPERACAO_FINAL: 'Recuperação Final',
 };
+
+const orderedPeriods = [
+  'PRIMEIRO_BIMESTRE',
+  'SEGUNDO_BIMESTRE',
+  'TERCEIRO_BIMESTRE',
+  'QUARTO_BIMESTRE',
+  'RECUPERACAO_FINAL',
+];
 
 export default function BoletimAlunoParaProfessorPage() {
   const params = useParams();
@@ -158,6 +169,8 @@ export default function BoletimAlunoParaProfessorPage() {
     if (media >= 5) return styles.mediaMedia;
     return styles.mediaBaixa;
   };
+
+  console.log(boletimData);
 
   if (loading) {
     return (
@@ -332,21 +345,21 @@ export default function BoletimAlunoParaProfessorPage() {
                 <div key={materiaNome} className={styles.materiaCard}>
                   <div className={styles.materiaHeader}>
                     <h2>
-                      <FiBookOpen /> {materiaNome}
+                      <LuBookOpen /> {materiaNome}
                     </h2>
                     <div className={styles.headerStats}>
                       <div className={styles.frequenciaStat}>
-                        <span>Freq.</span>
                         <strong>
                           {materiaData.frequencia?.porcentagem.toFixed(0)}%
                         </strong>
+                        <span>Frequência</span>
                       </div>
                       <div
                         className={`${styles.mediaGeral} ${getMediaColor(
                           materiaData.mediaFinalGeral,
                         )}`}
                       >
-                        <span>Média Final</span>
+                        <span>Média</span>
                         <strong>
                           {materiaData.mediaFinalGeral !== null
                             ? materiaData.mediaFinalGeral
@@ -357,66 +370,60 @@ export default function BoletimAlunoParaProfessorPage() {
                   </div>
 
                   <div className={styles.periodosContainer}>
-                    {Object.entries(materiaData)
-                      .filter(
-                        ([key]) =>
-                          key !== 'mediaFinalGeral' && key !== 'frequencia',
-                      )
-                      .map(([periodoKey, data]) => {
-                        const periodoData = data as Periodo;
-                        return (
-                          <div key={periodoKey} className={styles.periodo}>
-                            <h3 className={styles.periodoTitle}>
-                              <FiClipboard />{' '}
-                              {periodosMap[periodoKey] || periodoKey}
-                              <span
-                                className={`${
-                                  styles.mediaPeriodo
-                                } ${getMediaColor(periodoData.media)}`}
-                              >
-                                {periodoData.media !== null
-                                  ? periodoData.media
-                                  : '--'}
-                              </span>
-                            </h3>
-                            <ul className={styles.avaliacoesList}>
-                              {periodoData.avaliacoes.map((av, index) => (
-                                <li key={index}>
-                                  <span>
-                                    {av.tipo.replace(/_/g, ' ').toLowerCase()}
-                                  </span>
-                                  <strong>{av.nota.toFixed(2)}</strong>
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        );
-                      })}
+                    {orderedPeriods.map((periodoKey) => {
+                      const data = materiaData[periodoKey];
+                      if (!data) return null;
+                      const periodoData = data as Periodo;
+
+                      return (
+                        <div key={periodoKey} className={styles.periodo}>
+                          <h3 className={styles.periodoTitle}>
+                            {periodosMap[periodoKey] || periodoKey}
+                            <span
+                              className={`${
+                                styles.mediaPeriodo
+                              } ${getMediaColor(periodoData.media)}`}
+                            >
+                              {periodoData.media !== null
+                                ? periodoData.media
+                                : '--'}
+                            </span>
+                            <p className={styles.frequenciaBimestre}>
+                              {periodoData.frequencia !== undefined
+                                ? `${periodoData.frequencia.toFixed(0)}% Freq.`
+                                : ''}
+                            </p>
+                          </h3>
+                        </div>
+                      );
+                    })}
                   </div>
 
-                  <div className={styles.commentSection}>
-                    <h3>
-                      <FiMessageSquare /> Comentário do Professor
-                    </h3>
-                    <textarea
-                      className={styles.commentInput}
-                      placeholder="Escreva um comentário sobre o desempenho do aluno nesta matéria..."
-                      value={comments[materiaNome] || ''}
-                      onChange={(e) =>
-                        handleCommentChange(materiaNome, e.target.value)
-                      }
-                    />
-                    <button
-                      className={styles.saveButton}
-                      onClick={() => handleSaveComment(materiaNome)}
-                      disabled={savingComment[materiaNome]}
-                    >
-                      <FiSave />{' '}
-                      {savingComment[materiaNome]
-                        ? 'Salvando...'
-                        : 'Salvar Comentário'}
-                    </button>
-                  </div>
+                  {boletimData.materiasDoProfessor?.includes(materiaNome) && (
+                    <div className={styles.commentSection}>
+                      <h3>
+                        <FiMessageSquare /> Comentário do Professor
+                      </h3>
+                      <textarea
+                        className={styles.commentInput}
+                        placeholder="Escreva um comentário sobre o desempenho do aluno nesta matéria..."
+                        value={comments[materiaNome] || ''}
+                        onChange={(e) =>
+                          handleCommentChange(materiaNome, e.target.value)
+                        }
+                      />
+                      <button
+                        className={styles.saveButton}
+                        onClick={() => handleSaveComment(materiaNome)}
+                        disabled={savingComment[materiaNome]}
+                      >
+                        <FiSave />{' '}
+                        {savingComment[materiaNome]
+                          ? 'Salvando...'
+                          : 'Salvar Comentário'}
+                      </button>
+                    </div>
+                  )}
                 </div>
               ),
             )}

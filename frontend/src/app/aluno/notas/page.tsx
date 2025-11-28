@@ -50,7 +50,16 @@ type MateriaData = {
   mediaFinalGeral: number;
 } & Partial<Record<PeriodoKey, PeriodoData>>;
 
-type BoletimResponse = Record<string, MateriaData>;
+type BoletimMap = Record<string, MateriaData>;
+
+type BoletimApiResponse = {
+  boletim: BoletimMap;
+  dadosAluno: any;
+  mediaGeralBimestre: any;
+  frequenciaGeral: number;
+  comentarios: any;
+  statsTurma: any;
+};
 
 const formatNota = (nota?: number | null) =>
   typeof nota === 'number' ? nota.toFixed(1) : '-';
@@ -73,7 +82,7 @@ const getStatusInfo = (media?: number | null) => {
 
 export default function NotasAlunoPage() {
   const { user, loading: authLoading } = useAuth();
-  const [boletim, setBoletim] = useState<BoletimResponse | null>(null);
+  const [boletim, setBoletim] = useState<BoletimMap | null>(null);
   const [loadingNotas, setLoadingNotas] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
@@ -94,11 +103,11 @@ export default function NotasAlunoPage() {
       try {
         setLoadingNotas(true);
         setError(null);
-        const { data } = await api.get<BoletimResponse>(
+        const { data } = await api.get<BoletimApiResponse>(
           `/alunos/${user.id}/boletim`,
           { signal: controller.signal },
         );
-        setBoletim(data);
+        setBoletim(data.boletim);
       } catch (err) {
         const axiosError = err as AxiosError<{ message?: string }>;
         if (axiosError?.code === 'ERR_CANCELED') return;

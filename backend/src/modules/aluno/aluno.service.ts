@@ -14,12 +14,12 @@ const PERIODOS_PADRAO = [
 ] as const;
 
 const PERIODOS_LABEL: Record<(typeof PERIODOS_PADRAO)[number], string> = {
-  PRIMEIRO_BIMESTRE: '1Âº Bimestre',
-  SEGUNDO_BIMESTRE: '2Âº Bimestre',
-  TERCEIRO_BIMESTRE: '3Âº Bimestre',
-  QUARTO_BIMESTRE: '4Âº Bimestre',
-  ATIVIDADES_CONTINUAS: 'Atividades ContÃ­nuas',
-  RECUPERACAO_FINAL: 'RecuperaÃ§Ã£o Final',
+  PRIMEIRO_BIMESTRE: '1º Bimestre',
+  SEGUNDO_BIMESTRE: '2º Bimestre',
+  TERCEIRO_BIMESTRE: '3º Bimestre',
+  QUARTO_BIMESTRE: '4º Bimestre',
+  ATIVIDADES_CONTINUAS: 'Atividades Contínuas',
+  RECUPERACAO_FINAL: 'Recuperação Final',
 };
 
 const PERIODOS_PDF_ORDEM: (typeof PERIODOS_PADRAO)[number][] = [
@@ -105,6 +105,8 @@ async function getBoletim(
         nota: true,
         periodo: true,
         tipo: true,
+        tarefaId: true,
+        bimestre: { select: { periodo: true } },
         componenteCurricular: {
           select: { materia: { select: { nome: true } } },
         },
@@ -138,8 +140,8 @@ async function getBoletim(
             id: true,
             componentes_curriculares: {
               select: {
-                materia: { select: { nome: true } },
                 id: true,
+                materia: { select: { nome: true } },
               },
             },
           },
@@ -155,9 +157,10 @@ async function getBoletim(
   const unidadeEscolarId = perfilAluno.usuario.unidadeEscolarId;
   let dataInicioAno: Date | undefined;
   let dataFimAno: Date | undefined;
+  let bimestres: any[] = [];
 
   if (unidadeEscolarId) {
-    const bimestres = await prisma.bimestres.findMany({
+    bimestres = await prisma.bimestres.findMany({
       where: { unidadeEscolarId },
       orderBy: { dataInicio: 'asc' },
     });
@@ -179,6 +182,11 @@ async function getBoletim(
     { aulasDadas: number; presencas: number; porcentagem: number }
   > = {};
 
+  const frequenciaPorMateriaBimestre: Record<
+    string,
+    Record<string, number>
+  > = {};
+
   if (matriculaAtiva && dataInicioAno && dataFimAno) {
     const componentes = matriculaAtiva.turma?.componentes_curriculares || [];
 
@@ -186,7 +194,8 @@ async function getBoletim(
       componentes.map(async (comp) => {
         if (!comp.materia?.nome) return;
 
-        const totalAulas = await prisma.diarioAula.count({
+        // Frequência Geral
+        const totalAulasGeral = await prisma.diarioAula.count({
           where: {
             componenteCurricularId: comp.id,
             data: {
@@ -196,7 +205,7 @@ async function getBoletim(
           },
         });
 
-        const presencas = await prisma.diarioAulaPresenca.count({
+        const presencasGeral = await prisma.diarioAulaPresenca.count({
           where: {
             matriculaId: matriculaAtiva.id,
             situacao: 'PRESENTE',
@@ -211,10 +220,67 @@ async function getBoletim(
         });
 
         frequenciaPorMateria[comp.materia.nome] = {
-          aulasDadas: totalAulas,
-          presencas,
-          porcentagem: totalAulas > 0 ? (presencas / totalAulas) * 100 : 100,
+          aulasDadas: totalAulasGeral,
+          presencas: presencasGeral,
+          porcentagem:
+            totalAulasGeral > 0
+              ? (presencasGeral / totalAulasGeral) * 100
+              : 100,
         };
+
+        // Frequência por Bimestre
+        frequenciaPorMateriaBimestre[comp.materia.nome] = {};
+
+        try {
+          if (bimestres.length > 0) {
+            await Promise.all(
+              bimestres.map(async (bimestre) => {
+                const totalAulasBimestre = await prisma.diarioAula.count({
+                  where: {
+                    componenteCurricularId: comp.id,
+                    data: {
+                      gte: bimestre.dataInicio,
+                      lte: bimestre.dataFim,
+                    },
+                  },
+                });
+
+                const presencasBimestre = await prisma.diarioAulaPresenca.count(
+                  {
+                    where: {
+                      matriculaId: matriculaAtiva.id,
+                      situacao: 'PRESENTE',
+                      diarioAula: {
+                        componenteCurricularId: comp.id,
+                        data: {
+                          gte: bimestre.dataInicio,
+                          lte: bimestre.dataFim,
+                        },
+                      },
+                    },
+                  },
+                );
+
+                if (comp.materia?.nome) {
+                  if (totalAulasBimestre > 0) {
+                    frequenciaPorMateriaBimestre[comp.materia.nome][
+                      bimestre.periodo
+                    ] = (presencasBimestre / totalAulasBimestre) * 100;
+                  } else {
+                    frequenciaPorMateriaBimestre[comp.materia.nome][
+                      bimestre.periodo
+                    ] = 100;
+                  }
+                }
+              }),
+            );
+          }
+        } catch (err) {
+          console.error(
+            '[BOLETIM SERVICE] Erro ao calcular frequência por bimestre:',
+            err,
+          );
+        }
       }),
     );
   }
@@ -226,10 +292,11 @@ async function getBoletim(
     }
   });
 
-  // --- FILTRO PARA PROFESSOR ---
+  // --- FILTRO PARA PROFESSOR (REMOVIDO FILTRO, APENAS IDENTIFICAÇÃO) ---
+  let materiasDoProfessor: string[] = [];
   if (user?.papel === 'PROFESSOR' && user.perfilId) {
     console.log(
-      '[BOLETIM SERVICE] Filtrando matérias para o professor:',
+      '[BOLETIM SERVICE] Identificando matérias do professor:',
       user.perfilId,
     );
     const componentesProfessor = await prisma.componenteCurricular.findMany({
@@ -240,16 +307,7 @@ async function getBoletim(
       select: { materia: { select: { nome: true } } },
     });
 
-    const materiasProfessor = new Set(
-      componentesProfessor.map((c) => c.materia.nome),
-    );
-
-    // Manter apenas as matérias que o professor leciona
-    for (const materia of materiasEsperadas) {
-      if (!materiasProfessor.has(materia)) {
-        materiasEsperadas.delete(materia);
-      }
-    }
+    materiasDoProfessor = componentesProfessor.map((c) => c.materia.nome);
   }
   // -----------------------------
 
@@ -261,11 +319,14 @@ async function getBoletim(
   }[] = [];
 
   avaliacoes.forEach((av) => {
+    // Filter out evaluations linked to tasks (keep only manual evaluations)
+    if (av.tarefaId) return;
+
     if (av.componenteCurricular?.materia?.nome) {
       materiasEsperadas.add(av.componenteCurricular.materia.nome);
       todasAsNotas.push({
         materia: av.componenteCurricular.materia.nome,
-        periodo: av.periodo,
+        periodo: av.bimestre?.periodo || av.periodo,
         tipo: String(av.tipo),
         nota: av.nota,
       });
@@ -276,21 +337,8 @@ async function getBoletim(
     }
   });
 
-  submissoes.forEach((sub) => {
-    if (sub.tarefa?.componenteCurricular?.materia?.nome) {
-      materiasEsperadas.add(sub.tarefa.componenteCurricular.materia.nome);
-      todasAsNotas.push({
-        materia: sub.tarefa.componenteCurricular.materia.nome,
-        periodo: 'ATIVIDADES_CONTINUAS',
-        tipo: String(sub.tarefa.tipo),
-        nota: sub.nota_total!,
-      });
-    } else {
-      console.warn(
-        '[BOLETIM SERVICE] Aviso: Ignorando submissão sem matéria associada.',
-      );
-    }
-  });
+  // Submissions are task-based, so we ignore them for the bulletin grade
+  // submissoes.forEach((sub) => { ... });
   console.log(
     `[BOLETIM SERVICE] Total de notas válidas processadas: ${todasAsNotas.length}`,
   );
@@ -335,25 +383,52 @@ async function getBoletim(
         notasDaMateria.push(...notasDoPeriodo);
       }
       if (notasDoPeriodo.length > 0) {
-        const mediaPeriodo =
-          notasDoPeriodo.reduce((a: number, b: number) => a + b, 0) /
-          notasDoPeriodo.length;
+        const somaPeriodo = notasDoPeriodo.reduce(
+          (a: number, b: number) => a + b,
+          0,
+        );
         boletimFinal[materia][periodo].media = parseFloat(
-          mediaPeriodo.toFixed(2),
+          somaPeriodo.toFixed(2),
         );
       }
     }
-    if (notasDaMateria.length > 0) {
-      const mediaFinalMateria =
-        notasDaMateria.reduce((a, b) => a + b, 0) / notasDaMateria.length;
+    // Calcular média final como a média das notas dos bimestres (que são somas)
+    let somaMediasBimestres = 0;
+    let bimestresComNota = 0;
+
+    PERIODOS_PADRAO.forEach((periodo) => {
+      // Inject bimester frequency
+      if (
+        frequenciaPorMateriaBimestre[materia] &&
+        frequenciaPorMateriaBimestre[materia][periodo] !== undefined
+      ) {
+        boletimFinal[materia][periodo].frequencia =
+          frequenciaPorMateriaBimestre[materia][periodo];
+      } else {
+        boletimFinal[materia][periodo].frequencia = 100; // Default
+      }
+
+      if (
+        periodo !== 'ATIVIDADES_CONTINUAS' &&
+        periodo !== 'RECUPERACAO_FINAL'
+      ) {
+        const mediaPeriodo = boletimFinal[materia][periodo].media;
+        if (mediaPeriodo !== null) {
+          somaMediasBimestres += mediaPeriodo;
+          bimestresComNota++;
+        }
+      }
+    });
+
+    if (bimestresComNota > 0) {
       boletimFinal[materia].mediaFinalGeral = parseFloat(
-        mediaFinalMateria.toFixed(2),
+        (somaMediasBimestres / bimestresComNota).toFixed(2),
       );
     } else {
       boletimFinal[materia].mediaFinalGeral = null;
     }
 
-    // Adicionar frequência
+    // Adicionar frequência geral da matéria
     if (frequenciaPorMateria[materia]) {
       boletimFinal[materia].frequencia = frequenciaPorMateria[materia];
     } else {
@@ -404,14 +479,18 @@ async function getBoletim(
   });
 
   // 3. Frequência Geral
-  let totalAulasGeral = 0;
-  let totalPresencasGeral = 0;
+  let somaFrequencias = 0;
+  let totalMateriasComFrequencia = 0;
+
   for (const materia in frequenciaPorMateria) {
-    totalAulasGeral += frequenciaPorMateria[materia].aulasDadas;
-    totalPresencasGeral += frequenciaPorMateria[materia].presencas;
+    somaFrequencias += frequenciaPorMateria[materia].porcentagem;
+    totalMateriasComFrequencia++;
   }
+
   const frequenciaGeral =
-    totalAulasGeral > 0 ? (totalPresencasGeral / totalAulasGeral) * 100 : 100;
+    totalMateriasComFrequencia > 0
+      ? somaFrequencias / totalMateriasComFrequencia
+      : 100;
 
   // --- ESTATÍSTICAS DA TURMA ---
   const statsTurma: {
@@ -480,6 +559,7 @@ async function getBoletim(
     frequenciaGeral,
     comentarios,
     statsTurma,
+    materiasDoProfessor,
   };
 }
 
@@ -736,9 +816,8 @@ async function getAgendaEventos(
         type: tipoMap[String(evento.tipo).toUpperCase()] || 'Evento Escolar',
         title: evento.titulo,
         details:
-          [evento.descricao, evento.turma?.nome]
-            .filter(Boolean)
-            .join(' â€¢ ') || undefined,
+          [evento.descricao, evento.turma?.nome].filter(Boolean).join(' • ') ||
+          undefined,
         time: evento.dia_inteiro
           ? 'Dia inteiro'
           : isPrimeiroDia
@@ -794,7 +873,7 @@ async function generateBoletimPdf(usuarioId: string) {
   const boletim = boletimData.boletim;
 
   if (!perfilAluno) {
-    throw new Error('Perfil de aluno nǜo encontrado.');
+    throw new Error('Perfil de aluno não encontrado.');
   }
 
   const doc = await PDFDocument.create();
@@ -831,7 +910,7 @@ async function generateBoletimPdf(usuarioId: string) {
   const matriculaInfo = perfilAluno.matriculas[0];
   const turmaInfo = matriculaInfo?.turma
     ? `${matriculaInfo.turma.serie} - ${matriculaInfo.turma.nome}`
-    : 'Turma nǜo informada';
+    : 'Turma não informada';
   const materias = Object.entries(boletim).sort(([a], [b]) =>
     a.localeCompare(b, 'pt-BR'),
   );
@@ -858,478 +937,284 @@ async function generateBoletimPdf(usuarioId: string) {
       }
       const fallback = char.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
       if (fallback) {
-        for (const fbChar of fallback) {
-          if (fbChar.charCodeAt(0) <= 0xff) {
-            result += fbChar;
-          }
-        }
+        result += fallback;
       }
     }
     return result;
   };
 
-  let cursorY = page.getSize().height - marginY;
-
-  const addPage = () => {
-    page = doc.addPage(pageSize);
-    cursorY = page.getSize().height - marginY;
-  };
-
-  const ensureSpace = (needed = 24) => {
-    if (cursorY - needed <= marginY) {
-      addPage();
-    }
-  };
-
-  const writeLine = (
+  const drawText = (
     text: string,
-    {
-      size = 11,
-      font = regularFont,
-      color = colors.text,
-      indent = 0,
-      spacing = 6,
-    }: {
-      size?: number;
-      font?: PDFFont;
-      color?: ReturnType<typeof rgb>;
-      indent?: number;
-      spacing?: number;
-    } = {},
-  ) => {
-    const totalHeight = size + spacing;
-    ensureSpace(totalHeight);
-    page.drawText(sanitizePdfText(text), {
-      x: marginX + indent,
-      y: cursorY - size,
-      size,
-      font,
-      color,
-    });
-    cursorY -= totalHeight;
-  };
-
-  const drawHeader = () => {
-    const headerHeight = 70;
-    ensureSpace(headerHeight + 16);
-    const headerBottomY = cursorY - headerHeight;
-
-    page.drawRectangle({
-      x: marginX,
-      y: headerBottomY,
-      width: contentWidth,
-      height: headerHeight,
-      color: colors.primary,
-    });
-
-    page.drawText(sanitizePdfText('Boletim Escolar'), {
-      x: marginX + 18,
-      y: headerBottomY + headerHeight - 28,
-      size: 20,
-      font: boldFont,
-      color: colors.white,
-    });
-
-    page.drawText(sanitizePdfText(unidadeNome), {
-      x: marginX + 18,
-      y: headerBottomY + headerHeight - 48,
-      size: 12,
-      font: regularFont,
-      color: colors.white,
-    });
-
-    const anoText = `Ano letivo: ${matriculaInfo?.ano_letivo ?? '--'}`;
-    page.drawText(sanitizePdfText(anoText), {
-      x: marginX + 18,
-      y: headerBottomY + 16,
-      size: 11,
-      font: regularFont,
-      color: colors.white,
-    });
-
-    cursorY = headerBottomY - 24;
-  };
-
-  const drawInfoCard = () => {
-    const infoItems = [
-      { label: 'Aluno', value: alunoNome },
-      { label: 'Matr��cula', value: perfilAluno.numero_matricula ?? '--' },
-      { label: 'Turma', value: turmaInfo },
-      { label: 'Unidade', value: unidadeNome },
-    ];
-
-    const columns = 2;
-    const cardPadding = 16;
-    const rowHeight = 28;
-    const rows = Math.ceil(infoItems.length / columns);
-    const cardHeight = rows * rowHeight + cardPadding * 2;
-
-    ensureSpace(cardHeight + 16);
-    const cardBottomY = cursorY - cardHeight;
-
-    page.drawRectangle({
-      x: marginX,
-      y: cardBottomY,
-      width: contentWidth,
-      height: cardHeight,
-      color: colors.cardBg,
-      borderColor: colors.tableBorder,
-      borderWidth: 0.5,
-    });
-
-    for (let row = 0; row < rows; row++) {
-      for (let col = 0; col < columns; col++) {
-        const index = row * columns + col;
-        const item = infoItems[index];
-        if (!item) continue;
-
-        const cellWidth = contentWidth / columns;
-        const cellX = marginX + col * cellWidth;
-        const baseY = cursorY - cardPadding - row * rowHeight - 14;
-
-        page.drawText(sanitizePdfText(item.label), {
-          x: cellX + 10,
-          y: baseY,
-          size: 10,
-          font: boldFont,
-          color: colors.lightText,
-        });
-
-        page.drawText(sanitizePdfText(item.value), {
-          x: cellX + 10,
-          y: baseY - 12,
-          size: 12,
-          font: regularFont,
-          color: colors.text,
-        });
-      }
-    }
-
-    cursorY = cardBottomY - 24;
-  };
-
-  const drawSummaryChips = () => {
-    const summaryItems = [
-      { label: 'Total de disciplinas', value: String(materias.length) },
-      {
-        label: 'M��dia global',
-        value: mediaGlobal != null ? formatNotaPdf(mediaGlobal) : '--',
-      },
-      { label: 'Gerado em', value: formatDateBr(new Date()) },
-    ];
-
-    const chipGap = 12;
-    const chipHeight = 44;
-    const chipWidth =
-      (contentWidth - chipGap * (summaryItems.length - 1)) /
-      summaryItems.length;
-
-    ensureSpace(chipHeight + 12);
-
-    summaryItems.forEach((item, index) => {
-      const x = marginX + index * (chipWidth + chipGap);
-      const y = cursorY - chipHeight;
-
-      page.drawRectangle({
-        x,
-        y,
-        width: chipWidth,
-        height: chipHeight,
-        color: colors.tableStripe,
-        borderColor: colors.tableBorder,
-        borderWidth: 0.5,
-      });
-
-      page.drawText(sanitizePdfText(item.label), {
-        x: x + 10,
-        y: y + chipHeight - 18,
-        size: 9,
-        font: boldFont,
-        color: colors.lightText,
-      });
-
-      page.drawText(sanitizePdfText(item.value), {
-        x: x + 10,
-        y: y + 14,
-        size: 14,
-        font: boldFont,
-        color: colors.primaryDark,
-      });
-    });
-
-    cursorY -= chipHeight + 24;
-  };
-
-  type TableColumn = {
-    key: string;
-    label: string;
-    width: number;
-    align: 'left' | 'center';
-  };
-
-  const tableColumns: TableColumn[] = [
-    { key: 'disciplina', label: 'Disciplina', width: 130, align: 'left' },
-    ...PERIODOS_PDF_ORDEM.map((periodo) => ({
-      key: periodo,
-      label: PERIODOS_LABEL[periodo],
-      width: periodo === 'RECUPERACAO_FINAL' ? 58 : 52,
-      align: 'center' as const,
-    })),
-    { key: 'mediaFinal', label: 'M��dia final', width: 60, align: 'center' },
-    { key: 'status', label: 'Situa��ǜo', width: 70, align: 'center' },
-  ];
-
-  const totalTableWidth = tableColumns.reduce(
-    (acc, column) => acc + column.width,
-    0,
-  );
-
-  if (totalTableWidth > contentWidth) {
-    const scale = contentWidth / totalTableWidth;
-    tableColumns.forEach((column) => {
-      column.width = parseFloat((column.width * scale).toFixed(2));
-    });
-
-    const adjustedWidth = tableColumns.reduce(
-      (acc, column) => acc + column.width,
-      0,
-    );
-    const diff = contentWidth - adjustedWidth;
-    tableColumns[tableColumns.length - 1].width += diff;
-  }
-
-  const truncateToWidth = (
-    rawText: string,
-    width: number,
-    font: PDFFont,
+    x: number,
+    y: number,
     size: number,
+    font: PDFFont,
+    color = colors.text,
   ) => {
-    const text = sanitizePdfText(rawText);
-    if (font.widthOfTextAtSize(text, size) <= width - 8) {
-      return text;
-    }
-    let truncated = text;
-    while (truncated.length > 1) {
-      truncated = truncated.slice(0, -1);
-      const withDots = `${truncated}...`;
-      if (font.widthOfTextAtSize(withDots, size) <= width - 8) {
-        return withDots;
-      }
-    }
-    return truncated;
+    page.drawText(sanitizePdfText(text), { x, y, size, font, color });
   };
 
-  const drawTableRow = (
-    data: Record<string, string>,
-    {
-      header = false,
-      stripe = false,
-      cellColors = {},
-    }: {
-      header?: boolean;
-      stripe?: boolean;
-      cellColors?: Record<string, ReturnType<typeof rgb>>;
-    } = {},
+  const drawRightText = (
+    text: string,
+    x: number,
+    y: number,
+    size: number,
+    font: PDFFont,
+    color = colors.text,
   ) => {
-    const rowHeight = header ? 30 : 24;
-    ensureSpace(rowHeight + 4);
-    const rowBottomY = cursorY - rowHeight;
-    let cellX = marginX;
-
-    tableColumns.forEach((column) => {
-      const backgroundColor = header
-        ? colors.tableHeaderBg
-        : stripe
-        ? colors.tableStripe
-        : undefined;
-
-      page.drawRectangle({
-        x: cellX,
-        y: rowBottomY,
-        width: column.width,
-        height: rowHeight,
-        color: backgroundColor,
-        borderColor: colors.tableBorder,
-        borderWidth: 0.5,
-      });
-
-      const font = header ? boldFont : regularFont;
-      const fontSize = 10;
-      const cellText = header ? column.label : data[column.key] ?? '';
-      const processedText =
-        !header && column.align === 'left'
-          ? truncateToWidth(cellText, column.width, font, fontSize)
-          : sanitizePdfText(cellText);
-
-      const textWidth = font.widthOfTextAtSize(processedText, fontSize);
-      let textX =
-        column.align === 'center'
-          ? cellX + column.width / 2 - textWidth / 2
-          : cellX + 6;
-      if (column.align === 'center' && textWidth > column.width - 6) {
-        textX = cellX + 3;
-      }
-
-      const textColor =
-        cellColors[column.key] || (header ? colors.primaryDark : colors.text);
-
-      const textY = rowBottomY + (rowHeight - fontSize) / 2 + 1;
-      page.drawText(processedText, {
-        x: textX,
-        y: textY,
-        size: fontSize,
-        font,
-        color: textColor,
-      });
-
-      cellX += column.width;
-    });
-
-    cursorY -= rowHeight;
+    const width = font.widthOfTextAtSize(sanitizePdfText(text), size);
+    drawText(text, x - width, y, size, font, color);
   };
 
-  const getStatusData = (media?: number | null) => {
-    if (typeof media !== 'number') {
-      return { label: 'Em andamento', color: colors.warning };
-    }
-    if (media >= 7) {
-      return { label: 'Aprovado', color: colors.approved };
-    }
-    if (media < 5) {
-      return { label: 'Reprovado', color: colors.danger };
-    }
-    return { label: 'Recupera��ǜo', color: colors.warning };
+  const drawCenterText = (
+    text: string,
+    y: number,
+    size: number,
+    font: PDFFont,
+    color = colors.text,
+  ) => {
+    const width = font.widthOfTextAtSize(sanitizePdfText(text), size);
+    drawText(text, (pageWidth - width) / 2, y, size, font, color);
   };
 
-  drawHeader();
-  drawInfoCard();
-  drawSummaryChips();
+  let y = page.getHeight() - marginY;
 
-  if (materias.length === 0) {
-    writeLine(
-      'Ainda nǜo hǭ notas registradas para este aluno neste ano letivo.',
-      { size: 12 },
-    );
-  } else {
-    drawTableRow({}, { header: true });
-
-    materias.forEach(([materiaNome, materiaData], index) => {
-      const statusInfo = getStatusData(materiaData.mediaFinalGeral);
-      const rowValues: Record<string, string> = {
-        disciplina: materiaNome,
-        mediaFinal: formatNotaPdf(materiaData.mediaFinalGeral),
-        status: statusInfo.label,
-      };
-
-      PERIODOS_PDF_ORDEM.forEach((periodo) => {
-        rowValues[periodo] = formatNotaPdf(materiaData[periodo]?.media);
-      });
-
-      drawTableRow(rowValues, {
-        stripe: index % 2 === 1,
-        cellColors: { status: statusInfo.color },
-      });
-    });
-  }
-
-  writeLine('', { spacing: 2 });
-  writeLine(`Documento gerado em ${formatDateBr(new Date())}`, {
-    size: 10,
-    color: colors.lightText,
+  // Header
+  page.drawRectangle({
+    x: 0,
+    y: y - 80,
+    width: pageWidth,
+    height: 125,
+    color: colors.primary,
   });
 
-  const pdfBytes = await doc.save();
-  return pdfBytes;
-}
+  drawCenterText('BOLETIM ESCOLAR', y - 30, 24, boldFont, colors.white);
+  drawCenterText(
+    unidadeNome.toUpperCase(),
+    y - 55,
+    14,
+    regularFont,
+    colors.white,
+  );
 
-async function getProfile(user: AuthenticatedRequest['user']) {
-  if (
-    !user ||
-    user.papel !== 'ALUNO' ||
-    !user.perfilId ||
-    !user.unidadeEscolarId
-  ) {
-    throw new Error('UsuÃ¡rio nÃ£o Ã© um aluno vÃ¡lido.');
-  }
+  y -= 110;
 
-  const { id: usuarioId, perfilId: alunoPerfilId, unidadeEscolarId } = user;
-  const [usuario, perfilAluno, matriculaAtiva] = await Promise.all([
-    prisma.usuarios.findUnique({
-      where: { id: usuarioId },
-      select: {
-        nome: true,
-        email: true,
-        data_nascimento: true,
-        status: true,
-        unidade_escolar: { select: { nome: true } },
-      },
-    }),
-    prisma.usuarios_aluno.findUnique({
-      where: { id: alunoPerfilId },
-      select: { numero_matricula: true, email_responsavel: true },
-    }),
-    prisma.matriculas.findFirst({
-      where: { alunoId: alunoPerfilId, status: 'ATIVA' },
-      select: {
-        ano_letivo: true,
-        turma: { select: { nome: true, serie: true } },
-      },
-    }),
-  ]);
+  // Student Info Card
+  const cardHeight = 70;
+  page.drawRectangle({
+    x: marginX,
+    y: y - cardHeight,
+    width: contentWidth,
+    height: cardHeight,
+    color: colors.cardBg,
+    borderColor: colors.tableBorder,
+    borderWidth: 1,
+  });
 
-  if (!usuario || !perfilAluno || !matriculaAtiva) {
-    throw new Error('Dados essenciais do aluno nÃ£o encontrados.');
-  }
+  const col1X = marginX + 15;
+  const col2X = marginX + contentWidth / 2 + 10;
+  const row1Y = y - 25;
+  const row2Y = y - 50;
 
-  const [totalEntregas, provasFeitas] = await Promise.all([
-    prisma.submissoes.count({
-      where: {
-        alunoId: alunoPerfilId,
-        status: { in: ['ENVIADA', 'ENVIADA_COM_ATRASO', 'AVALIADA'] },
-      },
-    }),
-    prisma.submissoes.count({
-      where: {
-        alunoId: alunoPerfilId,
-        tarefa: { tipo: 'PROVA' },
-        status: { in: ['ENVIADA', 'ENVIADA_COM_ATRASO', 'AVALIADA'] },
-      },
-    }),
-  ]);
+  drawText('Aluno:', col1X, row1Y, 10, boldFont, colors.lightText);
+  drawText(alunoNome, col1X + 35, row1Y, 10, regularFont, colors.text);
 
-  const boletimResponse = await getBoletim(usuarioId);
-  const materias = Object.values(boletimResponse.boletim);
-  let mediaGlobal = 0;
-  if (materias.length > 0) {
-    const somaMedias = materias.reduce(
-      (acc, materia) => acc + (materia.mediaFinalGeral || 0),
-      0,
+  drawText('Matrícula:', col2X, row1Y, 10, boldFont, colors.lightText);
+  drawText(
+    perfilAluno.numero_matricula,
+    col2X + 55,
+    row1Y,
+    10,
+    regularFont,
+    colors.text,
+  );
+
+  drawText('Turma:', col1X, row2Y, 10, boldFont, colors.lightText);
+  drawText(turmaInfo, col1X + 35, row2Y, 10, regularFont, colors.text);
+
+  drawText('Ano Letivo:', col2X, row2Y, 10, boldFont, colors.lightText);
+  drawText(
+    String(matriculaInfo?.ano_letivo || new Date().getFullYear()),
+    col2X + 60,
+    row2Y,
+    10,
+    regularFont,
+    colors.text,
+  );
+
+  y -= cardHeight + 30;
+
+  // Grades Table
+  const colWidths = [140, 55, 55, 55, 55, 65, 50]; // Adjusted for better fit
+  const headers = [
+    'Disciplina',
+    '1º Bim',
+    '2º Bim',
+    '3º Bim',
+    '4º Bim',
+    'Rec. Final',
+    'Média',
+  ];
+
+  // Table Header
+  page.drawRectangle({
+    x: marginX,
+    y: y - 25,
+    width: contentWidth,
+    height: 25,
+    color: colors.tableHeaderBg,
+  });
+
+  let currentX = marginX + 10;
+  headers.forEach((header, i) => {
+    if (i === 0) {
+      drawText(header, currentX, y - 18, 9, boldFont, colors.primaryDark);
+    } else {
+      drawRightText(
+        header,
+        currentX + colWidths[i] - 10,
+        y - 18,
+        9,
+        boldFont,
+        colors.primaryDark,
+      );
+    }
+    currentX += colWidths[i];
+  });
+
+  y -= 25;
+
+  // Table Rows
+  materias.forEach(([materiaNome, dados], index) => {
+    if (y < marginY + 40) {
+      page = doc.addPage(pageSize);
+      y = page.getHeight() - marginY;
+      // Redraw header on new page
+      page.drawRectangle({
+        x: marginX,
+        y: y - 25,
+        width: contentWidth,
+        height: 25,
+        color: colors.tableHeaderBg,
+      });
+      let hX = marginX + 10;
+      headers.forEach((header, i) => {
+        if (i === 0) {
+          drawText(header, hX, y - 18, 9, boldFont, colors.primaryDark);
+        } else {
+          drawRightText(
+            header,
+            hX + colWidths[i] - 10,
+            y - 18,
+            9,
+            boldFont,
+            colors.primaryDark,
+          );
+        }
+        hX += colWidths[i];
+      });
+      y -= 25;
+    }
+
+    if (index % 2 === 0) {
+      page.drawRectangle({
+        x: marginX,
+        y: y - 25,
+        width: contentWidth,
+        height: 25,
+        color: colors.tableStripe,
+      });
+    }
+
+    let rowX = marginX + 10;
+    drawText(
+      materiaNome.length > 25
+        ? materiaNome.substring(0, 25) + '...'
+        : materiaNome,
+      rowX,
+      y - 17,
+      9,
+      regularFont,
+      colors.text,
     );
-    mediaGlobal = somaMedias / materias.length;
+    rowX += colWidths[0];
+
+    PERIODOS_PDF_ORDEM.forEach((periodo, i) => {
+      const nota = dados[periodo]?.media;
+      const notaText = formatNotaPdf(nota);
+      let color = colors.text;
+      if (typeof nota === 'number') {
+        color = nota >= 6 ? colors.approved : colors.danger;
+      }
+      drawRightText(
+        notaText,
+        rowX + colWidths[i + 1] - 10,
+        y - 17,
+        9,
+        regularFont,
+        color,
+      );
+      rowX += colWidths[i + 1];
+    });
+
+    // Final Average
+    const mediaFinal = dados.mediaFinalGeral;
+    const mediaText = formatNotaPdf(mediaFinal);
+    let finalColor = colors.text;
+    if (typeof mediaFinal === 'number') {
+      finalColor = mediaFinal >= 6 ? colors.approved : colors.danger;
+    }
+    drawRightText(
+      mediaText,
+      rowX + colWidths[6] - 10,
+      y - 17,
+      9,
+      boldFont,
+      finalColor,
+    );
+
+    y -= 25;
+  });
+
+  // Footer
+  y -= 30;
+  page.drawLine({
+    start: { x: marginX, y },
+    end: { x: pageWidth - marginX, y },
+    thickness: 1,
+    color: colors.tableBorder,
+  });
+
+  y -= 20;
+  drawText(
+    `Gerado em: ${formatDateBr(new Date())}`,
+    marginX,
+    y,
+    8,
+    regularFont,
+    colors.lightText,
+  );
+  if (mediaGlobal !== null) {
+    const text = `Média Global do Aluno: ${formatNotaPdf(mediaGlobal)}`;
+    drawRightText(
+      text,
+      pageWidth - marginX,
+      y,
+      10,
+      boldFont,
+      colors.primaryDark,
+    );
   }
 
-  return {
-    nome: usuario.nome,
-    email: usuario.email,
-    status: usuario.status,
-    dataNascimento: usuario.data_nascimento,
-    escola: usuario.unidade_escolar?.nome,
-    numeroMatricula: perfilAluno.numero_matricula,
-    emailResponsavel: perfilAluno.email_responsavel,
-    turma: `${matriculaAtiva.turma.serie} - ${matriculaAtiva.turma.nome}`,
-    anoLetivo: matriculaAtiva.ano_letivo,
-    totalAtividadesEntregues: totalEntregas,
-    provasFeitas: provasFeitas,
-    mediaGlobal: parseFloat(mediaGlobal.toFixed(2)),
-  };
+  const pdfBytes = await doc.save();
+  return Buffer.from(pdfBytes);
 }
 
 export const alunoService = {
   findAllPerfis,
-  findOne: findOneByUserId,
+  findOneByUserId,
   getBoletim,
+  saveComentario,
   getAgendaEventos,
   generateBoletimPdf,
-  getProfile,
-  saveComentario,
 };

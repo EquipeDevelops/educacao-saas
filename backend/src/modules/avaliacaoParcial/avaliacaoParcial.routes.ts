@@ -1,51 +1,52 @@
-import { Router } from "express";
-import { avaliacaoController } from "./avaliacaoParcial.controller";
-import { validate } from "../../middlewares/validate";
-import { protect, authorize } from "../../middlewares/auth";
+import { Router } from 'express';
+import { avaliacaoController } from './avaliacaoParcial.controller';
+import { validate } from '../../middlewares/validate';
+import { protect, authorize } from '../../middlewares/auth';
+import { z } from 'zod';
 import {
   createAvaliacaoSchema,
   updateAvaliacaoSchema,
   paramsSchema,
   findAllAvaliacoesSchema,
-} from "./avaliacaoParcial.validator";
+} from './avaliacaoParcial.validator';
 
 const router = Router();
 
 router.post(
-  "/",
+  '/',
   protect,
-  authorize("PROFESSOR"),
+  authorize('PROFESSOR'),
   validate(createAvaliacaoSchema),
-  avaliacaoController.create
+  avaliacaoController.create,
 );
 router.put(
-  "/:id",
+  '/:id',
   protect,
-  authorize("PROFESSOR"),
+  authorize('PROFESSOR'),
   validate(updateAvaliacaoSchema),
-  avaliacaoController.update
+  avaliacaoController.update,
 );
 router.delete(
-  "/:id",
+  '/:id',
   protect,
-  authorize("PROFESSOR"),
-  validate({ params: paramsSchema }),
-  avaliacaoController.remove
+  authorize('PROFESSOR'),
+  validate(z.object({ params: paramsSchema })),
+  avaliacaoController.remove,
 );
 
 router.get(
-  "/",
+  '/',
   protect,
-  authorize("GESTOR", "PROFESSOR", "ALUNO"),
+  authorize('GESTOR', 'PROFESSOR', 'ALUNO'),
   validate(findAllAvaliacoesSchema),
-  avaliacaoController.findAll
+  avaliacaoController.findAll,
 );
 router.get(
-  "/:id",
+  '/:id',
   protect,
-  authorize("GESTOR", "PROFESSOR", "ALUNO"),
-  validate({ params: paramsSchema }),
-  avaliacaoController.findById
+  authorize('GESTOR', 'PROFESSOR', 'ALUNO'),
+  validate(z.object({ params: paramsSchema })),
+  avaliacaoController.findById,
 );
 
 export const avaliacaoRoutes = router;
