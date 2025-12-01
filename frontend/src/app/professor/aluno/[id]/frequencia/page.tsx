@@ -1,75 +1,127 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import { api } from "@/services/api";
-import styles from "./frequencia.module.css";
+import { useEffect, useState } from 'react';
+import { api } from '@/services/api';
+import styles from './frequencia.module.css';
+import { FiPercent, FiCheckCircle, FiXCircle } from 'react-icons/fi';
+import { useParams } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
+import Section from '@/components/section/Section';
+import Loading from '@/components/loading/Loading';
+import ErrorMsg from '@/components/errorMsg/ErrorMsg';
+import BarraDeProgresso from '@/components/progressBar/BarraDeProgresso';
 
-type Falta = {
-  id: string;
-  data: string;
-  justificada: boolean;
-  observacao: string | null;
+type FrequenciaData = {
+  aulasDadas: number;
+  presencas: number;
+  faltasJustificadas: number;
+  faltasNaoJustificadas: number;
+  porcentagem: number;
 };
 
-export default function FrequenciaPage({ params }: { params: { id: string } }) {
-  const { id: alunoId } = params;
-  const [faltas, setFaltas] = useState<Falta[]>([]);
+type MateriaData = {
+  frequencia?: FrequenciaData;
+};
+
+type BoletimData = {
+  [materia: string]: MateriaData;
+};
+
+export default function FrequenciaPage() {
+  const params = useParams();
+  const alunoId = params.id as string;
+  const { user, loading: authLoading } = useAuth();
+
+  const [boletim, setBoletim] = useState<BoletimData | null>(null);
+  const [aluno, setAluno] = useState<{ usuario: { nome: string } } | null>(
+    null,
+  );
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (alunoId) {
-      api.get(`/alunos/${alunoId}`).then((alunoRes) => {
-        const matriculaAtiva = alunoRes.data?.matriculas?.[0];
-        if (matriculaAtiva) {
-          api
-            .get(`/faltas?matriculaId=${matriculaAtiva.id}`)
-            .then((faltasRes) => {
-              setFaltas(faltasRes.data);
-              setLoading(false);
-            });
-        } else {
-          setLoading(false);
-        }
-      });
-    }
-  }, [alunoId]);
+    if (authLoading) return;
 
-  if (loading) return <p>A carregar histórico de frequência...</p>;
+    if (!user) {
+      setLoading(false);
+      return;
+    }
+
+    if (alunoId) {
+      Promise.all([
+        api.get(`/alunos/${alunoId}/boletim`),
+        api.get(`/alunos/${alunoId}`),
+      ])
+        .then(([boletimRes, alunoRes]) => {
+          console.log('Dados do boletim recebidos:', boletimRes.data);
+          setBoletim(boletimRes.data.boletim);
+          setAluno(alunoRes.data);
+          setLoading(false);
+        })
+        .catch((error) => {
+          console.error('Erro ao carregar frequência:', error);
+          setLoading(false);
+        });
+    }
+  }, [alunoId, authLoading, user]);
+
+  if (loading) {
+    return (
+      <Section>
+        <Loading />
+      </Section>
+    );
+  }
+
+  if (!boletim || Object.keys(boletim).length === 0) {
+    return (
+      <Section>
+        <ErrorMsg text="Nenhuma informação de frequência disponível." />
+      </Section>
+    );
+  }
 
   return (
     <div className={styles.container}>
-      {faltas.length === 0 ? (
-        <p>Nenhuma falta registada para este aluno.</p>
-      ) : (
-        <table className={styles.table}>
-          <thead>
-            <tr>
-              <th>Data</th>
-              <th>Status</th>
-              <th>Observação</th>
-            </tr>
-          </thead>
-          <tbody>
-            {faltas.map((falta) => (
-              <tr key={falta.id}>
-                <td>{new Date(falta.data).toLocaleDateString("pt-BR")}</td>
-                <td>
-                  <span
-                    className={
-                      falta.justificada
-                        ? styles.justificada
-                        : styles.naoJustificada
-                    }
-                  >
-                    {falta.justificada ? "Justificada" : "Não Justificada"}
-                  </span>
-                </td>
-                <td>{falta.observacao || "-"}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+      <div className={styles.header}>
+        <h2 className={styles.title}>Registro de Frequência</h2>
+        <p className={styles.subtitle}>
+          Acompanhamento detalhado de presenças por disciplina
+        </p>
+      </div>
+
+      <div className={styles.list}>
+        {Object.entries(boletim).map(([materia, data]) => {
+          const freq = data.frequencia;
+          if (!freq) return null;
+
+          const totalFaltas = freq.aulasDadas - freq.presencas;
+
+          return (
+            <div key={materia} className={styles.card}>
+              <div className={styles.cardHeader}>
+                <h3 className={styles.materiaTitle}>{materia}</h3>
+                <span className={styles.percentage}>
+                  {freq.porcentagem.toFixed(0)}%
+                </span>
+              </div>
+
+              <p className={styles.aulasInfo}>
+                {freq.presencas} de {freq.aulasDadas} aulas
+              </p>
+
+              <div className={styles.progressBarContainer}>
+                <BarraDeProgresso className={styles.barra} porcentagem={freq.porcentagem}/>
+              </div>
+
+              <p className={styles.faltasInfo}>
+                {totalFaltas} faltas ({freq.faltasJustificadas || 0}{' '}
+                justificadas, {freq.faltasNaoJustificadas || 0} não
+                justificadas)
+              </p>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }

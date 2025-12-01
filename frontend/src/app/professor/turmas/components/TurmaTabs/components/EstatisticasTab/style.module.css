@@ -1,0 +1,105 @@
+.container {
+  padding: 1.5rem;
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  margin-bottom: 2.5rem;
+}
+
+.stat {
+  background-color: white;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--cor-borda);
+  border-radius: 10px;
+  gap: 10px;
+}
+
+.statIcon {
+  font-size: 1.5rem;
+  width: 52px;
+  height: 52px;
+  background-color: var(--cor-primaria-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  color: var(--cor-primaria);
+}
+
+.statValue {
+  font-size: 2rem;
+  font-weight: 500;
+  margin-bottom: 5px;
+  color: var(--cor-texto);
+}
+
+.statLabel {
+  font-size: 0.9rem;
+  color: var(--cor-subtexto);
+}
+
+.distribuicao {
+  padding: 20px;
+  border: 1px solid var(--cor-borda);
+  border-radius: 10px;
+}
+
+.distTitle {
+  font-size: 1.2rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.distTitle span {
+  width: 5px;
+  height: 25px;
+  background-color: var(--cor-primaria);
+  border-radius: 5px;
+}
+
+.distChart {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.infoContainer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 5px;
+}
+
+.infoContainer p {
+  font-size: 1rem !important;
+  color: var(--cor-texto);
+}
+
+.infoContainer p span {
+  background-color: var(--cor-primaria-light);
+  padding: 2px 5px;
+  border: 1px solid color-mix(in srgb, currentColor 20%, white 80%);
+  color: var(--cor-primaria);
+  border-radius: 5px;
+}
+
+.barGreen {
+  background-color: var(--cor-sucesso) !important;
+}
+.barBlue {
+  background-color: var(--cor-primaria) !important;
+}
+.barOrange {
+  background-color: var(--cor-aviso) !important;
+}
+.barRed {
+  background-color: var(--cor-perigo) !important;
+}

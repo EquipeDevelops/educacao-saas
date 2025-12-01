@@ -1,0 +1,215 @@
+.calendarCard {
+  background: var(--card, #fff);
+  border: 1px solid var(--cor-borda);
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.calendarHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  gap: 12px;
+}
+
+.monthNav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.monthLabel {
+  min-width: 180px;
+  text-align: center;
+  font-weight: 700;
+  text-transform: capitalize;
+  color: var(--cor-texto-destaque);
+}
+
+.navBtn {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  padding: 0px;
+  border: 1px solid var(--cor-borda);
+  background: var(--card, #fff);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  color: var(--cor-subtexto);
+}
+
+.navBtn:hover {
+  filter: brightness(0.97);
+}
+
+.todayBtn {
+  border: 1px solid var(--cor-borda);
+  border-radius: 8px;
+  padding: 6px 12px;
+  background: transparent;
+  color: var(--cor-texto-destaque);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.todayBtn:hover {
+  filter: brightness(0.98);
+}
+
+.weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  margin-bottom: 8px;
+}
+
+.weekday {
+  text-align: center;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 12px;
+  color: var(--cor-subtexto);
+  padding: 4px 0;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.cell {
+  background: var(--card, #fff);
+  border: 1px solid var(--cor-borda);
+  border-radius: 10px;
+  min-height: 92px;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  cursor: pointer;
+  transition: border 0.15s ease, box-shadow 0.15s ease;
+}
+
+.cell:hover {
+  border-color: var(--cor-primaria, #4f46e5);
+  box-shadow: 0 0 0 1px rgba(79, 70, 229, 0.15);
+}
+
+.outMonth {
+  opacity: 0.45;
+}
+
+.today {
+  border-color: var(--cor-primaria);
+}
+
+.selected {
+  background: var(--cor-primaria-light);
+  color: #fff;
+  border-color: var(--cor-primaria);
+}
+
+.cellTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.dayNumber {
+  font-weight: 700;
+  color: var(--cor-texto-destaque);
+}
+
+.counter {
+  background: rgb(247, 247, 247);
+  color: var(--cor-subtexto);
+  border-radius: 5px;
+  font-size: .75rem;
+  font-weight: 500;
+  padding: 2px 8px;
+}
+
+.cellDots {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  display: inline-block;
+}
+
+.more {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--cor-subtexto);
+}
+
+.legend {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--cor-borda);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  color: var(--cor-texto-destaque);
+  font-weight: 600;
+}
+
+.legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.aula {
+  background-color: var(--cor-primaria);
+}
+
+.prova {
+  background-color: var(--cor-perigo);
+}
+
+.trabalho {
+  background-color: var(--cor-sucesso);
+}
+
+.questionario,
+.tarefa {
+  background-color: var(--cor-aviso);
+}
+
+.recuperacao {
+  background-color: #07c4fd;
+}
+
+.reuniao {
+  background-color: var(--cor-envio);
+}
+
+.evento_escolar {
+  background-color: var(--cor-primaria-dark);
+}
+
+.feriado {
+  background-color: #64748b;
+}
+
+.default {
+  background-color: var(--cor-borda);
+}
+
+@media (max-width: 960px) {
+  .monthLabel {
+    font-size: 14px;
+  }
+  .cell {
+    min-height: 80px;
+  }
+}

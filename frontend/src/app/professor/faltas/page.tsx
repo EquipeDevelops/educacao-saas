@@ -1,226 +1,332 @@
-"use client";
+'use client';
 
-import { useState, useEffect, FormEvent } from "react";
-import { api } from "@/services/api";
-import styles from "./faltas.module.css";
-import { FiCalendar, FiUserX, FiSave } from "react-icons/fi";
-import { useAuth } from "@/contexts/AuthContext";
-import { TurmaDashboardInfo } from "../turmas/page";
+import { useState, useEffect } from 'react';
+import { api } from '@/services/api';
+import styles from './faltas.module.css';
+import Section from '@/components/section/Section';
+import Loading from '@/components/loading/Loading';
+import { useAuth } from '@/contexts/AuthContext';
+import { FiSave, FiAlertTriangle, FiCheckCircle } from 'react-icons/fi';
+import { LuCalendar, LuCheck, LuX, LuClock } from 'react-icons/lu';
 
-type AlunoMatriculado = {
+type Componente = {
   id: string;
+  materia: { nome: string };
+  turma: { id: string; nome: string; serie: string };
+};
+
+type Aluno = {
+  id: string; // matriculaId
   nome: string;
 };
 
-export default function FaltasPage() {
-  const { user, loading: authLoading } = useAuth();
-  const [turmas, setTurmas] = useState<TurmaDashboardInfo[]>([]);
-  const [selectedComponenteId, setSelectedComponenteId] = useState<
-    string | null
-  >(null);
-  const [alunos, setAlunos] = useState<AlunoMatriculado[]>([]);
-  const [selectedMatriculaId, setSelectedMatriculaId] = useState<string | null>(
-    null
-  );
-  const [dataFalta, setDataFalta] = useState(
-    new Date().toISOString().split("T")[0]
-  );
-  const [observacao, setObservacao] = useState("");
-  const [justificada, setJustificada] = useState(false);
+type Situacao = 'PRESENTE' | 'FALTA' | 'FALTA_JUSTIFICADA';
 
-  const [loading, setLoading] = useState(true);
-  const [loadingAlunos, setLoadingAlunos] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
+export default function FrequenciaPage() {
+  const { loading: authLoading } = useAuth();
+  const [componentes, setComponentes] = useState<Componente[]>([]);
+  const [selectedComponenteId, setSelectedComponenteId] = useState('');
+  const [dataAula, setDataAula] = useState(
+    new Date().toISOString().split('T')[0],
+  );
+  const [alunos, setAlunos] = useState<Aluno[]>([]);
+  const [presencas, setPresencas] = useState<Record<string, Situacao>>({});
+  const [observacoes, setObservacoes] = useState<Record<string, string>>({});
+
+  const [loadingComponentes, setLoadingComponentes] = useState(true);
+  const [loadingDados, setLoadingDados] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [feedback, setFeedback] = useState<{
+    type: 'success' | 'error';
+    message: string;
+  } | null>(null);
 
   useEffect(() => {
     if (authLoading) return;
 
-    async function fetchTurmas() {
+    async function fetchComponentes() {
       try {
-        const response = await api.get("/professor/dashboard/turmas");
-        setTurmas(response.data);
-        if (response.data.length > 0) {
-          setSelectedComponenteId(response.data[0].componenteId);
+        const { data } = await api.get<Componente[]>(
+          '/componentes-curriculares',
+        );
+        setComponentes(data);
+        if (data.length > 0) {
+          setSelectedComponenteId(data[0].id);
         }
-      } catch (err) {
-        setError("Não foi possível carregar as turmas.");
+      } catch (error) {
+        console.error('Erro ao buscar componentes', error);
       } finally {
-        setLoading(false);
+        setLoadingComponentes(false);
       }
     }
-    fetchTurmas();
+
+    fetchComponentes();
   }, [authLoading]);
 
   useEffect(() => {
     if (!selectedComponenteId) return;
 
-    const turmaSelecionada = turmas.find(
-      (t) => t.componenteId === selectedComponenteId
-    );
-    if (!turmaSelecionada) return;
-
-    async function fetchAlunos() {
-      setLoadingAlunos(true);
-      setError(null);
+    async function fetchData() {
+      setLoadingDados(true);
+      setFeedback(null);
       try {
-        const response = await api.get(
-          `/matriculas?turmaId=${turmaSelecionada.turmaId}`
-        );
-        const alunosMatriculados = response.data.map((matricula: any) => ({
-          id: matricula.id,
-          nome: matricula.aluno.usuario.nome,
-        }));
+        // 1. Buscar alunos (matriculas)
+        const { data: matriculas } = await api.get('/matriculas', {
+          params: { componenteCurricularId: selectedComponenteId },
+        });
 
-        setAlunos(alunosMatriculados);
-        if (alunosMatriculados.length > 0) {
-          setSelectedMatriculaId(alunosMatriculados[0].id);
-        } else {
-          setSelectedMatriculaId(null);
+        const listaAlunos = matriculas
+          .map((m: any) => ({
+            id: m.id,
+            nome: m.aluno.usuario.nome,
+          }))
+          .sort((a: Aluno, b: Aluno) => a.nome.localeCompare(b.nome));
+
+        setAlunos(listaAlunos);
+
+        // 2. Buscar diário existente
+        const { data: diario } = await api.get('/diarios-aula', {
+          params: {
+            componenteCurricularId: selectedComponenteId,
+            data: dataAula,
+          },
+        });
+
+        const novasPresencas: Record<string, Situacao> = {};
+        const novasObservacoes: Record<string, string> = {};
+
+        // Inicializa todos como PRESENTE por padrão
+        listaAlunos.forEach((aluno: Aluno) => {
+          novasPresencas[aluno.id] = 'PRESENTE';
+        });
+
+        // Se já houver registro, sobrescreve
+        if (diario && diario.registros_presenca) {
+          diario.registros_presenca.forEach((reg: any) => {
+            novasPresencas[reg.matriculaId] = reg.situacao;
+            if (reg.observacao) {
+              novasObservacoes[reg.matriculaId] = reg.observacao;
+            }
+          });
         }
-      } catch (err) {
-        setError("Não foi possível carregar os alunos desta turma.");
+
+        setPresencas(novasPresencas);
+        setObservacoes(novasObservacoes);
+      } catch (error: any) {
+        console.error('Erro ao carregar dados', error);
+        const message =
+          error.response?.data?.message ||
+          'Falha ao carregar lista de alunos e frequência.';
+        setFeedback({
+          type: 'error',
+          message,
+        });
       } finally {
-        setLoadingAlunos(false);
+        setLoadingDados(false);
       }
     }
-    fetchAlunos();
-  }, [selectedComponenteId, turmas]);
 
-  const handleRegistrarFalta = async (event: FormEvent) => {
-    event.preventDefault();
-    if (!selectedMatriculaId || !dataFalta) {
-      setError("Por favor, selecione um aluno e uma data.");
-      return;
-    }
-    setError(null);
-    setSuccess(null);
+    fetchData();
+  }, [selectedComponenteId, dataAula]);
 
+  const handlePresencaChange = (alunoId: string, situacao: Situacao) => {
+    setPresencas((prev) => ({ ...prev, [alunoId]: situacao }));
+  };
+
+  const handleSave = async () => {
+    setSaving(true);
+    setFeedback(null);
     try {
-      await api.post("/faltas", {
-        matriculaId: selectedMatriculaId,
-        data: new Date(dataFalta + "T03:00:00.000Z").toISOString(),
-        justificada,
-        observacao,
+      const payload = {
+        componenteCurricularId: selectedComponenteId,
+        data: new Date(dataAula).toISOString(),
+        presencas: Object.entries(presencas).map(([matriculaId, situacao]) => ({
+          matriculaId,
+          situacao,
+          observacao: observacoes[matriculaId],
+        })),
+      };
+
+      await api.post('/diarios-aula', payload);
+      setFeedback({
+        type: 'success',
+        message: 'Frequência salva com sucesso!',
       });
-      setSuccess(`Falta registrada com sucesso!`);
-      setObservacao("");
-      setJustificada(false);
-    } catch (err: any) {
-      setError(err.response?.data?.message || "Erro ao registrar a falta.");
+    } catch (error: any) {
+      console.error('Erro ao salvar frequência', error);
+      const message =
+        error.response?.data?.message ||
+        'Erro ao salvar frequência. Tente novamente.';
+      setFeedback({
+        type: 'error',
+        message,
+      });
+    } finally {
+      setSaving(false);
     }
   };
 
-  if (loading || authLoading) {
+  if (loadingComponentes) {
     return (
-      <div className={styles.pageContainer}>
-        <p>Carregando...</p>
-      </div>
+      <Section>
+        <Loading />
+      </Section>
     );
   }
 
   return (
-    <div className={styles.pageContainer}>
-      <header className={styles.header}>
-        <h1>Registro de Faltas</h1>
-        <p>Selecione a turma e o aluno para registrar uma ausência.</p>
-      </header>
+    <Section>
+      <div className={styles.container}>
+        <header className={styles.header}>
+          <h1>Frequência Escolar</h1>
+          <p>Registre a presença dos alunos para o dia selecionado.</p>
+        </header>
 
-      <div className={styles.card}>
-        <div className={styles.turmaSelector}>
-          <label htmlFor="turma">Selecione a Turma</label>
-          <select
-            id="turma"
-            value={selectedComponenteId || ""}
-            onChange={(e) => setSelectedComponenteId(e.target.value)}
-            className={styles.select}
-          >
-            {turmas.map((turma) => (
-              <option key={turma.componenteId} value={turma.componenteId}>
-                {turma.nomeTurma} ({turma.materia})
-              </option>
-            ))}
-          </select>
+        <div className={styles.controls}>
+          <div className={styles.controlGroup}>
+            <label htmlFor="turma">Turma</label>
+            <select
+              id="turma"
+              value={selectedComponenteId}
+              onChange={(e) => setSelectedComponenteId(e.target.value)}
+              disabled={loadingDados}
+            >
+              {componentes.map((comp) => (
+                <option key={comp.id} value={comp.id}>
+                  {comp.turma.serie} - {comp.turma.nome} ({comp.materia.nome})
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className={styles.controlGroup}>
+            <label htmlFor="data">
+              <LuCalendar /> Data
+            </label>
+            <input
+              type="date"
+              id="data"
+              value={dataAula}
+              onChange={(e) => setDataAula(e.target.value)}
+              disabled={loadingDados}
+            />
+          </div>
         </div>
 
-        {loadingAlunos ? (
-          <p>Carregando alunos...</p>
-        ) : (
-          <form onSubmit={handleRegistrarFalta} className={styles.formGrid}>
-            <div className={styles.field}>
-              <label htmlFor="aluno">
-                <FiUserX /> Aluno
-              </label>
-              <select
-                id="aluno"
-                value={selectedMatriculaId || ""}
-                onChange={(e) => setSelectedMatriculaId(e.target.value)}
-                className={styles.select}
-                required
-              >
-                {alunos.length > 0 ? (
-                  alunos.map((aluno) => (
-                    <option key={aluno.id} value={aluno.id}>
-                      {aluno.nome}
-                    </option>
-                  ))
-                ) : (
-                  <option disabled value="">
-                    Nenhum aluno encontrado nesta turma
-                  </option>
-                )}
-              </select>
-            </div>
-
-            <div className={styles.field}>
-              <label htmlFor="data">
-                <FiCalendar /> Data da Falta
-              </label>
-              <input
-                id="data"
-                type="date"
-                value={dataFalta}
-                onChange={(e) => setDataFalta(e.target.value)}
-                className={styles.input}
-                required
-              />
-            </div>
-
-            <div className={`${styles.field} ${styles.fullWidth}`}>
-              <label htmlFor="observacao">Observações (Opcional)</label>
-              <textarea
-                id="observacao"
-                value={observacao}
-                onChange={(e) => setObservacao(e.target.value)}
-                className={styles.textarea}
-                placeholder="Ex: Atestado médico, falta justificada pelos pais..."
-              />
-            </div>
-
-            <div className={`${styles.field} ${styles.checkboxContainer}`}>
-              <input
-                type="checkbox"
-                id="justificada"
-                checked={justificada}
-                onChange={(e) => setJustificada(e.target.checked)}
-              />
-              <label htmlFor="justificada">Marcar como falta justificada</label>
-            </div>
-
-            <div className={`${styles.footer} ${styles.fullWidth}`}>
-              {error && <p className={styles.error}>{error}</p>}
-              {success && <p className={styles.success}>{success}</p>}
-              <button
-                type="submit"
-                className={styles.saveButton}
-                disabled={!selectedMatriculaId}
-              >
-                <FiSave /> Registrar Falta
-              </button>
-            </div>
-          </form>
+        {feedback && (
+          <div
+            className={`${styles.feedback} ${
+              feedback.type === 'error' ? styles.error : styles.success
+            }`}
+          >
+            {feedback.type === 'error' ? (
+              <FiAlertTriangle />
+            ) : (
+              <FiCheckCircle />
+            )}
+            <span>{feedback.message}</span>
+          </div>
         )}
+
+        <div className={styles.listContainer}>
+          {loadingDados ? (
+            <div className={styles.loadingBox}>
+              <Loading />
+              <span>Carregando lista de chamada...</span>
+            </div>
+          ) : alunos.length === 0 ? (
+            <div className={styles.emptyState}>
+              <FiAlertTriangle />
+              <span>Nenhum aluno encontrado nesta turma.</span>
+            </div>
+          ) : (
+            <>
+              <div className={styles.listHeader}>
+                <span className={styles.colAluno}>Aluno</span>
+                <span className={styles.colStatus}>Situação</span>
+              </div>
+              <ul className={styles.studentList}>
+                {alunos.map((aluno) => (
+                  <li key={aluno.id} className={styles.studentItem}>
+                    <span className={styles.studentName}>{aluno.nome}</span>
+                    <div className={styles.statusOptions}>
+                      <label
+                        className={`${styles.option} ${
+                          presencas[aluno.id] === 'PRESENTE'
+                            ? styles.selectedP
+                            : ''
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name={`status-${aluno.id}`}
+                          value="PRESENTE"
+                          checked={presencas[aluno.id] === 'PRESENTE'}
+                          onChange={() =>
+                            handlePresencaChange(aluno.id, 'PRESENTE')
+                          }
+                        />
+                        <span className={styles.badge}>P</span>
+                        <span className={styles.label}>Presente</span>
+                      </label>
+
+                      <label
+                        className={`${styles.option} ${
+                          presencas[aluno.id] === 'FALTA'
+                            ? styles.selectedF
+                            : ''
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name={`status-${aluno.id}`}
+                          value="FALTA"
+                          checked={presencas[aluno.id] === 'FALTA'}
+                          onChange={() =>
+                            handlePresencaChange(aluno.id, 'FALTA')
+                          }
+                        />
+                        <span className={styles.badge}>F</span>
+                        <span className={styles.label}>Falta</span>
+                      </label>
+
+                      <label
+                        className={`${styles.option} ${
+                          presencas[aluno.id] === 'FALTA_JUSTIFICADA'
+                            ? styles.selectedFT
+                            : ''
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name={`status-${aluno.id}`}
+                          value="FALTA_JUSTIFICADA"
+                          checked={presencas[aluno.id] === 'FALTA_JUSTIFICADA'}
+                          onChange={() =>
+                            handlePresencaChange(aluno.id, 'FALTA_JUSTIFICADA')
+                          }
+                        />
+                        <span className={styles.badge}>FT</span>
+                        <span className={styles.label}>Justificada</span>
+                      </label>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+              <div className={styles.footer}>
+                <button
+                  className={styles.saveButton}
+                  onClick={handleSave}
+                  disabled={saving}
+                >
+                  <FiSave />
+                  {saving ? 'Salvando...' : 'Salvar Frequência'}
+                </button>
+              </div>
+            </>
+          )}
+        </div>
       </div>
-    </div>
+    </Section>
   );
 }

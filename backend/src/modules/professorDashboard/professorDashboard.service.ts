@@ -15,6 +15,18 @@ const dayMap: { [key: string]: number } = {
   SABADO: 6,
 };
 
+type AlunoStatus = "Excelente" | "Bom" | "Ruim";
+
+function calcularStatusAluno(media: number, presenca: number): AlunoStatus {
+  if (media >= 8 && presenca >= 90) {
+    return "Excelente";
+  }
+  if (media >= 6 && presenca >= 75) {
+    return "Bom";
+  }
+  return "Ruim";
+}
+
 async function getProfessorProfile(user: AuthenticatedRequest["user"]) {
   if (!user.id) {
     throw new Error("Usuário não encontrado.");
@@ -360,14 +372,19 @@ async function getCorrecoesDashboard(user: AuthenticatedRequest["user"]) {
   const tarefas = await prisma.tarefas.findMany({
     where: {
       componenteCurricular: { professorId },
-      submissoes: { some: {} },
+      OR: [{ submissoes: { some: {} } }, { tipo: "TRABALHO" }],
     },
     select: {
       id: true,
       titulo: true,
       data_entrega: true,
+      tipo: true,
       componenteCurricular: {
-        select: { turma: { select: { nome: true, serie: true } } },
+        select: {
+          turmaId: true,
+          turma: { select: { nome: true, serie: true } },
+          materia: { select: { nome: true } },
+        },
       },
     },
   });
@@ -377,6 +394,9 @@ async function getCorrecoesDashboard(user: AuthenticatedRequest["user"]) {
   }
 
   const tarefaIds = tarefas.map((t) => t.id);
+  const turmaIds = [
+    ...new Set(tarefas.map((t) => t.componenteCurricular.turmaId)),
+  ];
 
   const submissionStats = await prisma.submissoes.groupBy({
     by: ["tarefaId", "status"],
@@ -388,28 +408,75 @@ async function getCorrecoesDashboard(user: AuthenticatedRequest["user"]) {
     },
   });
 
-  const statsMap = new Map();
+  const statsMap = new Map<
+    string,
+    {
+      entregas: number;
+      corrigidas: number;
+    }
+  >();
   for (const stat of submissionStats) {
     if (!statsMap.has(stat.tarefaId)) {
       statsMap.set(stat.tarefaId, { entregas: 0, corrigidas: 0 });
     }
-    const current = statsMap.get(stat.tarefaId);
+    const current = statsMap.get(stat.tarefaId)!;
     current.entregas += stat._count.id;
     if (stat.status === "AVALIADA") {
       current.corrigidas += stat._count.id;
     }
   }
 
+  const avaliacaoRegistros =
+    tarefaIds.length > 0
+      ? await prisma.avaliacaoParcial.findMany({
+          where: { tarefaId: { in: tarefaIds } },
+          select: { tarefaId: true },
+        })
+      : [];
+  const avaliacaoMap = new Map<string, number>();
+  for (const registro of avaliacaoRegistros) {
+    if (!registro.tarefaId) continue;
+    const atual = avaliacaoMap.get(registro.tarefaId) ?? 0;
+    avaliacaoMap.set(registro.tarefaId, atual + 1);
+  }
+
+  const matriculaRegistros =
+    turmaIds.length > 0
+      ? await prisma.matriculas.findMany({
+          where: { turmaId: { in: turmaIds }, status: "ATIVA" },
+          select: { turmaId: true },
+        })
+      : [];
+  const matriculaMap = new Map<string, number>();
+  for (const registro of matriculaRegistros) {
+    if (!registro.turmaId) continue;
+    const atual = matriculaMap.get(registro.turmaId) ?? 0;
+    matriculaMap.set(registro.turmaId, atual + 1);
+  }
+
   const correcoesComStats = tarefas.map((tarefa) => {
     const stats = statsMap.get(tarefa.id) || { entregas: 0, corrigidas: 0 };
-    const pendentes = stats.entregas - stats.corrigidas;
+    let entregas = stats.entregas;
+    let corrigidas = stats.corrigidas;
+
+    if (tarefa.tipo === "TRABALHO") {
+      const totalMatriculas =
+        matriculaMap.get(tarefa.componenteCurricular.turmaId) ?? 0;
+      const avaliados = avaliacaoMap.get(tarefa.id) ?? 0;
+      entregas = Math.max(entregas, totalMatriculas);
+      corrigidas = Math.max(corrigidas, avaliados);
+    }
+
+    const pendentes = Math.max(entregas - corrigidas, 0);
     return {
       id: tarefa.id,
       titulo: tarefa.titulo,
       turma: `${tarefa.componenteCurricular.turma.serie} ${tarefa.componenteCurricular.turma.nome}`,
-      entregas: stats.entregas,
-      corrigidas: stats.corrigidas,
-      pendentes: pendentes,
+      materia: tarefa.componenteCurricular.materia.nome,
+      tipo: tarefa.tipo,
+      entregas,
+      corrigidas,
+      pendentes,
       prazo: tarefa.data_entrega,
       status:
         pendentes > 0
@@ -487,6 +554,7 @@ async function getTurmaDetails(
   user: AuthenticatedRequest["user"]
 ) {
   const professorId = user.perfilId;
+  if (!professorId) throw new Error("Usuário não é um professor.");
 
   const componente = await prisma.componenteCurricular.findFirstOrThrow({
     where: { id: componenteId, professorId },
@@ -504,12 +572,7 @@ async function getTurmaDetails(
       where: { turmaId: turmaId, status: "ATIVA" },
       select: {
         id: true,
-        aluno: {
-          select: {
-            id: true,
-            usuario: { select: { id: true, nome: true } },
-          },
-        },
+        alunoId: true,
       },
     }),
     prisma.tarefas.findMany({
@@ -518,59 +581,184 @@ async function getTurmaDetails(
     }),
   ]);
 
-  const alunos = await Promise.all(
-    matriculas.map(async (m) => {
-      const [avaliacoesParciais, submissoesAvaliadas] = await Promise.all([
-        prisma.avaliacaoParcial.findMany({
-          where: {
-            matriculaId: m.id,
-            componenteCurricularId: componente.id,
-          },
-          select: { nota: true },
-        }),
-        prisma.submissoes.findMany({
-          where: {
-            alunoId: m.aluno.id,
-            tarefa: { componenteCurricularId: componente.id },
-            status: StatusSubmissao.AVALIADA,
-            nota_total: { not: null },
-          },
-          select: { nota_total: true },
-        }),
-      ]);
+  const alunoPerfilIds = Array.from(
+    new Set(
+      matriculas
+        .map((matricula) => matricula.alunoId)
+        .filter((id): id is string => Boolean(id))
+    )
+  );
 
-      const todasAsNotas = [
-        ...avaliacoesParciais.map((a) => a.nota),
-        ...submissoesAvaliadas.map((s) => s.nota_total!),
-      ];
+  const alunoPerfis = alunoPerfilIds.length
+    ? await prisma.usuarios_aluno.findMany({
+        where: { id: { in: alunoPerfilIds } },
+        select: { id: true, usuarioId: true },
+      })
+    : [];
 
-      const media =
-        todasAsNotas.length > 0
-          ? todasAsNotas.reduce((acc, nota) => acc + nota, 0) /
-            todasAsNotas.length
-          : 0;
+  const usuarioIds = Array.from(
+    new Set(
+      alunoPerfis
+        .map((perfil) => perfil.usuarioId)
+        .filter((id): id is string => Boolean(id))
+    )
+  );
 
-      const totalFaltas = await prisma.registroFalta.count({
-        where: { matriculaId: m.id },
-      });
-      const DIAS_LETIVOS_TOTAIS = 100;
-      const presenca = Math.max(
-        0,
-        ((DIAS_LETIVOS_TOTAIS - totalFaltas) / DIAS_LETIVOS_TOTAIS) * 100
-      );
+  const usuarios = usuarioIds.length
+    ? await prisma.usuarios.findMany({
+        where: { id: { in: usuarioIds } },
+        select: { id: true, nome: true },
+      })
+    : [];
 
+  const usuarioMap = new Map(
+    usuarios.map((usuario) => [usuario.id, usuario])
+  );
+  const perfilToUsuario = new Map(
+    alunoPerfis
+      .map((perfil) => {
+        const usuario = perfil.usuarioId
+          ? usuarioMap.get(perfil.usuarioId)
+          : null;
+        if (!usuario) {
+          return null;
+        }
+        return [
+          perfil.id,
+          { usuarioId: usuario.id, nome: usuario.nome },
+        ] as const;
+      })
+      .filter((entry): entry is [string, { usuarioId: string; nome: string }] =>
+        Boolean(entry)
+      )
+  );
+
+  type MatriculaComUsuario = {
+    id: string;
+    alunoPerfilId: string;
+    usuarioId: string;
+    nome: string;
+  };
+
+  const matriculasValidas: MatriculaComUsuario[] = matriculas
+    .map((matricula) => {
+      const usuarioInfo = perfilToUsuario.get(matricula.alunoId);
+      if (!usuarioInfo) {
+        return null;
+      }
       return {
-        id: m.aluno.usuario.id,
-        nome: m.aluno.usuario.nome,
-        media: parseFloat(media.toFixed(1)),
-        presenca: Math.round(presenca),
-        status:
-          media < 6 || presenca < 75
-            ? ("Atenção" as "Atenção")
-            : ("Ativo" as "Ativo"),
+        id: matricula.id,
+        alunoPerfilId: matricula.alunoId,
+        usuarioId: usuarioInfo.usuarioId,
+        nome: usuarioInfo.nome,
       };
     })
+    .filter((matricula): matricula is MatriculaComUsuario =>
+      Boolean(matricula)
+    );
+  const totalMatriculas = matriculasValidas.length;
+
+  const matriculaIds = matriculasValidas.map((m) => m.id);
+
+  const PERIODOS_PADRAO = [
+    "PRIMEIRO_BIMESTRE",
+    "SEGUNDO_BIMESTRE",
+    "TERCEIRO_BIMESTRE",
+    "QUARTO_BIMESTRE",
+  ];
+
+  const avaliacoesPromise = matriculaIds.length
+    ? prisma.avaliacaoParcial.findMany({
+        where: {
+          componenteCurricularId: componente.id,
+          matriculaId: { in: matriculaIds },
+        },
+        select: {
+          matriculaId: true,
+          nota: true,
+          periodo: true,
+          tarefaId: true,
+        },
+      })
+    : Promise.resolve([]);
+
+  const totalAulasPromise = prisma.diarioAula.count({
+    where: { componenteCurricularId: componente.id },
+  });
+
+  const presencasPromise = matriculaIds.length
+    ? prisma.diarioAulaPresenca.groupBy({
+        by: ["matriculaId"],
+        where: {
+          matriculaId: { in: matriculaIds },
+          situacao: "PRESENTE",
+          diarioAula: { componenteCurricularId: componente.id },
+        },
+        _count: { _all: true },
+      })
+    : Promise.resolve([]);
+
+  const [avaliacoesParciais, totalAulas, presencasPorAluno] = await Promise.all(
+    [avaliacoesPromise, totalAulasPromise, presencasPromise]
   );
+
+  const avaliacoesPorMatricula = new Map<
+    string,
+    { nota: number; periodo: string }[]
+  >();
+  avaliacoesParciais.forEach((avaliacao) => {
+    if (avaliacao.tarefaId) return;
+
+    const lista = avaliacoesPorMatricula.get(avaliacao.matriculaId) ?? [];
+    lista.push({ nota: avaliacao.nota, periodo: avaliacao.periodo });
+    avaliacoesPorMatricula.set(avaliacao.matriculaId, lista);
+  });
+
+  const presencasMap = new Map<string, number>();
+  if (Array.isArray(presencasPorAluno)) {
+    presencasPorAluno.forEach((p) => {
+      presencasMap.set(p.matriculaId, p._count._all);
+    });
+  }
+
+  const alunos = matriculasValidas.map((m) => {
+    const notas = avaliacoesPorMatricula.get(m.id) ?? [];
+
+    const notasPorPeriodo: Record<string, number> = {};
+
+    notas.forEach((nota) => {
+      if (!notasPorPeriodo[nota.periodo]) {
+        notasPorPeriodo[nota.periodo] = 0;
+      }
+      notasPorPeriodo[nota.periodo] += nota.nota;
+    });
+
+    let somaMediasBimestres = 0;
+    let bimestresComNota = 0;
+
+    PERIODOS_PADRAO.forEach((periodo) => {
+      if (notasPorPeriodo[periodo] !== undefined) {
+        somaMediasBimestres += notasPorPeriodo[periodo];
+        bimestresComNota++;
+      }
+    });
+
+    const media =
+      bimestresComNota > 0 ? somaMediasBimestres / bimestresComNota : 0;
+
+    const presencas = presencasMap.get(m.id) ?? 0;
+    const presenca = totalAulas > 0 ? (presencas / totalAulas) * 100 : 0;
+
+    const status = calcularStatusAluno(media, presenca);
+
+    return {
+      id: m.usuarioId,
+      nome: m.nome,
+      media: parseFloat(media.toFixed(1)),
+      presenca: Math.round(presenca),
+      status,
+    };
+  });
 
   const atividades = tarefas.map((t) => ({
     id: t.id,
@@ -578,7 +766,7 @@ async function getTurmaDetails(
     tipo: t.tipo,
     data_entrega: t.data_entrega,
     entregas: t._count.submissoes,
-    total: matriculas.length,
+    total: totalMatriculas,
   }));
 
   const mediaGeral = await calcularMediaGeralComponente(componente.id);
@@ -597,13 +785,11 @@ async function getTurmaDetails(
   ].map((d) => ({
     ...d,
     percent:
-      matriculas.length > 0
-        ? Math.round((d.alunos / matriculas.length) * 100)
-        : 0,
+      totalMatriculas > 0 ? Math.round((d.alunos / totalMatriculas) * 100) : 0,
   }));
 
   const estatisticas = {
-    totalAlunos: matriculas.length,
+    totalAlunos: totalMatriculas,
     mediaGeral: mediaGeral,
     atividades: tarefas.length,
     distribuicao: distribuicao,

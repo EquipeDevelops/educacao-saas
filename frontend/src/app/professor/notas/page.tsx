@@ -1,9 +1,18 @@
-"use client";
+'use client';
 
-import { useEffect, useMemo, useState } from "react";
-import { FiSave, FiAlertTriangle, FiCheckCircle, FiInfo } from "react-icons/fi";
-import { api } from "@/services/api";
-import styles from "./notas.module.css";
+import { useEffect, useMemo, useState } from 'react';
+import { FiSave, FiAlertTriangle, FiCheckCircle, FiInfo } from 'react-icons/fi';
+import { api } from '@/services/api';
+import { useAuth } from '@/contexts/AuthContext';
+import styles from './notas.module.css';
+import Section from '@/components/section/Section';
+import Loading from '@/components/loading/Loading';
+import {
+  LuCircleAlert,
+  LuCircleCheck,
+  LuInfo,
+  LuCalendar,
+} from 'react-icons/lu';
 
 type Componente = {
   id: string;
@@ -52,59 +61,61 @@ type GradeRow = {
   bimestres: Record<string, number | null>;
   recuperacao: number | null;
   media: number | null;
-  status: "APROVADO" | "REPROVADO" | "PENDENTE";
+  status: 'APROVADO' | 'REPROVADO' | 'PENDENTE';
 };
 
 const periodoLabels: Record<string, string> = {
-  PRIMEIRO_BIMESTRE: "1º Bimestre",
-  SEGUNDO_BIMESTRE: "2º Bimestre",
-  TERCEIRO_BIMESTRE: "3º Bimestre",
-  QUARTO_BIMESTRE: "4º Bimestre",
-  RECUPERACAO_FINAL: "Recuperação",
+  PRIMEIRO_BIMESTRE: '1º Bimestre',
+  SEGUNDO_BIMESTRE: '2º Bimestre',
+  TERCEIRO_BIMESTRE: '3º Bimestre',
+  QUARTO_BIMESTRE: '4º Bimestre',
+  RECUPERACAO_FINAL: 'Recuperação',
 };
 
 const tarefaTipoLabels: Record<string, string> = {
-  PROVA: "Prova",
-  TRABALHO: "Trabalho",
-  QUESTIONARIO: "Questionário",
-  LICAO_DE_CASA: "Lição de Casa",
-  ATIVIDADE_EM_SALA: "Atividade em Sala",
-  PARTICIPACAO: "Participação",
-  OUTRO: "Outro",
+  PROVA: 'Prova',
+  TRABALHO: 'Trabalho',
+  QUESTIONARIO: 'Questionário',
+  LICAO_DE_CASA: 'Lição de Casa',
+  ATIVIDADE_EM_SALA: 'Atividade em Sala',
+  PARTICIPACAO: 'Participação',
+  OUTRO: 'Outro',
 };
 
 const periodoOrdem: string[] = [
-  "PRIMEIRO_BIMESTRE",
-  "SEGUNDO_BIMESTRE",
-  "TERCEIRO_BIMESTRE",
-  "QUARTO_BIMESTRE",
+  'PRIMEIRO_BIMESTRE',
+  'SEGUNDO_BIMESTRE',
+  'TERCEIRO_BIMESTRE',
+  'QUARTO_BIMESTRE',
 ];
 
-const dateFormatter = new Intl.DateTimeFormat("pt-BR", {
-  day: "2-digit",
-  month: "2-digit",
-  year: "numeric",
+const dateFormatter = new Intl.DateTimeFormat('pt-BR', {
+  day: '2-digit',
+  month: '2-digit',
+  year: 'numeric',
 });
 
 const notaFormatter = (value: number | null) => {
-  if (value === null || Number.isNaN(value)) return "--";
+  if (value === null || Number.isNaN(value)) return '--';
   return value.toFixed(1);
 };
 
 const getPeriodoLabel = (periodo: string) =>
-  periodoLabels[periodo] ?? periodo.replace(/_/g, " ");
+  periodoLabels[periodo] ?? periodo.replace(/_/g, ' ');
 
 export default function ProfessorNotasPage() {
+  const { loading: authLoading } = useAuth();
   const [componentes, setComponentes] = useState<Componente[]>([]);
   const [bimestres, setBimestres] = useState<Bimestre[]>([]);
   const [matriculas, setMatriculas] = useState<Matricula[]>([]);
   const [avaliacoes, setAvaliacoes] = useState<Avaliacao[]>([]);
+  const [currentBimestre, setCurrentBimestre] = useState<Bimestre | null>(null);
 
-  const [selectedComponenteId, setSelectedComponenteId] = useState<string>("");
-  const [selectedTurmaId, setSelectedTurmaId] = useState<string>("");
-  const [selectedAlunoId, setSelectedAlunoId] = useState<string>("");
-  const [selectedBimestreId, setSelectedBimestreId] = useState<string>("");
-  const [notaInput, setNotaInput] = useState<string>("");
+  const [selectedComponenteId, setSelectedComponenteId] = useState<string>('');
+  const [selectedTurmaId, setSelectedTurmaId] = useState<string>('');
+  const [selectedAlunoId, setSelectedAlunoId] = useState<string>('');
+  const [selectedBimestreId, setSelectedBimestreId] = useState<string>('');
+  const [notaInput, setNotaInput] = useState<string>('');
 
   const [loadingComponentes, setLoadingComponentes] = useState(true);
   const [loadingBimestres, setLoadingBimestres] = useState(true);
@@ -115,12 +126,15 @@ export default function ProfessorNotasPage() {
   const [feedbackSuccess, setFeedbackSuccess] = useState<string | null>(null);
 
   useEffect(() => {
+    if (authLoading) return;
     let ativo = true;
 
     async function carregarComponentes() {
       setLoadingComponentes(true);
       try {
-        const { data } = await api.get<Componente[]>("/componentes-curriculares");
+        const { data } = await api.get<Componente[]>(
+          '/componentes-curriculares',
+        );
         if (!ativo) return;
         setComponentes(data);
         if (data.length > 0) {
@@ -129,7 +143,7 @@ export default function ProfessorNotasPage() {
         }
       } catch (error) {
         if (!ativo) return;
-        setFeedbackError("Falha ao carregar seus componentes curriculares.");
+        setFeedbackError('Falha ao carregar seus componentes curriculares.');
       } finally {
         if (ativo) setLoadingComponentes(false);
       }
@@ -139,21 +153,23 @@ export default function ProfessorNotasPage() {
     return () => {
       ativo = false;
     };
-  }, []);
+  }, [authLoading]);
 
   useEffect(() => {
+    if (authLoading) return;
     let ativo = true;
     async function carregarBimestres() {
       setLoadingBimestres(true);
       try {
-        const { data } = await api.get<Bimestre[]>("/bimestres");
+        const { data } = await api.get<Bimestre[]>('/bimestres');
         if (!ativo) return;
         const hoje = new Date();
         const filtrados = data
           .filter((b) => new Date(b.dataInicio) <= hoje)
           .sort(
             (a, b) =>
-              new Date(a.dataInicio).getTime() - new Date(b.dataInicio).getTime(),
+              new Date(a.dataInicio).getTime() -
+              new Date(b.dataInicio).getTime(),
           );
         setBimestres(filtrados);
 
@@ -164,10 +180,11 @@ export default function ProfessorNotasPage() {
             return inicio <= hoje && fim >= hoje;
           }) ?? filtrados[filtrados.length - 1];
 
-        setSelectedBimestreId(vigente?.id ?? "");
+        setCurrentBimestre(vigente ?? null);
+        setSelectedBimestreId(vigente?.id ?? '');
       } catch (error) {
         if (!ativo) return;
-        setFeedbackError("Falha ao carregar os bimestres disponíveis.");
+        setFeedbackError('Falha ao carregar os bimestres disponíveis.');
       } finally {
         if (ativo) setLoadingBimestres(false);
       }
@@ -177,13 +194,13 @@ export default function ProfessorNotasPage() {
     return () => {
       ativo = false;
     };
-  }, []);
+  }, [authLoading]);
 
   useEffect(() => {
     if (!selectedComponenteId) {
       setMatriculas([]);
       setAvaliacoes([]);
-      setSelectedAlunoId("");
+      setSelectedAlunoId('');
       return;
     }
 
@@ -197,10 +214,10 @@ export default function ProfessorNotasPage() {
     async function carregarDadosDaTurma() {
       try {
         const [matriculasRes, avaliacoesRes] = await Promise.all([
-          api.get<Matricula[]>("/matriculas", {
+          api.get<Matricula[]>('/matriculas', {
             params: { componenteCurricularId: selectedComponenteId },
           }),
-          api.get<Avaliacao[]>("/avaliacoes", {
+          api.get<Avaliacao[]>('/avaliacoes', {
             params: { componenteCurricularId: selectedComponenteId },
           }),
         ]);
@@ -208,7 +225,7 @@ export default function ProfessorNotasPage() {
         if (!ativo) return;
 
         const alunosOrdenados = [...matriculasRes.data].sort((a, b) =>
-          a.aluno.usuario.nome.localeCompare(b.aluno.usuario.nome, "pt-BR"),
+          a.aluno.usuario.nome.localeCompare(b.aluno.usuario.nome, 'pt-BR'),
         );
 
         setMatriculas(alunosOrdenados);
@@ -217,17 +234,17 @@ export default function ProfessorNotasPage() {
 
         setSelectedAlunoId((prev) => {
           if (prev && alunosOrdenados.some((m) => m.id === prev)) return prev;
-          return alunosOrdenados[0]?.id ?? "";
+          return alunosOrdenados[0]?.id ?? '';
         });
       } catch (error: any) {
         if (!ativo) return;
         const message =
           error?.response?.data?.message ||
-          "Falha ao carregar os dados da turma.";
+          'Falha ao carregar os dados da turma.';
         setFeedbackError(message);
         setMatriculas([]);
         setAvaliacoes([]);
-        setSelectedAlunoId("");
+        setSelectedAlunoId('');
       } finally {
         if (ativo) setLoadingDadosTurma(false);
       }
@@ -239,61 +256,36 @@ export default function ProfessorNotasPage() {
     };
   }, [selectedComponenteId, componentes]);
 
-  useEffect(() => {
-    if (!selectedAlunoId || !selectedBimestreId) {
-      setNotaInput("");
-      return;
-    }
-    const manual = avaliacoes.find(
-      (avaliacao) =>
-        avaliacao.matricula.id === selectedAlunoId &&
-        (avaliacao.bimestre?.id === selectedBimestreId ||
-          avaliacao.periodo ===
-            bimestres.find((b) => b.id === selectedBimestreId)?.periodo) &&
-        !avaliacao.tarefa,
-    );
-
-    if (manual) {
-      setNotaInput(manual.nota.toFixed(1));
-    } else {
-      setNotaInput("");
-    }
-  }, [selectedAlunoId, selectedBimestreId, avaliacoes, bimestres]);
-
   const linhaDeNotas = useMemo<GradeRow[]>(() => {
     if (matriculas.length === 0) return [];
 
     return matriculas.map((matricula) => {
       const avaliacoesDoAluno = avaliacoes.filter(
-        (avaliacao) => avaliacao.matricula.id === matricula.id,
+        (avaliacao) =>
+          avaliacao.matricula.id === matricula.id && !avaliacao.tarefa,
       );
 
-      const mediasPorPeriodo: Record<string, { soma: number; quantidade: number }> =
-        {};
-
-      avaliacoesDoAluno.forEach((avaliacao) => {
-        const periodo = avaliacao.periodo;
-        if (!mediasPorPeriodo[periodo]) {
-          mediasPorPeriodo[periodo] = { soma: 0, quantidade: 0 };
-        }
-        mediasPorPeriodo[periodo].soma += avaliacao.nota;
-        mediasPorPeriodo[periodo].quantidade += 1;
-      });
+      // Sort by date descending to ensure we get the latest grade if there are duplicates
+      avaliacoesDoAluno.sort(
+        (a, b) => new Date(b.data).getTime() - new Date(a.data).getTime(),
+      );
 
       const notasBimestres: Record<string, number | null> = {};
 
       periodoOrdem.forEach((periodo) => {
-        const resumo = mediasPorPeriodo[periodo];
-        notasBimestres[periodo] = resumo
-          ? parseFloat((resumo.soma / resumo.quantidade).toFixed(1))
-          : null;
+        const avaliacao = avaliacoesDoAluno.find(
+          (av) =>
+            av.periodo === periodo ||
+            (av.bimestre && av.bimestre.periodo === periodo),
+        );
+        notasBimestres[periodo] = avaliacao ? avaliacao.nota : null;
       });
 
-      const resumoRecuperacao = mediasPorPeriodo["RECUPERACAO_FINAL"];
-      const recuperacao = resumoRecuperacao
-        ? parseFloat(
-            (resumoRecuperacao.soma / resumoRecuperacao.quantidade).toFixed(1),
-          )
+      const avaliacaoRecuperacao = avaliacoesDoAluno.find(
+        (av) => av.periodo === 'RECUPERACAO_FINAL',
+      );
+      const recuperacao = avaliacaoRecuperacao
+        ? avaliacaoRecuperacao.nota
         : null;
 
       const todasNotasPresentes = periodoOrdem.every(
@@ -311,13 +303,13 @@ export default function ProfessorNotasPage() {
           )
         : null;
 
-      const status: GradeRow["status"] = !todasNotasPresentes
-        ? "PENDENTE"
+      const status: GradeRow['status'] = !todasNotasPresentes
+        ? 'PENDENTE'
         : mediaFinal !== null && mediaFinal >= 7
-        ? "APROVADO"
+        ? 'APROVADO'
         : recuperacao !== null && recuperacao >= 7
-        ? "APROVADO"
-        : "REPROVADO";
+        ? 'APROVADO'
+        : 'REPROVADO';
 
       return {
         matriculaId: matricula.id,
@@ -334,10 +326,7 @@ export default function ProfessorNotasPage() {
     if (!selectedAlunoId) return [];
     return avaliacoes
       .filter((avaliacao) => avaliacao.matricula.id === selectedAlunoId)
-      .sort(
-        (a, b) =>
-          new Date(b.data).getTime() - new Date(a.data).getTime(),
-      );
+      .sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime());
   }, [avaliacoes, selectedAlunoId]);
 
   const correcoesAlunoSelecionado = useMemo(() => {
@@ -364,29 +353,29 @@ export default function ProfessorNotasPage() {
     setFeedbackSuccess(null);
 
     if (!selectedComponenteId || !selectedTurmaId) {
-      setFeedbackError("Selecione uma turma para registrar a nota.");
+      setFeedbackError('Selecione uma turma para registrar a nota.');
       return;
     }
 
     if (!selectedAlunoId) {
-      setFeedbackError("Escolha um aluno para registrar a nota.");
+      setFeedbackError('Escolha um aluno para registrar a nota.');
       return;
     }
 
     if (!selectedBimestreId || !bimestreSelecionado) {
-      setFeedbackError("Escolha um bimestre válido.");
+      setFeedbackError('Escolha um bimestre válido.');
       return;
     }
 
-    const valorNota = parseFloat(notaInput.replace(",", "."));
+    const valorNota = parseFloat(notaInput.replace(',', '.'));
     if (Number.isNaN(valorNota) || valorNota < 0 || valorNota > 10) {
-      setFeedbackError("Informe uma nota entre 0 e 10.");
+      setFeedbackError('Informe uma nota entre 0 e 10.');
       return;
     }
 
     const dataReferencia = new Date(bimestreSelecionado.dataFim).toISOString();
 
-    const avaliacaoManualExistente = avaliacoes.find(
+    const avaliacoesManuaisExistentes = avaliacoes.filter(
       (avaliacao) =>
         avaliacao.matricula.id === selectedAlunoId &&
         (avaliacao.bimestre?.id === selectedBimestreId ||
@@ -396,51 +385,48 @@ export default function ProfessorNotasPage() {
 
     setSavingNota(true);
     try {
-      if (avaliacaoManualExistente) {
-        const { data } = await api.put<Avaliacao>(
-          `/avaliacoes/${avaliacaoManualExistente.id}`,
-          {
-            nota: valorNota,
-            data: dataReferencia,
-            bimestreId: selectedBimestreId,
-          },
-        );
-
-        setAvaliacoes((prev) =>
-          prev.map((avaliacao) =>
-            avaliacao.id === data.id ? data : avaliacao,
+      // Delete all existing manual evaluations for this bimester to ensure only one prevails
+      if (avaliacoesManuaisExistentes.length > 0) {
+        await Promise.all(
+          avaliacoesManuaisExistentes.map((av) =>
+            api.delete(`/avaliacoes/${av.id}`),
           ),
         );
-        setFeedbackSuccess("Nota atualizada com sucesso.");
-      } else {
-        const { data } = await api.post<Avaliacao>("/avaliacoes", {
-          nota: valorNota,
-          tipo: "PROVA",
-          data: dataReferencia,
-          matriculaId: selectedAlunoId,
-          componenteCurricularId: selectedComponenteId,
-          bimestreId: selectedBimestreId,
-        });
-
-        setAvaliacoes((prev) => [...prev, data]);
-        setFeedbackSuccess("Nota registrada com sucesso.");
       }
+
+      // Create the new evaluation
+      const { data } = await api.post<Avaliacao>('/avaliacoes', {
+        nota: valorNota,
+        tipo: 'PROVA',
+        data: dataReferencia,
+        matriculaId: selectedAlunoId,
+        componenteCurricularId: selectedComponenteId,
+        bimestreId: selectedBimestreId,
+      });
+
+      setAvaliacoes((prev) => {
+        // Remove deleted ones and add the new one
+        const filtered = prev.filter(
+          (av) => !avaliacoesManuaisExistentes.some((old) => old.id === av.id),
+        );
+        return [...filtered, data];
+      });
+      setFeedbackSuccess('Nota registrada com sucesso (anteriores removidas).');
     } catch (error: any) {
       const message =
         error?.response?.data?.message ||
-        "Não foi possível registrar a nota. Tente novamente.";
+        'Não foi possível registrar a nota. Tente novamente.';
       setFeedbackError(message);
     } finally {
       setSavingNota(false);
     }
   };
 
-  if (loadingComponentes && componentes.length === 0) {
+  if (loadingComponentes) {
     return (
-      <div className={styles.loadingBox}>
-        <FiInfo />
-        <span>Carregando seus componentes curriculares...</span>
-      </div>
+      <Section>
+        <Loading />
+      </Section>
     );
   }
 
@@ -457,15 +443,124 @@ export default function ProfessorNotasPage() {
   }
 
   return (
-    <div className={styles.pageContainer}>
+    <Section>
       <div className={styles.card}>
         <header className={styles.headerBlock}>
           <h1>Lançar notas</h1>
           <p>
-            Gerencie as notas da turma e acompanhe as correções registradas
-            automaticamente ao corrigir provas, atividades ou trabalhos.
+            Gerencie as notas da turma e acompanhe as correções registradas de
+            provas, atividades ou trabalhos.
           </p>
         </header>
+
+        <div className={styles.bimestreBanner}>
+          <div className={styles.bimestreIcon}>
+            <LuCalendar />
+          </div>
+          {currentBimestre ? (
+            <div>
+              <h2>
+                {currentBimestre.nome ||
+                  currentBimestre.periodo.replace(/_/g, ' ')}
+              </h2>
+              <span>
+                {dateFormatter.format(new Date(currentBimestre.dataInicio))} -{' '}
+                {dateFormatter.format(new Date(currentBimestre.dataFim))}
+              </span>
+              <p className={styles.bannerHint}>
+                <LuCircleAlert />
+                As notas lançadas aqui serão atribuídas a este bimestre.
+              </p>
+            </div>
+          ) : (
+            <div>
+              <h2>Nenhum bimestre vigente</h2>
+              <span>
+                Cadastre um periodo com o gestor para habilitar a atribuicao
+                automatica.
+              </span>
+            </div>
+          )}
+        </div>
+
+        {(feedbackError || feedbackSuccess) && (
+          <div
+            className={`${styles.feedback} ${
+              feedbackError ? styles.feedbackError : styles.feedbackSuccess
+            }`}
+          >
+            {feedbackError ? <LuCircleAlert /> : <LuCircleCheck />}
+            <span>{feedbackError ?? feedbackSuccess}</span>
+          </div>
+        )}
+
+        <section className={styles.correcoesSection}>
+          <header className={styles.sectionHeader}>
+            <h2>
+              <span></span>Atividades Corrigidas
+            </h2>
+            <p>
+              Visualize as notas das atividades para auxiliar na atribuição da
+              nota final do bimestre. Estas notas não entram automaticamente no
+              cálculo da média.
+            </p>
+          </header>
+
+          {loadingDadosTurma ? (
+            <div className={styles.emptyState}>
+              <LuInfo />
+              <span>Carregando correções da turma...</span>
+            </div>
+          ) : alunoSelecionado ? (
+            correcoesAlunoSelecionado.length > 0 ? (
+              <ul className={styles.correcoesList}>
+                {correcoesAlunoSelecionado.map((avaliacao) => (
+                  <li key={avaliacao.id} className={styles.correcoesItem}>
+                    <div>
+                      <div className={styles.correcoesMain}>
+                        <h3>{avaliacao.tarefa?.titulo}</h3>
+                      </div>
+                      <div className={styles.correcoesMeta}>
+                        <span>
+                          {avaliacao.tarefa
+                            ? tarefaTipoLabels[avaliacao.tarefa.tipo] ??
+                              avaliacao.tarefa.tipo
+                            : tarefaTipoLabels[avaliacao.tipo] ??
+                              avaliacao.tipo}
+                        </span>
+                        <span>
+                          {getPeriodoLabel(
+                            avaliacao.bimestre?.periodo ?? avaliacao.periodo,
+                          )}
+                        </span>
+                        <span>
+                          Entregue em:{' '}
+                          {dateFormatter.format(new Date(avaliacao.data))}
+                        </span>
+                      </div>
+                    </div>
+                    <p className={styles.correcoesNota}>
+                      Nota: <span>{notaFormatter(avaliacao.nota)}</span>
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <div className={styles.emptyState}>
+                <LuInfo />
+                <span>
+                  Nenhuma correção automática foi registrada para o aluno
+                  selecionado ainda.
+                </span>
+              </div>
+            )
+          ) : (
+            <div className={styles.emptyState}>
+              <LuInfo />
+              <span>Selecione um aluno para visualizar as correções.</span>
+            </div>
+          )}
+        </section>
 
         <section className={styles.selectionPanel}>
           <div className={styles.field}>
@@ -479,7 +574,7 @@ export default function ProfessorNotasPage() {
             >
               {componentes.map((componente) => (
                 <option key={componente.id} value={componente.id}>
-                  {componente.turma.serie} - {componente.turma.nome} ·{" "}
+                  {componente.turma.serie} - {componente.turma.nome} ·{' '}
                   {componente.materia.nome}
                 </option>
               ))}
@@ -544,90 +639,22 @@ export default function ProfessorNotasPage() {
               loadingDadosTurma ||
               !selectedAlunoId ||
               !selectedBimestreId ||
-              notaInput.trim() === ""
+              notaInput.trim() === ''
             }
           >
             <FiSave />
-            {savingNota ? "Salvando..." : "Registrar nota"}
+            {savingNota ? 'Salvando...' : 'Registrar nota'}
           </button>
-        </section>
-
-        {(feedbackError || feedbackSuccess) && (
-          <div
-            className={`${styles.feedback} ${
-              feedbackError ? styles.feedbackError : styles.feedbackSuccess
-            }`}
-          >
-            {feedbackError ? <FiAlertTriangle /> : <FiCheckCircle />}
-            <span>{feedbackError ?? feedbackSuccess}</span>
-          </div>
-        )}
-
-        <section className={styles.correcoesSection}>
-          <header className={styles.sectionHeader}>
-            <h2>Correções registradas automaticamente</h2>
-            <p>
-              Toda correção feita nas submissões aparece aqui e é considerada na
-              média do bimestre.
-            </p>
-          </header>
-
-          {loadingDadosTurma ? (
-            <div className={styles.emptyState}>
-              <FiInfo />
-              <span>Carregando correções da turma...</span>
-            </div>
-          ) : alunoSelecionado ? (
-            correcoesAlunoSelecionado.length > 0 ? (
-              <ul className={styles.correcoesList}>
-                {correcoesAlunoSelecionado.map((avaliacao) => (
-                  <li key={avaliacao.id} className={styles.correcoesItem}>
-                    <div className={styles.correcoesMain}>
-                      <strong>{avaliacao.tarefa?.titulo}</strong>
-                      <span className={styles.correcoesNota}>
-                        Nota: {notaFormatter(avaliacao.nota)}
-                      </span>
-                    </div>
-                    <div className={styles.correcoesMeta}>
-                      <span>
-                        {avaliacao.tarefa
-                          ? tarefaTipoLabels[avaliacao.tarefa.tipo] ??
-                            avaliacao.tarefa.tipo
-                          : tarefaTipoLabels[avaliacao.tipo] ?? avaliacao.tipo}
-                      </span>
-                      <span>
-                        {getPeriodoLabel(
-                          avaliacao.bimestre?.periodo ?? avaliacao.periodo,
-                        )}
-                      </span>
-                      <span>{dateFormatter.format(new Date(avaliacao.data))}</span>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <div className={styles.emptyState}>
-                <FiInfo />
-                <span>
-                  Nenhuma correção automática foi registrada para o aluno
-                  selecionado ainda.
-                </span>
-              </div>
-            )
-          ) : (
-            <div className={styles.emptyState}>
-              <FiInfo />
-              <span>Selecione um aluno para visualizar as correções.</span>
-            </div>
-          )}
         </section>
 
         <section className={styles.tableSection}>
           <header className={styles.sectionHeader}>
-            <h2>Quadro de notas da turma</h2>
+            <h2>
+              <span></span>Quadro de notas da turma
+            </h2>
             {turmaSelecionada && (
               <p>
-                {turmaSelecionada.turma.serie} - {turmaSelecionada.turma.nome} ·{" "}
+                {turmaSelecionada.turma.serie} - {turmaSelecionada.turma.nome} ·{' '}
                 {turmaSelecionada.materia.nome}
               </p>
             )}
@@ -652,7 +679,7 @@ export default function ProfessorNotasPage() {
                     {periodoOrdem.map((periodo) => (
                       <th key={periodo}>{getPeriodoLabel(periodo)}</th>
                     ))}
-                    <th>{getPeriodoLabel("RECUPERACAO_FINAL")}</th>
+                    <th>{getPeriodoLabel('RECUPERACAO_FINAL')}</th>
                     <th>Média</th>
                     <th>Status</th>
                   </tr>
@@ -662,25 +689,27 @@ export default function ProfessorNotasPage() {
                     <tr key={linha.matriculaId}>
                       <td className={styles.alunoCell}>{linha.alunoNome}</td>
                       {periodoOrdem.map((periodo) => (
-                        <td key={periodo}>{notaFormatter(linha.bimestres[periodo])}</td>
+                        <td key={periodo}>
+                          {notaFormatter(linha.bimestres[periodo])}
+                        </td>
                       ))}
                       <td>{notaFormatter(linha.recuperacao)}</td>
                       <td>{notaFormatter(linha.media)}</td>
                       <td>
                         <span
                           className={`${styles.statusPill} ${
-                            linha.status === "APROVADO"
+                            linha.status === 'APROVADO'
                               ? styles.statusSuccess
-                              : linha.status === "REPROVADO"
+                              : linha.status === 'REPROVADO'
                               ? styles.statusDanger
                               : styles.statusNeutral
                           }`}
                         >
-                          {linha.status === "PENDENTE"
-                            ? "Em andamento"
-                            : linha.status === "APROVADO"
-                            ? "Aprovado"
-                            : "Reprovado"}
+                          {linha.status === 'PENDENTE'
+                            ? 'Em andamento'
+                            : linha.status === 'APROVADO'
+                            ? 'Aprovado'
+                            : 'Reprovado'}
                         </span>
                       </td>
                     </tr>
@@ -691,6 +720,6 @@ export default function ProfessorNotasPage() {
           )}
         </section>
       </div>
-    </div>
+    </Section>
   );
 }

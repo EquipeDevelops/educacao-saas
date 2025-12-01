@@ -1,0 +1,85 @@
+.container {
+  padding: 0;
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th,
+.table td {
+  padding: 15px 20px;
+  text-align: left;
+  border-bottom: 1px solid var(--cor-borda);
+  white-space: nowrap;
+}
+
+.table th {
+  text-transform: uppercase;
+  background-color: #f7f7f7;
+}
+
+.thContent {
+  font-weight: 600;
+  color: var(--cor-subtexto);
+  font-size: .8rem;
+}
+
+.table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.table tbody tr:hover {
+  background-color: #f1f7ff;
+}
+
+
+
+.centerAlign {
+  text-align: center;
+}
+
+.statusExcelente,
+.statusBom,
+.statusRuim {
+  font-size: .85rem;
+  font-weight: 500;
+  border: 1px solid color-mix(in srgb, currentColor 20%, white 80%);
+  display: inline-flex;
+  gap: 5px;
+  padding: 5px 10px;
+  border-radius: 10px;
+  align-items: center;
+}
+
+.statusExcelente {
+  background-color: var(--cor-sucesso-light);
+  color: var(--cor-sucesso-dark);
+}
+
+.statusBom {
+  background-color: var(--cor-aviso-light);
+  color: var(--cor-aviso-dark);
+}
+
+.statusRuim {
+  background-color: var(--cor-perigo-light);
+  color: var(--cor-perigo-dark);
+}
+
+.actionButton {
+  padding: 10px 20px;
+  border: 1px solid var(--cor-borda);
+  color: var(--cor-subtexto);
+  font-weight: 500;
+  border-radius: 10px;
+  transition: all .2s ease;
+}
+
+.actionButton:hover {
+  background-color: var(--cor-primaria);
+  border-color: var(--cor-primaria);
+  color: white;
+}

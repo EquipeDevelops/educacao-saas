@@ -1,42 +1,39 @@
-import { DiaDaSemana, PrismaClient } from "@prisma/client";
-import { PDFDocument, PDFFont, StandardFonts, rgb } from "pdf-lib";
-import { AuthenticatedRequest } from "../../middlewares/auth";
+import { DiaDaSemana, PrismaClient } from '@prisma/client';
+import { PDFDocument, PDFFont, StandardFonts, rgb } from 'pdf-lib';
+import { AuthenticatedRequest } from '../../middlewares/auth';
 
 const prisma = new PrismaClient();
 
 const PERIODOS_PADRAO = [
-  "PRIMEIRO_BIMESTRE",
-  "SEGUNDO_BIMESTRE",
-  "TERCEIRO_BIMESTRE",
-  "QUARTO_BIMESTRE",
-  "ATIVIDADES_CONTINUAS",
-  "RECUPERACAO_FINAL",
+  'PRIMEIRO_BIMESTRE',
+  'SEGUNDO_BIMESTRE',
+  'TERCEIRO_BIMESTRE',
+  'QUARTO_BIMESTRE',
+  'ATIVIDADES_CONTINUAS',
+  'RECUPERACAO_FINAL',
 ] as const;
 
-const PERIODOS_LABEL: Record<
-  (typeof PERIODOS_PADRAO)[number],
-  string
-> = {
-  PRIMEIRO_BIMESTRE: "1Âº Bimestre",
-  SEGUNDO_BIMESTRE: "2Âº Bimestre",
-  TERCEIRO_BIMESTRE: "3Âº Bimestre",
-  QUARTO_BIMESTRE: "4Âº Bimestre",
-  ATIVIDADES_CONTINUAS: "Atividades ContÃ­nuas",
-  RECUPERACAO_FINAL: "RecuperaÃ§Ã£o Final",
+const PERIODOS_LABEL: Record<(typeof PERIODOS_PADRAO)[number], string> = {
+  PRIMEIRO_BIMESTRE: '1º Bimestre',
+  SEGUNDO_BIMESTRE: '2º Bimestre',
+  TERCEIRO_BIMESTRE: '3º Bimestre',
+  QUARTO_BIMESTRE: '4º Bimestre',
+  ATIVIDADES_CONTINUAS: 'Atividades Contínuas',
+  RECUPERACAO_FINAL: 'Recuperação Final',
 };
 
 const PERIODOS_PDF_ORDEM: (typeof PERIODOS_PADRAO)[number][] = [
-  "PRIMEIRO_BIMESTRE",
-  "SEGUNDO_BIMESTRE",
-  "TERCEIRO_BIMESTRE",
-  "QUARTO_BIMESTRE",
-  "RECUPERACAO_FINAL",
+  'PRIMEIRO_BIMESTRE',
+  'SEGUNDO_BIMESTRE',
+  'TERCEIRO_BIMESTRE',
+  'QUARTO_BIMESTRE',
+  'RECUPERACAO_FINAL',
 ];
 
 const findAllPerfis = (unidadeEscolarId: string) => {
   console.log(
-    "[SERVICE] Buscando todos os perfis de alunos para a unidade:",
-    unidadeEscolarId
+    '[SERVICE] Buscando todos os perfis de alunos para a unidade:',
+    unidadeEscolarId,
   );
   return prisma.usuarios_aluno.findMany({
     where: { usuario: { unidadeEscolarId: unidadeEscolarId, status: true } },
@@ -45,7 +42,7 @@ const findAllPerfis = (unidadeEscolarId: string) => {
       numero_matricula: true,
       usuario: { select: { id: true, nome: true } },
     },
-    orderBy: { usuario: { nome: "asc" } },
+    orderBy: { usuario: { nome: 'asc' } },
   });
 };
 
@@ -54,45 +51,62 @@ const findOneByUserId = async (usuarioId: string) => {
     where: { usuarioId: usuarioId },
     select: {
       id: true,
+      numero_matricula: true,
       usuario: { select: { id: true, nome: true, email: true } },
       matriculas: {
-        where: { status: "ATIVA" },
-        select: { id: true },
+        where: { status: 'ATIVA' },
+        select: {
+          id: true,
+          ano_letivo: true,
+          turma: { select: { nome: true, serie: true } },
+        },
         take: 1,
       },
     },
   });
 };
-async function getBoletim(usuarioId: string) {
-  console.log(
-    `\n--- [BOLETIM SERVICE] Iniciando para o usuÃ¡rio ID: ${usuarioId} ---`
-  );
+async function getBoletim(
+  usuarioId: string,
+  user?: AuthenticatedRequest['user'],
+) {
+  console.log(`[BOLETIM SERVICE] Iniciando para o usuário ID: ${usuarioId}`);
 
   const perfilAluno = await prisma.usuarios_aluno.findUnique({
     where: { usuarioId },
-    select: { id: true },
+    select: {
+      id: true,
+      numero_matricula: true,
+      usuario: {
+        select: {
+          unidadeEscolarId: true,
+          unidade_escolar: { select: { nome: true } },
+        },
+      },
+    },
   });
 
   if (!perfilAluno) {
     console.error(
-      `[BOLETIM SERVICE] ERRO: Perfil de aluno nÃ£o encontrado para o usuÃ¡rio ID: ${usuarioId}`
+      `[BOLETIM SERVICE] ERRO: Perfil de aluno não encontrado para o usuário ID: ${usuarioId}`,
     );
-    throw new Error("Perfil de aluno nÃ£o encontrado para este usuÃ¡rio.");
+    throw new Error('Perfil de aluno não encontrado para este usuário.');
   }
   const alunoPerfilId = perfilAluno.id;
   console.log(
-    `[BOLETIM SERVICE] Perfil de aluno encontrado. ID do Perfil: ${alunoPerfilId}`
+    `[BOLETIM SERVICE] Perfil de aluno encontrado. ID do Perfil: ${alunoPerfilId}`,
   );
 
   const materiasEsperadas = new Set<string>();
 
   const [avaliacoes, submissoes, matriculaAtiva] = await Promise.all([
     prisma.avaliacaoParcial.findMany({
-      where: { matricula: { alunoId: alunoPerfilId, status: "ATIVA" } },
+      where: { matricula: { alunoId: alunoPerfilId, status: 'ATIVA' } },
       select: {
         nota: true,
         periodo: true,
         tipo: true,
+        tarefaId: true,
+        bimestre: { select: { periodo: true } },
         componenteCurricular: {
           select: { materia: { select: { nome: true } } },
         },
@@ -101,14 +115,16 @@ async function getBoletim(usuarioId: string) {
     prisma.submissoes.findMany({
       where: {
         alunoId: alunoPerfilId,
-        status: "AVALIADA",
+        status: 'AVALIADA',
         nota_total: { not: null },
       },
       select: {
         nota_total: true,
         tarefa: {
           select: {
+            titulo: true,
             tipo: true,
+            data_entrega: true,
             componenteCurricular: {
               select: { materia: { select: { nome: true } } },
             },
@@ -117,13 +133,16 @@ async function getBoletim(usuarioId: string) {
       },
     }),
     prisma.matriculas.findFirst({
-      where: { alunoId: alunoPerfilId, status: "ATIVA" },
+      where: { alunoId: alunoPerfilId, status: 'ATIVA' },
       select: {
         id: true,
+        ano_letivo: true,
         turma: {
           select: {
+            id: true,
             componentes_curriculares: {
               select: {
+                id: true,
                 materia: { select: { nome: true } },
               },
             },
@@ -133,14 +152,204 @@ async function getBoletim(usuarioId: string) {
     }),
   ]);
   console.log(
-    `[BOLETIM SERVICE] Encontradas ${avaliacoes.length} avaliaÃ§Ãµes parciais e ${submissoes.length} submissÃµes.`
+    `[BOLETIM SERVICE] Encontradas ${avaliacoes.length} avaliações parciais e ${submissoes.length} submissões.`,
   );
+
+  // --- LÓGICA DE FREQUÊNCIA ---
+  const unidadeEscolarId = perfilAluno.usuario.unidadeEscolarId;
+  let dataInicioAno: Date | undefined;
+  let dataFimAno: Date | undefined;
+  let bimestres: any[] = [];
+
+  if (unidadeEscolarId) {
+    bimestres = await prisma.bimestres.findMany({
+      where: { unidadeEscolarId },
+      orderBy: { dataInicio: 'asc' },
+    });
+
+    if (bimestres.length > 0) {
+      dataInicioAno = bimestres[0].dataInicio;
+      // Encontrar a maior data fim
+      const datasFim = bimestres.map((b) => b.dataFim);
+      dataFimAno = new Date(Math.max(...datasFim.map((d) => d.getTime())));
+
+      console.log(
+        `[BOLETIM SERVICE] Período letivo definido por bimestres: ${dataInicioAno.toISOString()} até ${dataFimAno.toISOString()}`,
+      );
+    }
+  }
+
+  const frequenciaPorMateria: Record<
+    string,
+    {
+      aulasDadas: number;
+      presencas: number;
+      faltasJustificadas: number;
+      faltasNaoJustificadas: number;
+      porcentagem: number;
+    }
+  > = {};
+
+  const frequenciaPorMateriaBimestre: Record<
+    string,
+    Record<string, number>
+  > = {};
+
+  if (matriculaAtiva && dataInicioAno && dataFimAno) {
+    const componentes = matriculaAtiva.turma?.componentes_curriculares || [];
+
+    await Promise.all(
+      componentes.map(async (comp) => {
+        if (!comp.materia?.nome) return;
+
+        // Frequência Geral
+        const totalAulasGeral = await prisma.diarioAula.count({
+          where: {
+            componenteCurricularId: comp.id,
+            data: {
+              gte: dataInicioAno,
+              lte: dataFimAno,
+            },
+          },
+        });
+
+        const presencasGeral = await prisma.diarioAulaPresenca.count({
+          where: {
+            matriculaId: matriculaAtiva.id,
+            situacao: 'PRESENTE',
+            diarioAula: {
+              componenteCurricularId: comp.id,
+              data: {
+                gte: dataInicioAno,
+                lte: dataFimAno,
+              },
+            },
+          },
+        });
+
+        const faltasJustificadas = await prisma.diarioAulaPresenca.count({
+          where: {
+            matriculaId: matriculaAtiva.id,
+            situacao: 'FALTA_JUSTIFICADA',
+            diarioAula: {
+              componenteCurricularId: comp.id,
+              data: {
+                gte: dataInicioAno,
+                lte: dataFimAno,
+              },
+            },
+          },
+        });
+
+        const faltasNaoJustificadas = await prisma.diarioAulaPresenca.count({
+          where: {
+            matriculaId: matriculaAtiva.id,
+            situacao: 'FALTA',
+            diarioAula: {
+              componenteCurricularId: comp.id,
+              data: {
+                gte: dataInicioAno,
+                lte: dataFimAno,
+              },
+            },
+          },
+        });
+
+        frequenciaPorMateria[comp.materia.nome] = {
+          aulasDadas: totalAulasGeral,
+          presencas: presencasGeral,
+          faltasJustificadas,
+          faltasNaoJustificadas,
+          porcentagem:
+            totalAulasGeral > 0 ? (presencasGeral / totalAulasGeral) * 100 : 0,
+        };
+        console.log(
+          `[FREQ_DEBUG] Matéria: ${comp.materia.nome}`,
+          frequenciaPorMateria[comp.materia.nome],
+        );
+
+        // Frequência por Bimestre
+        frequenciaPorMateriaBimestre[comp.materia.nome] = {};
+
+        try {
+          if (bimestres.length > 0) {
+            await Promise.all(
+              bimestres.map(async (bimestre) => {
+                const totalAulasBimestre = await prisma.diarioAula.count({
+                  where: {
+                    componenteCurricularId: comp.id,
+                    data: {
+                      gte: bimestre.dataInicio,
+                      lte: bimestre.dataFim,
+                    },
+                  },
+                });
+
+                const presencasBimestre = await prisma.diarioAulaPresenca.count(
+                  {
+                    where: {
+                      matriculaId: matriculaAtiva.id,
+                      situacao: 'PRESENTE',
+                      diarioAula: {
+                        componenteCurricularId: comp.id,
+                        data: {
+                          gte: bimestre.dataInicio,
+                          lte: bimestre.dataFim,
+                        },
+                      },
+                    },
+                  },
+                );
+
+                if (comp.materia?.nome) {
+                  if (totalAulasBimestre > 0) {
+                    frequenciaPorMateriaBimestre[comp.materia.nome][
+                      bimestre.periodo
+                    ] = (presencasBimestre / totalAulasBimestre) * 100;
+                  } else {
+                    frequenciaPorMateriaBimestre[comp.materia.nome][
+                      bimestre.periodo
+                    ] = 0;
+                  }
+                }
+              }),
+            );
+          }
+        } catch (err) {
+          console.error(
+            '[BOLETIM SERVICE] Erro ao calcular frequência por bimestre:',
+            err,
+          );
+        }
+      }),
+    );
+  }
+  // -----------------------------
 
   matriculaAtiva?.turma?.componentes_curriculares?.forEach((componente) => {
     if (componente.materia?.nome) {
       materiasEsperadas.add(componente.materia.nome);
     }
   });
+
+  // --- FILTRO PARA PROFESSOR (REMOVIDO FILTRO, APENAS IDENTIFICAÇÃO) ---
+  let materiasDoProfessor: string[] = [];
+  if (user?.papel === 'PROFESSOR' && user.perfilId) {
+    console.log(
+      '[BOLETIM SERVICE] Identificando matérias do professor:',
+      user.perfilId,
+    );
+    const componentesProfessor = await prisma.componenteCurricular.findMany({
+      where: {
+        professorId: user.perfilId,
+        turmaId: matriculaAtiva?.turma?.id,
+      },
+      select: { materia: { select: { nome: true } } },
+    });
+
+    materiasDoProfessor = componentesProfessor.map((c) => c.materia.nome);
+  }
+  // -----------------------------
 
   const todasAsNotas: {
     materia: string;
@@ -150,38 +359,28 @@ async function getBoletim(usuarioId: string) {
   }[] = [];
 
   avaliacoes.forEach((av) => {
+    // Filter out evaluations linked to tasks (keep only manual evaluations)
+    if (av.tarefaId) return;
+
     if (av.componenteCurricular?.materia?.nome) {
       materiasEsperadas.add(av.componenteCurricular.materia.nome);
       todasAsNotas.push({
         materia: av.componenteCurricular.materia.nome,
-        periodo: av.periodo,
+        periodo: av.bimestre?.periodo || av.periodo,
         tipo: String(av.tipo),
         nota: av.nota,
       });
     } else {
       console.warn(
-        "[BOLETIM SERVICE] Aviso: Ignorando avaliaÃ§Ã£o parcial sem matÃ©ria associada."
+        '[BOLETIM SERVICE] Aviso: Ignorando avaliação parcial sem matéria associada.',
       );
     }
   });
 
-  submissoes.forEach((sub) => {
-    if (sub.tarefa?.componenteCurricular?.materia?.nome) {
-      materiasEsperadas.add(sub.tarefa.componenteCurricular.materia.nome);
-      todasAsNotas.push({
-        materia: sub.tarefa.componenteCurricular.materia.nome,
-        periodo: "ATIVIDADES_CONTINUAS",
-        tipo: String(sub.tarefa.tipo),
-        nota: sub.nota_total!,
-      });
-    } else {
-      console.warn(
-        "[BOLETIM SERVICE] Aviso: Ignorando submissÃ£o sem matÃ©ria associada."
-      );
-    }
-  });
+  // Submissions are task-based, so we ignore them for the bulletin grade
+  // submissoes.forEach((sub) => { ... });
   console.log(
-    `[BOLETIM SERVICE] Total de notas vÃ¡lidas processadas: ${todasAsNotas.length}`
+    `[BOLETIM SERVICE] Total de notas válidas processadas: ${todasAsNotas.length}`,
   );
 
   const boletimFinal = todasAsNotas.reduce((acc: Record<string, any>, nota) => {
@@ -207,6 +406,49 @@ async function getBoletim(usuarioId: string) {
     });
   });
 
+  // --- DETALHAMENTO DE ATIVIDADES ---
+  const detalhamento: Record<
+    string,
+    {
+      nome: string;
+      tipo: string;
+      nota: number;
+      data?: Date;
+    }[]
+  > = {};
+
+  // Adicionar avaliações manuais
+  avaliacoes.forEach((av) => {
+    if (av.tarefaId) return; // Ignorar vinculadas a tarefas
+    if (av.componenteCurricular?.materia?.nome) {
+      const materia = av.componenteCurricular.materia.nome;
+      if (!detalhamento[materia]) detalhamento[materia] = [];
+      detalhamento[materia].push({
+        nome: `Avaliação (${av.tipo}) - ${
+          PERIODOS_LABEL[av.periodo as keyof typeof PERIODOS_LABEL] ||
+          av.periodo
+        }`,
+        tipo: String(av.tipo),
+        nota: av.nota,
+      });
+    }
+  });
+
+  // Adicionar submissões (tarefas)
+  submissoes.forEach((sub) => {
+    if (sub.tarefa?.componenteCurricular?.materia?.nome) {
+      const materia = sub.tarefa.componenteCurricular.materia.nome;
+      if (!detalhamento[materia]) detalhamento[materia] = [];
+      detalhamento[materia].push({
+        nome: sub.tarefa.titulo,
+        tipo: String(sub.tarefa.tipo),
+        nota: sub.nota_total || 0,
+        data: sub.tarefa.data_entrega,
+      });
+    }
+  });
+  // ----------------------------------
+
   for (const materia in boletimFinal) {
     PERIODOS_PADRAO.forEach((periodo) => {
       if (!boletimFinal[materia][periodo]) {
@@ -216,44 +458,219 @@ async function getBoletim(usuarioId: string) {
     let notasDaMateria: number[] = [];
     for (const periodo in boletimFinal[materia]) {
       const notasDoPeriodo = boletimFinal[materia][periodo].avaliacoes.map(
-        (av: any) => av.nota
+        (av: any) => av.nota,
       );
-      notasDaMateria.push(...notasDoPeriodo);
+
+      // Exclude ATIVIDADES_CONTINUAS from the final average calculation
+      if (periodo !== 'ATIVIDADES_CONTINUAS') {
+        notasDaMateria.push(...notasDoPeriodo);
+      }
       if (notasDoPeriodo.length > 0) {
-        const mediaPeriodo =
-          notasDoPeriodo.reduce((a: number, b: number) => a + b, 0) /
-          notasDoPeriodo.length;
+        const somaPeriodo = notasDoPeriodo.reduce(
+          (a: number, b: number) => a + b,
+          0,
+        );
         boletimFinal[materia][periodo].media = parseFloat(
-          mediaPeriodo.toFixed(2)
+          somaPeriodo.toFixed(2),
         );
       }
     }
-    if (notasDaMateria.length > 0) {
-      const mediaFinalMateria =
-        notasDaMateria.reduce((a, b) => a + b, 0) / notasDaMateria.length;
+    // Calcular média final como a média das notas dos bimestres (que são somas)
+    let somaMediasBimestres = 0;
+    let bimestresComNota = 0;
+
+    PERIODOS_PADRAO.forEach((periodo) => {
+      // Inject bimester frequency
+      if (
+        frequenciaPorMateriaBimestre[materia] &&
+        frequenciaPorMateriaBimestre[materia][periodo] !== undefined
+      ) {
+        boletimFinal[materia][periodo].frequencia =
+          frequenciaPorMateriaBimestre[materia][periodo];
+      } else {
+        boletimFinal[materia][periodo].frequencia = 0; // Default
+      }
+
+      if (
+        periodo !== 'ATIVIDADES_CONTINUAS' &&
+        periodo !== 'RECUPERACAO_FINAL'
+      ) {
+        const mediaPeriodo = boletimFinal[materia][periodo].media;
+        if (mediaPeriodo !== null) {
+          somaMediasBimestres += mediaPeriodo;
+          bimestresComNota++;
+        }
+      }
+    });
+
+    if (bimestresComNota > 0) {
       boletimFinal[materia].mediaFinalGeral = parseFloat(
-        mediaFinalMateria.toFixed(2)
+        (somaMediasBimestres / bimestresComNota).toFixed(2),
       );
     } else {
       boletimFinal[materia].mediaFinalGeral = null;
     }
+
+    // Adicionar frequência geral da matéria
+    if (frequenciaPorMateria[materia]) {
+      boletimFinal[materia].frequencia = frequenciaPorMateria[materia];
+    } else {
+      boletimFinal[materia].frequencia = {
+        aulasDadas: 0,
+        presencas: 0,
+        faltasJustificadas: 0,
+        faltasNaoJustificadas: 0,
+        porcentagem: 0,
+      };
+    }
+  }
+
+  // --- NOVOS DADOS ---
+  // 1. Comentários
+  const comentariosDb = await prisma.comentarioBoletim.findMany({
+    where: { matriculaId: matriculaAtiva?.id },
+    include: {
+      componenteCurricular: {
+        select: {
+          materia: { select: { nome: true } },
+          professor: { select: { usuario: { select: { nome: true } } } },
+        },
+      },
+    },
+  });
+
+  const comentarios: Record<
+    string,
+    { texto: string; autorNome: string; data: Date }
+  > = {};
+  comentariosDb.forEach((c) => {
+    if (c.componenteCurricular?.materia?.nome) {
+      comentarios[c.componenteCurricular.materia.nome] = {
+        texto: c.comentario,
+        autorNome:
+          c.componenteCurricular.professor?.usuario?.nome || 'Professor',
+        data: c.atualizado_em,
+      };
+    }
+  });
+
+  // 2. Média Geral por Bimestre
+  const mediaGeralBimestre: Record<string, number | null> = {};
+  PERIODOS_PADRAO.forEach((periodo) => {
+    if (periodo === 'ATIVIDADES_CONTINUAS') return;
+
+    let somaMedias = 0;
+    let countMaterias = 0;
+
+    for (const materia in boletimFinal) {
+      const mediaMateria = boletimFinal[materia][periodo]?.media;
+      if (typeof mediaMateria === 'number') {
+        somaMedias += mediaMateria;
+        countMaterias++;
+      }
+    }
+
+    mediaGeralBimestre[periodo] =
+      countMaterias > 0
+        ? parseFloat((somaMedias / countMaterias).toFixed(2))
+        : null;
+  });
+
+  // 3. Frequência Geral
+  let somaFrequencias = 0;
+  let totalMateriasComFrequencia = 0;
+
+  for (const materia in frequenciaPorMateria) {
+    somaFrequencias += frequenciaPorMateria[materia].porcentagem;
+    totalMateriasComFrequencia++;
+  }
+
+  const frequenciaGeral =
+    totalMateriasComFrequencia > 0
+      ? somaFrequencias / totalMateriasComFrequencia
+      : 100;
+
+  // --- ESTATÍSTICAS DA TURMA ---
+  const statsTurma: {
+    mediasBimestre: Record<string, number>;
+    mediasPorMateria: Record<string, number>;
+  } = { mediasBimestre: {}, mediasPorMateria: {} };
+
+  if (matriculaAtiva) {
+    // 1. Médias por Bimestre da Turma
+    const mediasBimestreDb = await prisma.avaliacaoParcial.groupBy({
+      by: ['periodo'],
+      where: {
+        matricula: {
+          turmaId: matriculaAtiva.turma.id,
+          status: 'ATIVA',
+          ano_letivo: matriculaAtiva.ano_letivo,
+        },
+      },
+      _avg: { nota: true },
+    });
+    mediasBimestreDb.forEach((m) => {
+      if (m._avg.nota) {
+        statsTurma.mediasBimestre[m.periodo] = m._avg.nota;
+      }
+    });
+
+    // 2. Médias por Matéria da Turma
+    const mediasMateriaDb = await prisma.avaliacaoParcial.groupBy({
+      by: ['componenteCurricularId'],
+      where: {
+        matricula: {
+          turmaId: matriculaAtiva.turma.id,
+          status: 'ATIVA',
+          ano_letivo: matriculaAtiva.ano_letivo,
+        },
+      },
+      _avg: { nota: true },
+    });
+
+    const componentesMap = new Map<string, string>();
+    matriculaAtiva.turma.componentes_curriculares.forEach((c) => {
+      if (c.materia?.nome) componentesMap.set(c.id, c.materia.nome);
+    });
+
+    mediasMateriaDb.forEach((m) => {
+      const nome = componentesMap.get(m.componenteCurricularId);
+      if (nome && m._avg.nota) {
+        statsTurma.mediasPorMateria[nome] = m._avg.nota;
+      }
+    });
   }
 
   console.log(
-    "[BOLETIM SERVICE] Boletim finalizado e pronto para ser enviado."
+    '[BOLETIM SERVICE] Boletim finalizado e pronto para ser enviado.',
   );
-  return boletimFinal;
+
+  return {
+    boletim: boletimFinal,
+    dadosAluno: {
+      matricula: perfilAluno.numero_matricula,
+      escola:
+        perfilAluno.usuario.unidade_escolar?.nome || 'Escola não informada',
+      anoLetivo: matriculaAtiva?.ano_letivo,
+    },
+    mediaGeralBimestre,
+    frequenciaGeral,
+    comentarios,
+    statsTurma,
+    materiasDoProfessor,
+    detalhamento,
+  };
 }
 
 type AgendaEventoTipo =
-  | "Aula"
-  | "Prova"
-  | "Trabalho"
-  | "Tarefa"
-  | "RecuperaÃ§Ã£o"
-  | "ReuniÃ£o"
-  | "Feriado"
-  | "Evento Escolar";
+  | 'Aula'
+  | 'Prova'
+  | 'Trabalho'
+  | 'Tarefa'
+  | 'Recuperação'
+  | 'Reunião'
+  | 'Feriado'
+  | 'Evento Escolar';
 
 type AgendaEvento = {
   id: string;
@@ -275,15 +692,15 @@ const diaSemanaMap: Record<DiaDaSemana, number> = {
 };
 
 const tipoMap: Record<string, AgendaEventoTipo> = {
-  AULA: "Aula",
-  PROVA: "Prova",
-  TRABALHO: "Trabalho",
-  TAREFA: "Tarefa",
-  RECUPERACAO: "RecuperaÃ§Ã£o",
-  RECUPERACAO_FINAL: "RecuperaÃ§Ã£o",
-  REUNIAO: "ReuniÃ£o",
-  FERIADO: "Feriado",
-  EVENTO_ESCOLAR: "Evento Escolar",
+  AULA: 'Aula',
+  PROVA: 'Prova',
+  TRABALHO: 'Trabalho',
+  TAREFA: 'Tarefa',
+  RECUPERACAO: 'Recuperação',
+  RECUPERACAO_FINAL: 'Recuperação',
+  REUNIAO: 'Reunião',
+  FERIADO: 'Feriado',
+  EVENTO_ESCOLAR: 'Evento Escolar',
 };
 
 const startOfDay = (date: Date) => {
@@ -311,10 +728,87 @@ const formatTime = (date: Date | null | undefined) => {
   return date.toISOString().slice(11, 16);
 };
 
+async function saveComentario(
+  usuarioId: string,
+  materiaNome: string,
+  comentario: string,
+  user: AuthenticatedRequest['user'],
+) {
+  console.log(
+    `[SAVE_COMENTARIO] Iniciando para usuárioId: ${usuarioId}, matéria: ${materiaNome}, professorId: ${user?.perfilId}`,
+  );
+
+  if (user?.papel !== 'PROFESSOR' || !user.perfilId) {
+    console.error(
+      '[SAVE_COMENTARIO] Erro: Usuário não é professor ou sem perfilId.',
+    );
+    throw new Error('Apenas professores podem adicionar comentários.');
+  }
+
+  const perfilAluno = await prisma.usuarios_aluno.findUnique({
+    where: { usuarioId },
+    select: { id: true },
+  });
+
+  if (!perfilAluno) {
+    console.error('[SAVE_COMENTARIO] Erro: Perfil de aluno não encontrado.');
+    throw new Error('Aluno não encontrado.');
+  }
+  console.log(`[SAVE_COMENTARIO] Perfil aluno encontrado: ${perfilAluno.id}`);
+
+  const matriculaAtiva = await prisma.matriculas.findFirst({
+    where: { alunoId: perfilAluno.id, status: 'ATIVA' },
+    select: { id: true, turmaId: true },
+  });
+
+  if (!matriculaAtiva) {
+    console.error('[SAVE_COMENTARIO] Erro: Matrícula ativa não encontrada.');
+    throw new Error('Matrícula ativa não encontrada.');
+  }
+  console.log(
+    `[SAVE_COMENTARIO] Matrícula ativa: ${matriculaAtiva.id}, Turma: ${matriculaAtiva.turmaId}`,
+  );
+
+  const componente = await prisma.componenteCurricular.findFirst({
+    where: {
+      turmaId: matriculaAtiva.turmaId,
+      materia: { nome: materiaNome },
+      professorId: user.perfilId, // Ensure the professor teaches this subject
+    },
+  });
+
+  if (!componente) {
+    console.error(
+      `[SAVE_COMENTARIO] Erro: Componente curricular não encontrado para professor ${user.perfilId} na turma ${matriculaAtiva.turmaId} com matéria ${materiaNome}`,
+    );
+    throw new Error('Você não leciona esta matéria para este aluno.');
+  }
+  console.log(
+    `[SAVE_COMENTARIO] Componente curricular encontrado: ${componente.id}`,
+  );
+
+  const result = await prisma.comentarioBoletim.upsert({
+    where: {
+      matriculaId_componenteCurricularId: {
+        matriculaId: matriculaAtiva.id,
+        componenteCurricularId: componente.id,
+      },
+    },
+    update: { comentario },
+    create: {
+      matriculaId: matriculaAtiva.id,
+      componenteCurricularId: componente.id,
+      comentario,
+    },
+  });
+  console.log('[SAVE_COMENTARIO] Comentário salvo/atualizado com sucesso.');
+  return result;
+}
+
 async function getAgendaEventos(
-  user: AuthenticatedRequest["user"],
+  user: AuthenticatedRequest['user'],
   rangeStart: Date,
-  rangeEnd: Date
+  rangeEnd: Date,
 ) {
   if (!user?.perfilId) {
     return [];
@@ -324,7 +818,7 @@ async function getAgendaEventos(
   const end = endOfDay(rangeEnd);
 
   const matriculaAtiva = await prisma.matriculas.findFirst({
-    where: { alunoId: user.perfilId, status: "ATIVA" },
+    where: { alunoId: user.perfilId, status: 'ATIVA' },
     select: { turmaId: true },
   });
 
@@ -387,11 +881,11 @@ async function getAgendaEventos(
         eventos.push({
           id: `aula-${horario.id}-${formatDateKey(current)}`,
           date: new Date(current),
-          type: "Aula",
+          type: 'Aula',
           title:
             horario.componenteCurricular?.materia?.nome ||
             horario.turma?.nome ||
-            "Aula",
+            'Aula',
           details: horario.turma?.nome || undefined,
           time: `${horario.hora_inicio} - ${horario.hora_fim}`,
         });
@@ -403,11 +897,11 @@ async function getAgendaEventos(
     const entrega = new Date(tarefa.data_entrega);
     const tipo =
       tipoMap[String(tarefa.tipo).toUpperCase()] ||
-      (tarefa.tipo === "PROVA"
-        ? "Prova"
-        : tarefa.tipo === "TRABALHO"
-        ? "Trabalho"
-        : "Tarefa");
+      (tarefa.tipo === 'PROVA'
+        ? 'Prova'
+        : tarefa.tipo === 'TRABALHO'
+        ? 'Trabalho'
+        : 'Tarefa');
 
     eventos.push({
       id: `tarefa-${tarefa.id}`,
@@ -439,13 +933,13 @@ async function getAgendaEventos(
       eventos.push({
         id: `evento-${evento.id}-${formatDateKey(dia)}`,
         date: new Date(dia),
-        type: tipoMap[String(evento.tipo).toUpperCase()] || "Evento Escolar",
+        type: tipoMap[String(evento.tipo).toUpperCase()] || 'Evento Escolar',
         title: evento.titulo,
         details:
-          [evento.descricao, evento.turma?.nome].filter(Boolean).join(" â€¢ ") ||
+          [evento.descricao, evento.turma?.nome].filter(Boolean).join(' • ') ||
           undefined,
         time: evento.dia_inteiro
-          ? "Dia inteiro"
+          ? 'Dia inteiro'
           : isPrimeiroDia
           ? formatTime(inicioOriginal)
           : undefined,
@@ -457,8 +951,8 @@ async function getAgendaEventos(
     const diff = a.date.getTime() - b.date.getTime();
     if (diff !== 0) return diff;
 
-    const horaA = a.time?.slice(0, 5) || "";
-    const horaB = b.time?.slice(0, 5) || "";
+    const horaA = a.time?.slice(0, 5) || '';
+    const horaB = b.time?.slice(0, 5) || '';
     return horaA.localeCompare(horaB);
   });
 
@@ -469,10 +963,10 @@ async function getAgendaEventos(
 }
 
 const formatNotaPdf = (nota?: number | null) =>
-  typeof nota === "number" ? nota.toFixed(1).replace(".", ",") : "--";
+  typeof nota === 'number' ? nota.toFixed(1).replace('.', ',') : '--';
 
 async function generateBoletimPdf(usuarioId: string) {
-  const [boletim, perfilAluno] = await Promise.all([
+  const [boletimData, perfilAluno] = await Promise.all([
     getBoletim(usuarioId),
     prisma.usuarios_aluno.findFirst({
       where: { usuarioId },
@@ -485,7 +979,7 @@ async function generateBoletimPdf(usuarioId: string) {
           },
         },
         matriculas: {
-          where: { status: "ATIVA" },
+          where: { status: 'ATIVA' },
           select: {
             ano_letivo: true,
             turma: { select: { nome: true, serie: true } },
@@ -496,543 +990,553 @@ async function generateBoletimPdf(usuarioId: string) {
     }),
   ]);
 
+  const boletim = boletimData.boletim;
+
   if (!perfilAluno) {
-    throw new Error("Perfil de aluno nǜo encontrado.");
+    throw new Error('Perfil de aluno não encontrado.');
   }
 
   const doc = await PDFDocument.create();
   const pageSize: [number, number] = [595.28, 841.89];
   let page = doc.addPage(pageSize);
   const pageWidth = page.getSize().width;
-  const marginX = 45;
-  const marginY = 45;
+  const pageHeight = page.getSize().height;
+  const marginX = 40;
+  const marginY = 40;
   const contentWidth = pageWidth - marginX * 2;
   const regularFont = await doc.embedFont(StandardFonts.Helvetica);
   const boldFont = await doc.embedFont(StandardFonts.HelveticaBold);
-  const colors = {
-    primary: rgb(15 / 255, 76 / 255, 129 / 255),
-    primaryDark: rgb(6 / 255, 45 / 255, 80 / 255),
-    text: rgb(33 / 255, 37 / 255, 41 / 255),
-    lightText: rgb(94 / 255, 106 / 255, 121 / 255),
-    cardBg: rgb(247 / 255, 249 / 255, 252 / 255),
-    tableHeaderBg: rgb(226 / 255, 232 / 255, 240 / 255),
-    tableStripe: rgb(244 / 255, 248 / 255, 252 / 255),
-    tableBorder: rgb(205 / 255, 212 / 255, 222 / 255),
-    approved: rgb(16 / 255, 185 / 255, 129 / 255),
-    warning: rgb(245 / 255, 158 / 255, 11 / 255),
-    danger: rgb(239 / 255, 68 / 255, 68 / 255),
-    white: rgb(1, 1, 1),
-  };
-  const formatDateBr = (date: Date) =>
-    `${String(date.getDate()).padStart(2, "0")}/${String(
-      date.getMonth() + 1
-    ).padStart(2, "0")}/${date.getFullYear()}`;
 
-  const alunoNome = perfilAluno.usuario?.nome ?? "Aluno";
+  const colors = {
+    primary: rgb(0.06, 0.3, 0.51), // #0F4C81
+    primaryLight: rgb(0.92, 0.95, 0.98),
+    text: rgb(0.13, 0.15, 0.16), // #212529
+    textLight: rgb(0.37, 0.42, 0.47), // #5E6A79
+    border: rgb(0.8, 0.83, 0.87), // #CDD4DE
+    success: rgb(0.06, 0.73, 0.5), // #10B981
+    danger: rgb(0.94, 0.27, 0.27), // #EF4444
+    white: rgb(1, 1, 1),
+    chartBar: rgb(0.06, 0.3, 0.51),
+    chartGrid: rgb(0.9, 0.9, 0.9),
+  };
+
+  const formatDateBr = (date: Date) =>
+    `${String(date.getDate()).padStart(2, '0')}/${String(
+      date.getMonth() + 1,
+    ).padStart(2, '0')}/${date.getFullYear()}`;
+
+  const alunoNome = perfilAluno.usuario?.nome ?? 'Aluno';
   const unidadeNome =
-    perfilAluno.usuario?.unidade_escolar?.nome ?? "Unidade escolar";
+    perfilAluno.usuario?.unidade_escolar?.nome ?? 'Unidade escolar';
   const matriculaInfo = perfilAluno.matriculas[0];
   const turmaInfo = matriculaInfo?.turma
     ? `${matriculaInfo.turma.serie} - ${matriculaInfo.turma.nome}`
-    : "Turma nǜo informada";
+    : 'Turma não informada';
   const materias = Object.entries(boletim).sort(([a], [b]) =>
-    a.localeCompare(b, "pt-BR")
+    a.localeCompare(b, 'pt-BR'),
   );
   const mediaGlobal =
     materias.length > 0
-      ?
-          materias.reduce(
-            (acc, [, materia]) => acc + (materia.mediaFinalGeral || 0),
-            0
-          ) / materias.length
+      ? materias.reduce(
+          (acc, [, materia]) => acc + (materia.mediaFinalGeral || 0),
+          0,
+        ) / materias.length
       : null;
 
   const sanitizePdfText = (value?: string | number | null) => {
     if (value === undefined || value === null) {
-      return "";
+      return '';
     }
-    const normalized = String(value).normalize("NFKC").replace(/\uFFFD/g, "");
-    let result = "";
+    const normalized = String(value)
+      .normalize('NFKC')
+      .replace(/\uFFFD/g, '');
+    let result = '';
     for (const char of normalized) {
       if (char.charCodeAt(0) <= 0xff) {
         result += char;
         continue;
       }
-      const fallback = char
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "");
+      const fallback = char.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
       if (fallback) {
-        for (const fbChar of fallback) {
-          if (fbChar.charCodeAt(0) <= 0xff) {
-            result += fbChar;
-          }
-        }
+        result += fallback;
       }
     }
     return result;
   };
 
-  let cursorY = page.getSize().height - marginY;
-
-  const addPage = () => {
-    page = doc.addPage(pageSize);
-    cursorY = page.getSize().height - marginY;
-  };
-
-  const ensureSpace = (needed = 24) => {
-    if (cursorY - needed <= marginY) {
-      addPage();
-    }
-  };
-
-  const writeLine = (
+  const drawText = (
     text: string,
-    {
-      size = 11,
-      font = regularFont,
-      color = colors.text,
-      indent = 0,
-      spacing = 6,
-    }: {
-      size?: number;
-      font?: PDFFont;
-      color?: ReturnType<typeof rgb>;
-      indent?: number;
-      spacing?: number;
-    } = {}
-  ) => {
-    const totalHeight = size + spacing;
-    ensureSpace(totalHeight);
-    page.drawText(sanitizePdfText(text), {
-      x: marginX + indent,
-      y: cursorY - size,
-      size,
-      font,
-      color,
-    });
-    cursorY -= totalHeight;
-  };
-
-  const drawHeader = () => {
-    const headerHeight = 70;
-    ensureSpace(headerHeight + 16);
-    const headerBottomY = cursorY - headerHeight;
-
-    page.drawRectangle({
-      x: marginX,
-      y: headerBottomY,
-      width: contentWidth,
-      height: headerHeight,
-      color: colors.primary,
-    });
-
-    page.drawText(sanitizePdfText("Boletim Escolar"), {
-      x: marginX + 18,
-      y: headerBottomY + headerHeight - 28,
-      size: 20,
-      font: boldFont,
-      color: colors.white,
-    });
-
-    page.drawText(sanitizePdfText(unidadeNome), {
-      x: marginX + 18,
-      y: headerBottomY + headerHeight - 48,
-      size: 12,
-      font: regularFont,
-      color: colors.white,
-    });
-
-    const anoText = `Ano letivo: ${matriculaInfo?.ano_letivo ?? "--"}`;
-    page.drawText(sanitizePdfText(anoText), {
-      x: marginX + 18,
-      y: headerBottomY + 16,
-      size: 11,
-      font: regularFont,
-      color: colors.white,
-    });
-
-    cursorY = headerBottomY - 24;
-  };
-
-  const drawInfoCard = () => {
-    const infoItems = [
-      { label: "Aluno", value: alunoNome },
-      { label: "Matr��cula", value: perfilAluno.numero_matricula ?? "--" },
-      { label: "Turma", value: turmaInfo },
-      { label: "Unidade", value: unidadeNome },
-    ];
-
-    const columns = 2;
-    const cardPadding = 16;
-    const rowHeight = 28;
-    const rows = Math.ceil(infoItems.length / columns);
-    const cardHeight = rows * rowHeight + cardPadding * 2;
-
-    ensureSpace(cardHeight + 16);
-    const cardBottomY = cursorY - cardHeight;
-
-    page.drawRectangle({
-      x: marginX,
-      y: cardBottomY,
-      width: contentWidth,
-      height: cardHeight,
-      color: colors.cardBg,
-      borderColor: colors.tableBorder,
-      borderWidth: 0.5,
-    });
-
-    for (let row = 0; row < rows; row++) {
-      for (let col = 0; col < columns; col++) {
-        const index = row * columns + col;
-        const item = infoItems[index];
-        if (!item) continue;
-
-        const cellWidth = contentWidth / columns;
-        const cellX = marginX + col * cellWidth;
-        const baseY = cursorY - cardPadding - row * rowHeight - 14;
-
-        page.drawText(sanitizePdfText(item.label), {
-          x: cellX + 10,
-          y: baseY,
-          size: 10,
-          font: boldFont,
-          color: colors.lightText,
-        });
-
-        page.drawText(sanitizePdfText(item.value), {
-          x: cellX + 10,
-          y: baseY - 12,
-          size: 12,
-          font: regularFont,
-          color: colors.text,
-        });
-      }
-    }
-
-    cursorY = cardBottomY - 24;
-  };
-
-  const drawSummaryChips = () => {
-    const summaryItems = [
-      { label: "Total de disciplinas", value: String(materias.length) },
-      {
-        label: "M��dia global",
-        value: mediaGlobal != null ? formatNotaPdf(mediaGlobal) : "--",
-      },
-      { label: "Gerado em", value: formatDateBr(new Date()) },
-    ];
-
-    const chipGap = 12;
-    const chipHeight = 44;
-    const chipWidth =
-      (contentWidth - chipGap * (summaryItems.length - 1)) /
-      summaryItems.length;
-
-    ensureSpace(chipHeight + 12);
-
-    summaryItems.forEach((item, index) => {
-      const x = marginX + index * (chipWidth + chipGap);
-      const y = cursorY - chipHeight;
-
-      page.drawRectangle({
-        x,
-        y,
-        width: chipWidth,
-        height: chipHeight,
-        color: colors.tableStripe,
-        borderColor: colors.tableBorder,
-        borderWidth: 0.5,
-      });
-
-      page.drawText(sanitizePdfText(item.label), {
-        x: x + 10,
-        y: y + chipHeight - 18,
-        size: 9,
-        font: boldFont,
-        color: colors.lightText,
-      });
-
-      page.drawText(sanitizePdfText(item.value), {
-        x: x + 10,
-        y: y + 14,
-        size: 14,
-        font: boldFont,
-        color: colors.primaryDark,
-      });
-    });
-
-    cursorY -= chipHeight + 24;
-  };
-
-  type TableColumn = {
-    key: string;
-    label: string;
-    width: number;
-    align: "left" | "center";
-  };
-
-  const tableColumns: TableColumn[] = [
-    { key: "disciplina", label: "Disciplina", width: 130, align: "left" },
-    ...PERIODOS_PDF_ORDEM.map((periodo) => ({
-      key: periodo,
-      label: PERIODOS_LABEL[periodo],
-      width: periodo === "RECUPERACAO_FINAL" ? 58 : 52,
-      align: "center" as const,
-    })),
-    { key: "mediaFinal", label: "M��dia final", width: 60, align: "center" },
-    { key: "status", label: "Situa��ǜo", width: 70, align: "center" },
-  ];
-
-  const totalTableWidth = tableColumns.reduce(
-    (acc, column) => acc + column.width,
-    0
-  );
-
-  if (totalTableWidth > contentWidth) {
-    const scale = contentWidth / totalTableWidth;
-    tableColumns.forEach((column) => {
-      column.width = parseFloat((column.width * scale).toFixed(2));
-    });
-
-    const adjustedWidth = tableColumns.reduce(
-      (acc, column) => acc + column.width,
-      0
-    );
-    const diff = contentWidth - adjustedWidth;
-    tableColumns[tableColumns.length - 1].width += diff;
-  }
-
-  const truncateToWidth = (
-    rawText: string,
-    width: number,
+    x: number,
+    y: number,
+    size: number,
     font: PDFFont,
-    size: number
+    color = colors.text,
   ) => {
-    const text = sanitizePdfText(rawText);
-    if (font.widthOfTextAtSize(text, size) <= width - 8) {
-      return text;
-    }
-    let truncated = text;
-    while (truncated.length > 1) {
-      truncated = truncated.slice(0, -1);
-      const withDots = `${truncated}...`;
-      if (font.widthOfTextAtSize(withDots, size) <= width - 8) {
-        return withDots;
-      }
-    }
-    return truncated;
+    page.drawText(sanitizePdfText(text), { x, y, size, font, color });
   };
 
-  const drawTableRow = (
-    data: Record<string, string>,
-    {
-      header = false,
-      stripe = false,
-      cellColors = {},
-    }: {
-      header?: boolean;
-      stripe?: boolean;
-      cellColors?: Record<string, ReturnType<typeof rgb>>;
-    } = {}
+  const drawRightText = (
+    text: string,
+    x: number,
+    y: number,
+    size: number,
+    font: PDFFont,
+    color = colors.text,
   ) => {
-    const rowHeight = header ? 30 : 24;
-    ensureSpace(rowHeight + 4);
-    const rowBottomY = cursorY - rowHeight;
-    let cellX = marginX;
-
-    tableColumns.forEach((column) => {
-      const backgroundColor = header
-        ? colors.tableHeaderBg
-        : stripe
-        ? colors.tableStripe
-        : undefined;
-
-      page.drawRectangle({
-        x: cellX,
-        y: rowBottomY,
-        width: column.width,
-        height: rowHeight,
-        color: backgroundColor,
-        borderColor: colors.tableBorder,
-        borderWidth: 0.5,
-      });
-
-      const font = header ? boldFont : regularFont;
-      const fontSize = 10;
-      const cellText = header ? column.label : data[column.key] ?? "";
-      const processedText =
-        !header && column.align === "left"
-          ? truncateToWidth(cellText, column.width, font, fontSize)
-          : sanitizePdfText(cellText);
-
-      const textWidth = font.widthOfTextAtSize(processedText, fontSize);
-      let textX =
-        column.align === "center"
-          ? cellX + column.width / 2 - textWidth / 2
-          : cellX + 6;
-      if (column.align === "center" && textWidth > column.width - 6) {
-        textX = cellX + 3;
-      }
-
-      const textColor =
-        cellColors[column.key] ||
-        (header ? colors.primaryDark : colors.text);
-
-      const textY = rowBottomY + (rowHeight - fontSize) / 2 + 1;
-      page.drawText(processedText, {
-        x: textX,
-        y: textY,
-        size: fontSize,
-        font,
-        color: textColor,
-      });
-
-      cellX += column.width;
-    });
-
-    cursorY -= rowHeight;
+    const width = font.widthOfTextAtSize(sanitizePdfText(text), size);
+    drawText(text, x - width, y, size, font, color);
   };
 
-  const getStatusData = (media?: number | null) => {
-    if (typeof media !== "number") {
-      return { label: "Em andamento", color: colors.warning };
-    }
-    if (media >= 7) {
-      return { label: "Aprovado", color: colors.approved };
-    }
-    if (media < 5) {
-      return { label: "Reprovado", color: colors.danger };
-    }
-    return { label: "Recupera��ǜo", color: colors.warning };
+  const drawCenterText = (
+    text: string,
+    y: number,
+    size: number,
+    font: PDFFont,
+    color = colors.text,
+  ) => {
+    const width = font.widthOfTextAtSize(sanitizePdfText(text), size);
+    drawText(text, (pageWidth - width) / 2, y, size, font, color);
   };
 
-  drawHeader();
-  drawInfoCard();
-  drawSummaryChips();
+  let y = pageHeight - marginY;
 
-  if (materias.length === 0) {
-    writeLine(
-      "Ainda nǜo hǭ notas registradas para este aluno neste ano letivo.",
-      { size: 12 }
-    );
-  } else {
-    drawTableRow({}, { header: true });
-
-    materias.forEach(([materiaNome, materiaData], index) => {
-      const statusInfo = getStatusData(materiaData.mediaFinalGeral);
-      const rowValues: Record<string, string> = {
-        disciplina: materiaNome,
-        mediaFinal: formatNotaPdf(materiaData.mediaFinalGeral),
-        status: statusInfo.label,
-      };
-
-      PERIODOS_PDF_ORDEM.forEach((periodo) => {
-        rowValues[periodo] = formatNotaPdf(materiaData[periodo]?.media);
-      });
-
-      drawTableRow(rowValues, {
-        stripe: index % 2 === 1,
-        cellColors: { status: statusInfo.color },
-      });
-    });
-  }
-
-  writeLine("", { spacing: 2 });
-  writeLine(`Documento gerado em ${formatDateBr(new Date())}`, {
-    size: 10,
-    color: colors.lightText,
+  // --- HEADER ---
+  page.drawRectangle({
+    x: 0,
+    y: y - 100,
+    width: pageWidth,
+    height: 140,
+    color: colors.primary,
   });
 
-  const pdfBytes = await doc.save();
-  return pdfBytes;
-}
+  drawCenterText('BOLETIM ESCOLAR', y - 40, 26, boldFont, colors.white);
+  drawCenterText(
+    unidadeNome.toUpperCase(),
+    y - 70,
+    14,
+    regularFont,
+    colors.white,
+  );
 
-async function getProfile(user: AuthenticatedRequest["user"]) {
-  if (!user || user.papel !== "ALUNO" || !user.perfilId || !user.unidadeEscolarId) {
-    throw new Error("UsuÃ¡rio nÃ£o Ã© um aluno vÃ¡lido.");
-  }
+  y -= 130;
 
-  const { id: usuarioId, perfilId: alunoPerfilId, unidadeEscolarId } = user;
-  const [usuario, perfilAluno, matriculaAtiva] = await Promise.all([
-    prisma.usuarios.findUnique({
-      where: { id: usuarioId },
-      select: {
-        nome: true,
-        email: true,
-        data_nascimento: true,
-        status: true,
-        unidade_escolar: { select: { nome: true } },
-      },
-    }),
-    prisma.usuarios_aluno.findUnique({
-      where: { id: alunoPerfilId },
-      select: { numero_matricula: true, email_responsavel: true },
-    }),
-    prisma.matriculas.findFirst({
-      where: { alunoId: alunoPerfilId, status: "ATIVA" },
-      select: {
-        ano_letivo: true,
-        turma: { select: { nome: true, serie: true } },
-      },
-    }),
-  ]);
+  // --- STUDENT INFO ---
+  const infoBoxHeight = 60;
+  page.drawRectangle({
+    x: marginX,
+    y: y - infoBoxHeight,
+    width: contentWidth,
+    height: infoBoxHeight,
+    color: colors.white,
+    borderColor: colors.border,
+    borderWidth: 1,
+  });
 
-  if (!usuario || !perfilAluno || !matriculaAtiva) {
-    throw new Error("Dados essenciais do aluno nÃ£o encontrados.");
-  }
+  const col1 = marginX + 15;
+  const col2 = marginX + contentWidth / 2 + 10;
+  const row1 = y - 25;
+  const row2 = y - 45;
 
-  const [totalEntregas, provasFeitas] = await Promise.all([
-    prisma.submissoes.count({
-      where: {
-        alunoId: alunoPerfilId,
-        status: { in: ["ENVIADA", "ENVIADA_COM_ATRASO", "AVALIADA"] },
-      },
-    }),
-    prisma.submissoes.count({
-      where: {
-        alunoId: alunoPerfilId,
-        tarefa: { tipo: "PROVA" },
-        status: { in: ["ENVIADA", "ENVIADA_COM_ATRASO", "AVALIADA"] },
-      },
-    }),
-  ]);
+  drawText('Aluno:', col1, row1, 10, boldFont, colors.textLight);
+  drawText(alunoNome, col1 + 40, row1, 10, regularFont, colors.text);
 
-  const boletimData = await getBoletim(usuarioId);
-  const materias = Object.values(boletimData);
-  let mediaGlobal = 0;
-  if (materias.length > 0) {
-    const somaMedias = materias.reduce(
-      (acc, materia) => acc + (materia.mediaFinalGeral || 0),
-      0
+  drawText('Matrícula:', col2, row1, 10, boldFont, colors.textLight);
+  drawText(
+    perfilAluno.numero_matricula,
+    col2 + 60,
+    row1,
+    10,
+    regularFont,
+    colors.text,
+  );
+
+  drawText('Turma:', col1, row2, 10, boldFont, colors.textLight);
+  drawText(turmaInfo, col1 + 40, row2, 10, regularFont, colors.text);
+
+  drawText('Ano:', col2, row2, 10, boldFont, colors.textLight);
+  drawText(
+    String(matriculaInfo?.ano_letivo || new Date().getFullYear()),
+    col2 + 60,
+    row2,
+    10,
+    regularFont,
+    colors.text,
+  );
+
+  y -= infoBoxHeight + 30;
+
+  // --- GRADES TABLE ---
+  const colWidths = [130, 50, 50, 50, 50, 60, 50, 50];
+  const headers = [
+    'Disciplina',
+    '1º Bim',
+    '2º Bim',
+    '3º Bim',
+    '4º Bim',
+    'Rec.',
+    'Média',
+    'Freq',
+  ];
+
+  // Header Background
+  page.drawRectangle({
+    x: marginX,
+    y: y - 25,
+    width: contentWidth,
+    height: 25,
+    color: colors.primaryLight,
+  });
+
+  let currentX = marginX + 10;
+  headers.forEach((header, i) => {
+    if (i === 0) {
+      drawText(header, currentX, y - 17, 9, boldFont, colors.primary);
+    } else {
+      drawRightText(
+        header,
+        currentX + colWidths[i] - 10,
+        y - 17,
+        9,
+        boldFont,
+        colors.primary,
+      );
+    }
+    currentX += colWidths[i];
+  });
+
+  y -= 25;
+
+  materias.forEach(([materiaNome, dados], index) => {
+    if (y < marginY + 100) {
+      // Check for page break
+      page = doc.addPage(pageSize);
+      y = pageHeight - marginY;
+
+      // Re-draw table header
+      page.drawRectangle({
+        x: marginX,
+        y: y - 25,
+        width: contentWidth,
+        height: 25,
+        color: colors.primaryLight,
+      });
+      let hX = marginX + 10;
+      headers.forEach((header, i) => {
+        if (i === 0) {
+          drawText(header, hX, y - 17, 9, boldFont, colors.primary);
+        } else {
+          drawRightText(
+            header,
+            hX + colWidths[i] - 10,
+            y - 17,
+            9,
+            boldFont,
+            colors.primary,
+          );
+        }
+        hX += colWidths[i];
+      });
+      y -= 25;
+    }
+
+    // Row separator
+    page.drawLine({
+      start: { x: marginX, y },
+      end: { x: pageWidth - marginX, y },
+      thickness: 0.5,
+      color: colors.border,
+    });
+
+    let rowX = marginX + 10;
+    drawText(
+      materiaNome.length > 22
+        ? materiaNome.substring(0, 22) + '...'
+        : materiaNome,
+      rowX,
+      y - 17,
+      9,
+      regularFont,
+      colors.text,
     );
-    mediaGlobal = somaMedias / materias.length;
+    rowX += colWidths[0];
+
+    PERIODOS_PDF_ORDEM.forEach((periodo, i) => {
+      const nota = dados[periodo]?.media;
+      const notaText = formatNotaPdf(nota);
+      let color = colors.text;
+      if (typeof nota === 'number') {
+        color = nota >= 6 ? colors.success : colors.danger;
+      }
+      drawRightText(
+        notaText,
+        rowX + colWidths[i + 1] - 10,
+        y - 17,
+        9,
+        regularFont,
+        color,
+      );
+      rowX += colWidths[i + 1];
+    });
+
+    // Final Average
+    const mediaFinal = dados.mediaFinalGeral;
+    const mediaText = formatNotaPdf(mediaFinal);
+    let finalColor = colors.text;
+    if (typeof mediaFinal === 'number') {
+      finalColor = mediaFinal >= 6 ? colors.success : colors.danger;
+    }
+    drawRightText(
+      mediaText,
+      rowX + colWidths[6] - 10,
+      y - 17,
+      9,
+      boldFont,
+      finalColor,
+    );
+    rowX += colWidths[6];
+
+    // Frequency
+    const frequencia = dados.frequencia?.porcentagem ?? 0;
+    const freqText = `${frequencia.toFixed(0)}%`;
+    let freqColor = frequencia >= 75 ? colors.success : colors.danger;
+    drawRightText(
+      freqText,
+      rowX + colWidths[7] - 10,
+      y - 17,
+      9,
+      regularFont,
+      freqColor,
+    );
+
+    y -= 25;
+  });
+
+  // Bottom border of table
+  page.drawLine({
+    start: { x: marginX, y },
+    end: { x: pageWidth - marginX, y },
+    thickness: 1,
+    color: colors.border,
+  });
+
+  y -= 40;
+
+  // --- PERFORMANCE CHART ---
+  if (y < 200) {
+    page = doc.addPage(pageSize);
+    y = pageHeight - marginY;
   }
 
-  return {
-    nome: usuario.nome,
-    email: usuario.email,
-    status: usuario.status,
-    dataNascimento: usuario.data_nascimento,
-    escola: usuario.unidade_escolar?.nome,
-    numeroMatricula: perfilAluno.numero_matricula,
-    emailResponsavel: perfilAluno.email_responsavel,
-    turma: `${matriculaAtiva.turma.serie} - ${matriculaAtiva.turma.nome}`,
-    anoLetivo: matriculaAtiva.ano_letivo,
-    totalAtividadesEntregues: totalEntregas,
-    provasFeitas: provasFeitas,
-    mediaGlobal: parseFloat(mediaGlobal.toFixed(2)),
-  };
-}
+  drawText('Análise de Desempenho', marginX, y, 14, boldFont, colors.primary);
+  y -= 20;
 
+  const chartHeight = 150;
+  const chartWidth = contentWidth;
+  const chartY = y - chartHeight;
+
+  // Chart Background
+  page.drawRectangle({
+    x: marginX,
+    y: chartY,
+    width: chartWidth,
+    height: chartHeight,
+    color: colors.white,
+    borderColor: colors.border,
+    borderWidth: 1,
+  });
+
+  // Grid lines (0, 5, 10)
+  [0, 5, 10].forEach((val) => {
+    const lineY = chartY + (val / 10) * chartHeight;
+    page.drawLine({
+      start: { x: marginX, y: lineY },
+      end: { x: marginX + chartWidth, y: lineY },
+      thickness: 0.5,
+      color: colors.chartGrid,
+      opacity: 0.5,
+    });
+    drawRightText(
+      String(val),
+      marginX - 5,
+      lineY - 3,
+      8,
+      regularFont,
+      colors.textLight,
+    );
+  });
+
+  // Bars
+  const barWidth = (chartWidth / materias.length) * 0.6;
+  const spacing = (chartWidth / materias.length) * 0.4;
+  let barX = marginX + spacing / 2;
+
+  materias.forEach(([materiaNome, dados]) => {
+    const media = dados.mediaFinalGeral || 0;
+    const barHeight = (media / 10) * chartHeight;
+
+    // Bar
+    page.drawRectangle({
+      x: barX,
+      y: chartY,
+      width: barWidth,
+      height: barHeight,
+      color: media >= 6 ? colors.primary : colors.danger,
+    });
+
+    // Label (Subject) - Rotated if possible or just short
+    const shortName = materiaNome.substring(0, 3).toUpperCase();
+    drawCenterText(shortName, chartY - 15, 8, regularFont, colors.textLight); // Can't easily rotate text per bar with this helper, keeping it simple
+    // Actually, let's just write the short name centered under the bar
+    const textWidth = regularFont.widthOfTextAtSize(shortName, 8);
+    page.drawText(shortName, {
+      x: barX + (barWidth - textWidth) / 2,
+      y: chartY - 12,
+      size: 8,
+      font: regularFont,
+      color: colors.textLight,
+    });
+
+    barX += barWidth + spacing;
+  });
+
+  y = chartY - 40;
+
+  // --- DETALHAMENTO DE ATIVIDADES ---
+  if (
+    boletimData.detalhamento &&
+    Object.keys(boletimData.detalhamento).length > 0
+  ) {
+    if (y < 200) {
+      page = doc.addPage(pageSize);
+      y = pageHeight - marginY;
+    }
+
+    drawText(
+      'Detalhamento de Atividades',
+      marginX,
+      y,
+      14,
+      boldFont,
+      colors.primary,
+    );
+    y -= 25;
+
+    const detalhamento = boletimData.detalhamento;
+    const materiasDetalhadas = Object.keys(detalhamento).sort((a, b) =>
+      a.localeCompare(b),
+    );
+
+    for (const materia of materiasDetalhadas) {
+      const atividades = detalhamento[materia];
+      if (!atividades || atividades.length === 0) continue;
+
+      if (y < 100) {
+        page = doc.addPage(pageSize);
+        y = pageHeight - marginY;
+      }
+
+      // Subject Header
+      page.drawRectangle({
+        x: marginX,
+        y: y - 20,
+        width: contentWidth,
+        height: 20,
+        color: colors.primaryLight,
+      });
+      drawText(materia, marginX + 10, y - 14, 10, boldFont, colors.primary);
+      y -= 20;
+
+      // Activities List
+      // Columns: Data | Atividade | Tipo | Nota
+      const detCols = [70, 250, 100, 50];
+
+      // Header for list
+      let dX = marginX + 10;
+      drawText('Data', dX, y - 15, 8, boldFont, colors.textLight);
+      dX += detCols[0];
+      drawText('Atividade', dX, y - 15, 8, boldFont, colors.textLight);
+      dX += detCols[1];
+      drawText('Tipo', dX, y - 15, 8, boldFont, colors.textLight);
+      dX += detCols[2];
+      drawText('Nota', dX, y - 15, 8, boldFont, colors.textLight);
+
+      y -= 20;
+
+      for (const ativ of atividades) {
+        if (y < marginY + 20) {
+          page = doc.addPage(pageSize);
+          y = pageHeight - marginY;
+          // Redraw subject header if split? Maybe just continue
+        }
+
+        let rowX = marginX + 10;
+        const dataStr = ativ.data ? formatDateBr(new Date(ativ.data)) : '--';
+        drawText(dataStr, rowX, y - 10, 8, regularFont, colors.text);
+        rowX += detCols[0];
+
+        const nome =
+          ativ.nome.length > 50
+            ? ativ.nome.substring(0, 50) + '...'
+            : ativ.nome;
+        drawText(nome, rowX, y - 10, 8, regularFont, colors.text);
+        rowX += detCols[1];
+
+        drawText(ativ.tipo, rowX, y - 10, 8, regularFont, colors.text);
+        rowX += detCols[2];
+
+        const notaStr = formatNotaPdf(ativ.nota);
+        let notaColor = colors.text;
+        if (ativ.nota >= 6) notaColor = colors.success;
+        else notaColor = colors.danger;
+
+        drawText(notaStr, rowX, y - 10, 8, boldFont, notaColor);
+
+        y -= 15;
+      }
+      y -= 10; // Spacing between subjects
+    }
+  }
+
+  // --- FOOTER ---
+  const footerY = 30;
+  page.drawLine({
+    start: { x: marginX, y: footerY + 15 },
+    end: { x: pageWidth - marginX, y: footerY + 15 },
+    thickness: 1,
+    color: colors.border,
+  });
+
+  drawText(
+    `Gerado em: ${formatDateBr(new Date())}`,
+    marginX,
+    footerY,
+    8,
+    regularFont,
+    colors.textLight,
+  );
+
+  if (mediaGlobal !== null) {
+    const text = `Média Global: ${formatNotaPdf(mediaGlobal)}`;
+    drawRightText(
+      text,
+      pageWidth - marginX,
+      footerY,
+      10,
+      boldFont,
+      colors.primary,
+    );
+  }
+
+  const pdfBytes = await doc.save();
+  return Buffer.from(pdfBytes);
+}
 
 export const alunoService = {
   findAllPerfis,
   findOne: findOneByUserId,
+  findOneByUserId,
   getBoletim,
+  saveComentario,
   getAgendaEventos,
   generateBoletimPdf,
-  getProfile,
 };
-
-
-

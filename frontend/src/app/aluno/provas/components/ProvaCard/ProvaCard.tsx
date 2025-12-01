@@ -10,7 +10,7 @@ type StatusInfo = {
   link: string;
 };
 
-const getInitials = (name?: string) => {
+export const getInitials = (name?: string) => {
   if (!name) return 'AA';
   const parts = name.trim().split(' ').filter(Boolean);
   if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();

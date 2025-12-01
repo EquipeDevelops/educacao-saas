@@ -11,6 +11,8 @@ import {
   findAllTarefasSchema,
   publishTarefaSchema,
   deleteTarefaSchema,
+  trabalhoCorrecaoParamsSchema,
+  trabalhoManualGradeSchema,
 } from "./tarefa.validator";
 
 const router = Router();
@@ -104,6 +106,22 @@ router.post(
   validate(z.object({ params: paramsSchema })),
   uploadAnexos,
   tarefaController.uploadAttachments
+);
+
+router.get(
+  "/:id/trabalhos/avaliacoes",
+  protect,
+  authorize("PROFESSOR"),
+  validate(trabalhoCorrecaoParamsSchema),
+  tarefaController.getTrabalhoCorrecaoResumo
+);
+
+router.post(
+  "/:id/trabalhos/avaliacoes",
+  protect,
+  authorize("PROFESSOR"),
+  validate(trabalhoManualGradeSchema),
+  tarefaController.gradeTrabalhoAluno
 );
 
 export const tarefaRoutes = router;

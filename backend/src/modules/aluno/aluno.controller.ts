@@ -1,18 +1,18 @@
-import { Request, Response, NextFunction } from "express";
-import { alunoService } from "./aluno.service";
-import { AuthenticatedRequest } from "../../middlewares/auth";
+import { Request, Response, NextFunction } from 'express';
+import { alunoService } from './aluno.service';
+import { AuthenticatedRequest } from '../../middlewares/auth';
 
 export const alunoController = {
   findAll: async (
     req: AuthenticatedRequest,
     res: Response,
-    next: NextFunction
+    next: NextFunction,
   ) => {
     try {
       const { unidadeEscolarId } = req.user;
       if (!unidadeEscolarId) {
         return res.status(403).json({
-          message: "Usuário não está associado a uma unidade escolar.",
+          message: 'Usuário não está associado a uma unidade escolar.',
         });
       }
       const alunos = await alunoService.findAllPerfis(unidadeEscolarId);
@@ -22,12 +22,17 @@ export const alunoController = {
     }
   },
 
-  findOne: async (req: Request, res: Response, next: NextFunction) => {
+  findOne: async (
+    req: AuthenticatedRequest,
+    res: Response,
+    next: NextFunction,
+  ) => {
     try {
       const { id } = req.params; // ID do USUÁRIO
+      console.log(`[CONTROLLER] FindOne aluno (usuário) ID: ${id}`);
       const aluno = await alunoService.findOne(id);
       if (!aluno) {
-        return res.status(404).json({ message: "Aluno não encontrado." });
+        return res.status(404).json({ message: 'Aluno não encontrado.' });
       }
       res.json(aluno);
     } catch (error) {
@@ -38,13 +43,28 @@ export const alunoController = {
   getBoletim: async (
     req: AuthenticatedRequest,
     res: Response,
-    next: NextFunction
+    next: NextFunction,
   ) => {
     try {
       const { id } = req.params; // ID do USUÁRIO do aluno
       console.log(`[CONTROLLER] Requisição para boletim do usuário ID: ${id}`);
-      const boletimData = await alunoService.getBoletim(id);
+      const boletimData = await alunoService.getBoletim(id, req.user);
       res.json(boletimData);
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  saveComentario: async (
+    req: AuthenticatedRequest,
+    res: Response,
+    next: NextFunction,
+  ) => {
+    try {
+      const { id } = req.params; // ID do USUÁRIO do aluno
+      const { materiaNome, comentario } = req.body;
+      await alunoService.saveComentario(id, materiaNome, comentario, req.user);
+      res.status(200).json({ message: 'Comentário salvo com sucesso.' });
     } catch (error) {
       next(error);
     }
@@ -53,23 +73,23 @@ export const alunoController = {
   getBoletimPdf: async (
     req: AuthenticatedRequest,
     res: Response,
-    next: NextFunction
+    next: NextFunction,
   ) => {
     try {
       const { id } = req.params;
 
-      if (req.user?.papel === "ALUNO" && req.user.id !== id) {
+      if (req.user?.papel === 'ALUNO' && req.user.id !== id) {
         return res.status(403).json({
-          message: "Você só pode baixar o seu próprio boletim.",
+          message: 'Você só pode baixar o seu próprio boletim.',
         });
       }
 
       const pdfBytes = await alunoService.generateBoletimPdf(id);
 
-      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader('Content-Type', 'application/pdf');
       res.setHeader(
-        "Content-Disposition",
-        `attachment; filename=boletim_${id}.pdf`
+        'Content-Disposition',
+        `attachment; filename=boletim_${id}.pdf`,
       );
       res.send(Buffer.from(pdfBytes));
     } catch (error) {
@@ -80,12 +100,12 @@ export const alunoController = {
   getAgendaMensal: async (
     req: AuthenticatedRequest,
     res: Response,
-    next: NextFunction
+    next: NextFunction,
   ) => {
     try {
       if (!req.user?.perfilId) {
         return res.status(403).json({
-          message: "Perfil de aluno não encontrado para o usuário autenticado.",
+          message: 'Perfil de aluno não encontrado para o usuário autenticado.',
         });
       }
 
@@ -105,14 +125,14 @@ export const alunoController = {
 
       if (startDate > endDate) {
         return res.status(400).json({
-          message: "A data inicial não pode ser maior que a data final.",
+          message: 'A data inicial não pode ser maior que a data final.',
         });
       }
 
       const eventos = await alunoService.getAgendaEventos(
         req.user,
         startDate,
-        endDate
+        endDate,
       );
 
       res.json({ eventos });

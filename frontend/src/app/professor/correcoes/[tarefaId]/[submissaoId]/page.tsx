@@ -1,193 +1,62 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
-import Link from "next/link";
-import { api } from "@/services/api";
-import styles from "./correcao.module.css";
-import {
-  FiArrowLeft,
-  FiThumbsUp,
-  FiThumbsDown,
-  FiSave,
-  FiCheckCircle,
-} from "react-icons/fi";
-import { useCorrecaoData } from "@/hooks/tarefas/useCorrecaoData";
+import { useState, useEffect } from 'react';
+import { useParams, useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { api } from '@/services/api';
+import styles from './correcao.module.css';
+import { FiArrowLeft } from 'react-icons/fi';
+import { useCorrecaoData } from '@/hooks/tarefas/useCorrecaoData';
+import Section from '@/components/section/Section';
+import QuestaoParaCorrigir from './components/questaoParaCorrigir/QuestaoParaCorrigir';
+import CorrecaoResumo from './components/correcaoResumo/CorrecaoResumo';
+import Loading from '@/components/loading/Loading';
+import ErrorMsg from '@/components/errorMsg/ErrorMsg';
+import { LuCalendar, LuClock, LuSchool } from 'react-icons/lu';
+import { getInitials } from '@/app/aluno/provas/components/ProvaCard/ProvaCard';
 
 type NotasState = Record<string, { nota: number; feedback: string | null }>;
-
-const CorrecaoResumo = ({
-  submissao,
-  questoes,
-  notas,
-  onSaveRascunho,
-  onFinalizar,
-}: any) => {
-  const pontuacaoTotal = Object.values(notas).reduce(
-    (acc: number, item: any) => acc + (item.nota || 0),
-    0
-  );
-  const pontuacaoMax = questoes.reduce((a: any, b: any) => a + b.pontos, 0);
-
-  return (
-    <div className={styles.resumoCard}>
-      <div className={styles.resumoAluno}>
-        <div className={styles.avatar}>
-          {submissao?.aluno.usuario.nome.substring(0, 2).toUpperCase()}
-        </div>
-        <div>
-          <p>{submissao?.aluno.usuario.nome}</p>
-          <small>
-            {new Date(submissao?.enviado_em).toLocaleString("pt-BR")}
-          </small>
-        </div>
-      </div>
-
-      <div className={styles.notaCalculada}>
-        <p>Nota Calculada</p>
-        <strong>{pontuacaoTotal.toFixed(1)}</strong>
-        <span>de {pontuacaoMax.toFixed(1)} pontos</span>
-      </div>
-
-      <ul className={styles.resumoStats}>
-        <li>
-          <span>Pontuação</span>{" "}
-          <strong>
-            {pontuacaoTotal.toFixed(1)} / {pontuacaoMax.toFixed(1)}
-          </strong>
-        </li>
-        <li>
-          <span>Questões</span> <strong>{questoes.length}</strong>
-        </li>
-      </ul>
-
-      <div className={styles.resumoActions}>
-        <button onClick={onSaveRascunho} className={styles.rascunhoButton}>
-          <FiSave /> Salvar Rascunho
-        </button>
-        <button
-          onClick={() => onFinalizar(pontuacaoTotal)}
-          className={styles.finalizarButton}
-        >
-          <FiCheckCircle /> Finalizar Correção
-        </button>
-      </div>
-    </div>
-  );
-};
-
-const QuestaoParaCorrigir = ({ item, notaItem, onNotaChange }: any) => {
-  const { questao, resposta } = item;
-  const isCorrect =
-    questao.opcoes_multipla_escolha?.find((opt: any) => opt.correta)?.id ===
-    resposta.opcaoEscolhidaId;
-
-  return (
-    <div className={styles.questaoCard}>
-      <div className={styles.questaoHeader}>
-        <span className={styles.qNum}>{questao.sequencia}</span>
-        <span className={styles.qTipo}>
-          {questao.tipo === "MULTIPLA_ESCOLHA"
-            ? "Múltipla Escolha"
-            : "Discursiva"}
-        </span>
-        <span className={styles.qPontos}>{questao.pontos} pontos</span>
-      </div>
-      <h4>Enunciado</h4>
-      <p>{questao.enunciado}</p>
-
-      {questao.tipo === "MULTIPLA_ESCOLHA" && (
-        <>
-          <h4>Resposta Correta</h4>
-          <div className={styles.respostaCorreta}>
-            {
-              questao.opcoes_multipla_escolha.find((opt: any) => opt.correta)
-                ?.texto
-            }
-          </div>
-        </>
-      )}
-
-      <h4>Resposta do Aluno</h4>
-      <div
-        className={`${styles.respostaAluno} ${
-          isCorrect ? styles.respCerta : styles.respErrada
-        }`}
-      >
-        {questao.tipo === "MULTIPLA_ESCOLHA"
-          ? questao.opcoes_multipla_escolha.find(
-              (opt: any) => opt.id === resposta.opcaoEscolhidaId
-            )?.texto
-          : resposta.resposta_texto}
-        {questao.tipo === "MULTIPLA_ESCOLHA" && (
-          <span>{isCorrect ? "Correta" : "Incorreta"}</span>
-        )}
-      </div>
-
-      <div className={styles.correcaoForm}>
-        <div className={styles.field}>
-          <label>Pontuação Atribuída</label>
-          <div>
-            <input
-              type="number"
-              max={questao.pontos}
-              min={0}
-              step="0.5"
-              value={notaItem?.nota ?? ""}
-              onChange={(e) => onNotaChange("nota", parseFloat(e.target.value))}
-            />
-            <span>/ {questao.pontos}</span>
-            <button onClick={() => onNotaChange("nota", questao.pontos)}>
-              <FiThumbsUp />
-            </button>
-            <button onClick={() => onNotaChange("nota", 0)}>
-              <FiThumbsDown />
-            </button>
-          </div>
-        </div>
-        <div className={styles.field}>
-          <label>Feedback para o Aluno (opcional)</label>
-          <textarea
-            value={notaItem?.feedback ?? ""}
-            onChange={(e) => onNotaChange("feedback", e.target.value)}
-            placeholder="Deixe um comentário sobre a resposta do aluno..."
-          ></textarea>
-        </div>
-      </div>
-    </div>
-  );
-};
 
 export default function CorrecaoIndividualPage() {
   const params = useParams();
   const router = useRouter();
   const { submissaoId, tarefaId } = params;
 
-  const { submissao, correcaoMap, error, isLoading } = useCorrecaoData(
-    submissaoId as string
+  const { submissao, tarefa, correcaoMap, error, isLoading } = useCorrecaoData(
+    submissaoId as string,
   );
 
   const [notas, setNotas] = useState<NotasState>({});
 
   useEffect(() => {
-    if (submissao) {
-      const initialNotas: NotasState = {};
-      for (const item of correcaoMap) {
-        if (item.resposta) {
-          initialNotas[item.resposta.id] = {
-            nota: item.resposta.nota ?? 0,
-            feedback: item.resposta.feedback ?? null,
-          };
+    if (submissao && correcaoMap.length > 0) {
+      setNotas((prev) => {
+        if (Object.keys(prev).length > 0) return prev;
+
+        console.log('Populating notas from correcaoMap', correcaoMap);
+        const initialNotas: NotasState = {};
+        for (const item of correcaoMap) {
+          if (item.resposta) {
+            console.log(
+              `Resposta ${item.resposta.id}: nota=${
+                item.resposta.nota
+              } (type: ${typeof item.resposta.nota})`,
+            );
+            initialNotas[item.resposta.id] = {
+              nota: item.resposta.nota ?? 0,
+              feedback: item.resposta.feedback ?? null,
+            };
+          }
         }
-      }
-      setNotas(initialNotas);
+        return initialNotas;
+      });
     }
   }, [submissao, correcaoMap]);
 
   const handleNotaChange = (
     respostaId: string,
-    field: "nota" | "feedback",
-    value: number | string
+    field: 'nota' | 'feedback',
+    value: number | string,
   ) => {
     setNotas((prev) => ({
       ...prev,
@@ -198,15 +67,25 @@ export default function CorrecaoIndividualPage() {
     }));
   };
 
+  const saveAnswers = async () => {
+    console.log('Saving answers...', notas);
+    for (const respostaId in notas) {
+      const payload = {
+        nota: notas[respostaId].nota ?? 0,
+        feedback: notas[respostaId].feedback ?? '',
+      };
+      console.log(`Saving resposta ${respostaId}`, payload);
+      await api.patch(`/respostas/${respostaId}/grade`, payload);
+    }
+  };
+
   const handleSaveRascunho = async () => {
     try {
-      for (const respostaId in notas) {
-        await api.patch(`/respostas/${respostaId}/grade`, notas[respostaId]);
-      }
-      alert("Rascunho salvo com sucesso!");
+      await saveAnswers();
+      alert('Rascunho salvo com sucesso!');
     } catch (err) {
       console.error(err);
-      alert("Erro ao salvar rascunho.");
+      alert('Erro ao salvar rascunho.');
     }
   };
 
@@ -214,42 +93,134 @@ export default function CorrecaoIndividualPage() {
     if (
       !window.confirm(
         `Finalizar correção com nota ${notaFinal.toFixed(
-          1
-        )}? Esta ação não pode ser desfeita.`
+          1,
+        )}? Esta ação não pode ser desfeita.`,
       )
     )
       return;
 
     try {
-      await handleSaveRascunho();
+      await saveAnswers();
 
       await api.patch(`/submissoes/${submissaoId}/grade`, {
         nota_total: notaFinal,
-        feedback: "Correção finalizada.",
+        feedback: 'Correção finalizada.',
       });
 
-      alert("Correção finalizada e nota atribuída com sucesso!");
+      alert('Correção finalizada e nota atribuída com sucesso!');
       router.push(`/professor/correcoes/${tarefaId}`);
     } catch (err) {
       console.error(err);
-      alert("Erro ao finalizar a correção.");
+      alert('Erro ao finalizar a correção.');
     }
   };
 
-  if (isLoading) return <p>Carregando correção...</p>;
-  if (error) return <p>{error}</p>;
+  if (isLoading) {
+    return (
+      <Section>
+        <Loading />
+      </Section>
+    );
+  }
+  if (error) {
+    return (
+      <Section>
+        <ErrorMsg text={error} />
+      </Section>
+    );
+  }
+
+  const dataEntrega = tarefa?.data_entrega
+    ? new Date(tarefa.data_entrega)
+    : null;
+
+  const now = new Date();
+
+  const isLate = dataEntrega ? now > dataEntrega : false;
+
+  const dataLimiteComTolerancia = tarefa?.data_entrega
+    ? new Date(tarefa.data_entrega)
+    : new Date();
+
+  dataLimiteComTolerancia.setDate(dataLimiteComTolerancia.getDate() + 60);
+
+  dataLimiteComTolerancia.setHours(23, 59, 59, 999);
+
+  const isExpired = tarefa?.data_entrega
+    ? new Date() > dataLimiteComTolerancia
+    : false;
 
   return (
-    <div className={styles.pageContainer}>
+    <Section maxWidth={1200}>
       <Link
         href={`/professor/correcoes/${tarefaId}`}
         className={styles.backLink}
       >
-        <FiArrowLeft /> Voltar
+        <FiArrowLeft /> Voltar para correções
       </Link>
+
+      {isLate && submissao?.status !== 'AVALIADA' && (
+        <div className={styles.warningCard}>
+          <div className={styles.warningIcon}>
+            <LuClock />
+          </div>
+          <div className={styles.warningContent}>
+            <h3>Prazo de entrega encerrado</h3>
+            <p>
+              A data de entrega desta atividade já passou. Você tem até 7 dias
+              de tolerância após o prazo para realizar a correção.
+            </p>
+          </div>
+        </div>
+      )}
+
       <header className={styles.header}>
-        <h1>Corrigindo: {submissao?.aluno.usuario.nome}</h1>
-        <p>{submissao?.tarefa.titulo}</p>
+        <div className={styles.headerContent}>
+          <div className={styles.headerTitle}>
+            <h2>{tarefa?.titulo}</h2>
+            <ul className={styles.headerList}>
+              <li className={styles.tipoTarefa}>
+                {tarefa?.tipo === 'QUESTIONARIO'
+                  ? 'Questionário'
+                  : tarefa?.tipo === 'TRABALHO'
+                  ? 'Trabalho'
+                  : 'Prova'}
+              </li>
+              <li className={styles.materia}>
+                {tarefa?.componenteCurricular?.materia.nome}
+              </li>
+              <li>
+                <LuSchool />
+                {tarefa?.componenteCurricular?.turma.serie} -{' '}
+                {tarefa?.componenteCurricular?.turma.nome}
+              </li>
+            </ul>
+          </div>
+          <div className={styles.headerNota}>
+            <h3>{submissao?.tarefa.pontos}</h3>
+            <p>Nota máxima da atividade</p>
+          </div>
+        </div>
+        <div className={styles.headerAluno}>
+          <div className={styles.headerAlunoInfo}>
+            <span>{getInitials(submissao?.aluno.usuario.nome)}</span>
+            <p>{submissao?.aluno.usuario.nome}</p>
+          </div>
+          <div className={styles.headerAlunoData}>
+            <p>Entrega:</p>
+            <p>
+              <LuCalendar />{' '}
+              {new Date(submissao?.enviado_em).toLocaleDateString('pt-BR')}
+            </p>
+            <p>
+              <LuClock />{' '}
+              {new Date(submissao?.enviado_em).toLocaleTimeString('pt-BR', {
+                hour: '2-digit',
+                minute: '2-digit',
+              })}
+            </p>
+          </div>
+        </div>
       </header>
 
       <div className={styles.mainGrid}>
@@ -258,10 +229,11 @@ export default function CorrecaoIndividualPage() {
             <QuestaoParaCorrigir
               key={item.questao.id}
               item={item}
-              notaItem={notas[item.resposta?.id || ""]}
+              notaItem={notas[item.resposta?.id || '']}
+              readOnly={isExpired}
               onNotaChange={(
-                field: "nota" | "feedback",
-                value: number | string
+                field: 'nota' | 'feedback',
+                value: number | string,
               ) =>
                 item.resposta &&
                 handleNotaChange(item.resposta.id, field, value)
@@ -274,11 +246,12 @@ export default function CorrecaoIndividualPage() {
             submissao={submissao}
             questoes={correcaoMap.map((i) => i.questao)}
             notas={notas}
+            readOnly={isExpired}
             onSaveRascunho={handleSaveRascunho}
             onFinalizar={handleFinalizarCorrecao}
           />
         </aside>
       </div>
-    </div>
+    </Section>
   );
 }
