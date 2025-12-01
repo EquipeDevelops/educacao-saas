@@ -1,4 +1,5 @@
 import express, { Application, Request, Response, NextFunction } from "express";
+import path from "path";
 import { authRoutes, protectedRouter } from "./routes";
 import { errorHandler } from "./middlewares/error";
 import cors from "cors";
@@ -20,6 +21,8 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 app.get("/", (req: Request, res: Response) => {
   res.send("API da Plataforma Educacional está no ar!");
 });
+
+app.use("/uploads", express.static(path.resolve(__dirname, "..", "uploads")));
 
 app.use("/api/auth", authRoutes);
 

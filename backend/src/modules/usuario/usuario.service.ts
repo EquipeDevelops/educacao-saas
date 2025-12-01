@@ -10,16 +10,21 @@ type PrismaTransactionClient = Omit<
   PrismaClient,
   "$connect" | "$disconnect" | "$on" | "$transaction" | "$use" | "$extends"
 >;
+
 interface UserPayload {
   id: string;
   instituicaoId: string | null;
   unidadeEscolarId: string | null;
   papel: PapelUsuario;
 }
+
 interface UserCreationData extends CreateUserInput {
   instituicaoId: string;
   unidadeEscolarId: string;
+  fotoUrl?: string | null;
+  data?: any;
 }
+
 interface AlunoCSV {
   nome: string;
   email: string;
@@ -123,7 +128,7 @@ async function importarAlunos(
 }
 
 async function createUser(
-  data: UserCreationData,
+  input: UserCreationData,
   prismaClient: PrismaTransactionClient = prisma
 ) {
   const {
@@ -136,8 +141,12 @@ async function createUser(
     perfil_responsavel,
     instituicaoId,
     unidadeEscolarId,
-  } = data;
+    fotoUrl,
+    data: ignoredFormData,
+  } = input;
+
   const senhaHash = await bcryptjs.hash(senha, 10);
+
   const novoUsuario = await prismaClient.usuarios.create({
     data: {
       nome,
@@ -147,8 +156,10 @@ async function createUser(
       status: true,
       instituicaoId,
       unidadeEscolarId,
+      fotoUrl,
     },
   });
+
   if (papel === PapelUsuario.ALUNO && perfil_aluno) {
     await prismaClient.usuarios_aluno.create({
       data: { usuarioId: novoUsuario.id, ...perfil_aluno },
@@ -175,6 +186,7 @@ async function createUser(
       },
     });
   }
+
   const usuarioCompleto = await prismaClient.usuarios.findUniqueOrThrow({
     where: { id: novoUsuario.id },
     include: {
@@ -183,6 +195,7 @@ async function createUser(
       perfil_responsavel: { include: { alunos: true } },
     },
   });
+
   const { senha_hash, ...usuarioSemSenha } = usuarioCompleto;
   return usuarioSemSenha;
 }
@@ -190,7 +203,14 @@ async function createUser(
 async function findAllUsers(where: Prisma.UsuariosWhereInput) {
   return prisma.usuarios.findMany({
     where,
-    select: { id: true, nome: true, email: true, papel: true, status: true },
+    select: {
+      id: true,
+      nome: true,
+      email: true,
+      papel: true,
+      status: true,
+      fotoUrl: true,
+    },
     orderBy: { nome: "asc" },
   });
 }
@@ -211,8 +231,10 @@ async function findUserById(id: string, where: Prisma.UsuariosWhereInput) {
 
 async function updateUser(
   id: string,
-  data: Prisma.UsuariosUpdateInput & {
+  input: Prisma.UsuariosUpdateInput & {
     perfil_professor?: { titulacao?: string; area_especializacao?: string };
+    fotoUrl?: string;
+    data?: any;
   },
   where: Prisma.UsuariosWhereInput,
   prismaClient: PrismaTransactionClient = prisma
@@ -221,22 +243,28 @@ async function updateUser(
     where: { id, ...where },
     select: { perfil_professor: { select: { id: true } } },
   });
+
   if (!userExists) {
     throw new Error("Usuário não encontrado ou sem permissão para atualizar.");
   }
-  const { perfil_professor, ...userData } = data;
+
+  const { perfil_professor, data: ignoredFormData, ...userData } = input;
+
   return prismaClient.$transaction(async (tx) => {
     await tx.usuarios.update({ where: { id }, data: userData });
+
     if (perfil_professor && userExists.perfil_professor) {
       await tx.usuarios_professor.update({
         where: { id: userExists.perfil_professor.id },
         data: perfil_professor,
       });
     }
+
     const finalUser = await tx.usuarios.findUniqueOrThrow({
       where: { id },
       include: { perfil_aluno: true, perfil_professor: true },
     });
+
     const { senha_hash, ...usuarioSemSenha } = finalUser;
     return usuarioSemSenha;
   });

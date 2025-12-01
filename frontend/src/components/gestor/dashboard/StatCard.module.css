@@ -1,37 +1,20 @@
 .card {
-  background-color: #ffffff;
-  border-radius: 12px;
-  padding: 1.25rem;
-  border: 1px solid #e5e7eb;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  gap: 1rem;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  position: relative;
-  overflow: hidden;
-}
-
-.card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-}
-
-.header {
+  background: white;
+  border-radius: 1.25rem;
+  padding: 1.5rem;
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02),
+    0 2px 4px -1px rgba(0, 0, 0, 0.02);
+  border: 1px solid #f1f5f9;
+  transition: transform 0.2s, box-shadow 0.2s;
 }
 
-.iconBox {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 48px;
-  height: 48px;
-  border-radius: 10px;
-  font-size: 1.5rem;
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05),
+    0 4px 6px -2px rgba(0, 0, 0, 0.025);
 }
 
 .content {
@@ -39,41 +22,72 @@
   flex-direction: column;
 }
 
+.title {
+  color: #64748b;
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
 .value {
+  color: #0f172a;
   font-size: 1.75rem;
-  font-weight: 700;
-  color: #111827;
+  font-weight: 800;
+  margin: 0 0 0.75rem 0;
   line-height: 1.2;
 }
 
-.label {
-  font-size: 0.875rem;
-  color: #6b7280;
-  font-weight: 500;
-  margin-top: 0.25rem;
+.trend {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 600;
 }
 
-.primary .iconBox {
+.trendLabel {
+  color: #94a3b8;
+  font-weight: 400;
+  margin-left: 0.25rem;
+}
+
+.trendPositive {
+  color: #10b981;
+}
+.trendNegative {
+  color: #ef4444;
+}
+.trendNeutral {
+  color: #64748b;
+}
+
+.iconWrapper {
+  width: 48px;
+  height: 48px;
+  border-radius: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.blue {
   background-color: #eff6ff;
   color: #2563eb;
 }
-
-.success .iconBox {
+.purple {
+  background-color: #f5f3ff;
+  color: #7c3aed;
+}
+.green {
   background-color: #f0fdf4;
   color: #16a34a;
 }
-
-.warning .iconBox {
-  background-color: #fff7ed;
-  color: #ea580c;
-}
-
-.danger .iconBox {
+.red {
   background-color: #fef2f2;
   color: #dc2626;
 }
-
-.info .iconBox {
-  background-color: #f5f3ff;
-  color: #7c3aed;
+.orange {
+  background-color: #fff7ed;
+  color: #ea580c;
 }

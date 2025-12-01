@@ -1,4 +1,4 @@
-import prisma from "../utils/prisma";
+import prisma from "../../utils/prisma";
 
 export const connectDB = async () => {
   console.log("🔌 Conectando ao banco de dados via Prisma...");

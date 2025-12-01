@@ -133,6 +133,7 @@ model Usuarios {
   passwordResetExpires   DateTime?
   data_nascimento        DateTime?            @db.Date
   cpf_criptografado      Bytes?
+  fotoUrl                String?
   metadados              Json?
   EventosCalendario      EventosCalendario[]
 

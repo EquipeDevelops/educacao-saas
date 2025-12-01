@@ -1,30 +1,59 @@
-import { ReactNode } from "react";
 import styles from "./StatCard.module.css";
+import { TrendingUp, TrendingDown, Minus } from "lucide-react";
 
 interface StatCardProps {
-  icon: ReactNode;
-  label: string;
-  value: number | string;
-  type?: "primary" | "success" | "warning" | "danger" | "info";
-  isCurrency?: boolean;
+  title: string;
+  value: string | number;
+  icon: React.ReactNode;
+  trend?: {
+    value: number;
+    isPositive: boolean;
+  };
+  color?: "blue" | "purple" | "green" | "red" | "orange";
+  invertTrendColor?: boolean;
 }
 
 export default function StatCard({
-  icon,
-  label,
+  title,
   value,
-  type = "primary",
-  isCurrency = false,
+  icon,
+  trend,
+  color = "blue",
+  invertTrendColor = false,
 }: StatCardProps) {
+  let trendColorClass = styles.trendNeutral;
+  let TrendIcon = Minus;
+
+  if (trend) {
+    if (trend.value > 0) {
+      TrendIcon = TrendingUp;
+      trendColorClass = invertTrendColor
+        ? styles.trendNegative
+        : styles.trendPositive;
+    } else if (trend.value < 0) {
+      TrendIcon = TrendingDown;
+      trendColorClass = invertTrendColor
+        ? styles.trendPositive
+        : styles.trendNegative;
+    }
+  }
+
   return (
-    <div className={`${styles.card} ${styles[type]}`}>
-      <div className={styles.header}>
-        <div className={styles.iconBox}>{icon}</div>
-      </div>
+    <div className={styles.card}>
       <div className={styles.content}>
-        <h3 className={styles.value}>{value}</h3>
-        <span className={styles.label}>{label}</span>
+        <span className={styles.title}>{title}</span>
+        <h2 className={styles.value}>{value}</h2>
+
+        {trend && (
+          <div className={`${styles.trend} ${trendColorClass}`}>
+            <TrendIcon size={16} />
+            <span>{Math.abs(trend.value)}%</span>
+            <span className={styles.trendLabel}>vs. mês anterior</span>
+          </div>
+        )}
       </div>
+
+      <div className={`${styles.iconWrapper} ${styles[color]}`}>{icon}</div>
     </div>
   );
 }
