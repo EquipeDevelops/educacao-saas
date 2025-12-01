@@ -122,7 +122,9 @@ async function getBoletim(
         nota_total: true,
         tarefa: {
           select: {
+            titulo: true,
             tipo: true,
+            data_entrega: true,
             componenteCurricular: {
               select: { materia: { select: { nome: true } } },
             },
@@ -179,7 +181,13 @@ async function getBoletim(
 
   const frequenciaPorMateria: Record<
     string,
-    { aulasDadas: number; presencas: number; porcentagem: number }
+    {
+      aulasDadas: number;
+      presencas: number;
+      faltasJustificadas: number;
+      faltasNaoJustificadas: number;
+      porcentagem: number;
+    }
   > = {};
 
   const frequenciaPorMateriaBimestre: Record<
@@ -219,14 +227,46 @@ async function getBoletim(
           },
         });
 
+        const faltasJustificadas = await prisma.diarioAulaPresenca.count({
+          where: {
+            matriculaId: matriculaAtiva.id,
+            situacao: 'FALTA_JUSTIFICADA',
+            diarioAula: {
+              componenteCurricularId: comp.id,
+              data: {
+                gte: dataInicioAno,
+                lte: dataFimAno,
+              },
+            },
+          },
+        });
+
+        const faltasNaoJustificadas = await prisma.diarioAulaPresenca.count({
+          where: {
+            matriculaId: matriculaAtiva.id,
+            situacao: 'FALTA',
+            diarioAula: {
+              componenteCurricularId: comp.id,
+              data: {
+                gte: dataInicioAno,
+                lte: dataFimAno,
+              },
+            },
+          },
+        });
+
         frequenciaPorMateria[comp.materia.nome] = {
           aulasDadas: totalAulasGeral,
           presencas: presencasGeral,
+          faltasJustificadas,
+          faltasNaoJustificadas,
           porcentagem:
-            totalAulasGeral > 0
-              ? (presencasGeral / totalAulasGeral) * 100
-              : 100,
+            totalAulasGeral > 0 ? (presencasGeral / totalAulasGeral) * 100 : 0,
         };
+        console.log(
+          `[FREQ_DEBUG] Matéria: ${comp.materia.nome}`,
+          frequenciaPorMateria[comp.materia.nome],
+        );
 
         // Frequência por Bimestre
         frequenciaPorMateriaBimestre[comp.materia.nome] = {};
@@ -269,7 +309,7 @@ async function getBoletim(
                   } else {
                     frequenciaPorMateriaBimestre[comp.materia.nome][
                       bimestre.periodo
-                    ] = 100;
+                    ] = 0;
                   }
                 }
               }),
@@ -366,6 +406,49 @@ async function getBoletim(
     });
   });
 
+  // --- DETALHAMENTO DE ATIVIDADES ---
+  const detalhamento: Record<
+    string,
+    {
+      nome: string;
+      tipo: string;
+      nota: number;
+      data?: Date;
+    }[]
+  > = {};
+
+  // Adicionar avaliações manuais
+  avaliacoes.forEach((av) => {
+    if (av.tarefaId) return; // Ignorar vinculadas a tarefas
+    if (av.componenteCurricular?.materia?.nome) {
+      const materia = av.componenteCurricular.materia.nome;
+      if (!detalhamento[materia]) detalhamento[materia] = [];
+      detalhamento[materia].push({
+        nome: `Avaliação (${av.tipo}) - ${
+          PERIODOS_LABEL[av.periodo as keyof typeof PERIODOS_LABEL] ||
+          av.periodo
+        }`,
+        tipo: String(av.tipo),
+        nota: av.nota,
+      });
+    }
+  });
+
+  // Adicionar submissões (tarefas)
+  submissoes.forEach((sub) => {
+    if (sub.tarefa?.componenteCurricular?.materia?.nome) {
+      const materia = sub.tarefa.componenteCurricular.materia.nome;
+      if (!detalhamento[materia]) detalhamento[materia] = [];
+      detalhamento[materia].push({
+        nome: sub.tarefa.titulo,
+        tipo: String(sub.tarefa.tipo),
+        nota: sub.nota_total || 0,
+        data: sub.tarefa.data_entrega,
+      });
+    }
+  });
+  // ----------------------------------
+
   for (const materia in boletimFinal) {
     PERIODOS_PADRAO.forEach((periodo) => {
       if (!boletimFinal[materia][periodo]) {
@@ -405,7 +488,7 @@ async function getBoletim(
         boletimFinal[materia][periodo].frequencia =
           frequenciaPorMateriaBimestre[materia][periodo];
       } else {
-        boletimFinal[materia][periodo].frequencia = 100; // Default
+        boletimFinal[materia][periodo].frequencia = 0; // Default
       }
 
       if (
@@ -435,7 +518,9 @@ async function getBoletim(
       boletimFinal[materia].frequencia = {
         aulasDadas: 0,
         presencas: 0,
-        porcentagem: 100,
+        faltasJustificadas: 0,
+        faltasNaoJustificadas: 0,
+        porcentagem: 0,
       };
     }
   }
@@ -445,14 +530,27 @@ async function getBoletim(
   const comentariosDb = await prisma.comentarioBoletim.findMany({
     where: { matriculaId: matriculaAtiva?.id },
     include: {
-      componenteCurricular: { select: { materia: { select: { nome: true } } } },
+      componenteCurricular: {
+        select: {
+          materia: { select: { nome: true } },
+          professor: { select: { usuario: { select: { nome: true } } } },
+        },
+      },
     },
   });
 
-  const comentarios: Record<string, string> = {};
+  const comentarios: Record<
+    string,
+    { texto: string; autorNome: string; data: Date }
+  > = {};
   comentariosDb.forEach((c) => {
     if (c.componenteCurricular?.materia?.nome) {
-      comentarios[c.componenteCurricular.materia.nome] = c.comentario;
+      comentarios[c.componenteCurricular.materia.nome] = {
+        texto: c.comentario,
+        autorNome:
+          c.componenteCurricular.professor?.usuario?.nome || 'Professor',
+        data: c.atualizado_em,
+      };
     }
   });
 
@@ -560,6 +658,7 @@ async function getBoletim(
     comentarios,
     statsTurma,
     materiasDoProfessor,
+    detalhamento,
   };
 }
 
@@ -635,7 +734,14 @@ async function saveComentario(
   comentario: string,
   user: AuthenticatedRequest['user'],
 ) {
+  console.log(
+    `[SAVE_COMENTARIO] Iniciando para usuárioId: ${usuarioId}, matéria: ${materiaNome}, professorId: ${user?.perfilId}`,
+  );
+
   if (user?.papel !== 'PROFESSOR' || !user.perfilId) {
+    console.error(
+      '[SAVE_COMENTARIO] Erro: Usuário não é professor ou sem perfilId.',
+    );
     throw new Error('Apenas professores podem adicionar comentários.');
   }
 
@@ -645,8 +751,10 @@ async function saveComentario(
   });
 
   if (!perfilAluno) {
+    console.error('[SAVE_COMENTARIO] Erro: Perfil de aluno não encontrado.');
     throw new Error('Aluno não encontrado.');
   }
+  console.log(`[SAVE_COMENTARIO] Perfil aluno encontrado: ${perfilAluno.id}`);
 
   const matriculaAtiva = await prisma.matriculas.findFirst({
     where: { alunoId: perfilAluno.id, status: 'ATIVA' },
@@ -654,8 +762,12 @@ async function saveComentario(
   });
 
   if (!matriculaAtiva) {
+    console.error('[SAVE_COMENTARIO] Erro: Matrícula ativa não encontrada.');
     throw new Error('Matrícula ativa não encontrada.');
   }
+  console.log(
+    `[SAVE_COMENTARIO] Matrícula ativa: ${matriculaAtiva.id}, Turma: ${matriculaAtiva.turmaId}`,
+  );
 
   const componente = await prisma.componenteCurricular.findFirst({
     where: {
@@ -666,10 +778,16 @@ async function saveComentario(
   });
 
   if (!componente) {
+    console.error(
+      `[SAVE_COMENTARIO] Erro: Componente curricular não encontrado para professor ${user.perfilId} na turma ${matriculaAtiva.turmaId} com matéria ${materiaNome}`,
+    );
     throw new Error('Você não leciona esta matéria para este aluno.');
   }
+  console.log(
+    `[SAVE_COMENTARIO] Componente curricular encontrado: ${componente.id}`,
+  );
 
-  return prisma.comentarioBoletim.upsert({
+  const result = await prisma.comentarioBoletim.upsert({
     where: {
       matriculaId_componenteCurricularId: {
         matriculaId: matriculaAtiva.id,
@@ -683,6 +801,8 @@ async function saveComentario(
       comentario,
     },
   });
+  console.log('[SAVE_COMENTARIO] Comentário salvo/atualizado com sucesso.');
+  return result;
 }
 
 async function getAgendaEventos(
@@ -880,25 +1000,26 @@ async function generateBoletimPdf(usuarioId: string) {
   const pageSize: [number, number] = [595.28, 841.89];
   let page = doc.addPage(pageSize);
   const pageWidth = page.getSize().width;
-  const marginX = 45;
-  const marginY = 45;
+  const pageHeight = page.getSize().height;
+  const marginX = 40;
+  const marginY = 40;
   const contentWidth = pageWidth - marginX * 2;
   const regularFont = await doc.embedFont(StandardFonts.Helvetica);
   const boldFont = await doc.embedFont(StandardFonts.HelveticaBold);
+
   const colors = {
-    primary: rgb(15 / 255, 76 / 255, 129 / 255),
-    primaryDark: rgb(6 / 255, 45 / 255, 80 / 255),
-    text: rgb(33 / 255, 37 / 255, 41 / 255),
-    lightText: rgb(94 / 255, 106 / 255, 121 / 255),
-    cardBg: rgb(247 / 255, 249 / 255, 252 / 255),
-    tableHeaderBg: rgb(226 / 255, 232 / 255, 240 / 255),
-    tableStripe: rgb(244 / 255, 248 / 255, 252 / 255),
-    tableBorder: rgb(205 / 255, 212 / 255, 222 / 255),
-    approved: rgb(16 / 255, 185 / 255, 129 / 255),
-    warning: rgb(245 / 255, 158 / 255, 11 / 255),
-    danger: rgb(239 / 255, 68 / 255, 68 / 255),
+    primary: rgb(0.06, 0.3, 0.51), // #0F4C81
+    primaryLight: rgb(0.92, 0.95, 0.98),
+    text: rgb(0.13, 0.15, 0.16), // #212529
+    textLight: rgb(0.37, 0.42, 0.47), // #5E6A79
+    border: rgb(0.8, 0.83, 0.87), // #CDD4DE
+    success: rgb(0.06, 0.73, 0.5), // #10B981
+    danger: rgb(0.94, 0.27, 0.27), // #EF4444
     white: rgb(1, 1, 1),
+    chartBar: rgb(0.06, 0.3, 0.51),
+    chartGrid: rgb(0.9, 0.9, 0.9),
   };
+
   const formatDateBr = (date: Date) =>
     `${String(date.getDate()).padStart(2, '0')}/${String(
       date.getMonth() + 1,
@@ -977,106 +1098,107 @@ async function generateBoletimPdf(usuarioId: string) {
     drawText(text, (pageWidth - width) / 2, y, size, font, color);
   };
 
-  let y = page.getHeight() - marginY;
+  let y = pageHeight - marginY;
 
-  // Header
+  // --- HEADER ---
   page.drawRectangle({
     x: 0,
-    y: y - 80,
+    y: y - 100,
     width: pageWidth,
-    height: 125,
+    height: 140,
     color: colors.primary,
   });
 
-  drawCenterText('BOLETIM ESCOLAR', y - 30, 24, boldFont, colors.white);
+  drawCenterText('BOLETIM ESCOLAR', y - 40, 26, boldFont, colors.white);
   drawCenterText(
     unidadeNome.toUpperCase(),
-    y - 55,
+    y - 70,
     14,
     regularFont,
     colors.white,
   );
 
-  y -= 110;
+  y -= 130;
 
-  // Student Info Card
-  const cardHeight = 70;
+  // --- STUDENT INFO ---
+  const infoBoxHeight = 60;
   page.drawRectangle({
     x: marginX,
-    y: y - cardHeight,
+    y: y - infoBoxHeight,
     width: contentWidth,
-    height: cardHeight,
-    color: colors.cardBg,
-    borderColor: colors.tableBorder,
+    height: infoBoxHeight,
+    color: colors.white,
+    borderColor: colors.border,
     borderWidth: 1,
   });
 
-  const col1X = marginX + 15;
-  const col2X = marginX + contentWidth / 2 + 10;
-  const row1Y = y - 25;
-  const row2Y = y - 50;
+  const col1 = marginX + 15;
+  const col2 = marginX + contentWidth / 2 + 10;
+  const row1 = y - 25;
+  const row2 = y - 45;
 
-  drawText('Aluno:', col1X, row1Y, 10, boldFont, colors.lightText);
-  drawText(alunoNome, col1X + 35, row1Y, 10, regularFont, colors.text);
+  drawText('Aluno:', col1, row1, 10, boldFont, colors.textLight);
+  drawText(alunoNome, col1 + 40, row1, 10, regularFont, colors.text);
 
-  drawText('Matrícula:', col2X, row1Y, 10, boldFont, colors.lightText);
+  drawText('Matrícula:', col2, row1, 10, boldFont, colors.textLight);
   drawText(
     perfilAluno.numero_matricula,
-    col2X + 55,
-    row1Y,
+    col2 + 60,
+    row1,
     10,
     regularFont,
     colors.text,
   );
 
-  drawText('Turma:', col1X, row2Y, 10, boldFont, colors.lightText);
-  drawText(turmaInfo, col1X + 35, row2Y, 10, regularFont, colors.text);
+  drawText('Turma:', col1, row2, 10, boldFont, colors.textLight);
+  drawText(turmaInfo, col1 + 40, row2, 10, regularFont, colors.text);
 
-  drawText('Ano Letivo:', col2X, row2Y, 10, boldFont, colors.lightText);
+  drawText('Ano:', col2, row2, 10, boldFont, colors.textLight);
   drawText(
     String(matriculaInfo?.ano_letivo || new Date().getFullYear()),
-    col2X + 60,
-    row2Y,
+    col2 + 60,
+    row2,
     10,
     regularFont,
     colors.text,
   );
 
-  y -= cardHeight + 30;
+  y -= infoBoxHeight + 30;
 
-  // Grades Table
-  const colWidths = [140, 55, 55, 55, 55, 65, 50]; // Adjusted for better fit
+  // --- GRADES TABLE ---
+  const colWidths = [130, 50, 50, 50, 50, 60, 50, 50];
   const headers = [
     'Disciplina',
     '1º Bim',
     '2º Bim',
     '3º Bim',
     '4º Bim',
-    'Rec. Final',
+    'Rec.',
     'Média',
+    'Freq',
   ];
 
-  // Table Header
+  // Header Background
   page.drawRectangle({
     x: marginX,
     y: y - 25,
     width: contentWidth,
     height: 25,
-    color: colors.tableHeaderBg,
+    color: colors.primaryLight,
   });
 
   let currentX = marginX + 10;
   headers.forEach((header, i) => {
     if (i === 0) {
-      drawText(header, currentX, y - 18, 9, boldFont, colors.primaryDark);
+      drawText(header, currentX, y - 17, 9, boldFont, colors.primary);
     } else {
       drawRightText(
         header,
         currentX + colWidths[i] - 10,
-        y - 18,
+        y - 17,
         9,
         boldFont,
-        colors.primaryDark,
+        colors.primary,
       );
     }
     currentX += colWidths[i];
@@ -1084,31 +1206,32 @@ async function generateBoletimPdf(usuarioId: string) {
 
   y -= 25;
 
-  // Table Rows
   materias.forEach(([materiaNome, dados], index) => {
-    if (y < marginY + 40) {
+    if (y < marginY + 100) {
+      // Check for page break
       page = doc.addPage(pageSize);
-      y = page.getHeight() - marginY;
-      // Redraw header on new page
+      y = pageHeight - marginY;
+
+      // Re-draw table header
       page.drawRectangle({
         x: marginX,
         y: y - 25,
         width: contentWidth,
         height: 25,
-        color: colors.tableHeaderBg,
+        color: colors.primaryLight,
       });
       let hX = marginX + 10;
       headers.forEach((header, i) => {
         if (i === 0) {
-          drawText(header, hX, y - 18, 9, boldFont, colors.primaryDark);
+          drawText(header, hX, y - 17, 9, boldFont, colors.primary);
         } else {
           drawRightText(
             header,
             hX + colWidths[i] - 10,
-            y - 18,
+            y - 17,
             9,
             boldFont,
-            colors.primaryDark,
+            colors.primary,
           );
         }
         hX += colWidths[i];
@@ -1116,20 +1239,18 @@ async function generateBoletimPdf(usuarioId: string) {
       y -= 25;
     }
 
-    if (index % 2 === 0) {
-      page.drawRectangle({
-        x: marginX,
-        y: y - 25,
-        width: contentWidth,
-        height: 25,
-        color: colors.tableStripe,
-      });
-    }
+    // Row separator
+    page.drawLine({
+      start: { x: marginX, y },
+      end: { x: pageWidth - marginX, y },
+      thickness: 0.5,
+      color: colors.border,
+    });
 
     let rowX = marginX + 10;
     drawText(
-      materiaNome.length > 25
-        ? materiaNome.substring(0, 25) + '...'
+      materiaNome.length > 22
+        ? materiaNome.substring(0, 22) + '...'
         : materiaNome,
       rowX,
       y - 17,
@@ -1144,7 +1265,7 @@ async function generateBoletimPdf(usuarioId: string) {
       const notaText = formatNotaPdf(nota);
       let color = colors.text;
       if (typeof nota === 'number') {
-        color = nota >= 6 ? colors.approved : colors.danger;
+        color = nota >= 6 ? colors.success : colors.danger;
       }
       drawRightText(
         notaText,
@@ -1162,7 +1283,7 @@ async function generateBoletimPdf(usuarioId: string) {
     const mediaText = formatNotaPdf(mediaFinal);
     let finalColor = colors.text;
     if (typeof mediaFinal === 'number') {
-      finalColor = mediaFinal >= 6 ? colors.approved : colors.danger;
+      finalColor = mediaFinal >= 6 ? colors.success : colors.danger;
     }
     drawRightText(
       mediaText,
@@ -1172,37 +1293,237 @@ async function generateBoletimPdf(usuarioId: string) {
       boldFont,
       finalColor,
     );
+    rowX += colWidths[6];
+
+    // Frequency
+    const frequencia = dados.frequencia?.porcentagem ?? 0;
+    const freqText = `${frequencia.toFixed(0)}%`;
+    let freqColor = frequencia >= 75 ? colors.success : colors.danger;
+    drawRightText(
+      freqText,
+      rowX + colWidths[7] - 10,
+      y - 17,
+      9,
+      regularFont,
+      freqColor,
+    );
 
     y -= 25;
   });
 
-  // Footer
-  y -= 30;
+  // Bottom border of table
   page.drawLine({
     start: { x: marginX, y },
     end: { x: pageWidth - marginX, y },
     thickness: 1,
-    color: colors.tableBorder,
+    color: colors.border,
   });
 
+  y -= 40;
+
+  // --- PERFORMANCE CHART ---
+  if (y < 200) {
+    page = doc.addPage(pageSize);
+    y = pageHeight - marginY;
+  }
+
+  drawText('Análise de Desempenho', marginX, y, 14, boldFont, colors.primary);
   y -= 20;
+
+  const chartHeight = 150;
+  const chartWidth = contentWidth;
+  const chartY = y - chartHeight;
+
+  // Chart Background
+  page.drawRectangle({
+    x: marginX,
+    y: chartY,
+    width: chartWidth,
+    height: chartHeight,
+    color: colors.white,
+    borderColor: colors.border,
+    borderWidth: 1,
+  });
+
+  // Grid lines (0, 5, 10)
+  [0, 5, 10].forEach((val) => {
+    const lineY = chartY + (val / 10) * chartHeight;
+    page.drawLine({
+      start: { x: marginX, y: lineY },
+      end: { x: marginX + chartWidth, y: lineY },
+      thickness: 0.5,
+      color: colors.chartGrid,
+      opacity: 0.5,
+    });
+    drawRightText(
+      String(val),
+      marginX - 5,
+      lineY - 3,
+      8,
+      regularFont,
+      colors.textLight,
+    );
+  });
+
+  // Bars
+  const barWidth = (chartWidth / materias.length) * 0.6;
+  const spacing = (chartWidth / materias.length) * 0.4;
+  let barX = marginX + spacing / 2;
+
+  materias.forEach(([materiaNome, dados]) => {
+    const media = dados.mediaFinalGeral || 0;
+    const barHeight = (media / 10) * chartHeight;
+
+    // Bar
+    page.drawRectangle({
+      x: barX,
+      y: chartY,
+      width: barWidth,
+      height: barHeight,
+      color: media >= 6 ? colors.primary : colors.danger,
+    });
+
+    // Label (Subject) - Rotated if possible or just short
+    const shortName = materiaNome.substring(0, 3).toUpperCase();
+    drawCenterText(shortName, chartY - 15, 8, regularFont, colors.textLight); // Can't easily rotate text per bar with this helper, keeping it simple
+    // Actually, let's just write the short name centered under the bar
+    const textWidth = regularFont.widthOfTextAtSize(shortName, 8);
+    page.drawText(shortName, {
+      x: barX + (barWidth - textWidth) / 2,
+      y: chartY - 12,
+      size: 8,
+      font: regularFont,
+      color: colors.textLight,
+    });
+
+    barX += barWidth + spacing;
+  });
+
+  y = chartY - 40;
+
+  // --- DETALHAMENTO DE ATIVIDADES ---
+  if (
+    boletimData.detalhamento &&
+    Object.keys(boletimData.detalhamento).length > 0
+  ) {
+    if (y < 200) {
+      page = doc.addPage(pageSize);
+      y = pageHeight - marginY;
+    }
+
+    drawText(
+      'Detalhamento de Atividades',
+      marginX,
+      y,
+      14,
+      boldFont,
+      colors.primary,
+    );
+    y -= 25;
+
+    const detalhamento = boletimData.detalhamento;
+    const materiasDetalhadas = Object.keys(detalhamento).sort((a, b) =>
+      a.localeCompare(b),
+    );
+
+    for (const materia of materiasDetalhadas) {
+      const atividades = detalhamento[materia];
+      if (!atividades || atividades.length === 0) continue;
+
+      if (y < 100) {
+        page = doc.addPage(pageSize);
+        y = pageHeight - marginY;
+      }
+
+      // Subject Header
+      page.drawRectangle({
+        x: marginX,
+        y: y - 20,
+        width: contentWidth,
+        height: 20,
+        color: colors.primaryLight,
+      });
+      drawText(materia, marginX + 10, y - 14, 10, boldFont, colors.primary);
+      y -= 20;
+
+      // Activities List
+      // Columns: Data | Atividade | Tipo | Nota
+      const detCols = [70, 250, 100, 50];
+
+      // Header for list
+      let dX = marginX + 10;
+      drawText('Data', dX, y - 15, 8, boldFont, colors.textLight);
+      dX += detCols[0];
+      drawText('Atividade', dX, y - 15, 8, boldFont, colors.textLight);
+      dX += detCols[1];
+      drawText('Tipo', dX, y - 15, 8, boldFont, colors.textLight);
+      dX += detCols[2];
+      drawText('Nota', dX, y - 15, 8, boldFont, colors.textLight);
+
+      y -= 20;
+
+      for (const ativ of atividades) {
+        if (y < marginY + 20) {
+          page = doc.addPage(pageSize);
+          y = pageHeight - marginY;
+          // Redraw subject header if split? Maybe just continue
+        }
+
+        let rowX = marginX + 10;
+        const dataStr = ativ.data ? formatDateBr(new Date(ativ.data)) : '--';
+        drawText(dataStr, rowX, y - 10, 8, regularFont, colors.text);
+        rowX += detCols[0];
+
+        const nome =
+          ativ.nome.length > 50
+            ? ativ.nome.substring(0, 50) + '...'
+            : ativ.nome;
+        drawText(nome, rowX, y - 10, 8, regularFont, colors.text);
+        rowX += detCols[1];
+
+        drawText(ativ.tipo, rowX, y - 10, 8, regularFont, colors.text);
+        rowX += detCols[2];
+
+        const notaStr = formatNotaPdf(ativ.nota);
+        let notaColor = colors.text;
+        if (ativ.nota >= 6) notaColor = colors.success;
+        else notaColor = colors.danger;
+
+        drawText(notaStr, rowX, y - 10, 8, boldFont, notaColor);
+
+        y -= 15;
+      }
+      y -= 10; // Spacing between subjects
+    }
+  }
+
+  // --- FOOTER ---
+  const footerY = 30;
+  page.drawLine({
+    start: { x: marginX, y: footerY + 15 },
+    end: { x: pageWidth - marginX, y: footerY + 15 },
+    thickness: 1,
+    color: colors.border,
+  });
+
   drawText(
     `Gerado em: ${formatDateBr(new Date())}`,
     marginX,
-    y,
+    footerY,
     8,
     regularFont,
-    colors.lightText,
+    colors.textLight,
   );
+
   if (mediaGlobal !== null) {
-    const text = `Média Global do Aluno: ${formatNotaPdf(mediaGlobal)}`;
+    const text = `Média Global: ${formatNotaPdf(mediaGlobal)}`;
     drawRightText(
       text,
       pageWidth - marginX,
-      y,
+      footerY,
       10,
       boldFont,
-      colors.primaryDark,
+      colors.primary,
     );
   }
 
@@ -1212,6 +1533,7 @@ async function generateBoletimPdf(usuarioId: string) {
 
 export const alunoService = {
   findAllPerfis,
+  findOne: findOneByUserId,
   findOneByUserId,
   getBoletim,
   saveComentario,

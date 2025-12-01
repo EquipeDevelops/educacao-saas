@@ -9,10 +9,13 @@ import { useAuth } from '@/contexts/AuthContext';
 import Section from '@/components/section/Section';
 import Loading from '@/components/loading/Loading';
 import ErrorMsg from '@/components/errorMsg/ErrorMsg';
+import BarraDeProgresso from '@/components/progressBar/BarraDeProgresso';
 
 type FrequenciaData = {
   aulasDadas: number;
   presencas: number;
+  faltasJustificadas: number;
+  faltasNaoJustificadas: number;
   porcentagem: number;
 };
 
@@ -49,7 +52,8 @@ export default function FrequenciaPage() {
         api.get(`/alunos/${alunoId}`),
       ])
         .then(([boletimRes, alunoRes]) => {
-          setBoletim(boletimRes.data);
+          console.log('Dados do boletim recebidos:', boletimRes.data);
+          setBoletim(boletimRes.data.boletim);
           setAluno(alunoRes.data);
           setLoading(false);
         })
@@ -60,70 +64,60 @@ export default function FrequenciaPage() {
     }
   }, [alunoId, authLoading, user]);
 
-    if (loading) {
-      return (
-        <Section>
-          <Loading />
-        </Section>
-      );
-    }
+  if (loading) {
+    return (
+      <Section>
+        <Loading />
+      </Section>
+    );
+  }
 
-    if (!boletim || Object.keys(boletim).length === 0) {
-      return (
-        <Section>
-          <ErrorMsg text="Nenhuma informação de frequência disponível." />
-        </Section>
-      );
-    }
+  if (!boletim || Object.keys(boletim).length === 0) {
+    return (
+      <Section>
+        <ErrorMsg text="Nenhuma informação de frequência disponível." />
+      </Section>
+    );
+  }
 
   return (
-    <div>
-      <h2 className={styles.title}>
-        Frequência de {aluno?.usuario.nome || 'Aluno'}
-      </h2>
-      <div className={styles.grid}>
+    <div className={styles.container}>
+      <div className={styles.header}>
+        <h2 className={styles.title}>Registro de Frequência</h2>
+        <p className={styles.subtitle}>
+          Acompanhamento detalhado de presenças por disciplina
+        </p>
+      </div>
+
+      <div className={styles.list}>
         {Object.entries(boletim).map(([materia, data]) => {
           const freq = data.frequencia;
           if (!freq) return null;
 
-          const isLow = freq.porcentagem < 75; // Exemplo de regra de negócio
+          const totalFaltas = freq.aulasDadas - freq.presencas;
 
           return (
             <div key={materia} className={styles.card}>
-              <h3 className={styles.materiaTitle}>{materia}</h3>
-              <div className={styles.stats}>
-                <div className={styles.statItem}>
-                  <span className={styles.label}>Aulas Dadas</span>
-                  <span className={styles.value}>{freq.aulasDadas}</span>
-                </div>
-                <div className={styles.statItem}>
-                  <span className={styles.label}>Presenças</span>
-                  <span className={styles.value}>{freq.presencas}</span>
-                </div>
-                <div className={styles.statItem}>
-                  <span className={styles.label}>Faltas</span>
-                  <span className={styles.value}>
-                    {freq.aulasDadas - freq.presencas}
-                  </span>
-                </div>
+              <div className={styles.cardHeader}>
+                <h3 className={styles.materiaTitle}>{materia}</h3>
+                <span className={styles.percentage}>
+                  {freq.porcentagem.toFixed(0)}%
+                </span>
               </div>
-              <div
-                className={`${styles.percentage} ${
-                  isLow ? styles.low : styles.good
-                }`}
-              >
-                <FiPercent />
-                <span>{freq.porcentagem.toFixed(1)}%</span>
+
+              <p className={styles.aulasInfo}>
+                {freq.presencas} de {freq.aulasDadas} aulas
+              </p>
+
+              <div className={styles.progressBarContainer}>
+                <BarraDeProgresso className={styles.barra} porcentagem={freq.porcentagem}/>
               </div>
-              <div className={styles.progressBar}>
-                <div
-                  className={styles.progressFill}
-                  style={{
-                    width: `${freq.porcentagem}%`,
-                    backgroundColor: isLow ? '#ef4444' : '#10b981',
-                  }}
-                />
-              </div>
+
+              <p className={styles.faltasInfo}>
+                {totalFaltas} faltas ({freq.faltasJustificadas || 0}{' '}
+                justificadas, {freq.faltasNaoJustificadas || 0} não
+                justificadas)
+              </p>
             </div>
           );
         })}

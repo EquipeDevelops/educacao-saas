@@ -229,7 +229,7 @@ async function getAtividadesPendentes(user: AuthenticatedRequest['user']) {
           dataEntrega: `Prazo: ${new Date(
             tarefa.data_entrega,
           ).toLocaleDateString('pt-BR')}`,
-          tipo: tarefa.tipo
+          tipo: tarefa.tipo,
         };
       }
       return null;
@@ -544,7 +544,8 @@ async function getTurmaDetails(
   user: AuthenticatedRequest['user'],
 ) {
   const professorId = user.perfilId;
-    
+  if (!professorId) throw new Error('Usuário não é um professor.');
+
   const componente = await prisma.componenteCurricular.findFirstOrThrow({
     where: { id: componenteId, professorId },
     select: {
@@ -554,7 +555,7 @@ async function getTurmaDetails(
     },
   });
 
-  const turmaId = componente.turma.id;  
+  const turmaId = componente.turma.id;
 
   const [matriculas, tarefas] = await Promise.all([
     prisma.matriculas.findMany({
@@ -615,11 +616,8 @@ async function getTurmaDetails(
           { usuarioId: usuario.id, nome: usuario.nome },
         ] as const;
       })
-      .filter(
-        (
-          entry,
-        ): entry is [string, { usuarioId: string; nome: string }] =>
-          Boolean(entry),
+      .filter((entry): entry is [string, { usuarioId: string; nome: string }] =>
+        Boolean(entry),
       ),
   );
 
@@ -643,13 +641,19 @@ async function getTurmaDetails(
         nome: usuarioInfo.nome,
       };
     })
-    .filter(
-      (matricula): matricula is MatriculaComUsuario => Boolean(matricula),
+    .filter((matricula): matricula is MatriculaComUsuario =>
+      Boolean(matricula),
     );
   const totalMatriculas = matriculasValidas.length;
 
   const matriculaIds = matriculasValidas.map((m) => m.id);
-  const alunoIds = matriculasValidas.map((m) => m.alunoPerfilId);
+
+  const PERIODOS_PADRAO = [
+    'PRIMEIRO_BIMESTRE',
+    'SEGUNDO_BIMESTRE',
+    'TERCEIRO_BIMESTRE',
+    'QUARTO_BIMESTRE',
+  ];
 
   const avaliacoesPromise = matriculaIds.length
     ? prisma.avaliacaoParcial.findMany({
@@ -657,68 +661,82 @@ async function getTurmaDetails(
           componenteCurricularId: componente.id,
           matriculaId: { in: matriculaIds },
         },
-        select: { matriculaId: true, nota: true },
-      })
-    : Promise.resolve([]);
-
-  const submissoesPromise = alunoIds.length
-    ? prisma.submissoes.findMany({
-        where: {
-          alunoId: { in: alunoIds },
-          tarefa: { componenteCurricularId: componente.id },
-          status: StatusSubmissao.AVALIADA,
-          nota_total: { not: null },
+        select: {
+          matriculaId: true,
+          nota: true,
+          periodo: true,
+          tarefaId: true,
         },
-        select: { alunoId: true, nota_total: true },
       })
     : Promise.resolve([]);
 
-  const faltasPromise = matriculaIds.length
-    ? prisma.registroFalta.findMany({
-        where: { matriculaId: { in: matriculaIds } },
-        select: { matriculaId: true },
+  const totalAulasPromise = prisma.diarioAula.count({
+    where: { componenteCurricularId: componente.id },
+  });
+
+  const presencasPromise = matriculaIds.length
+    ? prisma.diarioAulaPresenca.groupBy({
+        by: ['matriculaId'],
+        where: {
+          matriculaId: { in: matriculaIds },
+          situacao: 'PRESENTE',
+          diarioAula: { componenteCurricularId: componente.id },
+        },
+        _count: { _all: true },
       })
     : Promise.resolve([]);
 
-  const [avaliacoesParciais, submissoesAvaliadas, faltasRegistros] =
-    await Promise.all([avaliacoesPromise, submissoesPromise, faltasPromise]);
+  const [avaliacoesParciais, totalAulas, presencasPorAluno] = await Promise.all(
+    [avaliacoesPromise, totalAulasPromise, presencasPromise],
+  );
 
-  const avaliacoesPorMatricula = new Map<string, number[]>();
+  const avaliacoesPorMatricula = new Map<
+    string,
+    { nota: number; periodo: string }[]
+  >();
   avaliacoesParciais.forEach((avaliacao) => {
+    if (avaliacao.tarefaId) return;
+
     const lista = avaliacoesPorMatricula.get(avaliacao.matriculaId) ?? [];
-    lista.push(avaliacao.nota);
+    lista.push({ nota: avaliacao.nota, periodo: avaliacao.periodo });
     avaliacoesPorMatricula.set(avaliacao.matriculaId, lista);
   });
 
-  const submissoesPorAluno = new Map<string, number[]>();
-  submissoesAvaliadas.forEach((submissao) => {
-    const lista = submissoesPorAluno.get(submissao.alunoId) ?? [];
-    lista.push(submissao.nota_total!);
-    submissoesPorAluno.set(submissao.alunoId, lista);
-  });
-
-  const faltasPorMatricula = new Map<string, number>();
-  faltasRegistros.forEach((registro) => {
-    const total = faltasPorMatricula.get(registro.matriculaId) ?? 0;
-    faltasPorMatricula.set(registro.matriculaId, total + 1);
-  });
+  const presencasMap = new Map<string, number>();
+  if (Array.isArray(presencasPorAluno)) {
+    presencasPorAluno.forEach((p) => {
+      presencasMap.set(p.matriculaId, p._count._all);
+    });
+  }
 
   const alunos = matriculasValidas.map((m) => {
-    const notasParciais = avaliacoesPorMatricula.get(m.id) ?? [];
-    const notasSubmissoes = submissoesPorAluno.get(m.alunoPerfilId) ?? [];
-    const todasAsNotas = [...notasParciais, ...notasSubmissoes];
+    const notas = avaliacoesPorMatricula.get(m.id) ?? [];
+
+    const notasPorPeriodo: Record<string, number> = {};
+
+    notas.forEach((nota) => {
+      if (!notasPorPeriodo[nota.periodo]) {
+        notasPorPeriodo[nota.periodo] = 0;
+      }
+      notasPorPeriodo[nota.periodo] += nota.nota;
+    });
+
+    let somaMediasBimestres = 0;
+    let bimestresComNota = 0;
+
+    PERIODOS_PADRAO.forEach((periodo) => {
+      if (notasPorPeriodo[periodo] !== undefined) {
+        somaMediasBimestres += notasPorPeriodo[periodo];
+        bimestresComNota++;
+      }
+    });
 
     const media =
-      todasAsNotas.length > 0
-        ? todasAsNotas.reduce((acc, nota) => acc + nota, 0) / todasAsNotas.length
-        : 0;
+      bimestresComNota > 0 ? somaMediasBimestres / bimestresComNota : 0;
 
-    const totalFaltas = faltasPorMatricula.get(m.id) ?? 0;
-    const DIAS_LETIVOS_TOTAIS = 100;
-    const presenca = Math.max(
-      0,
-      ((DIAS_LETIVOS_TOTAIS - totalFaltas) / DIAS_LETIVOS_TOTAIS) * 100,
-    );
+    const presencas = presencasMap.get(m.id) ?? 0;
+    const presenca = totalAulas > 0 ? (presencas / totalAulas) * 100 : 0;
+
     const status = calcularStatusAluno(media, presenca);
 
     return {
@@ -755,9 +773,7 @@ async function getTurmaDetails(
   ].map((d) => ({
     ...d,
     percent:
-      totalMatriculas > 0
-        ? Math.round((d.alunos / totalMatriculas) * 100)
-        : 0,
+      totalMatriculas > 0 ? Math.round((d.alunos / totalMatriculas) * 100) : 0,
   }));
 
   const estatisticas = {

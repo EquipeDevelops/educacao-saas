@@ -22,6 +22,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  margin-bottom: 20px;
 }
 
 .materiaHeader h2 {
@@ -40,9 +41,10 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
-  color: white;
+  color: var(--cor-subtexto);
   padding: 10px;
   border-radius: 10px;
+  background-color: rgb(233, 233, 233);
   text-align: center;
 }
 .mediaGeral span {
@@ -55,100 +57,56 @@
 
 .periodosContainer {
   display: grid;
-  grid-template-columns: repeat(auto-fit , minmax(250px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 20px;
 }
 
 .periodo {
-  background-color: var(--cor-fundo);
+  padding: 20px;
+  background-color: var(--cor-fundo-card);
   border: 1px solid var(--cor-borda);
-  border-radius: var(--raio-borda-md);
-  padding: 1rem;
+  border-radius: 15px;
+}
+
+.periodoDesativado {
+  opacity: 0.7;
+  background-color: rgb(243, 243, 243);
 }
 
 .periodoTitle {
+  font-size: 0.9rem;
+  color: var(--cor-subtexto);
+  font-weight: 500;
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 1rem;
-  font-weight: 600;
-  padding-bottom: 0.75rem;
-  margin-bottom: 1rem;
-  border-bottom: 1px solid var(--cor-borda);
-  gap: 0.5rem;
-  color: var(--cor-texto-destaque);
+  flex-direction: column;
+  gap: 2px;
 }
 
 .mediaPeriodo {
-  font-size: 0.9rem;
-  font-weight: 700;
-  padding: 0.25rem 0.5rem;
-  border-radius: var(--raio-borda-sm);
-  color: white;
+  width: fit-content;
+  font-size: 1.5rem;
+  font-weight: 500;
+  color: var(--cor-texto-destaque);
+  margin-bottom: 2px;
 }
 
 .frequenciaBimestre {
-  font-size: 0.75rem;
-  color: var(--cor-subtexto);
-  margin-top: 0.25rem;
-  font-weight: 500;
-}
-
-.avaliacoesList {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-.avaliacoesList li {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
   font-size: 0.9rem;
-  text-transform: capitalize;
-}
-.avaliacoesList li span {
+  font-weight: 400;
   color: var(--cor-subtexto);
-}
-.avaliacoesList li strong {
-  font-weight: 600;
-  color: var(--cor-texto);
 }
 
 .mediaAlta {
   background-color: var(--cor-sucesso);
+  color: white;
 }
 .mediaMedia {
   background-color: var(--cor-aviso);
+  color: white;
 }
 .mediaBaixa {
   background-color: var(--cor-perigo);
-}
-
-.infoCard {
-  background-color: var(--cor-fundo-card);
-  border: 1px solid var(--cor-borda);
-  border-radius: var(--raio-borda-md);
-  padding: 1.5rem;
-  margin-bottom: 2rem;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1.5rem;
-}
-
-.infoItem label {
-  display: block;
-  font-size: 0.85rem;
-  color: var(--cor-subtexto);
-  margin-bottom: 0.25rem;
-}
-
-.infoItem span {
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: var(--cor-texto-destaque);
+  color: white;
 }
 
 .statsGrid {
@@ -186,42 +144,38 @@
 }
 
 .commentSection {
-  padding: 1.5rem;
-  border-top: 1px solid var(--cor-borda);
-  background-color: var(--cor-fundo-subtil);
+  padding: 20px;
+  border: 1px solid var(--cor-borda);
+  border-radius: 15px;
+  margin-top: 20px;
 }
 
 .commentSection h3 {
   font-size: 1rem;
-  margin-bottom: 1rem;
+  margin-bottom: 20px;
+  color: var(--cor-primaria);
+  font-weight: 500;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 10px;
 }
 
 .commentInput {
   width: 100%;
-  min-height: 100px;
-  padding: 0.75rem;
-  border: 1px solid var(--cor-borda);
-  border-radius: var(--raio-borda-sm);
-  background-color: var(--cor-fundo);
-  color: var(--cor-texto);
-  resize: vertical;
-  margin-bottom: 1rem;
-  font-family: inherit;
+  resize: none;
+  min-height: 120px;
+  background-color: rgb(247, 247, 247);
+  margin-bottom: 10px;
 }
 
 .saveButton {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
+  justify-self: flex-end;
+  gap: 5px;
+  padding: 10px 20px;
   background-color: var(--cor-primaria);
   color: white;
-  border: none;
-  border-radius: var(--raio-borda-sm);
-  cursor: pointer;
   font-weight: 500;
   transition: background-color 0.2s;
 }
@@ -304,4 +258,113 @@
   flex: 1;
   min-height: 0;
   width: 100%;
+}
+
+.existingComment {
+  display: flex;
+  flex-direction: column;
+}
+
+.existingComment div {
+  padding: 20px;
+  background-color: var(--cor-primaria-light);
+  border-radius: 15px;
+  margin-top: 20px;
+  margin-bottom: 10px;
+  border: 1px solid color-mix(in srgb, var(--cor-primaria) 20%, white 80%);
+}
+
+.existingComment div h3 {
+  font-size: 0.9rem;
+  color: var(--cor-primaria);
+  display: flex;
+  align-items: center;
+  font-weight: 500;
+  gap: 10px;
+}
+
+.existingComment div p {
+  margin-left: 26px;
+  margin-top: 5px;
+  color: var(--cor-subtexto);
+}
+
+.editButton {
+  background-color: white;
+  border: 1px solid color-mix(in srgb, var(--cor-primaria) 20%, white 80%);
+  color: var(--cor-primaria);
+  padding: 10px 20px;
+  border-radius: 10px;
+  cursor: pointer;
+  width: fit-content;
+  font-weight: 500;
+  align-self: flex-end;
+  transition: all 0.2s;
+}
+
+.editButton:hover {
+  background-color: var(--cor-primaria-light);
+}
+
+.actionButtons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.cancelButton {
+  background-color: transparent;
+  border: 1px solid var(--cor-perigo);
+  color: var(--cor-perigo);
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.cancelButton:hover {
+  background-color: var(--cor-perigo-light);
+}
+
+.commentContainer {
+  padding: 20px;
+  margin-top: 20px;
+  border: 1px solid var(--cor-borda);
+  border-radius: 15px;
+}
+
+.commentContainer h3 {
+  font-size: 1rem;
+  color: var(--cor-primaria);
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  font-weight: 500;
+  gap: 10px;
+}
+
+.headerContainer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.exportButton {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background-color: var(--cor-primaria);
+  color: white;
+  border-radius: 8px;
+  font-weight: 500;
+  transition: background-color 0.2s;
+  cursor: pointer;
+  border: none;
+}
+
+.exportButton:hover {
+  background-color: var(--cor-primaria-hover);
 }

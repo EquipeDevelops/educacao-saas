@@ -29,6 +29,23 @@ export default function AlunoProfileLayout({
     }[];
   } | null>(null);
 
+  const handleExportPdf = async () => {
+    try {
+      const response = await api.get(`/alunos/${alunoId}/boletim/pdf`, {
+        responseType: 'blob',
+      });
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `boletim_do_aluno.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (err) {
+      console.error('Erro ao baixar PDF:', err);
+    }
+  };
+
   useEffect(() => {
     if (authLoading) return;
 
@@ -76,7 +93,9 @@ export default function AlunoProfileLayout({
           </div>
         </div>
         <div className={styles.actions}>
-          <button><LuImport /> Exportar em PDF</button>
+          <button onClick={handleExportPdf}>
+            <LuImport /> Exportar em PDF
+          </button>
         </div>
       </header>
       <nav className={styles.tabs}>
