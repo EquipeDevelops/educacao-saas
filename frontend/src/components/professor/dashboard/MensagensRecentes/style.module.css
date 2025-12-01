@@ -4,7 +4,7 @@
   border-radius: 15px;
   border: 1px solid var(--cor-borda);
   grid-column: 3 / 4;
-  grid-row: 5 / -1;
+  grid-row: 5 / 6;
   height: fit-content;
 }
 

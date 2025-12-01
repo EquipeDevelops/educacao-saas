@@ -206,6 +206,7 @@ async function getBoletim(
         const totalAulasGeral = await prisma.diarioAula.count({
           where: {
             componenteCurricularId: comp.id,
+            status: 'CONSOLIDADO',
             data: {
               gte: dataInicioAno,
               lte: dataFimAno,
@@ -219,6 +220,7 @@ async function getBoletim(
             situacao: 'PRESENTE',
             diarioAula: {
               componenteCurricularId: comp.id,
+              status: 'CONSOLIDADO',
               data: {
                 gte: dataInicioAno,
                 lte: dataFimAno,
@@ -233,6 +235,7 @@ async function getBoletim(
             situacao: 'FALTA_JUSTIFICADA',
             diarioAula: {
               componenteCurricularId: comp.id,
+              status: 'CONSOLIDADO',
               data: {
                 gte: dataInicioAno,
                 lte: dataFimAno,
@@ -247,6 +250,7 @@ async function getBoletim(
             situacao: 'FALTA',
             diarioAula: {
               componenteCurricularId: comp.id,
+              status: 'CONSOLIDADO',
               data: {
                 gte: dataInicioAno,
                 lte: dataFimAno,
@@ -278,6 +282,7 @@ async function getBoletim(
                 const totalAulasBimestre = await prisma.diarioAula.count({
                   where: {
                     componenteCurricularId: comp.id,
+                    status: 'CONSOLIDADO',
                     data: {
                       gte: bimestre.dataInicio,
                       lte: bimestre.dataFim,
@@ -292,6 +297,7 @@ async function getBoletim(
                       situacao: 'PRESENTE',
                       diarioAula: {
                         componenteCurricularId: comp.id,
+                        status: 'CONSOLIDADO',
                         data: {
                           gte: bimestre.dataInicio,
                           lte: bimestre.dataFim,

@@ -1,12 +1,12 @@
-import prisma from "../../utils/prisma";
-import { AuthenticatedRequest } from "../../middlewares/auth";
-import { PeriodoAvaliacao, Usuarios, StatusPagamento } from "@prisma/client";
+import prisma from '../../utils/prisma';
+import { AuthenticatedRequest } from '../../middlewares/auth';
+import { PeriodoAvaliacao, Usuarios, StatusPagamento } from '@prisma/client';
 
-type UserPayload = Omit<Usuarios, "senha_hash">;
+type UserPayload = Omit<Usuarios, 'senha_hash'>;
 
 async function getHorarios(user: UserPayload) {
   if (!user.unidadeEscolarId) {
-    throw new Error("Usuário não vinculado a uma unidade escolar.");
+    throw new Error('Usuário não vinculado a uma unidade escolar.');
   }
   return prisma.horarioAula.findMany({
     where: { unidadeEscolarId: user.unidadeEscolarId },
@@ -26,7 +26,7 @@ async function getHorarios(user: UserPayload) {
 
 async function getEventos(user: UserPayload) {
   if (!user.unidadeEscolarId) {
-    throw new Error("Usuário não vinculado a uma unidade escolar.");
+    throw new Error('Usuário não vinculado a uma unidade escolar.');
   }
   return prisma.eventosCalendario.findMany({
     where: { unidadeEscolarId: user.unidadeEscolarId },
@@ -35,7 +35,7 @@ async function getEventos(user: UserPayload) {
 
 async function getStats(user: UserPayload) {
   if (!user.unidadeEscolarId) {
-    throw new Error("Usuário não vinculado a uma unidade escolar.");
+    throw new Error('Usuário não vinculado a uma unidade escolar.');
   }
 
   const hoje = new Date();
@@ -63,7 +63,7 @@ async function getStats(user: UserPayload) {
       _sum: { valor: true },
       where: {
         unidadeEscolarId: user.unidadeEscolarId,
-        tipo: "RECEITA",
+        tipo: 'RECEITA',
         data: { gte: primeiroDiaMes, lte: ultimoDiaMes },
       },
     }),
@@ -71,7 +71,7 @@ async function getStats(user: UserPayload) {
       _sum: { valor: true },
       where: {
         unidadeEscolarId: user.unidadeEscolarId,
-        tipo: "DESPESA",
+        tipo: 'DESPESA',
         data: { gte: primeiroDiaMes, lte: ultimoDiaMes },
       },
     }),
@@ -102,7 +102,7 @@ interface ChartDataFilters {
 
 async function getChartData(user: UserPayload, filters: ChartDataFilters) {
   if (!user.unidadeEscolarId) {
-    throw new Error("Usuário gestor não está vinculado a uma unidade escolar.");
+    throw new Error('Usuário gestor não está vinculado a uma unidade escolar.');
   }
   const { unidadeEscolarId } = user;
   const { ano, periodo } = filters;
@@ -132,7 +132,7 @@ async function getChartData(user: UserPayload, filters: ChartDataFilters) {
       prisma.submissoes.findMany({
         where: {
           unidadeEscolarId,
-          status: "AVALIADA",
+          status: 'AVALIADA',
           nota_total: { not: null },
           tarefa: { componenteCurricular: { ano_letivo: anoAlvo } },
         },
@@ -148,17 +148,21 @@ async function getChartData(user: UserPayload, filters: ChartDataFilters) {
         include: {
           _count: {
             select: {
-              matriculas: { where: { status: "ATIVA", ano_letivo: anoAlvo } },
+              matriculas: { where: { status: 'ATIVA', ano_letivo: anoAlvo } },
             },
           },
         },
       }),
-      prisma.registroFalta.groupBy({
-        by: ["matriculaId", "justificada"],
+      prisma.diarioAulaPresenca.groupBy({
+        by: ['matriculaId', 'situacao'],
         where: {
-          matricula: { turma: { unidadeEscolarId } },
-          data: { gte: inicioAno, lte: fimAno },
+          diarioAula: {
+            componenteCurricular: { turma: { unidadeEscolarId } },
+            status: 'CONSOLIDADO',
+            data: { gte: inicioAno, lte: fimAno },
+          },
         },
+        _count: { situacao: true },
       }),
     ]);
 
@@ -187,10 +191,13 @@ async function getChartData(user: UserPayload, filters: ChartDataFilters) {
       justificadas: 0,
       naoJustificadas: 0,
     };
-    if (falta.justificada) {
-      turmaData.justificadas += 1;
-    } else {
-      turmaData.naoJustificadas += 1;
+
+    const count = falta._count.situacao;
+
+    if (falta.situacao === 'FALTA_JUSTIFICADA') {
+      turmaData.justificadas += count;
+    } else if (falta.situacao === 'FALTA') {
+      turmaData.naoJustificadas += count;
     }
     faltasPorTurma.set(turmaId, turmaData);
   });
@@ -277,10 +284,10 @@ async function getChartData(user: UserPayload, filters: ChartDataFilters) {
 async function getDesempenhoPorMateria(
   user: UserPayload,
   turmaId: string,
-  filters: ChartDataFilters
+  filters: ChartDataFilters,
 ) {
   if (!user.unidadeEscolarId) {
-    throw new Error("Usuário gestor não está vinculado a uma unidade escolar.");
+    throw new Error('Usuário gestor não está vinculado a uma unidade escolar.');
   }
 
   const { ano, periodo } = filters;
@@ -326,7 +333,7 @@ async function getDesempenhoPorMateria(
     ([nomeMateria, data]) => ({
       nomeMateria,
       mediaNota: parseFloat((data.soma / data.count).toFixed(1)),
-    })
+    }),
   );
 
   return desempenhoMaterias;

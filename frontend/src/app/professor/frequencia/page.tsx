@@ -143,7 +143,7 @@ export default function FrequenciaPage() {
       await api.post('/diarios-aula', payload);
       setFeedback({
         type: 'success',
-        message: 'Frequência salva com sucesso!',
+        message: 'Frequência salva como Rascunho com sucesso!',
       });
     } catch (error: any) {
       console.error('Erro ao salvar frequência', error);
@@ -173,6 +173,27 @@ export default function FrequenciaPage() {
         <header className={styles.header}>
           <h1>Frequência Escolar</h1>
           <p>Registre a presença dos alunos para o dia selecionado.</p>
+          <div
+            style={{
+              backgroundColor: 'var(--cor-primaria-light)',
+              color: 'var(--cor-primaria)',
+              padding: '0.75rem 1rem',
+              borderRadius: '6px',
+              marginBottom: '1rem',
+              fontSize: '0.9rem',
+              border:
+                '1px solid color-mix(in srgb, var(--cor-primaria) 20%, white 80%)',
+              margin: '1rem 0',
+            }}
+          >
+            <FiAlertTriangle />
+            <span>
+              <strong>Atenção:</strong> Os dados salvos aqui são registrados
+              como <strong>RASCUNHO</strong>. Para efetivar a frequência e
+              atualizar a porcentagem do aluno, é necessário consolidar no{' '}
+              <strong>Diário de Classe</strong>.
+            </span>
+          </div>
         </header>
 
         <div className={styles.controls}>

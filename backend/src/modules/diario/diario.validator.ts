@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from 'zod';
 
 export const createDiarioSchema = z.object({
   body: z.object({
@@ -11,15 +11,15 @@ export const createDiarioSchema = z.object({
       z.object({
         codigo: z.string(),
         descricao: z.string(),
-      })
+      }),
     ),
     frequencia: z.array(
       z.object({
         alunoId: z.string(),
-        status: z.enum(["PRESENTE", "AUSENTE", "FALTA_JUSTIFICADA"]),
-      })
+        status: z.enum(['PRESENTE', 'AUSENTE', 'AUSENTE_JUSTIFICADO']),
+      }),
     ),
   }),
 });
 
-export type CreateDiarioInput = z.infer<typeof createDiarioSchema>["body"];
+export type CreateDiarioInput = z.infer<typeof createDiarioSchema>['body'];
