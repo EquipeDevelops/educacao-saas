@@ -49,6 +49,7 @@ const navLinks = [
       { href: '/professor/correcoes', text: 'Correções', icon: <LuCopyCheck /> },
       { href: '/professor/notas', text: 'Lançar Notas', icon: <LuFilePenLine /> },
       { href: '/professor/frequencia', text: 'Fazer Frequência', icon: <LuUserCheck /> },
+      { href: '/professor/diario', text: 'Diário de Classe', icon: <LuFile /> },
       {
         href: '/professor/desempenho',
         text: 'Desempenho',

@@ -1,138 +1,197 @@
 .container {
-  padding: 3rem 2rem;
-  font-family: "Inter", system-ui, sans-serif;
-  color: #1f2937;
-  background-color: #f9fafb;
+  padding: 2rem 2.5rem;
+  font-family: "Inter", sans-serif;
+  background-color: #f3f4f6;
+  min-height: 100vh;
+  color: #374151;
 }
 
 .header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-end;
   margin-bottom: 2.5rem;
 }
 
-.header h1 {
-  font-size: 2rem;
-  font-weight: 600;
+.welcomeSection h1 {
+  font-size: 1.75rem;
+  font-weight: 700;
   color: #111827;
   margin-bottom: 0.25rem;
+  letter-spacing: -0.02em;
 }
 
-.header p {
-  font-size: 1rem;
+.welcomeSection p {
   color: #6b7280;
+  font-size: 0.95rem;
+}
+
+.dateDisplay {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 99px;
+  font-size: 0.875rem;
+  color: #4b5563;
+  font-weight: 500;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e5e7eb;
+}
+
+.sectionLabel {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.kpiSection {
+  margin-bottom: 2.5rem;
 }
 
 .statsGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1.25rem;
+}
+
+.analyticsSection {
   margin-bottom: 2.5rem;
+  background-color: transparent;
+}
+
+.sectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+  gap: 1rem;
 }
 
 .filtersContainer {
   display: flex;
-  flex-wrap: wrap;
-  gap: 1.5rem;
-  align-items: flex-end;
-  padding: 1.25rem 1.5rem;
-  background-color: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-  margin-bottom: 2rem;
+  gap: 1rem;
 }
 
-.filterGroup {
+.filterItem {
+  position: relative;
   display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.filterGroup label {
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: #4b5563;
-}
-
-.filterSelect {
-  padding: 0.6rem 0.75rem;
+  align-items: center;
+  background: white;
+  border: 1px solid #e5e7eb;
   border-radius: 8px;
-  border: 1px solid #d1d5db;
-  background-color: #f9fafb;
-  font-size: 0.95rem;
-  color: #111827;
-  transition: all 0.2s ease;
+  padding: 0 0.75rem;
+  height: 40px;
+  transition: all 0.2s;
 }
 
-.filterSelect:focus {
+.filterItem:hover {
+  border-color: #d1d5db;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+}
+
+.filterIcon {
+  color: #6b7280;
+  margin-right: 0.5rem;
+  font-size: 1rem;
+}
+
+.filterItem select {
+  border: none;
+  background: transparent;
+  font-size: 0.875rem;
+  color: #374151;
+  font-weight: 500;
+  cursor: pointer;
   outline: none;
-  border-color: #2563eb;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.25);
+  padding-right: 1.5rem;
 }
 
 .chartsGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-  gap: 1.75rem;
-  margin-bottom: 3rem;
+  grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+  gap: 1.5rem;
 }
 
-.mainContentGrid {
+.chartWrapper {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  min-height: 350px;
+}
+
+.loadingContainer {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: center;
+  padding: 3rem;
+}
+
+.bottomGrid {
   display: grid;
   grid-template-columns: 2fr 1fr;
-  gap: 2rem;
-  align-items: start;
+  gap: 1.5rem;
 }
 
-.sectionTitle {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: #111827;
-  margin-bottom: 1.25rem;
-  border-bottom: 1px solid #e5e7eb;
-  padding-bottom: 0.5rem;
+@media (max-width: 1024px) {
+  .bottomGrid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .shortcutsGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 1rem;
 }
 
 .shortcutCard {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 1.25rem;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 0.75rem;
-  background-color: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  padding: 1.75rem 1rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-  font-weight: 500;
-  color: #374151;
-  transition: all 0.2s ease-in-out;
+  transition: all 0.2s ease;
   text-align: center;
-}
-
-.shortcutCard svg {
-  font-size: 2rem;
-  color: #2563eb;
+  cursor: pointer;
+  text-decoration: none;
+  color: #4b5563;
+  font-weight: 500;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
 }
 
 .shortcutCard:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 4px 10px rgba(37, 99, 235, 0.15);
-  border-color: #2563eb;
-  color: #2563eb;
-  background-color: #f8fafc;
+  transform: translateY(-2px);
+  border-color: var(--cor-primaria, #016be4);
+  color: var(--cor-primaria, #016be4);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
 }
 
-@media (max-width: 1024px) {
-  .mainContentGrid {
-    grid-template-columns: 1fr;
-  }
+.shortcutIcon {
+  font-size: 1.5rem;
+  color: var(--cor-primaria, #016be4);
+  background-color: #eff6ff;
+  padding: 0.75rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.shortcutCard:hover .shortcutIcon {
+  background-color: var(--cor-primaria, #016be4);
+  color: white;
 }

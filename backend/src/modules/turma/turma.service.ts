@@ -20,6 +20,8 @@ const findAll = (unidadeEscolarId: string) => {
       nome: true,
       serie: true,
       turno: true,
+      etapa: true,
+      anoLetivo: true,
       _count: {
         select: {
           matriculas: { where: { status: "ATIVA" } },

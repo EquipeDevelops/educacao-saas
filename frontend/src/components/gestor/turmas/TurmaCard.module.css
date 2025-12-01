@@ -1,90 +1,140 @@
-/* components/gestor/turmas/TurmaCard.module.css */
 .card {
-  background-color: var(--cor-fundo-card);
-  border: 1px solid var(--cor-borda);
+  background: white;
+  border: 1px solid #e5e7eb;
   border-radius: 12px;
+  overflow: hidden;
+  transition: all 0.2s ease;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-  transition: all 0.2s ease-in-out;
+  position: relative;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.07);
-  border-color: var(--cor-primaria);
+  transform: translateY(-4px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  border-color: var(--cor-primaria-light, #ecf4ff);
 }
 
-.header {
+.cardHeader {
+  padding: 1rem 1rem 0.5rem;
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  padding: 1.5rem;
 }
 
-.serie {
-  font-size: 1.5rem;
+.nivelBadge {
+  font-size: 0.65rem;
   font-weight: 700;
-  margin: 0;
-  color: var(--cor-texto-destaque);
+  padding: 0.3rem 0.75rem;
+  border-radius: 99px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
-.nome {
-  font-size: 1rem;
-  color: var(--cor-subtexto);
-  margin: 0.25rem 0 0;
+.badgeInfantil {
+  background-color: #fce7f3;
+  color: #be185d;
 }
 
-.turno {
-  background-color: var(--cor-primaria-light);
-  color: var(--cor-primaria-dark);
-  padding: 0.3rem 0.8rem;
-  border-radius: 20px;
+.badgeFundamental {
+  background-color: #dbeafe;
+  color: #1d4ed8;
+}
+
+.badgeMedio {
+  background-color: #dcfce7;
+  color: #15803d;
+}
+
+.badgeDefault {
+  background-color: #f3f4f6;
+  color: #4b5563;
+}
+
+.editButton {
+  background: white;
+  border: 1px solid #f3f4f6;
+  color: #9ca3af;
+  cursor: pointer;
+  padding: 0.4rem;
+  border-radius: 8px;
+  transition: all 0.2s;
+  display: flex;
+}
+
+.editButton:hover {
+  background-color: #eff6ff;
+  color: var(--cor-primaria, #016be4);
+  border-color: #bfdbfe;
+}
+
+.cardBody {
+  padding: 0.5rem 1rem 1rem;
+  flex: 1;
+}
+
+.infoPrincipal {
+  margin-bottom: 0.75rem;
+}
+
+.turmaNome {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #111827;
+  line-height: 1.2;
+}
+
+.serieText {
+  font-size: 0.9rem;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.turnoTag {
+  display: inline-block;
   font-size: 0.75rem;
+  color: #4b5563;
+  background-color: #f9fafb;
+  border: 1px solid #e5e7eb;
+  padding: 0.2rem 0.6rem;
+  border-radius: 6px;
+  margin-bottom: 1rem;
   font-weight: 600;
   text-transform: capitalize;
 }
 
-.stats {
-  padding: 1rem 1.5rem;
-  border-top: 1px solid var(--cor-borda);
-  border-bottom: 1px solid var(--cor-borda);
+.statsRow {
   display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  flex-grow: 1;
+  gap: 1rem;
+  border-top: 1px dashed #e5e7eb;
+  padding-top: 0.75rem;
 }
 
-.statItem {
+.stat {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  color: var(--cor-texto);
-  font-size: 0.9rem;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  color: #6b7280;
+  font-weight: 500;
 }
 
-.statItem svg {
-  color: var(--cor-primaria);
+.icon {
+  color: var(--cor-primaria, #016be4);
 }
 
-.detailsButton {
-  background-color: transparent;
-  color: var(--cor-primaria);
-  border: none;
-  padding: 1rem;
+.cardFooter {
+  padding: 0.85rem;
+  background-color: #f8fafc;
+  border-top: 1px solid #e5e7eb;
   text-align: center;
+  font-size: 0.9rem;
   font-weight: 600;
-  text-decoration: none;
-  transition: all 0.2s ease-in-out;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
+  color: var(--cor-primaria, #016be4);
+  transition: background 0.2s;
 }
 
-.detailsButton:hover {
-  background-color: var(--cor-primaria);
-  color: white;
-  border-bottom-left-radius: 11px;
-  border-bottom-right-radius: 11px;
+.cardFooter:hover {
+  background-color: #eff6ff;
 }

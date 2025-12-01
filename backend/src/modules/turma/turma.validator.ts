@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { Turno } from "@prisma/client";
+import { Turno, EtapaEnsino } from "@prisma/client";
 
 export const paramsSchema = z.object({
   id: z.string({ required_error: "O ID da turma é obrigatório." }),
@@ -12,8 +12,9 @@ export const createTurmaSchema = z.object({
       .min(1, "O nome não pode ser vazio."),
     serie: z.string({ required_error: "A série é obrigatória." }),
     turno: z.nativeEnum(Turno, { required_error: "O turno é obrigatório." }),
-    // O campo 'unidadeEscolarId' foi REMOVIDO daqui.
-    // Ele será obtido do token do gestor logado para maior segurança.
+
+    etapa: z.nativeEnum(EtapaEnsino).optional(),
+    anoLetivo: z.coerce.number().optional(),
   }),
 });
 
@@ -22,6 +23,9 @@ export const updateTurmaSchema = z.object({
     nome: z.string().min(1, "O nome não pode ser vazio.").optional(),
     serie: z.string().optional(),
     turno: z.nativeEnum(Turno).optional(),
+
+    etapa: z.nativeEnum(EtapaEnsino).optional(),
+    anoLetivo: z.coerce.number().optional(),
   }),
   params: paramsSchema,
 });

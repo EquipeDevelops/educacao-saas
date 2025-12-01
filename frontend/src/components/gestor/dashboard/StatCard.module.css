@@ -1,26 +1,36 @@
 .card {
-  display: flex;
-  align-items: center;
-  gap: 1.25rem;
-  padding: 1.5rem 1.75rem;
   background-color: #ffffff;
   border-radius: 12px;
+  padding: 1.25rem;
   border: 1px solid #e5e7eb;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
-  transition: all 0.25s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 1rem;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  position: relative;
+  overflow: hidden;
 }
 
 .card:hover {
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.06);
   transform: translateY(-2px);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
 
-.iconWrapper {
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.iconBox {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0.75rem;
-  border-radius: 50%;
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
   font-size: 1.5rem;
 }
 
@@ -37,20 +47,33 @@
 }
 
 .label {
-  font-size: 0.95rem;
+  font-size: 0.875rem;
   color: #6b7280;
+  font-weight: 500;
   margin-top: 0.25rem;
 }
 
-.blue .iconWrapper {
-  background-color: #dbeafe;
+.primary .iconBox {
+  background-color: #eff6ff;
   color: #2563eb;
 }
-.green .iconWrapper {
-  background-color: #dcfce7;
+
+.success .iconBox {
+  background-color: #f0fdf4;
   color: #16a34a;
 }
-.orange .iconWrapper {
-  background-color: #ffedd5;
-  color: #f97316;
+
+.warning .iconBox {
+  background-color: #fff7ed;
+  color: #ea580c;
+}
+
+.danger .iconBox {
+  background-color: #fef2f2;
+  color: #dc2626;
+}
+
+.info .iconBox {
+  background-color: #f5f3ff;
+  color: #7c3aed;
 }
