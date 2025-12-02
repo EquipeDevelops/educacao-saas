@@ -291,11 +291,11 @@ export default function BoletimAlunoParaProfessorPage() {
                 ([bimestre, media]) =>
                   media !== null && (
                     <div key={bimestre} className={styles.statCard}>
-                      <h3>Média Geral - {periodosMap[bimestre] || bimestre}</h3>
+                      <h3>{periodosMap[bimestre] || bimestre}</h3>
                       <div className={`${styles.statValue}`}>
                         {media.toFixed(2)}
                       </div>
-                      <p>Média geral de todas as matérias</p>
+                      <p>Nota do bimestre</p>
                     </div>
                   ),
               )}

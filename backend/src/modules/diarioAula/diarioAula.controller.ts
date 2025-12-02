@@ -35,7 +35,19 @@ export async function upsertDiario(req: Request, res: Response) {
   }
 }
 
+export async function getAllDiarios(req: Request, res: Response) {
+  try {
+    const result = await diarioAulaService.getAll(
+      (req as unknown as AuthenticatedRequest).user!,
+    );
+    return res.json(result);
+  } catch (error: any) {
+    return res.status(400).json({ message: error.message });
+  }
+}
+
 export const diarioAulaController = {
   getDiario,
   upsertDiario,
+  getAllDiarios,
 };

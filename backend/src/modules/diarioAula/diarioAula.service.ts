@@ -93,6 +93,8 @@ export async function upsert(
     console.log(
       `[DiarioAula] Criando novo diário para ${dataAula.toISOString()}`,
     );
+    // Este serviço é usado pela tela de Frequência (coleta diária)
+    // Os dados ficam como RASCUNHO até serem consolidados no Diário de Classe
     diario = await prisma.diarioAula.create({
       data: {
         componenteCurricularId: data.componenteCurricularId,
@@ -103,6 +105,7 @@ export async function upsert(
         tema: data.conteudo?.tema,
         atividade: data.conteudo?.atividade,
         observacoes: data.conteudo?.observacoes,
+        status: 'RASCUNHO', // Não afeta cálculo de frequência até consolidação
         professorId: user.perfilId!,
         unidadeEscolarId: user.unidadeEscolarId!,
       },
@@ -149,7 +152,35 @@ export async function upsert(
   return { diario, presencas: results };
 }
 
+export async function getAll(user: AuthenticatedRequest['user']) {
+  if (!user.perfilId) {
+    throw new Error('Usuário não possui perfil de professor.');
+  }
+
+  const diarios = await prisma.diarioAula.findMany({
+    where: {
+      professorId: user.perfilId,
+    },
+    include: {
+      componenteCurricular: {
+        include: {
+          turma: true,
+          materia: true,
+        },
+      },
+      objetivos: true,
+      registros_presenca: true,
+    },
+    orderBy: {
+      data: 'desc',
+    },
+  });
+
+  return diarios;
+}
+
 export const diarioAulaService = {
   getByDate,
   upsert,
+  getAll,
 };

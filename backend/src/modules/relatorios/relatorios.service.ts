@@ -61,6 +61,7 @@ async function getFrequenciaDetalhadaPorTurma(
     where: {
       diarioAula: {
         componenteCurricular: { turmaId },
+        status: 'CONSOLIDADO',
         data: { gte: dataInicio, lte: dataFim },
       },
     },

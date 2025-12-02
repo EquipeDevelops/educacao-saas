@@ -5,6 +5,7 @@ import { api } from '@/services/api';
 import AlunoList from '@/app/professor/turmas/components/TurmaTabs/components/AlunoList/AlunoList';
 import EstatisticasTab from '@/app/professor/turmas/components/TurmaTabs/components/EstatisticasTab/EstatisticasTab';
 import styles from './style.module.css';
+import Loading from '@/components/loading/Loading';
 
 type Aluno = {
   id: string;
@@ -55,7 +56,7 @@ export default function DesempenhoTurmaDetalhes({
     fetchDetails();
   }, [componenteId]);
 
-  if (loading) return <p>Carregando detalhes da turma...</p>;
+  if (loading) return <Loading />;
   if (error) return <p className={styles.error}>{error}</p>;
   if (!details) return null;
 
@@ -66,7 +67,7 @@ export default function DesempenhoTurmaDetalhes({
       </div>
       <div className={styles.alunosContainer}>
         <h2>Alunos da Turma</h2>
-        <AlunoList alunos={details.alunos} />
+        <AlunoList alunos={details.alunos} componenteId={componenteId} />
       </div>
     </div>
   );

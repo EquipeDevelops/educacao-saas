@@ -14,6 +14,8 @@ import Modal from "@/components/modal/Modal";
 import Loading from "@/components/loading/Loading";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import Section from "@/components/section/Section";
+import { LuSearch } from "react-icons/lu";
 
 type Aluno = { id: string; usuario: { nome: string } };
 type Turma = { id: string; nome: string; serie: string };
@@ -194,7 +196,7 @@ export default function GestaoMatriculasPage() {
   }
 
   return (
-    <div className={styles.container}>
+    <Section>
       <ToastContainer position="top-right" autoClose={3000} />
       <header className={styles.header}>
         <div>
@@ -208,7 +210,7 @@ export default function GestaoMatriculasPage() {
 
       <div className={styles.toolbar}>
         <div className={styles.searchContainer}>
-          <FiSearch />
+          <LuSearch className={styles.searchIcon}/>
           <input
             type="text"
             placeholder="Buscar por nome do aluno..."
@@ -385,6 +387,6 @@ export default function GestaoMatriculasPage() {
           </form>
         </Modal>
       )}
-    </div>
+    </Section>
   );
 }

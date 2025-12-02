@@ -1,16 +1,18 @@
-"use client";
+'use client';
 
-import { useState, useEffect, useMemo, FormEvent, ChangeEvent } from "react";
-import { api } from "@/services/api";
-import styles from "./usuarios.module.css";
-import Loading from "@/components/loading/Loading";
-import Modal from "@/components/modal/Modal";
-import ImportarAlunosModal from "@/components/gestor/usuarios/ImportarAlunosModal";
-import { FiPlus, FiSearch, FiUpload, FiEdit, FiTrash2 } from "react-icons/fi";
-import { toast, ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import { useState, useEffect, useMemo, FormEvent, ChangeEvent } from 'react';
+import { api } from '@/services/api';
+import styles from './usuarios.module.css';
+import Loading from '@/components/loading/Loading';
+import Modal from '@/components/modal/Modal';
+import ImportarAlunosModal from '@/components/gestor/usuarios/ImportarAlunosModal';
+import { FiPlus, FiSearch, FiUpload, FiEdit, FiTrash2 } from 'react-icons/fi';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import Section from '@/components/section/Section';
+import { LuPlus, LuSearch, LuUpload } from 'react-icons/lu';
 
-type PapelUsuario = "PROFESSOR" | "ALUNO" | "RESPONSAVEL";
+type PapelUsuario = 'PROFESSOR' | 'ALUNO' | 'RESPONSAVEL';
 
 type Usuario = {
   id: string;
@@ -50,17 +52,17 @@ type FormState = {
 };
 
 const createInitialState = (): FormState => ({
-  nome: "",
-  email: "",
-  senha: "",
-  papel: "PROFESSOR",
-  numero_matricula: "",
-  titulacao: "",
-  telefone: "",
+  nome: '',
+  email: '',
+  senha: '',
+  papel: 'PROFESSOR',
+  numero_matricula: '',
+  titulacao: '',
+  telefone: '',
   responsavelAlunos: [
     {
-      alunoId: "",
-      parentesco: "",
+      alunoId: '',
+      parentesco: '',
       principal: true,
     },
   ],
@@ -70,29 +72,32 @@ export default function GestorUsuariosPage() {
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const [alunoOptions, setAlunoOptions] = useState<AlunoOption[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [filtro, setFiltro] = useState("");
-  const [filtroPapel, setFiltroPapel] = useState("TODOS");
-  const [filtroStatus, setFiltroStatus] = useState("TODOS");
+  const [filtro, setFiltro] = useState('');
+  const [filtroPapel, setFiltroPapel] = useState('TODOS');
+  const [filtroStatus, setFiltroStatus] = useState('TODOS');
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
   const [formState, setFormState] = useState<FormState>(() =>
-    createInitialState()
+    createInitialState(),
   );
   const [editingUser, setEditingUser] = useState<Usuario | null>(null);
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
 
   const fetchUsuarios = () => {
     setIsLoading(true);
-    Promise.all([api.get<Usuario[]>("/usuarios"), api.get<AlunoOption[]>("/alunos")])
+    Promise.all([
+      api.get<Usuario[]>('/usuarios'),
+      api.get<AlunoOption[]>('/alunos'),
+    ])
       .then(([usuariosResponse, alunosResponse]) => {
         setUsuarios(usuariosResponse.data);
         setAlunoOptions(alunosResponse.data);
       })
       .catch(() =>
-        toast.error("Falha ao carregar os usuários ou alunos disponíveis.")
+        toast.error('Falha ao carregar os usuários ou alunos disponíveis.'),
       )
       .finally(() => setIsLoading(false));
   };
@@ -102,25 +107,25 @@ export default function GestorUsuariosPage() {
   }, []);
 
   const handleInputChange = (
-    e: ChangeEvent<HTMLInputElement | HTMLSelectElement>
+    e: ChangeEvent<HTMLInputElement | HTMLSelectElement>,
   ) => {
     const { name, value } = e.target;
-    if (name === "papel") {
+    if (name === 'papel') {
       const novoPapel = value as PapelUsuario;
       setFormState((prev) => ({
         ...prev,
         papel: novoPapel,
-        numero_matricula: "",
-        titulacao: "",
-        telefone: "",
+        numero_matricula: '',
+        titulacao: '',
+        telefone: '',
         responsavelAlunos:
-          novoPapel === "RESPONSAVEL"
+          novoPapel === 'RESPONSAVEL'
             ? prev.responsavelAlunos.length > 0
               ? prev.responsavelAlunos
               : [
                   {
-                    alunoId: "",
-                    parentesco: "",
+                    alunoId: '',
+                    parentesco: '',
                     principal: true,
                   },
                 ]
@@ -135,7 +140,7 @@ export default function GestorUsuariosPage() {
   const handleResponsavelAlunoChange = (
     index: number,
     field: keyof ResponsavelAlunoForm,
-    value: string | boolean
+    value: string | boolean,
   ) => {
     setFormState((prev) => {
       const updated = [...prev.responsavelAlunos];
@@ -152,7 +157,7 @@ export default function GestorUsuariosPage() {
       ...prev,
       responsavelAlunos: [
         ...prev.responsavelAlunos,
-        { alunoId: "", parentesco: "", principal: false },
+        { alunoId: '', parentesco: '', principal: false },
       ],
     }));
   };
@@ -165,16 +170,16 @@ export default function GestorUsuariosPage() {
   };
 
   const handleEditInputChange = (
-    e: ChangeEvent<HTMLInputElement | HTMLSelectElement>
+    e: ChangeEvent<HTMLInputElement | HTMLSelectElement>,
   ) => {
     if (!editingUser) return;
     const { name, value, type } = e.target;
-    const isCheckbox = type === "checkbox";
+    const isCheckbox = type === 'checkbox';
     const finalValue = isCheckbox
       ? (e.target as HTMLInputElement).checked
       : value;
 
-    if (name === "titulacao") {
+    if (name === 'titulacao') {
       setEditingUser({
         ...editingUser,
         perfil_professor: { ...editingUser.perfil_professor, titulacao: value },
@@ -208,17 +213,17 @@ export default function GestorUsuariosPage() {
       papel: formState.papel,
     };
 
-    if (formState.papel === "ALUNO") {
+    if (formState.papel === 'ALUNO') {
       if (!formState.numero_matricula) {
-        toast.error("O número de matrícula é obrigatório para alunos.");
+        toast.error('O número de matrícula é obrigatório para alunos.');
         return;
       }
       payload.perfil_aluno = { numero_matricula: formState.numero_matricula };
-    } else if (formState.papel === "PROFESSOR") {
+    } else if (formState.papel === 'PROFESSOR') {
       payload.perfil_professor = {
         titulacao: formState.titulacao || undefined,
       };
-    } else if (formState.papel === "RESPONSAVEL") {
+    } else if (formState.papel === 'RESPONSAVEL') {
       const alunosVinculados = formState.responsavelAlunos
         .filter((aluno) => aluno.alunoId)
         .map((aluno) => ({
@@ -233,22 +238,22 @@ export default function GestorUsuariosPage() {
       };
     }
 
-    const toastId = toast.loading("Criando usuário...");
+    const toastId = toast.loading('Criando usuário...');
     try {
-      await api.post("/usuarios", payload);
+      await api.post('/usuarios', payload);
       toast.update(toastId, {
         render: `Usuário "${formState.nome}" criado com sucesso!`,
-        type: "success",
+        type: 'success',
         isLoading: false,
         autoClose: 3000,
       });
       closeModal();
       fetchUsuarios();
     } catch (err: any) {
-      const message = err.response?.data?.message || "Erro ao criar o usuário.";
+      const message = err.response?.data?.message || 'Erro ao criar o usuário.';
       toast.update(toastId, {
         render: message,
-        type: "error",
+        type: 'error',
         isLoading: false,
         autoClose: 5000,
       });
@@ -267,12 +272,12 @@ export default function GestorUsuariosPage() {
       },
     };
 
-    const toastId = toast.loading("Atualizando usuário...");
+    const toastId = toast.loading('Atualizando usuário...');
     try {
       await api.put(`/usuarios/${editingUser.id}`, payload);
       toast.update(toastId, {
-        render: "Usuário atualizado com sucesso!",
-        type: "success",
+        render: 'Usuário atualizado com sucesso!',
+        type: 'success',
         isLoading: false,
         autoClose: 3000,
       });
@@ -280,10 +285,10 @@ export default function GestorUsuariosPage() {
       fetchUsuarios();
     } catch (err: any) {
       const message =
-        err.response?.data?.message || "Erro ao atualizar o usuário.";
+        err.response?.data?.message || 'Erro ao atualizar o usuário.';
       toast.update(toastId, {
         render: message,
-        type: "error",
+        type: 'error',
         isLoading: false,
         autoClose: 5000,
       });
@@ -293,25 +298,25 @@ export default function GestorUsuariosPage() {
   async function handleDelete(user: Usuario) {
     if (
       window.confirm(
-        `Tem certeza que deseja excluir o usuário "${user.nome}"? Esta ação é irreversível.`
+        `Tem certeza que deseja excluir o usuário "${user.nome}"? Esta ação é irreversível.`,
       )
     ) {
-      const toastId = toast.loading("Excluindo usuário...");
+      const toastId = toast.loading('Excluindo usuário...');
       try {
         await api.delete(`/usuarios/${user.id}`);
         toast.update(toastId, {
           render: `Usuário "${user.nome}" excluído!`,
-          type: "info",
+          type: 'info',
           isLoading: false,
           autoClose: 3000,
         });
         fetchUsuarios();
       } catch (err: any) {
         const message =
-          err.response?.data?.message || "Erro ao excluir o usuário.";
+          err.response?.data?.message || 'Erro ao excluir o usuário.';
         toast.update(toastId, {
           render: message,
-          type: "error",
+          type: 'error',
           isLoading: false,
           autoClose: 5000,
         });
@@ -321,7 +326,7 @@ export default function GestorUsuariosPage() {
 
   const handleSelectAll = (e: ChangeEvent<HTMLInputElement>) => {
     setSelectedUserIds(
-      e.target.checked ? usuariosFiltrados.map((u) => u.id) : []
+      e.target.checked ? usuariosFiltrados.map((u) => u.id) : [],
     );
   };
 
@@ -329,34 +334,34 @@ export default function GestorUsuariosPage() {
     setSelectedUserIds((prev) =>
       prev.includes(userId)
         ? prev.filter((id) => id !== userId)
-        : [...prev, userId]
+        : [...prev, userId],
     );
   };
 
   const handleBulkAction = async (
-    action: "activate" | "deactivate" | "delete"
+    action: 'activate' | 'deactivate' | 'delete',
   ) => {
     const actionTextMap = {
-      activate: "ativar",
-      deactivate: "desativar",
-      delete: "excluir",
+      activate: 'ativar',
+      deactivate: 'desativar',
+      delete: 'excluir',
     };
     if (
       window.confirm(
-        `Tem certeza que deseja ${actionTextMap[action]} ${selectedUserIds.length} usuário(s) selecionado(s)?`
+        `Tem certeza que deseja ${actionTextMap[action]} ${selectedUserIds.length} usuário(s) selecionado(s)?`,
       )
     ) {
-      const toastId = toast.loading("Processando ação em massa...");
+      const toastId = toast.loading('Processando ação em massa...');
       const promises = selectedUserIds.map((id) => {
-        if (action === "delete") return api.delete(`/usuarios/${id}`);
-        return api.patch(`/usuarios/${id}`, { status: action === "activate" });
+        if (action === 'delete') return api.delete(`/usuarios/${id}`);
+        return api.patch(`/usuarios/${id}`, { status: action === 'activate' });
       });
 
       try {
         await Promise.all(promises);
         toast.update(toastId, {
-          render: "Ação em massa concluída com sucesso!",
-          type: "success",
+          render: 'Ação em massa concluída com sucesso!',
+          type: 'success',
           isLoading: false,
           autoClose: 3000,
         });
@@ -364,10 +369,10 @@ export default function GestorUsuariosPage() {
         fetchUsuarios();
       } catch (err: any) {
         const message =
-          err.response?.data?.message || "Erro ao executar ação em massa.";
+          err.response?.data?.message || 'Erro ao executar ação em massa.';
         toast.update(toastId, {
           render: message,
-          type: "error",
+          type: 'error',
           isLoading: false,
           autoClose: 5000,
         });
@@ -380,17 +385,21 @@ export default function GestorUsuariosPage() {
       (user) =>
         (user.nome.toLowerCase().includes(filtro.toLowerCase()) ||
           user.email.toLowerCase().includes(filtro.toLowerCase())) &&
-        (filtroPapel === "TODOS" || user.papel === filtroPapel) &&
-        (filtroStatus === "TODOS" || String(user.status) === filtroStatus)
+        (filtroPapel === 'TODOS' || user.papel === filtroPapel) &&
+        (filtroStatus === 'TODOS' || String(user.status) === filtroStatus),
     );
   }, [usuarios, filtro, filtroPapel, filtroStatus]);
 
   if (isLoading) {
-    return <Loading />;
+    return (
+      <Section>
+        <Loading />
+      </Section>
+    );
   }
 
   return (
-    <div className={styles.container}>
+    <Section>
       <ToastContainer position="top-right" autoClose={3000} />
       <header className={styles.header}>
         <h1>Gerenciamento de Usuários</h1>
@@ -399,17 +408,17 @@ export default function GestorUsuariosPage() {
             onClick={() => setIsImportModalOpen(true)}
             className={styles.button}
           >
-            <FiUpload className={styles.iconInline} /> Importar Alunos
+            <LuUpload className={styles.iconInline} /> Importar Alunos
           </button>
           <button onClick={openCreateModal} className={styles.buttonPrimary}>
-            <FiPlus className={styles.iconInline} /> Novo Usuário
+            <LuPlus className={styles.iconInline} /> Novo Usuário
           </button>
         </div>
       </header>
 
       <div className={styles.toolbar}>
         <div className={styles.searchContainer}>
-          <FiSearch className={styles.iconInline} />
+          <LuSearch className={styles.iconInline} />
           <input
             type="text"
             placeholder="Buscar por nome ou e-mail..."
@@ -441,13 +450,13 @@ export default function GestorUsuariosPage() {
       {selectedUserIds.length > 0 && (
         <div className={styles.bulkActionsContainer}>
           <span>{selectedUserIds.length} selecionado(s)</span>
-          <button onClick={() => handleBulkAction("activate")}>Ativar</button>
-          <button onClick={() => handleBulkAction("deactivate")}>
+          <button onClick={() => handleBulkAction('activate')}>Ativar</button>
+          <button onClick={() => handleBulkAction('deactivate')}>
             Desativar
           </button>
           <button
             className={styles.bulkDeleteButton}
-            onClick={() => handleBulkAction("delete")}
+            onClick={() => handleBulkAction('delete')}
           >
             Excluir
           </button>
@@ -481,7 +490,7 @@ export default function GestorUsuariosPage() {
                 <tr
                   key={user.id}
                   className={
-                    selectedUserIds.includes(user.id) ? styles.selectedRow : ""
+                    selectedUserIds.includes(user.id) ? styles.selectedRow : ''
                   }
                 >
                   <td className={styles.tdCheckbox}>
@@ -510,7 +519,7 @@ export default function GestorUsuariosPage() {
                           : styles.statusInactive
                       }
                     >
-                      {user.status ? "Ativo" : "Inativo"}
+                      {user.status ? 'Ativo' : 'Inativo'}
                     </span>
                   </td>
                   <td className={styles.actionButtons}>
@@ -546,10 +555,12 @@ export default function GestorUsuariosPage() {
         isOpen={isCreateModalOpen}
         onClose={closeModal}
         title="Criar Novo Usuário"
+        width={600}
       >
         <form onSubmit={handleSubmit} className={styles.modalForm}>
           <label className={styles.label}>Nome Completo*</label>
           <input
+            type='text'
             name="nome"
             value={formState.nome}
             onChange={handleInputChange}
@@ -581,7 +592,7 @@ export default function GestorUsuariosPage() {
             <option value="ALUNO">Aluno</option>
             <option value="RESPONSAVEL">Responsável</option>
           </select>
-          {formState.papel === "ALUNO" && (
+          {formState.papel === 'ALUNO' && (
             <>
               <label className={styles.label}>Número de Matrícula*</label>
               <input
@@ -592,24 +603,25 @@ export default function GestorUsuariosPage() {
               />
             </>
           )}
-          {formState.papel === "PROFESSOR" && (
+          {formState.papel === 'PROFESSOR' && (
             <>
               <label className={styles.label}>Titulação</label>
               <input
                 name="titulacao"
+                type="text"
                 value={formState.titulacao}
                 onChange={handleInputChange}
                 placeholder="Ex: Mestre, Doutor"
               />
             </>
           )}
-          {formState.papel === "RESPONSAVEL" &&
+          {formState.papel === 'RESPONSAVEL' &&
             (() => {
               const remainingOptions = alunoOptions.filter(
                 (option) =>
                   !formState.responsavelAlunos.some(
-                    (aluno) => aluno.alunoId === option.id
-                  )
+                    (aluno) => aluno.alunoId === option.id,
+                  ),
               );
 
               return (
@@ -646,9 +658,9 @@ export default function GestorUsuariosPage() {
                             return !formState.responsavelAlunos.some(
                               (aluno, alunoIndex) =>
                                 alunoIndex !== index &&
-                                aluno.alunoId === option.id
+                                aluno.alunoId === option.id,
                             );
-                          }
+                          },
                         );
 
                         return (
@@ -663,17 +675,16 @@ export default function GestorUsuariosPage() {
                                 onChange={(event) =>
                                   handleResponsavelAlunoChange(
                                     index,
-                                    "alunoId",
-                                    event.target.value
+                                    'alunoId',
+                                    event.target.value,
                                   )
                                 }
                               >
                                 <option value="">Selecione um aluno</option>
                                 {availableOptions.map((option) => (
                                   <option key={option.id} value={option.id}>
-                                    {option.usuario.nome} ({
-                                      option.numero_matricula
-                                    })
+                                    {option.usuario.nome} (
+                                    {option.numero_matricula})
                                   </option>
                                 ))}
                               </select>
@@ -686,8 +697,8 @@ export default function GestorUsuariosPage() {
                                 onChange={(event) =>
                                   handleResponsavelAlunoChange(
                                     index,
-                                    "parentesco",
-                                    event.target.value
+                                    'parentesco',
+                                    event.target.value,
                                   )
                                 }
                                 placeholder="Ex.: Pai, Mãe, Tio(a)"
@@ -700,8 +711,8 @@ export default function GestorUsuariosPage() {
                                 onChange={(event) =>
                                   handleResponsavelAlunoChange(
                                     index,
-                                    "principal",
-                                    event.target.checked
+                                    'principal',
+                                    event.target.checked,
                                   )
                                 }
                               />
@@ -717,7 +728,7 @@ export default function GestorUsuariosPage() {
                             </button>
                           </div>
                         );
-                      }
+                      },
                     )
                   )}
                   <span className={styles.helperText}>
@@ -752,18 +763,19 @@ export default function GestorUsuariosPage() {
             <label className={styles.label}>Nome Completo*</label>
             <input
               name="nome"
+              type='text'
               value={editingUser.nome}
               onChange={handleEditInputChange}
               required
             />
             <label className={styles.label}>Email</label>
             <input type="email" value={editingUser.email} disabled />
-            {editingUser.papel === "PROFESSOR" && (
+            {editingUser.papel === 'PROFESSOR' && (
               <>
                 <label className={styles.label}>Titulação</label>
                 <input
                   name="titulacao"
-                  value={editingUser.perfil_professor?.titulacao || ""}
+                  value={editingUser.perfil_professor?.titulacao || ''}
                   onChange={handleEditInputChange}
                 />
               </>
@@ -802,6 +814,6 @@ export default function GestorUsuariosPage() {
           fetchUsuarios();
         }}
       />
-    </div>
+    </Section>
   );
 }

@@ -1,13 +1,10 @@
-.pageContainer {
-  padding: 1.5rem;
-}
-
 .header {
-  margin-bottom: 2rem;
+  margin-bottom: 20px;
 }
 
 .header h1 {
-  font-size: 1.8rem;
+  font-size: 1.5rem;
+  font-weight: 500;
 }
 
 .header p {
@@ -17,25 +14,32 @@
 
 .tabs {
   display: flex;
-  gap: 0.5rem;
-  border-bottom: 2px solid var(--cor-borda);
-  margin-bottom: 1.5rem;
+  gap: 1rem;
+  margin-bottom: 10px;
+  border-bottom: 1px solid var(--cor-borda);
+  padding-bottom: 10px;
 }
 
 .tabs button {
-  padding: 0.75rem 1rem;
-  border: none;
-  background-color: transparent;
-  font-weight: 600;
+  padding: 10px 20px;
+  border: 1px solid var(--cor-borda) !important;
+  background-color: white;
+  font-weight: 500;
   color: var(--cor-subtexto);
   cursor: pointer;
   border-bottom: 2px solid transparent;
-  transform: translateY(2px);
+  transition: all 0.2s ease;
+  font-size: .9rem;
+}
+
+.tabs button:hover {
+  color: var(--cor-primaria);
 }
 
 .tabs .activeTab {
-  color: var(--cor-primaria);
-  border-bottom-color: var(--cor-primaria);
+  color: white;
+  background-color: var(--cor-primaria);
+  border-bottom: 5px solid var(--cor-primaria-dark) !important;
 }
 
 .statsGrid {
@@ -43,9 +47,6 @@
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 1.5rem;
   margin-bottom: 2rem;
-}
-
-.mainContent {
 }
 
 .geralContainer {
@@ -57,4 +58,9 @@
 
 .error {
   color: var(--cor-perigo);
+  background-color: var(--cor-perigo-light);
+  padding: 1rem;
+  border-radius: 8px;
+  border: 1px solid var(--cor-perigo);
+  margin-bottom: 1rem;
 }

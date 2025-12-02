@@ -201,7 +201,10 @@ async function getHomeStats(user: AuthenticatedRequest['user']) {
   if (matriculaAtiva) {
     // Tenta calcular a frequência baseada no Diário de Aula (novo sistema)
     const totalRegistrosDiario = await prisma.diarioAulaPresenca.count({
-      where: { matriculaId: matriculaAtiva.id },
+      where: {
+        matriculaId: matriculaAtiva.id,
+        diarioAula: { status: 'CONSOLIDADO' },
+      },
     });
 
     if (totalRegistrosDiario > 0) {
@@ -209,6 +212,7 @@ async function getHomeStats(user: AuthenticatedRequest['user']) {
         where: {
           matriculaId: matriculaAtiva.id,
           situacao: { not: 'PRESENTE' },
+          diarioAula: { status: 'CONSOLIDADO' },
         },
       });
       attendancePercentage =

@@ -1,27 +1,28 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import { api } from "@/services/api";
-import TurmaCard from "@/components/gestor/turmas/TurmaCard";
-import EditTurmaModal from "@/components/gestor/turmas/EditTurmaModal";
-import styles from "./turmas.module.css";
-import { FiPlus, FiSearch } from "react-icons/fi";
-import Loading from "@/components/loading/Loading";
+import { useEffect, useState } from 'react';
+import { api } from '@/services/api';
+import TurmaCard from '@/components/gestor/turmas/TurmaCard';
+import EditTurmaModal from '@/components/gestor/turmas/EditTurmaModal';
+import styles from './turmas.module.css';
+import { LuPlus, LuSearch } from 'react-icons/lu';
+import Loading from '@/components/loading/Loading';
+import Section from '@/components/section/Section';
 
 export default function TurmasPage() {
   const [turmas, setTurmas] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState('');
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedTurma, setSelectedTurma] = useState(null);
 
   const fetchTurmas = async () => {
     try {
-      const response = await api.get("/turmas");
+      const response = await api.get('/turmas');
       setTurmas(response.data);
     } catch (error) {
-      console.error("Erro ao buscar turmas", error);
+      console.error('Erro ao buscar turmas', error);
     } finally {
       setIsLoading(false);
     }
@@ -41,26 +42,26 @@ export default function TurmasPage() {
   };
 
   const filteredTurmas = turmas.filter((t: any) =>
-    t.nome.toLowerCase().includes(searchTerm.toLowerCase())
+    t.nome.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   if (isLoading) return <Loading />;
 
   return (
-    <div className={styles.container}>
+    <Section>
       <header className={styles.header}>
         <div>
           <h1>Gerenciar Turmas</h1>
           <p>Visualize e gerencie as turmas da instituição.</p>
         </div>
-        <button className="btn">
-          <FiPlus /> Nova Turma
+        <button className={styles.primaryButton}>
+          <LuPlus /> Nova Turma
         </button>
       </header>
 
-      <div className={styles.controls}>
-        <div className={styles.searchBar}>
-          <FiSearch className={styles.searchIcon} />
+      <div className={styles.toolbar}>
+        <div className={styles.searchContainer}>
+          <LuSearch className={styles.searchIcon} />
           <input
             type="text"
             placeholder="Buscar turma por nome..."
@@ -82,6 +83,6 @@ export default function TurmasPage() {
         turma={selectedTurma}
         onSuccess={handleSuccessEdit}
       />
-    </div>
+    </Section>
   );
 }

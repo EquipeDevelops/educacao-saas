@@ -1,4 +1,9 @@
-import { DiaDaSemana, PrismaClient } from '@prisma/client';
+import {
+  DiaDaSemana,
+  PrismaClient,
+  StatusSubmissao,
+  TipoTarefa,
+} from '@prisma/client';
 import { PDFDocument, PDFFont, StandardFonts, rgb } from 'pdf-lib';
 import { AuthenticatedRequest } from '../../middlewares/auth';
 
@@ -206,6 +211,7 @@ async function getBoletim(
         const totalAulasGeral = await prisma.diarioAula.count({
           where: {
             componenteCurricularId: comp.id,
+            status: 'CONSOLIDADO',
             data: {
               gte: dataInicioAno,
               lte: dataFimAno,
@@ -219,6 +225,7 @@ async function getBoletim(
             situacao: 'PRESENTE',
             diarioAula: {
               componenteCurricularId: comp.id,
+              status: 'CONSOLIDADO',
               data: {
                 gte: dataInicioAno,
                 lte: dataFimAno,
@@ -233,6 +240,7 @@ async function getBoletim(
             situacao: 'FALTA_JUSTIFICADA',
             diarioAula: {
               componenteCurricularId: comp.id,
+              status: 'CONSOLIDADO',
               data: {
                 gte: dataInicioAno,
                 lte: dataFimAno,
@@ -247,6 +255,7 @@ async function getBoletim(
             situacao: 'FALTA',
             diarioAula: {
               componenteCurricularId: comp.id,
+              status: 'CONSOLIDADO',
               data: {
                 gte: dataInicioAno,
                 lte: dataFimAno,
@@ -278,6 +287,7 @@ async function getBoletim(
                 const totalAulasBimestre = await prisma.diarioAula.count({
                   where: {
                     componenteCurricularId: comp.id,
+                    status: 'CONSOLIDADO',
                     data: {
                       gte: bimestre.dataInicio,
                       lte: bimestre.dataFim,
@@ -292,6 +302,7 @@ async function getBoletim(
                       situacao: 'PRESENTE',
                       diarioAula: {
                         componenteCurricularId: comp.id,
+                        status: 'CONSOLIDADO',
                         data: {
                           gte: bimestre.dataInicio,
                           lte: bimestre.dataFim,
@@ -1531,6 +1542,105 @@ async function generateBoletimPdf(usuarioId: string) {
   return Buffer.from(pdfBytes);
 }
 
+const getProfile = async (user: AuthenticatedRequest['user']) => {
+  if (!user.id) {
+    throw new Error('Usuário não identificado.');
+  }
+
+  const alunoPerfil = await prisma.usuarios_aluno.findUnique({
+    where: { usuarioId: user.id },
+    include: {
+      usuario: {
+        select: {
+          nome: true,
+          email: true,
+          data_nascimento: true,
+          status: true,
+        },
+      },
+      matriculas: {
+        where: { status: 'ATIVA' },
+        include: {
+          turma: {
+            include: {
+              unidade_escolar: { select: { nome: true } },
+            },
+          },
+        },
+        take: 1,
+      },
+    },
+  });
+
+  if (!alunoPerfil) {
+    throw new Error('Perfil de aluno não encontrado.');
+  }
+
+  const matriculaAtiva = alunoPerfil.matriculas[0];
+
+  // Calcular estatísticas
+  let totalAtividadesEntregues = 0;
+  let provasFeitas = 0;
+  let mediaGlobal = 0;
+
+  if (matriculaAtiva) {
+    const submissoes = await prisma.submissoes.findMany({
+      where: {
+        alunoId: alunoPerfil.id,
+        status: { in: [StatusSubmissao.ENVIADA, StatusSubmissao.AVALIADA] },
+        tarefa: {
+          componenteCurricular: { turmaId: matriculaAtiva.turmaId },
+        },
+      },
+      include: {
+        tarefa: { select: { tipo: true } },
+      },
+    });
+
+    totalAtividadesEntregues = submissoes.length;
+    provasFeitas = submissoes.filter(
+      (s) => s.tarefa.tipo === TipoTarefa.PROVA,
+    ).length;
+
+    const notas = await prisma.submissoes.findMany({
+      where: {
+        alunoId: alunoPerfil.id,
+        status: StatusSubmissao.AVALIADA,
+        nota_total: { not: null },
+        tarefa: {
+          componenteCurricular: { turmaId: matriculaAtiva.turmaId },
+        },
+      },
+      select: { nota_total: true },
+    });
+
+    if (notas.length > 0) {
+      const somaNotas = notas.reduce(
+        (acc, curr) => acc + (curr.nota_total || 0),
+        0,
+      );
+      mediaGlobal = parseFloat((somaNotas / notas.length).toFixed(1));
+    }
+  }
+
+  return {
+    nome: alunoPerfil.usuario.nome,
+    email: alunoPerfil.usuario.email,
+    status: alunoPerfil.usuario.status,
+    dataNascimento: alunoPerfil.usuario.data_nascimento?.toISOString() || '',
+    escola: matriculaAtiva?.turma.unidade_escolar.nome || 'Não matriculado',
+    numeroMatricula: alunoPerfil.numero_matricula,
+    emailResponsavel: alunoPerfil.email_responsavel || '',
+    turma: matriculaAtiva
+      ? `${matriculaAtiva.turma.serie} - ${matriculaAtiva.turma.nome}`
+      : 'Não matriculado',
+    anoLetivo: matriculaAtiva?.ano_letivo || new Date().getFullYear(),
+    totalAtividadesEntregues,
+    provasFeitas,
+    mediaGlobal,
+  };
+};
+
 export const alunoService = {
   findAllPerfis,
   findOne: findOneByUserId,
@@ -1539,4 +1649,5 @@ export const alunoService = {
   saveComentario,
   getAgendaEventos,
   generateBoletimPdf,
+  getProfile,
 };

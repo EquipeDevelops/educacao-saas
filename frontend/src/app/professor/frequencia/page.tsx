@@ -7,7 +7,7 @@ import Section from '@/components/section/Section';
 import Loading from '@/components/loading/Loading';
 import { useAuth } from '@/contexts/AuthContext';
 import { FiSave, FiAlertTriangle, FiCheckCircle } from 'react-icons/fi';
-import { LuCalendar, LuCheck, LuX, LuClock } from 'react-icons/lu';
+import { LuCalendar, LuCheck, LuX, LuClock, LuSave } from 'react-icons/lu';
 
 type Componente = {
   id: string;
@@ -26,9 +26,11 @@ export default function FrequenciaPage() {
   const { loading: authLoading } = useAuth();
   const [componentes, setComponentes] = useState<Componente[]>([]);
   const [selectedComponenteId, setSelectedComponenteId] = useState('');
-  const [dataAula, setDataAula] = useState(
-    new Date().toISOString().split('T')[0],
-  );
+  const [dataAula, setDataAula] = useState(() => {
+    const hoje = new Date();
+    const offset = hoje.getTimezoneOffset() * 60000;
+    return new Date(hoje.getTime() - offset).toISOString().split('T')[0];
+  });
   const [alunos, setAlunos] = useState<Aluno[]>([]);
   const [presencas, setPresencas] = useState<Record<string, Situacao>>({});
   const [observacoes, setObservacoes] = useState<Record<string, string>>({});
@@ -36,6 +38,7 @@ export default function FrequenciaPage() {
   const [loadingComponentes, setLoadingComponentes] = useState(true);
   const [loadingDados, setLoadingDados] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [isConsolidado, setIsConsolidado] = useState(false);
   const [feedback, setFeedback] = useState<{
     type: 'success' | 'error';
     message: string;
@@ -69,6 +72,7 @@ export default function FrequenciaPage() {
     async function fetchData() {
       setLoadingDados(true);
       setFeedback(null);
+      setIsConsolidado(false);
       try {
         const { data: matriculas } = await api.get('/matriculas', {
           params: { componenteCurricularId: selectedComponenteId },
@@ -97,13 +101,24 @@ export default function FrequenciaPage() {
           novasPresencas[aluno.id] = 'PRESENTE';
         });
 
-        if (diario && diario.registros_presenca) {
-          diario.registros_presenca.forEach((reg: any) => {
-            novasPresencas[reg.matriculaId] = reg.situacao;
-            if (reg.observacao) {
-              novasObservacoes[reg.matriculaId] = reg.observacao;
-            }
-          });
+        if (diario) {
+          if (diario.status === 'CONSOLIDADO') {
+            setIsConsolidado(true);
+            setFeedback({
+              type: 'error',
+              message:
+                'Este diário já foi consolidado e não pode ser alterado por aqui. Para editar, acesse Diário de Classe',
+            });
+          }
+
+          if (diario.registros_presenca) {
+            diario.registros_presenca.forEach((reg: any) => {
+              novasPresencas[reg.matriculaId] = reg.situacao;
+              if (reg.observacao) {
+                novasObservacoes[reg.matriculaId] = reg.observacao;
+              }
+            });
+          }
         }
 
         setPresencas(novasPresencas);
@@ -123,16 +138,24 @@ export default function FrequenciaPage() {
   }, [selectedComponenteId, dataAula]);
 
   const handlePresencaChange = (alunoId: string, situacao: Situacao) => {
+    if (isConsolidado) return;
     setPresencas((prev) => ({ ...prev, [alunoId]: situacao }));
   };
 
   const handleSave = async () => {
+    if (isConsolidado) return;
     setSaving(true);
     setFeedback(null);
     try {
+      const [ano, mes, dia] = dataAula.split('-');
+      const defaultTema = `Diário do dia ${dia}/${mes}/${ano}`;
+
       const payload = {
         componenteCurricularId: selectedComponenteId,
         data: new Date(dataAula).toISOString(),
+        conteudo: {
+          tema: defaultTema,
+        },
         presencas: Object.entries(presencas).map(([matriculaId, situacao]) => ({
           matriculaId,
           situacao,
@@ -143,7 +166,7 @@ export default function FrequenciaPage() {
       await api.post('/diarios-aula', payload);
       setFeedback({
         type: 'success',
-        message: 'Frequência salva com sucesso!',
+        message: 'Frequência salva como Rascunho com sucesso!',
       });
     } catch (error: any) {
       console.error('Erro ao salvar frequência', error);
@@ -172,7 +195,35 @@ export default function FrequenciaPage() {
       <div className={styles.container}>
         <header className={styles.header}>
           <h1>Frequência Escolar</h1>
-          <p>Registre a presença dos alunos para o dia selecionado.</p>
+          <p>
+            Registre a presença dos alunos para o dia selecionado, as
+            frequências salvas aqui serão registradas como rascunho para o
+            diário de classe.
+          </p>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              backgroundColor: 'var(--cor-primaria-light)',
+              color: 'var(--cor-primaria)',
+              padding: '10px 20px',
+              borderRadius: '10px',
+              marginBottom: '1rem',
+              fontSize: '0.9rem',
+              border:
+                '1px solid color-mix(in srgb, var(--cor-primaria) 20%, white 80%)',
+              margin: '1rem 0',
+            }}
+          >
+            <FiAlertTriangle />
+            <span>
+              <strong>Atenção:</strong> Os dados salvos aqui são registrados
+              como <strong>RASCUNHO</strong> para o diário. Para efetivar a
+              frequência e atualizar a porcentagem do aluno, é necessário
+              consolidar no <strong>Diário de Classe</strong>.
+            </span>
+          </div>
         </header>
 
         <div className={styles.controls}>
@@ -248,7 +299,7 @@ export default function FrequenciaPage() {
                           presencas[aluno.id] === 'PRESENTE'
                             ? styles.selectedP
                             : ''
-                        }`}
+                        } ${isConsolidado ? styles.disabled : ''}`}
                       >
                         <input
                           type="radio"
@@ -258,6 +309,7 @@ export default function FrequenciaPage() {
                           onChange={() =>
                             handlePresencaChange(aluno.id, 'PRESENTE')
                           }
+                          disabled={isConsolidado}
                         />
                         <span className={styles.badge}>P</span>
                         <span className={styles.label}>Presente</span>
@@ -268,7 +320,7 @@ export default function FrequenciaPage() {
                           presencas[aluno.id] === 'FALTA'
                             ? styles.selectedF
                             : ''
-                        }`}
+                        } ${isConsolidado ? styles.disabled : ''}`}
                       >
                         <input
                           type="radio"
@@ -278,6 +330,7 @@ export default function FrequenciaPage() {
                           onChange={() =>
                             handlePresencaChange(aluno.id, 'FALTA')
                           }
+                          disabled={isConsolidado}
                         />
                         <span className={styles.badge}>F</span>
                         <span className={styles.label}>Falta</span>
@@ -288,7 +341,7 @@ export default function FrequenciaPage() {
                           presencas[aluno.id] === 'FALTA_JUSTIFICADA'
                             ? styles.selectedFT
                             : ''
-                        }`}
+                        } ${isConsolidado ? styles.disabled : ''}`}
                       >
                         <input
                           type="radio"
@@ -298,6 +351,7 @@ export default function FrequenciaPage() {
                           onChange={() =>
                             handlePresencaChange(aluno.id, 'FALTA_JUSTIFICADA')
                           }
+                          disabled={isConsolidado}
                         />
                         <span className={styles.badge}>FJ</span>
                         <span className={styles.label}>Justificada</span>
@@ -310,9 +364,12 @@ export default function FrequenciaPage() {
                 <button
                   className={styles.saveButton}
                   onClick={handleSave}
-                  disabled={saving}
+                  disabled={saving || isConsolidado}
+                  style={
+                    isConsolidado ? { opacity: 0.5, cursor: 'not-allowed' } : {}
+                  }
                 >
-                  <FiSave />
+                  <LuSave />
                   {saving ? 'Salvando...' : 'Salvar Frequência'}
                 </button>
               </div>

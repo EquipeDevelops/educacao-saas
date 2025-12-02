@@ -1,44 +1,26 @@
-.pageContainer {
-  padding: 2rem;
-  max-width: 1200px;
-  margin: 0 auto;
-  animation: fadeIn 0.4s ease-out;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
 .header {
-  margin-bottom: 2rem;
-  text-align: left;
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 20px;
 }
 
 .header h1 {
-  font-size: 2rem;
-  font-weight: 700;
+  font-size: 1.5rem;
+  font-weight: 500;
   color: var(--cor-texto-destaque);
-  margin-bottom: 0.5rem;
 }
 
 .header p {
   color: var(--cor-subtexto);
-  font-size: 1rem;
 }
 
+/* ===== Wizard / Form Styles ===== */
 .stepIndicator {
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  gap: 2rem;
-  margin-top: 2rem;
+  gap: 20px;
+  margin-top: 20px;
   border-bottom: 1px solid var(--cor-borda);
   padding-bottom: 1.5rem;
 }
@@ -52,10 +34,11 @@
   color: var(--cor-cinza);
   transition: all 0.3s ease;
   position: relative;
+  cursor: pointer;
 }
 
 .step::after {
-  content: "";
+  content: '';
   position: absolute;
   bottom: -1.6rem;
   left: 0;
@@ -92,26 +75,24 @@
   background: var(--cor-primaria);
   border-color: var(--cor-primaria);
   color: #fff;
-  box-shadow: 0 0 0 4px var(--cor-primaria-light);
 }
 
 .card {
   background: var(--cor-fundo-card);
   border: 1px solid var(--cor-borda);
   border-radius: 12px;
-  box-shadow: var(--sombra-sm);
-  padding: 2.5rem;
+  padding: 20px;
   min-height: 500px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  margin-top: 1.5rem;
+  margin-top: 20px;
 }
 
 .formGrid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 1.5rem;
+  gap: 20px;
 }
 
 .fullWidth {
@@ -126,36 +107,28 @@
   margin-bottom: 0.5rem;
 }
 
-.card input,
-.card select,
-.card textarea {
-  width: 100%;
-  padding: 0.8rem 1rem;
+/* BNCC Styles */
+.bnccContextBar {
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  background-color: var(--cor-fundo);
+  border-radius: 6px;
   border: 1px solid var(--cor-borda);
-  border-radius: 8px;
-  font-size: 1rem;
-  background-color: #fff;
-  color: var(--cor-texto);
-  transition: border-color 0.2s, box-shadow 0.2s;
-}
-
-.card input:focus,
-.card select:focus,
-.card textarea:focus {
-  border-color: var(--cor-primaria);
-  box-shadow: 0 0 0 4px var(--cor-primaria-light);
-  outline: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .bnccFilters {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1rem;
+  gap: 20px;
   padding: 1.5rem;
   background: var(--cor-fundo);
   border: 1px solid var(--cor-borda);
   border-radius: 8px;
   margin-bottom: 2rem;
+  animation: fadeIn 0.3s;
 }
 
 .searchWrapper {
@@ -180,7 +153,7 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 1rem;
-  max-height: 450px;
+  max-height: 600px;
   overflow-y: auto;
   padding: 0.5rem;
 }
@@ -188,8 +161,8 @@
 .bnccItem {
   background: #fff;
   border: 1px solid var(--cor-borda);
-  border-radius: 8px;
-  padding: 1.25rem;
+  border-radius: 10px;
+  padding: 20px;
   cursor: pointer;
   transition: all 0.2s ease;
   display: flex;
@@ -200,7 +173,6 @@
 
 .bnccItem:hover {
   border-color: var(--cor-primaria);
-  transform: translateY(-2px);
   box-shadow: var(--sombra-md);
 }
 
@@ -211,12 +183,13 @@
 }
 
 .bnccCode {
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   font-weight: 700;
   color: var(--cor-primaria-dark);
   background: var(--cor-primaria-light);
-  padding: 0.3rem 0.6rem;
-  border-radius: 6px;
+  padding: 5px 10px;
+  border-radius: 5px;
+  border: 1px solid color-mix(in srgb, var(--cor-primaria) 20%, #fff 80%);
   align-self: flex-start;
 }
 
@@ -226,24 +199,34 @@
 }
 
 .bnccItem p {
-  font-size: 0.95rem;
+  font-size: 1rem;
   line-height: 1.5;
   color: var(--cor-subtexto);
   margin: 0;
 }
 
+.checkIcon {
+  color: var(--cor-sucesso);
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  font-size: 1.2rem;
+}
+
+/* Attendance Styles */
 .attendanceHeader {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 2rem;
-  padding-bottom: 1rem;
+  margin-bottom: 20px;
+  padding-bottom: 20px;
   border-bottom: 1px solid var(--cor-borda);
 }
 
 .attendanceHeader h3 {
-  font-size: 1.25rem;
+  font-size: 1.2rem;
   margin: 0;
+  color: var(--cor-texto-destaque);
 }
 
 .attendanceList {
@@ -256,10 +239,10 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1rem 1.5rem;
+  padding: 20px;
   background: #fff;
   border: 1px solid var(--cor-borda);
-  border-radius: 8px;
+  border-radius: 10px;
   transition: background-color 0.2s;
 }
 
@@ -284,7 +267,7 @@
   justify-content: center;
   font-weight: 700;
   font-size: 0.9rem;
-  border: 1px solid rgba(1, 107, 228, 0.1);
+  border: 1px solid color-mix(in srgb, var(--cor-primaria) 20%, #fff 80%);
 }
 
 .studentName strong {
@@ -306,9 +289,9 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.6rem 1.2rem;
-  border-radius: 6px;
-  border: 1px solid var(--cor-borda);
+  padding: 10px 20px;
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, currentColor 50%, #fff 50%);
   background: #fff;
   color: var(--cor-subtexto);
   cursor: pointer;
@@ -323,18 +306,38 @@
 
 .btnPresence.presente {
   background-color: var(--cor-sucesso-light);
-  border-color: var(--cor-sucesso);
   color: var(--cor-sucesso-dark);
 }
 
 .btnPresence.ausente {
   background-color: var(--cor-perigo-light);
-  border-color: var(--cor-perigo);
   color: var(--cor-perigo-dark);
 }
 
+.btnPresence.justificada {
+  background-color: var(--cor-aviso-light);
+  color: var(--cor-aviso-dark);
+}
+
+.btnPresence.justificada:hover {
+  background-color: var(--cor-aviso-light);
+}
+
+.rascunhoIndicator {
+  background-color: var(--cor-aviso-light);
+  border: 1px solid var(--cor-aviso);
+  padding: 10px 20px;
+  border-radius: 10px;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.9rem;
+  color: #92400e;
+}
+
 .footer {
-  margin-top: 3rem;
+  margin-top: 2rem;
   padding-top: 2rem;
   border-top: 1px solid var(--cor-borda);
   display: flex;
@@ -342,12 +345,14 @@
   align-items: center;
 }
 
+/* Buttons */
 .btnNav {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.9rem 1.8rem;
-  border-radius: 8px;
+  padding: 10px 20px !important;
+  border-radius: 10px;
+  background-color: var(--cor-primaria);
   font-weight: 600;
   font-size: 1rem;
   border: none;
@@ -370,43 +375,268 @@
 .btnNext {
   background-color: var(--cor-primaria);
   color: #fff;
-  box-shadow: 0 4px 6px rgba(1, 107, 228, 0.2);
 }
 
 .btnNext:hover {
   background-color: var(--cor-primaria-hover);
-  transform: translateY(-1px);
-  box-shadow: 0 6px 8px rgba(1, 107, 228, 0.3);
 }
 
 .btnSave {
   background-color: var(--cor-sucesso);
   color: #fff;
-  box-shadow: 0 4px 6px rgba(46, 196, 136, 0.2);
+  font-size: 1rem;
+  font-weight: 600;
 }
 
 .btnSave:hover {
   background-color: var(--cor-sucesso-dark);
-  transform: translateY(-1px);
-  box-shadow: 0 6px 8px rgba(46, 196, 136, 0.3);
 }
 
-.loading,
-.error {
+.btnNew {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 10px 20px;
+  background-color: var(--cor-primaria);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  width: fit-content;
+  align-self: flex-end;
+}
+
+.btnNew:hover {
+  background-color: var(--cor-primaria-hover);
+}
+
+/* ===== List View Styles (Standardized) ===== */
+
+.filtersContainer {
+  background-color: var(--cor-fundo-card);
+  border: 1px solid var(--cor-borda);
+  border-radius: 15px;
+  padding: 20px;
+  margin-bottom: 2rem;
+}
+
+.filtersHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.filtersHeader h2 {
+  font-size: 1.15rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--cor-texto-destaque);
+}
+
+.filtersHeader svg {
+  color: var(--cor-primaria);
+}
+
+.clearButton {
+  border: 1px solid var(--cor-borda);
+  background-color: transparent;
+  color: var(--cor-texto);
+  font-weight: 500;
+  padding: 10px 20px;
+  border-radius: 10px;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.clearButton:not(:disabled):hover {
+  background-color: var(--cor-primaria);
+  color: #fff;
+}
+
+.clearButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.filtersGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.25rem;
+}
+
+.filtersGrid label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.filtersGrid span {
+  font-size: 0.9rem;
+  color: var(--cor-subtexto);
+}
+
+.filtersGrid input[type='text']::placeholder {
+  color: var(--cor-subtexto);
+}
+
+.diariosList {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 1.5rem;
+}
+
+.diarioCard {
+  background-color: var(--cor-fundo-card);
+  border: 1px solid var(--cor-borda);
+  border-radius: 16px;
+  overflow: hidden;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.diarioCard:hover {
+  border-color: var(--cor-primaria);
+}
+
+.diarioHeader {
+  padding: 20px;
+  border-bottom: 1px solid var(--cor-borda);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  background-color: var(--cor-primaria-light);
+}
+
+.diarioHeader h3 {
+  font-size: 1.2rem;
+  color: var(--cor-primaria);
+  margin: 0 0 0.25rem;
+  font-weight: 600;
+}
+
+.turmaInfo {
+  font-size: 0.85rem;
+  color: var(--cor-subtexto);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.statusBadge {
+  padding: 0.3rem 0.7rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+  letter-spacing: 0.02em;
+}
+
+.statusBadge.consolidado {
+  background-color: var(--cor-sucesso-light);
+  color: var(--cor-sucesso-dark);
+  border: 1px solid var(--cor-sucesso);
+}
+
+.statusBadge.rascunho {
+  background-color: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fbbf24;
+}
+
+.diarioBody {
+  padding: 1.5rem;
+  flex: 1;
+}
+
+.diarioInfo {
+  display: flex;
+  gap: 1.5rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.diarioInfo span {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  color: var(--cor-subtexto);
+}
+
+.preview {
+  color: var(--cor-texto);
+  font-size: 0.95rem;
+  line-height: 1.6;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.diarioFooter {
+  padding: 1rem 1.5rem;
+  background-color: var(--cor-fundo-card);
+  border-top: 1px solid var(--cor-borda);
+  display: flex;
+  justify-content: flex-end;
+}
+
+.btnEdit {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.2rem;
+  background-color: transparent;
+  color: var(--cor-primaria);
+  border: 1px solid var(--cor-primaria);
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btnEdit:hover {
+  background-color: var(--cor-primaria);
+  color: #fff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px rgba(1, 107, 228, 0.2);
+}
+
+.loadingBox,
+.emptyState {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 4rem;
+  padding: 4rem 2rem;
+  text-align: center;
+  background-color: var(--cor-fundo-card);
+  border-radius: 16px;
+  border: 1px dashed var(--cor-borda);
   color: var(--cor-subtexto);
-  gap: 1rem;
 }
 
-.error {
-  color: var(--cor-perigo);
-  background: var(--cor-perigo-light);
-  border-radius: 8px;
-  margin: 2rem 0;
+.emptyState h3 {
+  color: var(--cor-texto-destaque);
+  margin: 1rem 0 0.5rem;
+  font-size: 1.5rem;
+}
+
+.emptyState p {
+  color: var(--cor-subtexto);
+  margin-bottom: 2rem;
 }
 
 .spinner {
@@ -418,5 +648,16 @@
 @keyframes spin {
   100% {
     transform: rotate(360deg);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }

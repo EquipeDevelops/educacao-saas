@@ -1,23 +1,15 @@
-.container {
-  padding: 2rem;
-  font-family: "Inter", system-ui, sans-serif;
-  color: var(--cor-texto);
-  background-color: #f9fafb;
-  min-height: 100vh;
-}
-
 .header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 2rem;
+  margin-bottom: 20px;
   flex-wrap: wrap;
   gap: 1rem;
 }
 
 .header h1 {
-  font-size: 1.8rem;
-  font-weight: 700;
+  font-size: 1.5rem;
+  font-weight: 500;
   color: var(--cor-texto-destaque);
   margin: 0;
 }
@@ -32,9 +24,9 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.7rem 1.4rem;
-  font-weight: 600;
-  border-radius: 8px;
+  padding: 10px 20px;
+  font-weight: 500;
+  border-radius: 10px;
   cursor: pointer;
   border: none;
   transition: all 0.2s ease;
@@ -50,22 +42,15 @@
 .button:hover {
   background-color: #f0f0f0;
   border-color: #ccc;
-  transform: translateY(-1px);
 }
 
 .buttonPrimary {
-  background: linear-gradient(
-    145deg,
-    var(--cor-primaria),
-    var(--cor-primaria-dark)
-  );
+  background-color: var(--cor-primaria);
   color: white;
-  box-shadow: 0 2px 5px rgba(0, 83, 224, 0.2);
 }
 
 .buttonPrimary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 10px rgba(0, 83, 224, 0.3);
+  background-color: var(--cor-primaria-dark);
 }
 
 .toolbar {

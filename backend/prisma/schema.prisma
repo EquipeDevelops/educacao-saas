@@ -383,6 +383,11 @@ enum SituacaoPresenca {
   FALTA_JUSTIFICADA
 }
 
+enum StatusDiario {
+  RASCUNHO
+  CONSOLIDADO
+}
+
 model DiarioAula {
   id                      String                 @id @default(auto()) @map("_id") @db.ObjectId
   data                    DateTime               @db.Date
@@ -391,6 +396,7 @@ model DiarioAula {
   tema                    String?
   atividade               String?
   observacoes             String?
+  status                  StatusDiario           @default(RASCUNHO)
   criado_em               DateTime               @default(now())
   atualizado_em           DateTime               @updatedAt
   professor               Usuarios_professor     @relation(fields: [professorId], references: [id])
