@@ -9,6 +9,7 @@ import { FiUser, FiArrowLeft } from 'react-icons/fi';
 import { useAuth } from '@/contexts/AuthContext';
 import { LuImport } from 'react-icons/lu';
 import Section from '@/components/section/Section';
+import Loading from '@/components/loading/Loading';
 
 export default function AlunoProfileLayout({
   children,
@@ -28,6 +29,9 @@ export default function AlunoProfileLayout({
       turma: { nome: string; serie: string };
     }[];
   } | null>(null);
+
+  const [loadingAluno, setLoadingAluno] = useState(true);
+  const [errorAluno, setErrorAluno] = useState<string | null>(null);
 
   const handleExportPdf = async () => {
     try {
@@ -50,12 +54,20 @@ export default function AlunoProfileLayout({
     if (authLoading) return;
 
     if (user && alunoId) {
+      console.log('Buscando aluno com ID:', alunoId);
       api
         .get(`/alunos/${alunoId}`)
-        .then((res) => setAluno(res.data))
-        .catch((err) =>
-          console.error('Erro ao carregar aluno no layout:', err),
-        );
+        .then((res) => {
+          setAluno(res.data);
+          setLoadingAluno(false);
+        })
+        .catch((err) => {
+          console.error('Erro ao carregar aluno no layout:', err);
+          setErrorAluno('Erro ao carregar dados do aluno.');
+          setLoadingAluno(false);
+        });
+    } else {
+      setLoadingAluno(false);
     }
   }, [alunoId, authLoading, user]);
 
@@ -71,33 +83,39 @@ export default function AlunoProfileLayout({
       <Link href="/professor/turmas" className={styles.backLink}>
         <FiArrowLeft /> Voltar para Turmas
       </Link>
-      <header className={styles.profileHeader}>
-        <div className={styles.profileInfo}>
-          <div className={styles.avatar}>
-            <FiUser />
+      {loadingAluno ? (
+        <Loading />
+      ) : errorAluno ? (
+        <div className={styles.error}>{errorAluno}</div>
+      ) : (
+        <header className={styles.profileHeader}>
+          <div className={styles.profileInfo}>
+            <div className={styles.avatar}>
+              <FiUser />
+            </div>
+            <div className={styles.info}>
+              <h1>{aluno?.usuario.nome}</h1>
+              <ul>
+                <li>Matrícula: {aluno?.numero_matricula}</li>
+                {matriculaAtiva && (
+                  <>
+                    <li>
+                      Turma: {matriculaAtiva.turma.serie} -{' '}
+                      {matriculaAtiva.turma.nome}
+                    </li>
+                    <li>Ano Letivo: {matriculaAtiva.ano_letivo}</li>
+                  </>
+                )}
+              </ul>
+            </div>
           </div>
-          <div className={styles.info}>
-            <h1>{aluno?.usuario.nome}</h1>
-            <ul>
-              <li>Matrícula: {aluno?.numero_matricula}</li>
-              {matriculaAtiva && (
-                <>
-                  <li>
-                    Turma: {matriculaAtiva.turma.serie} -{' '}
-                    {matriculaAtiva.turma.nome}
-                  </li>
-                  <li>Ano Letivo: {matriculaAtiva.ano_letivo}</li>
-                </>
-              )}
-            </ul>
+          <div className={styles.actions}>
+            <button onClick={handleExportPdf}>
+              <LuImport /> Exportar em PDF
+            </button>
           </div>
-        </div>
-        <div className={styles.actions}>
-          <button onClick={handleExportPdf}>
-            <LuImport /> Exportar em PDF
-          </button>
-        </div>
-      </header>
+        </header>
+      )}
       <nav className={styles.tabs}>
         {tabs.map((tab) => (
           <Link

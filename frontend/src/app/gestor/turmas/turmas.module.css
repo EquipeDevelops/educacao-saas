@@ -1,16 +1,13 @@
-.container {
-  padding: 2rem;
-}
-
 .header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 2rem;
+  margin-bottom: 20px;
 }
 
 .header h1 {
-  font-size: 1.8rem;
+  font-size: 1.5rem;
+  font-weight: 500;
 }
 
 .header p {
@@ -24,15 +21,16 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.75rem 1.5rem;
-  border-radius: 8px;
-  font-weight: 600;
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-weight: 500;
   border: none;
   cursor: pointer;
+  transition: all 0.2s ease;
 }
 
 .primaryButton:hover {
-  background-color: var(--cor-primaria-hover);
+  background-color: var(--cor-primaria-dark);
 }
 
 .toolbar {
@@ -42,18 +40,24 @@
 .searchContainer {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  background-color: var(--cor-fundo-card);
-  padding: 0.75rem 1rem;
-  border-radius: 8px;
-  border: 1px solid var(--cor-borda);
+  position: relative;
   max-width: 400px;
 }
+
 .searchContainer input {
-  border: none;
+  border: 1px solid var(--cor-borda);
+  border-radius: 8px;
+  padding: 10px 10px 10px 40px;
   outline: none;
-  background: transparent;
+  background: var(--cor-fundo-card);
   width: 100%;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 10px;
+  font-size: 1.2rem;
+  color: var(--cor-subtexto);
 }
 
 .grid {

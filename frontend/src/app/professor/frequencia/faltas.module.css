@@ -229,6 +229,12 @@
   color: var(--cor-subtexto);
 }
 
+.disabled {
+  opacity: 0.5;
+  pointer-events: none;
+  cursor: not-allowed;
+}
+
 @media (max-width: 768px) {
   .controls {
     grid-template-columns: 1fr;

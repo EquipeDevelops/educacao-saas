@@ -22,6 +22,8 @@ import {
 } from 'react-icons/fi';
 import Section from '@/components/section/Section';
 import Loading from '@/components/loading/Loading';
+import { LuFilter, LuPlus } from 'react-icons/lu';
+import ErrorMsg from '@/components/errorMsg/ErrorMsg';
 
 interface ExtendedTurma extends TurmaDashboardInfo {
   etapa?: 'INFANTIL' | 'FUNDAMENTAL' | 'MEDIO' | null;
@@ -223,9 +225,11 @@ export default function DiarioWizardPage() {
   const [bnccSkills, setBnccSkills] = useState<BnccHabilidade[]>([]);
 
   const [selectedTurmaId, setSelectedTurmaId] = useState<string>('');
-  const [dataAula, setDataAula] = useState(
-    new Date().toISOString().split('T')[0],
-  );
+  const [dataAula, setDataAula] = useState(() => {
+    const hoje = new Date();
+    const offset = hoje.getTimezoneOffset() * 60000;
+    return new Date(hoje.getTime() - offset).toISOString().split('T')[0];
+  });
   const [tema, setTema] = useState('');
   const [conteudo, setConteudo] = useState('');
   const [duracao, setDuracao] = useState('50');
@@ -248,9 +252,8 @@ export default function DiarioWizardPage() {
   const [diarios, setDiarios] = useState<any[]>([]);
   const [loadingDiarios, setLoadingDiarios] = useState(false);
   const [filterTurma, setFilterTurma] = useState<string>('all');
-  const [filterMes, setFilterMes] = useState<string>(
-    new Date().getMonth().toString(),
-  );
+  const [filterMes, setFilterMes] = useState<string>('all');
+  const [filterStatus, setFilterStatus] = useState<string>('all');
 
   useEffect(() => {
     if (authLoading) return;
@@ -435,7 +438,8 @@ export default function DiarioWizardPage() {
             }
           } else {
             // No diary exists - reset all fields to defaults
-            setTema('');
+            const [ano, mes, dia] = dataAula.split('-');
+            setTema(`Diário do dia ${dia}/${mes}/${ano}`);
             setConteudo('');
             setDuracao('50');
             setSelectedSkills([]);
@@ -443,7 +447,8 @@ export default function DiarioWizardPage() {
         } catch (diarioErr) {
           // No existing diary - use defaults
           console.log('No existing diary found for this date');
-          setTema('');
+          const [ano, mes, dia] = dataAula.split('-');
+          setTema(`Diário do dia ${dia}/${mes}/${ano}`);
           setConteudo('');
           setDuracao('50');
           setSelectedSkills([]);
@@ -530,10 +535,13 @@ export default function DiarioWizardPage() {
       return;
     }
 
+    const [ano, mes, dia] = dataAula.split('-');
+    const defaultTema = `Diário do dia ${dia}/${mes}/${ano}`;
+
     const payload = {
       componenteCurricularId: selectedTurmaId,
       data: dataAula,
-      tema,
+      tema: tema.trim() || defaultTema,
       conteudo,
       duracao: parseInt(duracao),
       habilidades: selectedSkills.map((s) => ({
@@ -800,11 +808,7 @@ export default function DiarioWizardPage() {
         </div>
       )}
       <div className={styles.attendanceHeader}>
-        <h3>
-          Chamada (
-          {Object.values(frequencia).filter((s) => s === 'PRESENTE').length}/
-          {alunos.length})
-        </h3>
+        <h3>Chamada</h3>
         <div className={styles.actions}>
           <button
             type="button"
@@ -882,24 +886,42 @@ export default function DiarioWizardPage() {
       'Dezembro',
     ];
 
-    // Filter diaries
     const diariosFiltered = diarios.filter((d) => {
       const matchTurma =
         filterTurma === 'all' || d.componenteCurricularId === filterTurma;
-      const diaroMonth = new Date(d.data).getMonth();
+
+      if (!d.data) return false;
+
+      const diaroMonth = new Date(d.data).getUTCMonth();
       const matchMes =
         filterMes === 'all' || diaroMonth.toString() === filterMes;
-      return matchTurma && matchMes;
+      const matchStatus = filterStatus === 'all' || d.status === filterStatus;
+      return matchTurma && matchMes && matchStatus;
     });
 
+    const clearFilters = () => {
+      setFilterTurma('all');
+      setFilterMes('all');
+      setFilterStatus('all');
+    };
+
+    const hasAppliedFilters =
+      filterTurma !== 'all' || filterMes !== 'all' || filterStatus !== 'all';
+
+    if (loadingDiarios) {
+      return (
+        <Section>
+          <Loading />
+        </Section>
+      );
+    }
+
     return (
-      <div>
-        <div className={styles.listHeader}>
+      <Section>
+        <header className={styles.header}>
           <div>
-            <h1>
-              <FiBook /> Meus Diários de Classe
-            </h1>
-            <p>Gerencie todos os seus registros de aula</p>
+            <h1>Meus Diários de Classe</h1>
+            <p>Gerencie todos os seus registros de aula e frequências.</p>
           </div>
           <button
             className={styles.btnNew}
@@ -908,40 +930,67 @@ export default function DiarioWizardPage() {
               setStep(1);
             }}
           >
-            <FiPlus /> Novo Diário
+            <LuPlus /> Novo Diário
           </button>
-        </div>
+        </header>
 
-        <div className={styles.filters}>
-          <div className={styles.filterGroup}>
-            <label>Turma</label>
-            <select
-              value={filterTurma}
-              onChange={(e) => setFilterTurma(e.target.value)}
+        <section className={styles.filtersContainer}>
+          <div className={styles.filtersHeader}>
+            <h2>
+              <LuFilter /> Filtros
+            </h2>
+            <button
+              type="button"
+              className={styles.clearButton}
+              onClick={clearFilters}
+              disabled={!hasAppliedFilters}
             >
-              <option value="all">Todas as Turmas</option>
-              {turmas.map((t) => (
-                <option key={t.componenteId} value={t.componenteId}>
-                  {t.nomeTurma} - {t.materia}
-                </option>
-              ))}
-            </select>
+              Limpar filtros
+            </button>
           </div>
-          <div className={styles.filterGroup}>
-            <label>Mês</label>
-            <select
-              value={filterMes}
-              onChange={(e) => setFilterMes(e.target.value)}
-            >
-              <option value="all">Todos os Meses</option>
-              {meses.map((mes, idx) => (
-                <option key={idx} value={idx.toString()}>
-                  {mes}
-                </option>
-              ))}
-            </select>
+
+          <div className={styles.filtersGrid}>
+            <label>
+              <span>Turma</span>
+              <select
+                value={filterTurma}
+                onChange={(e) => setFilterTurma(e.target.value)}
+              >
+                <option value="all">Todas as Turmas</option>
+                {turmas.map((t) => (
+                  <option key={t.componenteId} value={t.componenteId}>
+                    {t.nomeTurma} - {t.materia}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              <span>Mês</span>
+              <select
+                value={filterMes}
+                onChange={(e) => setFilterMes(e.target.value)}
+              >
+                <option value="all">Todos os Meses</option>
+                {meses.map((mes, idx) => (
+                  <option key={idx} value={idx.toString()}>
+                    {mes}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              <span>Status</span>
+              <select
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+              >
+                <option value="all">Todos</option>
+                <option value="RASCUNHO">Rascunho</option>
+                <option value="CONSOLIDADO">Consolidado</option>
+              </select>
+            </label>
           </div>
-        </div>
+        </section>
 
         {loadingDiarios ? (
           <div className={styles.loadingBox}>
@@ -952,15 +1001,20 @@ export default function DiarioWizardPage() {
           <div className={styles.emptyState}>
             <FiBook style={{ fontSize: '3rem', opacity: 0.3 }} />
             <h3>Nenhum diário encontrado</h3>
-            <p>Comece criando seu primeiro registro de aula</p>
-            <button className={styles.btnNew} onClick={() => setView('form')}>
-              <FiPlus /> Criar Primeiro Diário
-            </button>
+            <p>
+              {hasAppliedFilters
+                ? 'Tente ajustar os filtros para encontrar o que procura.'
+                : 'Comece criando seu primeiro registro de aula.'}
+            </p>
+            {!hasAppliedFilters && (
+              <button className={styles.btnNew} onClick={() => setView('form')}>
+                <FiPlus /> Criar Primeiro Diário
+              </button>
+            )}
           </div>
         ) : (
           <div className={styles.diariosList}>
             {diariosFiltered.map((diario) => {
-              // Get turma info from nested componenteCurricular
               const turmaInfo = diario.componenteCurricular;
               const dataFormatada = new Date(diario.data).toLocaleDateString(
                 'pt-BR',
@@ -1008,7 +1062,6 @@ export default function DiarioWizardPage() {
                     <button
                       className={styles.btnEdit}
                       onClick={() => {
-                        // Pre-select the turma and date before switching to form
                         setSelectedTurmaId(diario.componenteCurricularId);
                         setDataAula(
                           new Date(diario.data).toISOString().split('T')[0],
@@ -1025,12 +1078,22 @@ export default function DiarioWizardPage() {
             })}
           </div>
         )}
-      </div>
+      </Section>
     );
   };
 
-  if (loading) return <div className={styles.loading}>Carregando...</div>;
-  if (error) return <div className={styles.error}>{error}</div>;
+  if (loading)
+    return (
+      <Section>
+        <Loading />
+      </Section>
+    );
+  if (error)
+    return (
+      <Section>
+        <ErrorMsg text={error} />
+      </Section>
+    );
 
   // Show list view or form view
   if (view === 'list') {

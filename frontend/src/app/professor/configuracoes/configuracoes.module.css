@@ -88,14 +88,19 @@
 .error,
 .success {
   font-weight: 500;
+  padding: 10px 20px;
+  border: 1px solid color-mix(in srgb, currentColor 20%, white 80%);
+  border-radius: 10px;
 }
 
 .error {
-  color: var(--cor-perigo-dark);
+  color: var(--cor-perigo);
+  background-color: var(--cor-perigo-light);
 }
 
 .success {
   color: var(--cor-sucesso-dark);
+  background-color: var(--cor-sucesso-light);
 }
 
 @media (max-width: 768px) {
