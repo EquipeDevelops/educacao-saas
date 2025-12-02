@@ -3,11 +3,13 @@
 import { useState, useEffect } from 'react';
 import { api } from '@/services/api';
 import styles from './desempenho.module.css';
-import { FiUsers, FiBarChart2, FiClipboard } from 'react-icons/fi';
+import { LuUsers, LuChartBar, LuClipboardList } from 'react-icons/lu';
 import StatCard from '@/components/professor/dashboard/StatCard/StatCard';
 import DesempenhoTurmas from '@/components/professor/dashboard/DesempenhoTurmas/DesempenhoTurmas';
 import DesempenhoTurmaDetalhes from '@/components/professor/dashboard/DesempenhoTurmaDetalhes/DesempenhoTurmaDetalhes';
 import { TurmaDashboardInfo } from '../turmas/page';
+import Section from '@/components/section/Section';
+import Loading from '@/components/loading/Loading';
 
 type DesempenhoData = {
   desempenhoGeral: number;
@@ -44,8 +46,10 @@ export default function DesempenhoPage() {
 
   const selectedTurma = turmas.find((t) => t.componenteId === selectedTurmaId);
 
+  if (loading) return <Loading />;
+
   return (
-    <div className={styles.pageContainer}>
+    <Section>
       <header className={styles.header}>
         <h1>Desempenho Geral</h1>
         <p>Acompanhe a performance de suas turmas e alunos.</p>
@@ -66,12 +70,11 @@ export default function DesempenhoPage() {
               selectedTurmaId === turma.componenteId ? styles.activeTab : ''
             }
           >
-            {turma.nomeTurma}
+            {turma.nomeTurma} - {turma.materia}
           </button>
         ))}
       </div>
 
-      {loading && <p>Carregando...</p>}
       {error && <p className={styles.error}>{error}</p>}
 
       {!loading && (
@@ -83,17 +86,17 @@ export default function DesempenhoPage() {
               <>
                 <section className={styles.statsGrid}>
                   <StatCard
-                    icon={<FiUsers />}
+                    icon={<LuUsers />}
                     title="Média Geral dos Alunos"
                     value={desempenho.desempenhoGeral.toFixed(1)}
                   />
                   <StatCard
-                    icon={<FiClipboard />}
+                    icon={<LuClipboardList />}
                     title="Taxa de Conclusão de Atividades"
                     value={`${desempenho.taxaConclusaoGeral}%`}
                   />
                   <StatCard
-                    icon={<FiBarChart2 />}
+                    icon={<LuChartBar />}
                     title="Turmas Lecionadas"
                     value={desempenho.porTurma.length.toString()}
                   />
@@ -106,6 +109,6 @@ export default function DesempenhoPage() {
           )}
         </main>
       )}
-    </div>
+    </Section>
   );
 }

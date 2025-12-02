@@ -12,6 +12,9 @@ export default function Questoes({
   let acertou = false;
   let respostaAluno = '';
   let respostaCorreta = '';
+  const respostaEsperada = (
+    (questao.payload as Record<string, any> | null) ?? {}
+  ).respostaEsperada as string | undefined;
 
   if (!resposta) {
     acertou = false;
@@ -43,7 +46,7 @@ export default function Questoes({
 
     case 'DISCURSIVA': {
       respostaAluno = resposta?.resposta_texto;
-      respostaCorreta = resposta?.feedback;
+      respostaCorreta = respostaEsperada || resposta?.feedback;
       if (resposta?.nota && resposta.nota === questao.pontos) {
         acertou = true;
       }
@@ -88,9 +91,13 @@ export default function Questoes({
           </p>
         </div>
       </div>
-      {!acertou && resposta?.feedback ? (
+      {!acertou && (respostaEsperada?.trim() || resposta?.feedback) ? (
         <div className={styles.feedback}>
-          <p>{resposta.feedback}</p>
+          <p>
+            {respostaEsperada?.trim()
+              ? `Resposta esperada: ${respostaEsperada}`
+              : resposta?.feedback}
+          </p>
         </div>
       ) : (
         ''

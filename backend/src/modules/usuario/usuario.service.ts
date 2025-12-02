@@ -1,14 +1,14 @@
-import { Prisma, PrismaClient, PapelUsuario } from "@prisma/client";
-import bcryptjs from "bcryptjs";
-import { CreateUserInput } from "./usuario.validator";
-import { Readable } from "stream";
-import csv from "csv-parser";
+import { Prisma, PrismaClient, PapelUsuario } from '@prisma/client';
+import bcryptjs from 'bcryptjs';
+import { CreateUserInput } from './usuario.validator';
+import { Readable } from 'stream';
+import csv from 'csv-parser';
 
 const prisma = new PrismaClient();
 
 type PrismaTransactionClient = Omit<
   PrismaClient,
-  "$connect" | "$disconnect" | "$on" | "$transaction" | "$use" | "$extends"
+  '$connect' | '$disconnect' | '$on' | '$transaction' | '$use' | '$extends'
 >;
 
 interface UserPayload {
@@ -36,11 +36,11 @@ interface AlunoCSV {
 async function importarAlunos(
   user: UserPayload,
   fileBuffer: Buffer,
-  prismaClient: PrismaTransactionClient = prisma
+  prismaClient: PrismaTransactionClient = prisma,
 ): Promise<{ criados: number; erros: number; detalhesErros: string[] }> {
   if (!user.unidadeEscolarId || !user.instituicaoId) {
     throw new Error(
-      "Gestor não está vinculado a uma instituição ou unidade escolar."
+      'Gestor não está vinculado a uma instituição ou unidade escolar.',
     );
   }
 
@@ -49,15 +49,15 @@ async function importarAlunos(
     const data: AlunoCSV[] = [];
     stream
       .pipe(csv())
-      .on("data", (row) => data.push(row))
-      .on("end", () => resolve(data))
-      .on("error", (error) => reject(error));
+      .on('data', (row) => data.push(row))
+      .on('end', () => resolve(data))
+      .on('error', (error) => reject(error));
   });
 
   let criados = 0;
   let erros = 0;
   const detalhesErros: string[] = [];
-  const senhaPadrao = "mudar123";
+  const senhaPadrao = 'mudar123';
   const senhaHash = await bcryptjs.hash(senhaPadrao, 10);
 
   for (const [index, aluno] of resultados.entries()) {
@@ -70,7 +70,7 @@ async function importarAlunos(
     ) {
       erros++;
       detalhesErros.push(
-        `Linha ${linha}: Faltam dados obrigatórios (nome, email, numero_matricula, data_nascimento).`
+        `Linha ${linha}: Faltam dados obrigatórios (nome, email, numero_matricula, data_nascimento).`,
       );
       continue;
     }
@@ -84,14 +84,14 @@ async function importarAlunos(
       if (emailExistente) {
         erros++;
         detalhesErros.push(
-          `Linha ${linha}: O email '${aluno.email}' já está em uso.`
+          `Linha ${linha}: O email '${aluno.email}' já está em uso.`,
         );
         continue;
       }
       if (matriculaExistente) {
         erros++;
         detalhesErros.push(
-          `Linha ${linha}: O número de matrícula '${aluno.numero_matricula}' já está em uso.`
+          `Linha ${linha}: O número de matrícula '${aluno.numero_matricula}' já está em uso.`,
         );
         continue;
       }
@@ -120,7 +120,7 @@ async function importarAlunos(
     } catch (error) {
       erros++;
       detalhesErros.push(
-        `Linha ${linha}: Erro ao processar o aluno '${aluno.nome}'. Verifique os dados.`
+        `Linha ${linha}: Erro ao processar o aluno '${aluno.nome}'. Verifique os dados.`,
       );
     }
   }
@@ -237,15 +237,15 @@ async function updateUser(
     data?: any;
   },
   where: Prisma.UsuariosWhereInput,
-  prismaClient: PrismaTransactionClient = prisma
+  prismaClient: PrismaTransactionClient = prisma,
 ) {
   const userExists = await prismaClient.usuarios.findFirst({
     where: { id, ...where },
-    select: { perfil_professor: { select: { id: true } } },
+    select: { senha_hash: true, perfil_professor: { select: { id: true } } },
   });
 
   if (!userExists) {
-    throw new Error("Usuário não encontrado ou sem permissão para atualizar.");
+    throw new Error('Usuário não encontrado ou sem permissão para atualizar.');
   }
 
   const { perfil_professor, data: ignoredFormData, ...userData } = input;
@@ -273,15 +273,15 @@ async function updateUser(
 async function deleteUser(
   id: string,
   where: Prisma.UsuariosWhereInput,
-  prismaClient: PrismaTransactionClient = prisma
+  prismaClient: PrismaTransactionClient = prisma,
 ) {
   const userExists = await prismaClient.usuarios.findFirst({
     where: { id, ...where },
   });
   if (!userExists)
-    throw new Error("Usuário não encontrado ou sem permissão para deletar.");
+    throw new Error('Usuário não encontrado ou sem permissão para deletar.');
   await prismaClient.usuarios.delete({ where: { id } });
-  return { message: "Usuário deletado com sucesso." };
+  return { message: 'Usuário deletado com sucesso.' };
 }
 
 export const usuarioService = {

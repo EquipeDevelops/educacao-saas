@@ -1,5 +1,16 @@
 import { z } from "zod";
-import { TipoQuestao } from "@prisma/client";
+
+// Definimos manualmente para evitar erro de importação undefined do Prisma em runtime
+// Isso DEVE bater com o enum TipoQuestao no schema.prisma
+const TIPOS_QUESTAO = [
+  "MULTIPLA_ESCOLHA",
+  "DISCURSIVA",
+  "VERDADEIRO_FALSO",
+  "ASSOCIACAO_DE_COLUNAS", // Corrigido para bater com o schema.prisma (era ASSOCIACAO)
+] as const;
+
+// Criamos o Zod Enum diretamente das strings
+const TipoQuestaoEnum = z.enum(TIPOS_QUESTAO);
 
 export const paramsSchema = z.object({
   id: z.string({ required_error: "O ID da questão é obrigatório." }),
@@ -12,27 +23,24 @@ export const createQuestaoSchema = z.object({
       .number({ required_error: "A sequência é obrigatória." })
       .int()
       .positive(),
-    tipo: z.nativeEnum(TipoQuestao, {
-      required_error: "O tipo da questão é obrigatório.",
-    }),
+    tipo: TipoQuestaoEnum,
     titulo: z.string({ required_error: "O título é obrigatório." }).min(3),
     enunciado: z.string({ required_error: "O enunciado é obrigatório." }),
     pontos: z
       .number({ required_error: "A pontuação é obrigatória." })
-      .int()
       .min(0),
-    payload: z.record(z.any()).optional(), // Para dados extras, como opções de associação
+    payload: z.record(z.string(), z.any()).optional(), 
   }),
 });
 
 export const updateQuestaoSchema = z.object({
   body: z.object({
     sequencia: z.number().int().positive().optional(),
-    tipo: z.nativeEnum(TipoQuestao).optional(),
+    tipo: TipoQuestaoEnum.optional(),
     titulo: z.string().min(3).optional(),
     enunciado: z.string().optional(),
-    pontos: z.number().int().min(0).optional(),
-    payload: z.record(z.any()).optional(),
+    pontos: z.number().min(0).optional(),
+    payload: z.record(z.string(), z.any()).optional(),
   }),
   params: paramsSchema,
 });

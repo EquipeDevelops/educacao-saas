@@ -1,0 +1,154 @@
+.resumoCard {
+  background-color: white;
+  color: var(--cor-texto);
+  border-radius: 12px;
+  border: 1px solid var(--cor-borda);
+  padding: 20px;
+  border-radius: 15px;
+}
+
+.resumoCard h2 {
+  font-size: 1.2rem;
+  margin-bottom: 20px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.resumoCard h2 span {
+  background-color: var(--cor-primaria);
+  width: 5px;
+  height: 25px;
+  border-radius: 5px;
+}
+
+.resumoAluno {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding-bottom: 20px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--cor-borda);
+}
+
+.avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background-color: var(--cor-primaria);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.resumoAlunoInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.resumoAlunoInfoText {
+  color: var(--cor-subtexto);
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.resumoAlunoInfoText span {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.notaCalculada {
+  text-align: center;
+  padding: 10px 0px;
+}
+.notaCalculada p {
+  margin: 0;
+  color: var(--cor-subtexto);
+}
+.notaCalculada h3 {
+  font-size: 3rem;
+  color: var(--cor-primaria);
+}
+.notaCalculada p {
+  font-size: 1rem;
+  color: var(--cor-subtexto);
+}
+
+.resumoStats {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1.5rem 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+.resumoStats li {
+  display: flex;
+  justify-content: space-between;
+}
+
+.resumoStats li strong {
+  color: var(--cor-primaria);
+}
+
+.resumoActions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.rascunhoButton,
+.finalizarButton {
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  justify-content: center;
+}
+.rascunhoButton {
+  background-color: white;
+  color: var(--cor-texto);
+  border: 1px solid var(--cor-borda);
+}
+
+.rascunhoButton:hover {
+  background-color: var(--cor-bt-white-hover);
+}
+
+.finalizarButton {
+  background-color: var(--cor-primaria);
+  color: white;
+}
+
+.finalizarButton:hover {
+  background-color: var(--cor-primaria-hover);
+}
+
+.rascunhoButton:disabled,
+.finalizarButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background-color: #ccc;
+  border-color: #ccc;
+  color: #666;
+}
+
+.expiredMessage {
+  background-color: var(--cor-aviso-light);
+  color: var(--cor-aviso-dark);
+  padding: 10px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  text-align: center;
+  margin-bottom: 15px;
+  border: 1px solid var(--cor-aviso);
+  font-weight: 500;
+}

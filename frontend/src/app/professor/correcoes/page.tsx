@@ -1,105 +1,143 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import Link from "next/link";
-import { api } from "@/services/api";
-import styles from "./correcoes.module.css";
-import { FiFileText } from "react-icons/fi";
+import { useState, useEffect, useMemo } from 'react';
+import { api } from '@/services/api';
+import { useAuth } from '@/contexts/AuthContext';
+import styles from './correcoes.module.css';
+import { LuBox, LuFilter } from 'react-icons/lu';
+import Section from '@/components/section/Section';
+import CorrecaoCard, {
+  CorrecaoInfo,
+} from './components/correcaoCard/CorrecaoCard';
+import Pagination from '@/components/paginacao/Paginacao';
+import Loading from '@/components/loading/Loading';
 
-type CorrecaoInfo = {
-  id: string;
-  titulo: string;
-  turma: string;
-  entregas: number;
-  corrigidas: number;
-  pendentes: number;
-  prazo: string;
-  status: "PENDENTE" | "CONCLUIDA";
-};
-
-const CorrecaoCard = ({ correcao }: { correcao: CorrecaoInfo }) => {
-  const percentual =
-    correcao.entregas > 0
-      ? Math.round((correcao.corrigidas / correcao.entregas) * 100)
-      : 0;
-  return (
-    <div className={styles.card}>
-      <div className={styles.cardHeader}>
-        <div className={styles.cardIcon}>
-          <FiFileText />
-        </div>
-        {correcao.pendentes > 0 && (
-          <span className={styles.cardBadge}>
-            {correcao.pendentes} pendentes
-          </span>
-        )}
-      </div>
-      <div className={styles.cardBody}>
-        <h3>{correcao.titulo}</h3>
-        <p>{correcao.turma}</p>
-        <ul>
-          <li>
-            <span>Entregas</span>
-            <strong>{correcao.entregas}</strong>
-          </li>
-          <li>
-            <span>Corrigidas</span>
-            <strong>{correcao.corrigidas}</strong>
-          </li>
-          <li>
-            <span>Prazo</span>
-            <strong>
-              {new Date(correcao.prazo).toLocaleDateString("pt-BR")}
-            </strong>
-          </li>
-        </ul>
-      </div>
-      <div className={styles.cardFooter}>
-        <div className={styles.progressBarContainer}>
-          <div
-            className={styles.progressBar}
-            style={{ width: `${percentual}%` }}
-          ></div>
-        </div>
-        <span>{percentual}% concluído</span>
-      </div>
-      <Link
-        href={`/professor/correcoes/${correcao.id}`}
-        className={styles.cardButton}
-      >
-        {correcao.status === "PENDENTE"
-          ? "Corrigir Atividades"
-          : "Ver Entregas"}
-      </Link>
-    </div>
-  );
-};
+const ITEMS_PER_PAGE = 6;
 
 export default function CorrecoesPage() {
   const [allCorrecoes, setAllCorrecoes] = useState<CorrecaoInfo[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"PENDENTE" | "CONCLUIDA">(
-    "PENDENTE"
-  );
+  const { loading: authLoading } = useAuth();
+
+  const [busca, setBusca] = useState('');
+  const [filtroTurma, setFiltroTurma] = useState('');
+  const [filtroMateria, setFiltroMateria] = useState('');
+  const [ordenacao, setOrdenacao] = useState('prazo_asc');
+  const [mostrarConcluidas, setMostrarConcluidas] = useState(false);
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
+    if (authLoading) return;
+
     async function fetchCorrecoes() {
       try {
-        const response = await api.get("/professor/dashboard/correcoes");
+        setLoading(true);
+        const response = await api.get('/professor/dashboard/correcoes');
         setAllCorrecoes(response.data);
       } catch (error) {
-        console.error("Erro ao buscar correções", error);
+        console.error('Erro ao buscar correções', error);
       } finally {
         setLoading(false);
       }
     }
     fetchCorrecoes();
-  }, []);
+  }, [authLoading]);
 
-  const filteredCorrecoes = allCorrecoes.filter((c) => c.status === activeTab);
+  const turmasDisponiveis = useMemo(() => {
+    const turmas = new Set(allCorrecoes.map((c) => c.turma));
+    return Array.from(turmas).sort();
+  }, [allCorrecoes]);
+
+  const materiasDisponiveis = useMemo(() => {
+    const materias = new Set(allCorrecoes.map((c) => c.materia));
+    return Array.from(materias).sort();
+  }, [allCorrecoes]);
+
+  const filteredCorrecoes = useMemo(() => {
+    let result = allCorrecoes.filter((c) => {
+      if (mostrarConcluidas) {
+        return c.status === 'CONCLUIDA';
+      }
+      return c.status === 'PENDENTE';
+    });
+
+    if (busca) {
+      const termo = busca.toLowerCase();
+      result = result.filter((c) => c.titulo.toLowerCase().includes(termo));
+    }
+
+    if (filtroTurma) {
+      result = result.filter((c) => c.turma === filtroTurma);
+    }
+
+    if (filtroMateria) {
+      result = result.filter((c) => c.materia === filtroMateria);
+    }
+
+    result.sort((a, b) => {
+      if (ordenacao === 'prazo_asc') {
+        return new Date(a.prazo).getTime() - new Date(b.prazo).getTime();
+      } else if (ordenacao === 'prazo_desc') {
+        return new Date(b.prazo).getTime() - new Date(a.prazo).getTime();
+      } else if (ordenacao === 'mais_pendencias') {
+        return b.pendentes - a.pendentes;
+      } else if (ordenacao === 'menos_pendencias') {
+        return a.pendentes - b.pendentes;
+      }
+      return 0;
+    });
+
+    return result;
+  }, [
+    allCorrecoes,
+    mostrarConcluidas,
+    busca,
+    filtroTurma,
+    filtroMateria,
+    ordenacao,
+  ]);
+
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredCorrecoes.length / ITEMS_PER_PAGE),
+  );
+  const safePage = Math.min(page, totalPages);
+
+  const paginatedCorrecoes = useMemo(() => {
+    const startIndex = (safePage - 1) * ITEMS_PER_PAGE;
+    return filteredCorrecoes.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  }, [filteredCorrecoes, safePage]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [busca, filtroTurma, filtroMateria, ordenacao, mostrarConcluidas]);
+
+  const clearFilters = () => {
+    setBusca('');
+    setFiltroTurma('');
+    setFiltroMateria('');
+    setOrdenacao('prazo_asc');
+    setMostrarConcluidas(false);
+    setPage(1);
+  };
+
+  const hasFilters =
+    busca ||
+    filtroTurma ||
+    filtroMateria ||
+    ordenacao !== 'prazo_asc' ||
+    mostrarConcluidas;
+
+  if (loading || authLoading) {
+    return (
+      <Section>
+        <Loading />
+      </Section>
+    );
+  }
 
   return (
-    <div className={styles.pageContainer}>
+    <Section>
       <header className={styles.header}>
         <div>
           <h1>Correções</h1>
@@ -107,38 +145,110 @@ export default function CorrecoesPage() {
         </div>
       </header>
 
-      <div className={styles.tabs}>
-        <button
-          onClick={() => setActiveTab("PENDENTE")}
-          className={activeTab === "PENDENTE" ? styles.activeTab : ""}
-        >
-          Pendentes
-        </button>
-        <button
-          onClick={() => setActiveTab("CONCLUIDA")}
-          className={activeTab === "CONCLUIDA" ? styles.activeTab : ""}
-        >
-          Histórico de Concluídas
-        </button>
-      </div>
+      <section className={styles.filtersContainer}>
+        <div className={styles.filtersHeader}>
+          <h2>
+            <LuFilter /> Filtros
+          </h2>
+          <button
+            type="button"
+            className={styles.clearButton}
+            onClick={clearFilters}
+            disabled={!hasFilters}
+          >
+            Limpar filtros
+          </button>
+        </div>
+        <div className={styles.filtersGrid}>
+          <label>
+            <span>Buscar</span>
+            <input
+              type="text"
+              value={busca}
+              onChange={(e) => setBusca(e.target.value)}
+              placeholder="Título da atividade"
+            />
+          </label>
+          <label>
+            <span>Ordenar por</span>
+            <select
+              value={ordenacao}
+              onChange={(e) => setOrdenacao(e.target.value)}
+            >
+              <option value="prazo_asc">Prazo (Mais próximo)</option>
+              <option value="prazo_desc">Prazo (Mais distante)</option>
+              <option value="mais_pendencias">Mais pendências</option>
+              <option value="menos_pendencias">Menos pendências</option>
+            </select>
+          </label>
+          <label>
+            <span>Turma</span>
+            <select
+              value={filtroTurma}
+              onChange={(e) => setFiltroTurma(e.target.value)}
+            >
+              <option value="">Todas</option>
+              {turmasDisponiveis.map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            <span>Matéria</span>
+            <select
+              value={filtroMateria}
+              onChange={(e) => setFiltroMateria(e.target.value)}
+            >
+              <option value="">Todas</option>
+              {materiasDisponiveis.map((m) => (
+                <option key={m} value={m}>
+                  {m}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className={styles.checkboxLabel}>
+            <span>Status</span>
+            <div className={styles.checkboxContainer}>
+              <input
+                type="checkbox"
+                checked={mostrarConcluidas}
+                onChange={(e) => setMostrarConcluidas(e.target.checked)}
+              />
+              <span>Mostrar concluídas</span>
+            </div>
+          </label>
+        </div>
+      </section>
 
-      {loading ? (
-        <p>Carregando...</p>
-      ) : (
-        <div className={styles.grid}>
-          {filteredCorrecoes.length > 0 ? (
-            filteredCorrecoes.map((c) => (
-              <CorrecaoCard key={c.id} correcao={c} />
-            ))
-          ) : (
+      <div className={styles.grid}>
+        {paginatedCorrecoes.length > 0 ? (
+          paginatedCorrecoes.map((c) => (
+            <CorrecaoCard key={c.id} correcao={c} />
+          ))
+        ) : (
+          <div className={styles.emptyState}>
+            <LuBox size={50} />
             <p className={styles.emptyMessage}>
-              {activeTab === "PENDENTE"
-                ? "Nenhuma atividade com correções pendentes no momento."
-                : "Nenhuma atividade foi corrigida completamente ainda."}
+              {!mostrarConcluidas
+                ? 'Nenhuma atividade com correções pendentes no momento.'
+                : 'Nenhuma atividade foi corrigida completamente ainda.'}
             </p>
-          )}
+          </div>
+        )}
+      </div>
+      {filteredCorrecoes.length > ITEMS_PER_PAGE && (
+        <div className={styles.paginationWrapper}>
+          <Pagination
+            page={safePage}
+            totalPages={totalPages}
+            onChange={setPage}
+            maxButtons={7}
+          />
         </div>
       )}
-    </div>
+    </Section>
   );
 }

@@ -1,17 +1,18 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import { api } from "@/services/api";
-import AlunoList from "@/components/professor/turmas/AlunoList/AlunoList";
-import EstatisticasTab from "@/components/professor/turmas/EstatisticasTab/EstatisticasTab";
-import styles from "./style.module.css";
+import { useState, useEffect } from 'react';
+import { api } from '@/services/api';
+import AlunoList from '@/app/professor/turmas/components/TurmaTabs/components/AlunoList/AlunoList';
+import EstatisticasTab from '@/app/professor/turmas/components/TurmaTabs/components/EstatisticasTab/EstatisticasTab';
+import styles from './style.module.css';
+import Loading from '@/components/loading/Loading';
 
 type Aluno = {
   id: string;
   nome: string;
   media: number;
   presenca: number;
-  status: "Ativo" | "Atenção";
+  status: 'Excelente' | 'Bom' | 'Ruim';
 };
 
 type TurmaDetailsData = {
@@ -42,12 +43,12 @@ export default function DesempenhoTurmaDetalhes({
       try {
         setLoading(true);
         const response = await api.get(
-          `/professor/dashboard/turmas/${componenteId}/details`
+          `/professor/dashboard/turmas/${componenteId}/details`,
         );
         setDetails(response.data);
       } catch (err) {
-        console.error("Erro ao buscar detalhes da turma:", err);
-        setError("Não foi possível carregar os detalhes da turma.");
+        console.error('Erro ao buscar detalhes da turma:', err);
+        setError('Não foi possível carregar os detalhes da turma.');
       } finally {
         setLoading(false);
       }
@@ -55,7 +56,7 @@ export default function DesempenhoTurmaDetalhes({
     fetchDetails();
   }, [componenteId]);
 
-  if (loading) return <p>Carregando detalhes da turma...</p>;
+  if (loading) return <Loading />;
   if (error) return <p className={styles.error}>{error}</p>;
   if (!details) return null;
 
@@ -66,7 +67,7 @@ export default function DesempenhoTurmaDetalhes({
       </div>
       <div className={styles.alunosContainer}>
         <h2>Alunos da Turma</h2>
-        <AlunoList alunos={details.alunos} />
+        <AlunoList alunos={details.alunos} componenteId={componenteId} />
       </div>
     </div>
   );

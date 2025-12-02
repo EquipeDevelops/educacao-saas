@@ -1,0 +1,101 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.content {
+  background-color: white;
+  border: 1px solid var(--cor-borda);
+  border-radius: 15px;
+  overflow: hidden;
+}
+
+.header {
+  padding: 20px;
+  border-radius: 15px;
+  border: 1px solid var(--cor-borda);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: white;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.tabs {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.tabs button {
+  background-color: white;
+  border: 1px solid var(--cor-borda);
+  color: var(--cor-texto);
+  padding: 10px 20px;
+  font-size: 1rem;
+  border-radius: 10px;
+}
+
+.activeTab {
+  background-color: var(--cor-primaria-light) !important;
+  color: var(--cor-primaria) !important;
+  border-color: color-mix(in srgb, currentColor 20%, white 80%) !important;
+}
+
+.tabs button span {
+  font-size: .9rem;
+  padding: 2px 8px;
+  background-color: var(--cor-icons);
+  color: var(--cor-primaria);
+  border-radius: 5px;
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-left: auto;
+}
+
+.search {
+  width: 240px;
+}
+
+.search input {
+  width: 100%;
+  border: 1px solid var(--cor-borda);
+  border-radius: 10px;
+  padding: 10px 14px;
+  background-color: white;
+  color: var(--cor-texto);
+}
+
+.actionButton {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 20px;
+  background-color: var(--cor-primaria);
+  color: white;
+  transition: all .2s ease;
+  font-weight: 500;
+}
+
+.actionButton:hover {
+  background-color: var(--cor-primaria-dark);
+}
+
+@media (max-width: 900px) {
+  .controls {
+    width: 100%;
+    flex-direction: column;
+    align-items: flex-start;
+    margin-left: 0;
+  }
+
+  .search {
+    width: 100%;
+  }
+}

@@ -4,8 +4,9 @@ export type Questao = {
   titulo: string;
   enunciado: string;
   pontos: number;
-  tipo: "MULTIPLA_ESCOLHA" | "DISCURSIVA";
+  tipo: 'MULTIPLA_ESCOLHA' | 'DISCURSIVA';
   opcoes_multipla_escolha: { id: string; texto: string; correta: boolean }[];
+  payload?: { respostaEsperada?: string } | null;
 };
 
 export type Resposta = {
@@ -24,8 +25,15 @@ export type SubmissaoDetail = {
   enviado_em: string;
   atualizado_em: string;
   aluno: { usuario: { nome: string } };
-  tarefa: { id: string; titulo: string; pontos: number;};
-  status: "ENVIADA" | "AVALIADA" | "ENVIADA_COM_ATRASO";
+  tarefa: {
+    id: string;
+    titulo: string;
+    pontos: number;
+    tipo: string;
+    materia: { nome: string };
+    turma: { nome: string; serie: string };
+  };
+  status: 'ENVIADA' | 'AVALIADA' | 'ENVIADA_COM_ATRASO';
   nota_total: number | null;
   feedback: string | null;
   respostas: Resposta[];

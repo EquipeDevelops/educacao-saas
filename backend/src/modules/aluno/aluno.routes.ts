@@ -1,30 +1,37 @@
-import { Router } from "express";
-import { alunoController } from "./aluno.controller";
-import { protect, authorize } from "../../middlewares/auth";
+import { Router } from 'express';
+import { alunoController } from './aluno.controller';
+import { protect, authorize } from '../../middlewares/auth';
 
 const router = Router();
 
-router.get("/", protect, authorize("GESTOR"), alunoController.findAll);
+router.get('/', protect, authorize('GESTOR'), alunoController.findAll);
 
 router.get(
-  "/:id/boletim",
+  '/:id/boletim',
   protect,
-  authorize("GESTOR", "PROFESSOR", "ALUNO"),
-  alunoController.getBoletim
+  authorize('GESTOR', 'PROFESSOR', 'ALUNO', 'RESPONSAVEL'),
+  alunoController.getBoletim,
+);
+
+router.post(
+  '/:id/boletim/comentario',
+  protect,
+  authorize('PROFESSOR'),
+  alunoController.saveComentario,
 );
 
 router.get(
-  "/:id/boletim/pdf",
+  '/:id/boletim/pdf',
   protect,
-  authorize("GESTOR", "PROFESSOR", "ALUNO"),
-  alunoController.getBoletimPdf
+  authorize('GESTOR', 'PROFESSOR', 'ALUNO', 'RESPONSAVEL'),
+  alunoController.getBoletimPdf,
 );
 
 router.get(
-  "/agenda",
+  '/agenda',
   protect,
-  authorize("ALUNO"),
-  alunoController.getAgendaMensal
+  authorize('ALUNO'),
+  alunoController.getAgendaMensal,
 );
 
 router.get(
@@ -34,12 +41,11 @@ router.get(
   alunoController.getProfile,
 );
 
-// Rota para buscar os dados de um aluno específico (incluindo seu nome)
 router.get(
-  "/:id",
+  '/:id',
   protect,
-  authorize("GESTOR", "PROFESSOR", "ALUNO"),
-  alunoController.findOne // Garante que esta rota está aqui
+  authorize('GESTOR', 'PROFESSOR', 'ALUNO'),
+  alunoController.findOne,
 );
 
 export const alunoRoutes = router;

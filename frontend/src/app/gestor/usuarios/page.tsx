@@ -65,17 +65,17 @@ type FormState = {
 };
 
 const createInitialState = (): FormState => ({
-  nome: "",
-  email: "",
-  senha: "",
-  papel: "PROFESSOR",
-  numero_matricula: "",
-  titulacao: "",
-  telefone: "",
+  nome: '',
+  email: '',
+  senha: '',
+  papel: 'PROFESSOR',
+  numero_matricula: '',
+  titulacao: '',
+  telefone: '',
   responsavelAlunos: [
     {
-      alunoId: "",
-      parentesco: "",
+      alunoId: '',
+      parentesco: '',
       principal: true,
     },
   ],
@@ -96,7 +96,7 @@ export default function GestorUsuariosPage() {
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
   const [formState, setFormState] = useState<FormState>(() =>
-    createInitialState()
+    createInitialState(),
   );
   const [editingUser, setEditingUser] = useState<Usuario | null>(null);
 
@@ -131,19 +131,19 @@ export default function GestorUsuariosPage() {
   };
 
   const handleInputChange = (
-    e: ChangeEvent<HTMLInputElement | HTMLSelectElement>
+    e: ChangeEvent<HTMLInputElement | HTMLSelectElement>,
   ) => {
     const { name, value } = e.target;
-    if (name === "papel") {
+    if (name === 'papel') {
       const novoPapel = value as PapelUsuario;
       setFormState((prev) => ({
         ...prev,
         papel: novoPapel,
-        numero_matricula: "",
-        titulacao: "",
-        telefone: "",
+        numero_matricula: '',
+        titulacao: '',
+        telefone: '',
         responsavelAlunos:
-          novoPapel === "RESPONSAVEL"
+          novoPapel === 'RESPONSAVEL'
             ? prev.responsavelAlunos.length > 0
               ? prev.responsavelAlunos
               : [{ alunoId: "", parentesco: "", principal: true }]
@@ -157,7 +157,7 @@ export default function GestorUsuariosPage() {
   const handleResponsavelAlunoChange = (
     index: number,
     field: keyof ResponsavelAlunoForm,
-    value: string | boolean
+    value: string | boolean,
   ) => {
     setFormState((prev) => {
       const updated = [...prev.responsavelAlunos];
@@ -174,7 +174,7 @@ export default function GestorUsuariosPage() {
       ...prev,
       responsavelAlunos: [
         ...prev.responsavelAlunos,
-        { alunoId: "", parentesco: "", principal: false },
+        { alunoId: '', parentesco: '', principal: false },
       ],
     }));
   };
@@ -187,16 +187,16 @@ export default function GestorUsuariosPage() {
   };
 
   const handleEditInputChange = (
-    e: ChangeEvent<HTMLInputElement | HTMLSelectElement>
+    e: ChangeEvent<HTMLInputElement | HTMLSelectElement>,
   ) => {
     if (!editingUser) return;
     const { name, value, type } = e.target;
-    const isCheckbox = type === "checkbox";
+    const isCheckbox = type === 'checkbox';
     const finalValue = isCheckbox
       ? (e.target as HTMLInputElement).checked
       : value;
 
-    if (name === "titulacao") {
+    if (name === 'titulacao') {
       setEditingUser({
         ...editingUser,
         perfil_professor: { ...editingUser.perfil_professor, titulacao: value },
@@ -236,17 +236,17 @@ export default function GestorUsuariosPage() {
       papel: formState.papel,
     };
 
-    if (formState.papel === "ALUNO") {
+    if (formState.papel === 'ALUNO') {
       if (!formState.numero_matricula) {
         toast.error("Matrícula é obrigatória.");
         return;
       }
       payload.perfil_aluno = { numero_matricula: formState.numero_matricula };
-    } else if (formState.papel === "PROFESSOR") {
+    } else if (formState.papel === 'PROFESSOR') {
       payload.perfil_professor = {
         titulacao: formState.titulacao || undefined,
       };
-    } else if (formState.papel === "RESPONSAVEL") {
+    } else if (formState.papel === 'RESPONSAVEL') {
       const alunosVinculados = formState.responsavelAlunos
         .filter((aluno) => aluno.alunoId)
         .map((aluno) => ({
@@ -347,7 +347,7 @@ export default function GestorUsuariosPage() {
 
   const handleSelectAll = (e: ChangeEvent<HTMLInputElement>) => {
     setSelectedUserIds(
-      e.target.checked ? usuariosFiltrados.map((u) => u.id) : []
+      e.target.checked ? usuariosFiltrados.map((u) => u.id) : [],
     );
   };
 
@@ -355,7 +355,7 @@ export default function GestorUsuariosPage() {
     setSelectedUserIds((prev) =>
       prev.includes(userId)
         ? prev.filter((id) => id !== userId)
-        : [...prev, userId]
+        : [...prev, userId],
     );
   };
 
@@ -364,8 +364,8 @@ export default function GestorUsuariosPage() {
       (user) =>
         (user.nome.toLowerCase().includes(filtro.toLowerCase()) ||
           user.email.toLowerCase().includes(filtro.toLowerCase())) &&
-        (filtroPapel === "TODOS" || user.papel === filtroPapel) &&
-        (filtroStatus === "TODOS" || String(user.status) === filtroStatus)
+        (filtroPapel === 'TODOS' || user.papel === filtroPapel) &&
+        (filtroStatus === 'TODOS' || String(user.status) === filtroStatus),
     );
   }, [usuarios, filtro, filtroPapel, filtroStatus]);
 
@@ -396,7 +396,7 @@ export default function GestorUsuariosPage() {
   };
 
   return (
-    <div className={styles.container}>
+    <Section>
       <ToastContainer position="top-right" autoClose={3000} />
 
       <header className={styles.header}>
@@ -920,6 +920,6 @@ export default function GestorUsuariosPage() {
           fetchUsuarios();
         }}
       />
-    </div>
+    </Section>
   );
 }

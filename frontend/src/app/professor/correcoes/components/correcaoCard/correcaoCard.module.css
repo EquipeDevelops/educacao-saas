@@ -1,0 +1,285 @@
+.card {
+  display: flex;
+  align-items: center;
+  gap: 40px;
+  background-color: var(--cor-fundo-card);
+  padding: 20px;
+  border: 1px solid var(--cor-borda);
+  border-radius: 15px;
+}
+
+.cardInfoContainer {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  gap: 20px;
+}
+
+.cardIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  background-color: var(--cor-primaria-light);
+  color: var(--cor-primaria);
+  border: 1px solid color-mix(in srgb, currentColor 20%, white 80%);
+  border-radius: 10px;
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 5px;
+  flex: 1;
+}
+
+.tituloContainer {
+  display: flex;
+  align-items: center;
+  margin-bottom: 5px;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.tituloContainer h3 {
+  font-size: 1.2rem;
+  font-weight: 500;
+}
+
+.tituloContainer div {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.tituloContainer div p {
+  padding: 2px 10px;
+  background-color: var(--cor-primaria-light);
+  border: 1px solid color-mix(in srgb, currentColor 20%, white 80%);
+  color: var(--cor-primaria);
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.tituloContainer div p:first-child {
+  background-color: rgb(247, 247, 247);
+  color: var(--cor-texto);
+}
+
+.infoGerais {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.infoGerais li {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--cor-subtexto);
+}
+
+.infoCards {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  max-width: 500px;
+}
+
+.infoCards li {
+  display: flex;
+  flex-direction: column;
+  padding: 10px 20px;
+  border: 1px solid color-mix(in srgb, currentColor 20%, white 80%);
+  border-radius: 10px;
+  width: 100%;
+  gap: 5px;
+}
+
+.infoCards li h3 {
+  font-size: 0.9rem;
+  font-weight: 400;
+}
+
+.infoCards li span {
+  font-size: 1.3rem;
+  font-weight: 500;
+}
+
+.entregas {
+  background-color: var(--cor-primaria-light);
+  color: var(--cor-primaria);
+}
+
+.entregas h3 {
+  color: var(--cor-primaria);
+}
+
+.corrigidas {
+  background-color: var(--cor-sucesso-light);
+  color: var(--cor-sucesso-dark);
+}
+
+.corrigidas h3 {
+  color: var(--cor-sucesso-dark);
+}
+
+.pendentes {
+  background-color: rgb(248, 248, 248);
+  color: var(--cor-subtexto);
+}
+
+.pendentes h3 {
+  color: var(--cor-subtexto);
+}
+
+.cardActionsContainer {
+  display: flex;
+  width: 100%;
+  max-width: 300px;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.barraProgressoContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.barraProgressoContainer p {
+  font-size: 0.9rem;
+  color: var(--cor-subtexto);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 500;
+}
+
+.cardActionsContainer a {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 10px 20px;
+  border: 1px solid var(--cor-borda);
+  color: var(--cor-texto);
+  border-radius: 10px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.cardActionsContainer a:hover {
+  background-color: var(--cor-primaria);
+  color: white;
+  border-color: var(--cor-primaria);
+}
+
+.completa {
+  background-color: var(--cor-sucesso) !important;
+}
+
+@media (max-width: 1024px) {
+  .card {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 20px;
+  }
+
+  .cardInfoContainer {
+    width: 100%;
+  }
+
+  .content {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 20px;
+  }
+
+  .infoCards {
+    max-width: none;
+  }
+
+  .cardActionsContainer {
+    max-width: none;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+  }
+
+  .barraProgressoContainer {
+    flex: 1;
+  }
+
+  .cardActionsContainer a {
+    width: auto;
+    min-width: 200px;
+  }
+}
+
+@media (max-width: 768px) {
+  .cardInfoContainer {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .cardIcon {
+    display: none; /* Hide icon on mobile to save space, or keep it */
+  }
+
+  /* Or keep icon but adjust layout */
+  .cardInfoContainer {
+    flex-direction: row;
+  }
+  .cardIcon {
+    display: flex;
+    width: 40px;
+    height: 40px;
+    font-size: 1.2rem;
+  }
+
+  .cardActionsContainer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .cardActionsContainer a {
+    width: 100%;
+  }
+
+  .infoCards {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+
+  .infoCards li {
+    padding: 10px;
+    text-align: center;
+    align-items: center;
+  }
+}
+
+@media (max-width: 550px) {
+  .cardInfoContainer {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .infoCards {
+    grid-template-columns: 1fr;
+  }
+
+  .tituloContainer {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+}

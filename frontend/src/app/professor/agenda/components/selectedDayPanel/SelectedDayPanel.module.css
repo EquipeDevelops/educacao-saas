@@ -1,0 +1,151 @@
+.panel {
+  background-color: white;
+  padding: 20px;
+  border-radius: 15px;
+  border: 1px solid var(--cor-borda);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+.panel h2 {
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.panel h2 span {
+  width: 5px;
+  height: 20px;
+  background-color: var(--cor-primaria);
+  border-radius: 5px;
+}
+
+.dateInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 20px;
+  background-color: var(--cor-primaria-dark);
+  margin-top: 10px;
+  border-radius: 15px;
+}
+
+.dateDay {
+  font-size: 1.75rem;
+  color: white;
+  font-weight: 500;
+}
+
+.dateLong {
+  font-size: 1rem;
+  color: white;
+  text-transform: capitalize;
+}
+
+.content {
+  flex-grow: 1;
+  margin-top: 1rem;
+}
+
+.noEvents {
+  text-align: center;
+  padding: 3rem 0;
+  color: #a5b4fc;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+.noEvents svg {
+  font-size: 2.5rem;
+}
+.noEvents p {
+  color: #a5b4fc;
+  font-size: 1rem;
+  margin-top: 0.5rem;
+}
+
+.eventsList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow-y: scroll;
+  height: 500px;
+}
+
+.eventItem {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  padding: 20px;
+  border-radius: 15px;
+  border: 1px solid var(--cor-borda);
+}
+
+.contentItem {
+  display: flex;
+  gap: 20px;
+}
+
+.iconWrapper {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+
+.eventInfo {
+  display: flex;
+  flex-direction: column;
+}
+
+.eventInfo h4 {
+  font-size: 1rem;
+}
+
+.eventInfo p {
+  font-size: .9rem;
+  color: var(--cor-subtexto);
+}
+
+/* Cores dos ícones */
+.aula {
+  background-color: var(--cor-primaria);
+  color: white;
+}
+.prova {
+  background-color: var(--cor-perigo);
+  color: white;
+}
+
+.trabalho {
+  background-color: var(--cor-sucesso);
+  color: white;
+}
+
+.atividade {
+  background-color: var(--cor-aviso);
+  color: white;
+}
+
+.recuperacao {
+  background-color: var(--cor-aviso);
+  color: white;
+}
+.reuniao {
+  background-color: var(--cor-envio);
+  color: white;
+}
+.default {
+  background-color: var(--cor-cinza);
+  color: white;
+}

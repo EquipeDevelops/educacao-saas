@@ -1,0 +1,60 @@
+.header {
+  padding: 30px 20px;
+  border-radius: 15px;
+  background-color: var(--cor-primaria-dark);
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.infoContainer {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.identificador {
+  width: 52px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(255, 255, 255, 0.205);
+  border-radius: 10px;
+}
+
+.identificador p {
+  color: white;
+  font-size: 2rem;
+}
+
+.infoTurma h2 {
+  font-size: 1.5rem;
+  color: white;
+  font-weight: 500;
+}
+
+.infoTurma div {
+  display: flex;
+  margin-top: 5px;
+  gap: 10px;
+}
+
+.infoTurma div p {
+  color: var(--cor-icons);
+  font-size: .9rem;
+}
+
+.mediaContainer {
+  text-align: right;
+}
+
+.mediaContainer p {
+  color: var(--cor-icons);
+}
+
+.mediaContainer h3 {
+  font-size: 2.25rem;
+  color: white;
+  font-weight: 500;
+}

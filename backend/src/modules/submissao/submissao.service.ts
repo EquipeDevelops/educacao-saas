@@ -16,10 +16,57 @@ import { AuthenticatedRequest } from "../../middlewares/auth";
 const prisma = new PrismaClient();
 
 const fullInclude = {
-  aluno: { include: { usuario: { select: { id: true, nome: true } } } },
+  aluno: {
+    select: {
+      id: true,
+      usuarioId: true,
+    },
+  },
   tarefa: { select: { id: true, titulo: true, pontos: true } },
   respostas: true,
 };
+
+type SubmissaoComAluno = {
+  aluno?: {
+    usuarioId?: string | null;
+    [key: string]: any;
+  } | null;
+} | null;
+
+async function hydrateAlunoUsuarios<T extends SubmissaoComAluno | SubmissaoComAluno[]>(
+  data: T
+): Promise<T> {
+  if (!data) return data;
+
+  const list = Array.isArray(data) ? data : [data];
+  const usuarioIds = Array.from(
+    new Set(
+      list
+        .map((item) => item?.aluno?.usuarioId)
+        .filter((id): id is string => typeof id === "string" && id.length > 0)
+    )
+  );
+
+  if (usuarioIds.length === 0) return data;
+
+  const usuarios = await prisma.usuarios.findMany({
+    where: { id: { in: usuarioIds } },
+    select: { id: true, nome: true },
+  });
+  const usuariosMap = new Map(usuarios.map((usuario) => [usuario.id, usuario]));
+
+  list.forEach((item) => {
+    if (item?.aluno) {
+      const usuarioId = item.aluno.usuarioId ?? null;
+      (item.aluno as any).usuario =
+        usuarioId && usuariosMap.has(usuarioId)
+          ? usuariosMap.get(usuarioId)
+          : null;
+    }
+  });
+
+  return data;
+}
 
 const mapTipoTarefaParaTipoAvaliacao = (
   tipo: TipoTarefa
@@ -182,13 +229,16 @@ export async function findAll(
   if (filters.tarefaId) where.tarefaId = filters.tarefaId;
   if (filters.alunoId) where.alunoId = filters.alunoId;
 
-  return prisma.submissoes.findMany({
+  const submissoes = await prisma.submissoes.findMany({
     where,
     include: {
-      aluno: { include: { usuario: { select: { nome: true } } } },
+      aluno: { select: { id: true, usuarioId: true } },
       tarefa: { select: { titulo: true } },
     },
   });
+
+  await hydrateAlunoUsuarios(submissoes);
+  return submissoes;
 }
 
 export async function findById(id: string, user: AuthenticatedRequest["user"]) {
@@ -198,6 +248,7 @@ export async function findById(id: string, user: AuthenticatedRequest["user"]) {
   });
 
   if (!submissao) return null;
+  await hydrateAlunoUsuarios(submissao);
 
   const isOwner = submissao.alunoId === user.perfilId;
   const professorDaTarefa = await prisma.tarefas.findFirst({
@@ -340,6 +391,7 @@ export async function grade(
     submissao.unidadeEscolarId
   );
 
+  await hydrateAlunoUsuarios(submissaoAtualizada);
   return submissaoAtualizada;
 }
 
@@ -557,6 +609,7 @@ async function finalizeByAluno(
     submissao.unidadeEscolarId
   );
 
+  await hydrateAlunoUsuarios(resultado);
   return resultado;
 }
 

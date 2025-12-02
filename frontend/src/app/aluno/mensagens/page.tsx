@@ -8,10 +8,7 @@ import {
   FiMessageSquare,
   FiSend,
   FiSearch,
-  FiPhone,
-  FiVideo,
   FiMoreVertical,
-  FiPlus,
   FiPaperclip,
 } from 'react-icons/fi';
 import { BiMessageAdd } from 'react-icons/bi';
@@ -182,7 +179,7 @@ export default function MensagensPage() {
           onSelectUser={handleStartConversation}
         />
       )}
-      <Section childrenWidth={1800}>
+      <Section maxWidth={1800}>
         <div className={styles.pageContainer}>
           <div className={styles.chatLayout}>
             <aside className={styles.sidebar}>
