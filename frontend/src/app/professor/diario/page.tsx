@@ -253,7 +253,7 @@ export default function DiarioWizardPage() {
   const [loadingDiarios, setLoadingDiarios] = useState(false);
   const [filterTurma, setFilterTurma] = useState<string>('all');
   const [filterMes, setFilterMes] = useState<string>('all');
-  const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [filterStatus, setFilterStatus] = useState<string>('CONSOLIDADO');
 
   useEffect(() => {
     if (authLoading) return;
@@ -902,7 +902,7 @@ export default function DiarioWizardPage() {
     const clearFilters = () => {
       setFilterTurma('all');
       setFilterMes('all');
-      setFilterStatus('all');
+      setFilterStatus('CONSOLIDADO');
     };
 
     const hasAppliedFilters =
@@ -978,25 +978,13 @@ export default function DiarioWizardPage() {
                 ))}
               </select>
             </label>
-            <label>
-              <span>Status</span>
-              <select
-                value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value)}
-              >
-                <option value="all">Todos</option>
-                <option value="RASCUNHO">Rascunho</option>
-                <option value="CONSOLIDADO">Consolidado</option>
-              </select>
-            </label>
           </div>
         </section>
 
         {loadingDiarios ? (
-          <div className={styles.loadingBox}>
+          <Section>
             <Loading />
-            <span>Carregando diários...</span>
-          </div>
+          </Section>
         ) : diariosFiltered.length === 0 ? (
           <div className={styles.emptyState}>
             <FiBook style={{ fontSize: '3rem', opacity: 0.3 }} />

@@ -1,270 +1,335 @@
 "use client";
 
-import { useState, useEffect, FormEvent, ChangeEvent, useMemo } from "react";
+import { useState, useEffect, FormEvent } from "react";
 import { api } from "@/services/api";
 import styles from "./materias.module.css";
-import {
-  FiEdit,
-  FiTrash2,
-  FiPlus,
-  FiBookOpen,
-  FiSearch,
-  FiLink,
-} from "react-icons/fi";
-import Modal from "@/components/modal/Modal";
 import Loading from "@/components/loading/Loading";
+import Modal from "@/components/modal/Modal";
+import {
+  Plus,
+  Search,
+  Pencil,
+  Trash2,
+  LayoutGrid,
+  List as ListIcon,
+  BookOpen,
+  Hash,
+  Library,
+} from "lucide-react";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-type Materia = {
+interface Materia {
   id: string;
   nome: string;
   codigo?: string;
-  _count: {
+  _count?: {
     componentes_curriculares: number;
   };
-};
+}
 
-const initialState = {
-  nome: "",
-  codigo: "",
-};
-
-export default function GestaoMateriasPage() {
+export default function GestorMateriasPage() {
   const [materias, setMaterias] = useState<Materia[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [viewMode, setViewMode] = useState<"list" | "grid">("grid");
+  const [filtro, setFiltro] = useState("");
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingMateria, setEditingMateria] = useState<Materia | null>(null);
-  const [formState, setFormState] = useState(initialState);
 
-  async function fetchMaterias() {
+  const [nome, setNome] = useState("");
+  const [codigo, setCodigo] = useState("");
+
+  const fetchMaterias = async () => {
     try {
+      setIsLoading(true);
       const response = await api.get("/materias");
       setMaterias(response.data);
-    } catch (err) {
-      toast.error("Falha ao carregar as matérias.");
+    } catch (error) {
+      toast.error("Erro ao carregar matérias.");
     } finally {
       setIsLoading(false);
     }
-  }
+  };
 
   useEffect(() => {
     fetchMaterias();
   }, []);
 
-  const filteredMaterias = useMemo(
-    () =>
-      materias.filter(
-        (m) =>
-          m.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          m.codigo?.toLowerCase().includes(searchTerm.toLowerCase())
-      ),
-    [materias, searchTerm]
-  );
+  const openCreateModal = () => {
+    setEditingMateria(null);
+    setNome("");
+    setCodigo("");
+    setIsModalOpen(true);
+  };
 
-  const openModal = (materia: Materia | null = null) => {
-    if (materia) {
-      setEditingMateria(materia);
-      setFormState({ nome: materia.nome, codigo: materia.codigo || "" });
-    } else {
-      setEditingMateria(null);
-      setFormState(initialState);
-    }
+  const openEditModal = (materia: Materia) => {
+    setEditingMateria(materia);
+    setNome(materia.nome);
+    setCodigo(materia.codigo || "");
     setIsModalOpen(true);
   };
 
   const closeModal = () => {
     setIsModalOpen(false);
+    setEditingMateria(null);
   };
 
-  async function handleSubmit(event: FormEvent) {
-    event.preventDefault();
-    if (!formState.nome.trim()) {
-      toast.error("O nome da matéria é obrigatório.");
-      return;
-    }
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    const payload = { nome, codigo };
 
-    const toastId = toast.loading(
-      editingMateria ? "Atualizando..." : "Criando..."
-    );
     try {
       if (editingMateria) {
-        await api.put(`/materias/${editingMateria.id}`, formState);
-        toast.update(toastId, {
-          render: "Matéria atualizada com sucesso!",
-          type: "success",
-          isLoading: false,
-          autoClose: 3000,
-        });
+        await api.put(`/materias/${editingMateria.id}`, payload);
+        toast.success("Matéria atualizada com sucesso!");
       } else {
-        await api.post("/materias", formState);
-        toast.update(toastId, {
-          render: "Matéria criada com sucesso!",
-          type: "success",
-          isLoading: false,
-          autoClose: 3000,
-        });
+        await api.post("/materias", payload);
+        toast.success("Matéria criada com sucesso!");
       }
       closeModal();
-      await fetchMaterias();
-    } catch (err: any) {
-      const message =
-        err.response?.data?.message || "Erro ao salvar a matéria.";
-      toast.update(toastId, {
-        render: message,
-        type: "error",
-        isLoading: false,
-        autoClose: 5000,
-      });
+      fetchMaterias();
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Erro ao salvar matéria.");
     }
-  }
+  };
 
-  async function handleDelete(materia: Materia) {
+  const handleDelete = async (id: string) => {
     if (
       window.confirm(
-        `Tem certeza que deseja excluir a matéria "${materia.nome}"?`
+        "Tem certeza que deseja excluir esta matéria? Isso pode afetar turmas vinculadas."
       )
     ) {
-      const toastId = toast.loading("Excluindo...");
       try {
-        await api.delete(`/materias/${materia.id}`);
-        toast.update(toastId, {
-          render: "Matéria excluída com sucesso!",
-          type: "info",
-          isLoading: false,
-          autoClose: 3000,
-        });
-        await fetchMaterias();
-      } catch (err: any) {
-        const message =
-          err.response?.data?.message || "Erro ao excluir a matéria.";
-        toast.update(toastId, {
-          render: message,
-          type: "error",
-          isLoading: false,
-          autoClose: 5000,
-        });
+        await api.delete(`/materias/${id}`);
+        toast.success("Matéria excluída!");
+        fetchMaterias();
+      } catch (error) {
+        toast.error("Erro ao excluir. Verifique se há vínculos.");
       }
     }
-  }
+  };
 
-  if (isLoading) {
-    return <Loading />;
-  }
+  const stringToColor = (str: string) => {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const c = (hash & 0x00ffffff).toString(16).toUpperCase();
+    return "#" + "00000".substring(0, 6 - c.length) + c;
+  };
+
+  const materiasFiltradas = materias.filter(
+    (m) =>
+      m.nome.toLowerCase().includes(filtro.toLowerCase()) ||
+      m.codigo?.toLowerCase().includes(filtro.toLowerCase())
+  );
+
+  if (isLoading) return <Loading />;
 
   return (
     <div className={styles.container}>
       <ToastContainer position="top-right" autoClose={3000} />
+
       <header className={styles.header}>
-        <div>
-          <h1>Gerenciamento de Matérias</h1>
-          <p>
-            Adicione, edite e organize as disciplinas oferecidas pela sua
-            escola.
-          </p>
+        <div className={styles.headerContent}>
+          <h1>Matérias Curriculares</h1>
+          <p>Gerencie as disciplinas oferecidas na sua instituição.</p>
         </div>
-        <button className={styles.primaryButton} onClick={() => openModal()}>
-          <FiPlus /> Nova Matéria
+        <button onClick={openCreateModal} className={styles.btnPrimary}>
+          <Plus size={20} /> Nova Matéria
         </button>
       </header>
 
-      <div className={styles.toolbar}>
-        <div className={styles.searchContainer}>
-          <FiSearch />
+      <div className={styles.controlsBar}>
+        <div className={styles.searchWrapper}>
+          <Search size={20} className={styles.searchIcon} />
           <input
             type="text"
             placeholder="Buscar por nome ou código..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            value={filtro}
+            onChange={(e) => setFiltro(e.target.value)}
           />
+        </div>
+
+        <div className={styles.viewToggle}>
+          <button
+            className={`${styles.toggleBtn} ${
+              viewMode === "list" ? styles.active : ""
+            }`}
+            onClick={() => setViewMode("list")}
+            title="Lista"
+          >
+            <ListIcon size={20} />
+          </button>
+          <button
+            className={`${styles.toggleBtn} ${
+              viewMode === "grid" ? styles.active : ""
+            }`}
+            onClick={() => setViewMode("grid")}
+            title="Grade"
+          >
+            <LayoutGrid size={20} />
+          </button>
         </div>
       </div>
 
-      <div className={styles.grid}>
-        {filteredMaterias.map((materia) => (
-          <div key={materia.id} className={styles.card}>
-            <div className={styles.cardHeader}>
-              <div className={styles.cardIcon}>
-                <FiBookOpen />
+      {viewMode === "list" ? (
+        <div className={styles.tableWrapper}>
+          <table className={styles.table}>
+            <thead>
+              <tr>
+                <th>Código</th>
+                <th>Nome da Disciplina</th>
+                <th style={{ textAlign: "right" }}>Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              {materiasFiltradas.length > 0 ? (
+                materiasFiltradas.map((mat) => (
+                  <tr key={mat.id}>
+                    <td>
+                      <span className={styles.codeBadge}>
+                        {mat.codigo || "—"}
+                      </span>
+                    </td>
+                    <td>
+                      <div className={styles.subjectName}>
+                        <div
+                          className={styles.miniIcon}
+                          style={{ backgroundColor: stringToColor(mat.nome) }}
+                        >
+                          {mat.nome.charAt(0)}
+                        </div>
+                        {mat.nome}
+                      </div>
+                    </td>
+                    <td style={{ textAlign: "right" }}>
+                      <div className={styles.actions}>
+                        <button
+                          onClick={() => openEditModal(mat)}
+                          className={styles.actionBtn}
+                          title="Editar"
+                        >
+                          <Pencil size={16} />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(mat.id)}
+                          className={`${styles.actionBtn} ${styles.delete}`}
+                          title="Excluir"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={3} className={styles.emptyState}>
+                    Nenhuma matéria encontrada.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <div className={styles.gridWrapper}>
+          {materiasFiltradas.length > 0 ? (
+            materiasFiltradas.map((mat) => (
+              <div key={mat.id} className={styles.card}>
+                <div className={styles.cardHeader}>
+                  <span className={styles.codeTag}>
+                    {mat.codigo || "S/ CÓD"}
+                  </span>
+                  <div className={styles.cardActions}>
+                    <button
+                      onClick={() => openEditModal(mat)}
+                      className={styles.iconBtn}
+                    >
+                      <Pencil size={16} />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(mat.id)}
+                      className={`${styles.iconBtn} ${styles.danger}`}
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                </div>
+
+                <div className={styles.cardBody}>
+                  <div
+                    className={styles.subjectIcon}
+                    style={{ backgroundColor: stringToColor(mat.nome) }}
+                  >
+                    <BookOpen size={32} color="white" />
+                  </div>
+                  <h3>{mat.nome}</h3>
+                </div>
+
+                <div className={styles.cardFooter}>
+                  <span className={styles.footerInfo}>
+                    <Library size={14} /> Disciplina Curricular
+                  </span>
+                </div>
               </div>
-              <div className={styles.cardActions}>
-                <button
-                  onClick={() => openModal(materia)}
-                  className={styles.primaryButton}
-                  title="Editar Matéria"
-                >
-                  <FiEdit />
-                </button>
-                <button
-                  onClick={() => handleDelete(materia)}
-                  className={styles.primaryButton}
-                  title="Excluir Matéria"
-                >
-                  <FiTrash2 size={16} />
-                </button>
-              </div>
-            </div>
-            <div className={styles.cardBody}>
-              <h3 className={styles.cardTitle}>{materia.nome}</h3>
-              <p className={styles.cardCode}>
-                {materia.codigo || "Sem código"}
-              </p>
-            </div>
-            <div className={styles.cardFooter}>
-              <FiLink size={14} />
-              <span>{materia._count.componentes_curriculares} Vínculos</span>
+            ))
+          ) : (
+            <div className={styles.emptyState}>Nenhuma matéria encontrada.</div>
+          )}
+        </div>
+      )}
+
+      <Modal
+        isOpen={isModalOpen}
+        onClose={closeModal}
+        title={editingMateria ? "Editar Matéria" : "Nova Matéria"}
+      >
+        <form onSubmit={handleSubmit} className={styles.form}>
+          <div className={styles.inputGroup}>
+            <label>Nome da Disciplina*</label>
+            <div className={styles.inputWrapper}>
+              <BookOpen size={18} className={styles.inputIcon} />
+              <input
+                value={nome}
+                onChange={(e) => setNome(e.target.value)}
+                required
+                placeholder="Ex: Matemática Financeira"
+              />
             </div>
           </div>
-        ))}
-      </div>
 
-      {isModalOpen && (
-        <Modal
-          isOpen={isModalOpen}
-          onClose={closeModal}
-          title={editingMateria ? "Editar Matéria" : "Criar Nova Matéria"}
-        >
-          <form onSubmit={handleSubmit} className={styles.modalForm}>
-            <label className={styles.label}>
-              Nome da Matéria:
+          <div className={styles.inputGroup}>
+            <label>Código (Opcional)</label>
+            <div className={styles.inputWrapper}>
+              <Hash size={18} className={styles.inputIcon} />
               <input
-                name="nome"
-                value={formState.nome}
-                onChange={(e) =>
-                  setFormState({ ...formState, nome: e.target.value })
-                }
-                placeholder="Ex: Matemática, Língua Portuguesa"
-                required
+                value={codigo}
+                onChange={(e) => setCodigo(e.target.value)}
+                placeholder="Ex: MAT-101"
               />
-            </label>
-            <label className={styles.label}>
-              Código (Opcional):
-              <input
-                name="codigo"
-                value={formState.codigo}
-                onChange={(e) =>
-                  setFormState({ ...formState, codigo: e.target.value })
-                }
-                placeholder="Ex: MAT, LP"
-              />
-            </label>
-            <div className={styles.modalActions}>
-              <button
-                type="button"
-                className={styles.cancelButton}
-                onClick={closeModal}
-              >
-                Cancelar
-              </button>
-              <button type="submit" className={styles.saveButton}>
-                Salvar
-              </button>
             </div>
-          </form>
-        </Modal>
-      )}
+            <span className={styles.helperText}>
+              Um código único para identificar a matéria em relatórios.
+            </span>
+          </div>
+
+          <div className={styles.modalFooter}>
+            <button
+              type="button"
+              onClick={closeModal}
+              className={styles.btnGhost}
+            >
+              Cancelar
+            </button>
+            <button type="submit" className={styles.btnPrimary}>
+              {editingMateria ? "Salvar Alterações" : "Criar Matéria"}
+            </button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 }

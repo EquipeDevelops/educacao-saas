@@ -1556,6 +1556,7 @@ const getProfile = async (user: AuthenticatedRequest['user']) => {
           email: true,
           data_nascimento: true,
           status: true,
+          fotoUrl: true,
         },
       },
       matriculas: {
@@ -1637,7 +1638,8 @@ const getProfile = async (user: AuthenticatedRequest['user']) => {
     anoLetivo: matriculaAtiva?.ano_letivo || new Date().getFullYear(),
     totalAtividadesEntregues,
     provasFeitas,
-    mediaGlobal,
+    mediaGlobal: Number(mediaGlobal.toFixed(1)),
+    fotoUrl: alunoPerfil.usuario.fotoUrl,
   };
 };
 

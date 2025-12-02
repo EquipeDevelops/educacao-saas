@@ -1,10 +1,7 @@
 import Link from 'next/link';
 import { TarefaComStatus } from '@/types/tarefas';
 import styles from './style.module.css';
-import {
-  LuCalendar,
-  LuFileText,
-} from 'react-icons/lu';
+import { LuCalendar, LuFileText } from 'react-icons/lu';
 
 type StatusInfo = {
   text: string;
@@ -52,7 +49,10 @@ type TarefaCardProps = {
   readOnly?: boolean;
 };
 
-export default function TarefaCard({ tarefa, readOnly = false }: TarefaCardProps) {
+export default function TarefaCard({
+  tarefa,
+  readOnly = false,
+}: TarefaCardProps) {
   const totalPontos = tarefa.pontos || 0;
   const totalQuestoes = tarefa._count?.questoes || 0;
 
@@ -114,13 +114,13 @@ export default function TarefaCard({ tarefa, readOnly = false }: TarefaCardProps
         ) : (
           <Link
             href={statusInfo.link}
-            className={
-              tarefa.submissao?.status === 'EM_ANDAMENTO'
-                ? styles.activeLink
-                : tarefa.submissao?.status === 'NAO_INICIADA'
+            className={`${
+              tarefa.submissao?.status === 'EM_ANDAMENTO' ||
+              tarefa.submissao?.status === 'NAO_INICIADA'
                 ? styles.activeLink
                 : ''
             }
+            ${statusInfo.text === 'Disponível' ? styles.activeLink : ''}`}
           >
             {actionLabel}
           </Link>

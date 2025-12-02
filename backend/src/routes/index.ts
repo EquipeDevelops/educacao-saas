@@ -62,7 +62,7 @@ protectedRouter.use("/submissoes", submissaoRoutes);
 protectedRouter.use("/respostas", respostaRoutes);
 protectedRouter.use("/avaliacoes", avaliacaoRoutes);
 protectedRouter.use("/faltas", registroFaltaRoutes);
-
+protectedRouter.use("/dashboard/gestor", gestorDashboardRoutes);
 protectedRouter.use("/conquistas", conquistaRoutes);
 protectedRouter.use("/conquistas-por-unidade", conquistasPorUnidadeRoutes);
 protectedRouter.use("/conquistas-usuarios", conquistaUsuarioRoutes);

@@ -1,65 +1,53 @@
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
-import {
-  FiCalendar,
-  FiClock,
-  FiBookOpen,
-  FiUsers,
-  FiStar,
-  FiBriefcase,
-  FiAlertCircle,
-} from "react-icons/fi";
+import React from "react";
 import styles from "./UpcomingEvents.module.css";
 
-const EventIcon = ({ tipo }) => {
-  const iconMap = {
-    PROVA: <FiStar />,
-    RECUPERACAO: <FiBookOpen />,
-    REUNIAO: <FiUsers />,
-    EVENTO_ESCOLAR: <FiBriefcase />,
-    FERIADO: <FiCalendar />,
-    OUTRO: <FiAlertCircle />,
-  };
+interface Evento {
+  id: string;
+  titulo: string;
+  data_inicio: string;
+  tipo: string;
+  [key: string]: any;
+}
 
-  return (
-    <div className={styles.eventIcon}>{iconMap[tipo] || <FiAlertCircle />}</div>
-  );
-};
+interface UpcomingEventsProps {
+  events?: Evento[];
+}
 
-export default function UpcomingEvents({ events }) {
-  const upcoming = events
-    .map((e) => ({ ...e, start: new Date(e.data_inicio || e.start) }))
+export default function UpcomingEvents({ events = [] }: UpcomingEventsProps) {
+  const safeEvents = Array.isArray(events) ? events : [];
+
+  const upcoming = safeEvents
+    .map((e) => ({ ...e, start: new Date(e.data_inicio) }))
     .filter((e) => e.start >= new Date())
     .sort((a, b) => a.start.getTime() - b.start.getTime())
     .slice(0, 5);
 
+  if (upcoming.length === 0) {
+    return (
+      <div className={styles.emptyState}>
+        <p>Nenhum evento próximo agendado.</p>
+      </div>
+    );
+  }
+
   return (
-    <div className={styles.card}>
-      <h3 className={styles.title}>
-        <FiCalendar /> Próximos Eventos
-      </h3>
-      {upcoming.length > 0 ? (
-        <ul className={styles.eventList}>
-          {upcoming.map((event) => (
-            <li key={event.id} className={styles.eventItem}>
-              <EventIcon tipo={event.tipo || event.raw?.tipo} />
-              <div className={styles.eventDetails}>
-                <span className={styles.eventTitle}>
-                  {event.titulo || event.title}
-                </span>
-                <span className={styles.eventDate}>
-                  <FiClock />{" "}
-                  {format(event.start, "dd 'de' MMMM 'às' HH:mm", {
-                    locale: ptBR,
-                  })}
-                </span>
-              </div>
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p className={styles.noEvents}>Nenhum evento futuro agendado.</p>
-      )}
-    </div>
+    <ul className={styles.list}>
+      {upcoming.map((evt) => (
+        <li key={evt.id} className={styles.item}>
+          <div className={styles.dateBox}>
+            <span className={styles.day}>{evt.start.getDate()}</span>
+            <span className={styles.month}>
+              {evt.start
+                .toLocaleDateString("pt-BR", { month: "short" })
+                .replace(".", "")}
+            </span>
+          </div>
+          <div className={styles.info}>
+            <span className={styles.title}>{evt.titulo}</span>
+            <span className={styles.type}>{evt.tipo.replace("_", " ")}</span>
+          </div>
+        </li>
+      ))}
+    </ul>
   );
 }

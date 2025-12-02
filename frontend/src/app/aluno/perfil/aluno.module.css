@@ -36,18 +36,6 @@
   border: 1px solid var(--cor-borda);
 }
 
-.perfilCard {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.perfilCard .infoAluno {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-}
-
 .infoAluno .infoIniciais {
   display: flex;
   align-items: center;
@@ -59,11 +47,9 @@
   font-size: 1.8rem;
   font-weight: 500;
   color: white;
-}
-
-.infoAluno div h3 {
-  font-size: 1.3rem;
-  font-weight: 400;
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
 }
 
 .infoAluno div > p {
@@ -231,7 +217,7 @@
   color: var(--cor-envio);
 }
 
-.modalContainer h2{
+.modalContainer h2 {
   font-size: 1.5rem;
   font-weight: 500;
   margin-bottom: 20px;
@@ -244,7 +230,7 @@
 }
 
 .formulario label p {
-  font-size: .95rem;
+  font-size: 0.95rem;
   display: flex;
   align-items: center;
   gap: 5px;
@@ -267,7 +253,7 @@
   background-color: white;
   font-weight: 500;
   font-size: 1.1rem;
-  transition: all .2s ease;
+  transition: all 0.2s ease;
 }
 
 .formulario .buttons button:first-child {

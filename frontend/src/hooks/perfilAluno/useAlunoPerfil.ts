@@ -17,6 +17,7 @@ export type AlunoProfile = {
   totalAtividadesEntregues: number;
   provasFeitas: number;
   mediaGlobal: number;
+  fotoUrl?: string | null;
 };
 
 export function useAlunoPerfil() {
@@ -79,7 +80,7 @@ export function useAlunoPerfil() {
       await api.patch(`/usuarios/${user.id}/credentials`, payload);
       await fetchProfile();
       if (newPassword) {
-        alert('Usuário Atualizado com sucesso')
+        alert('Usuário Atualizado com sucesso');
         if (typeof (window as any).signOut === 'function') {
           (window as any).signOut();
         }

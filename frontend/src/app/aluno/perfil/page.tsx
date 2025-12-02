@@ -62,6 +62,8 @@ export default function PerfilPage() {
     return <ErrorMsg text={'Erro ao carregar o perfil'} />;
   }
 
+  console.log('Profile Data:', profile);
+
   return (
     <>
       {' '}
@@ -71,9 +73,16 @@ export default function PerfilPage() {
           <div className={styles.cardsContainer}>
             <div className={styles.perfilCard}>
               <div className={styles.infoAluno}>
-                <p className={styles.infoIniciais}>
-                  {getInitials(profile.nome)}
-                </p>
+                <div
+                  className={styles.infoIniciais}
+                  style={{
+                    backgroundImage: profile.fotoUrl
+                      ? `url(${profile.fotoUrl})`
+                      : '',
+                  }}
+                >
+                  {!profile.fotoUrl ? getInitials(profile.nome) : ''}
+                </div>
                 <div>
                   <h3>{profile.nome}</h3>
                   <p>

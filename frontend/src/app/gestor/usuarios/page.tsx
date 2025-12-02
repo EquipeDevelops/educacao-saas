@@ -1,18 +1,31 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useMemo, FormEvent, ChangeEvent } from 'react';
-import { api } from '@/services/api';
-import styles from './usuarios.module.css';
-import Loading from '@/components/loading/Loading';
-import Modal from '@/components/modal/Modal';
-import ImportarAlunosModal from '@/components/gestor/usuarios/ImportarAlunosModal';
-import { FiPlus, FiSearch, FiUpload, FiEdit, FiTrash2 } from 'react-icons/fi';
-import { toast, ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
-import Section from '@/components/section/Section';
-import { LuPlus, LuSearch, LuUpload } from 'react-icons/lu';
+import { useState, useEffect, useMemo, FormEvent, ChangeEvent } from "react";
+import { api } from "@/services/api";
+import styles from "./usuarios.module.css";
+import Loading from "@/components/loading/Loading";
+import Modal from "@/components/modal/Modal";
+import ImportarAlunosModal from "@/components/gestor/usuarios/ImportarAlunosModal";
+import {
+  Plus,
+  Search,
+  Upload,
+  Pencil,
+  Trash2,
+  Camera,
+  LayoutGrid,
+  List as ListIcon,
+  Mail,
+  Phone,
+  GraduationCap,
+  User,
+  X,
+} from "lucide-react";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import Section from "@/components/section/Section";
 
-type PapelUsuario = 'PROFESSOR' | 'ALUNO' | 'RESPONSAVEL';
+type PapelUsuario = "PROFESSOR" | "ALUNO" | "RESPONSAVEL" | "GESTOR";
 
 type Usuario = {
   id: string;
@@ -20,6 +33,7 @@ type Usuario = {
   email: string;
   papel: PapelUsuario;
   status: boolean;
+  fotoUrl?: string;
   perfil_professor?: { titulacao?: string };
   perfil_aluno?: { numero_matricula?: string };
   perfil_responsavel?: { telefone?: string };
@@ -72,9 +86,11 @@ export default function GestorUsuariosPage() {
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const [alunoOptions, setAlunoOptions] = useState<AlunoOption[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [filtro, setFiltro] = useState('');
-  const [filtroPapel, setFiltroPapel] = useState('TODOS');
-  const [filtroStatus, setFiltroStatus] = useState('TODOS');
+
+  const [filtro, setFiltro] = useState("");
+  const [filtroPapel, setFiltroPapel] = useState("TODOS");
+  const [filtroStatus, setFiltroStatus] = useState("TODOS");
+  const [viewMode, setViewMode] = useState<"list" | "grid">("list");
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -84,27 +100,36 @@ export default function GestorUsuariosPage() {
     createInitialState(),
   );
   const [editingUser, setEditingUser] = useState<Usuario | null>(null);
+
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
+  const [fotoFile, setFotoFile] = useState<File | null>(null);
+  const [fotoPreview, setFotoPreview] = useState<string | null>(null);
 
   const fetchUsuarios = () => {
     setIsLoading(true);
     Promise.all([
-      api.get<Usuario[]>('/usuarios'),
-      api.get<AlunoOption[]>('/alunos'),
+      api.get<Usuario[]>("/usuarios"),
+      api.get<AlunoOption[]>("/alunos"),
     ])
       .then(([usuariosResponse, alunosResponse]) => {
         setUsuarios(usuariosResponse.data);
         setAlunoOptions(alunosResponse.data);
       })
-      .catch(() =>
-        toast.error('Falha ao carregar os usuários ou alunos disponíveis.'),
-      )
+      .catch(() => toast.error("Falha ao carregar os dados."))
       .finally(() => setIsLoading(false));
   };
 
   useEffect(() => {
     fetchUsuarios();
   }, []);
+
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setFotoFile(file);
+      setFotoPreview(URL.createObjectURL(file));
+    }
+  };
 
   const handleInputChange = (
     e: ChangeEvent<HTMLInputElement | HTMLSelectElement>,
@@ -122,18 +147,11 @@ export default function GestorUsuariosPage() {
           novoPapel === 'RESPONSAVEL'
             ? prev.responsavelAlunos.length > 0
               ? prev.responsavelAlunos
-              : [
-                  {
-                    alunoId: '',
-                    parentesco: '',
-                    principal: true,
-                  },
-                ]
+              : [{ alunoId: "", parentesco: "", principal: true }]
             : [],
       }));
       return;
     }
-
     setFormState((prev) => ({ ...prev, [name]: value }));
   };
 
@@ -191,17 +209,23 @@ export default function GestorUsuariosPage() {
 
   const openCreateModal = () => {
     setFormState(createInitialState());
+    setFotoFile(null);
+    setFotoPreview(null);
     setIsCreateModalOpen(true);
   };
 
   const openEditModal = (user: Usuario) => {
     setEditingUser(JSON.parse(JSON.stringify(user)));
+    setFotoPreview(user.fotoUrl || null);
+    setFotoFile(null);
     setIsEditModalOpen(true);
   };
 
   const closeModal = () => {
     setIsCreateModalOpen(false);
     setIsEditModalOpen(false);
+    setFotoFile(null);
+    setFotoPreview(null);
   };
 
   async function handleSubmit(event: FormEvent) {
@@ -215,7 +239,7 @@ export default function GestorUsuariosPage() {
 
     if (formState.papel === 'ALUNO') {
       if (!formState.numero_matricula) {
-        toast.error('O número de matrícula é obrigatório para alunos.');
+        toast.error("Matrícula é obrigatória.");
         return;
       }
       payload.perfil_aluno = { numero_matricula: formState.numero_matricula };
@@ -231,29 +255,33 @@ export default function GestorUsuariosPage() {
           parentesco: aluno.parentesco || undefined,
           principal: aluno.principal,
         }));
-
       payload.perfil_responsavel = {
         telefone: formState.telefone || undefined,
         alunos: alunosVinculados,
       };
     }
 
-    const toastId = toast.loading('Criando usuário...');
+    const formData = new FormData();
+    formData.append("data", JSON.stringify(payload));
+    if (fotoFile) formData.append("foto", fotoFile);
+
+    const toastId = toast.loading("Salvando...");
     try {
-      await api.post('/usuarios', payload);
+      await api.post("/usuarios", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
       toast.update(toastId, {
-        render: `Usuário "${formState.nome}" criado com sucesso!`,
-        type: 'success',
+        render: `Usuário criado com sucesso!`,
+        type: "success",
         isLoading: false,
         autoClose: 3000,
       });
       closeModal();
       fetchUsuarios();
     } catch (err: any) {
-      const message = err.response?.data?.message || 'Erro ao criar o usuário.';
       toast.update(toastId, {
-        render: message,
-        type: 'error',
+        render: err.response?.data?.message || "Erro ao criar.",
+        type: "error",
         isLoading: false,
         autoClose: 5000,
       });
@@ -263,32 +291,32 @@ export default function GestorUsuariosPage() {
   async function handleUpdate(event: FormEvent) {
     event.preventDefault();
     if (!editingUser) return;
-
     const payload = {
       nome: editingUser.nome,
       status: editingUser.status,
-      perfil_professor: {
-        titulacao: editingUser.perfil_professor?.titulacao,
-      },
+      perfil_professor: { titulacao: editingUser.perfil_professor?.titulacao },
     };
+    const formData = new FormData();
+    formData.append("data", JSON.stringify(payload));
+    if (fotoFile) formData.append("foto", fotoFile);
 
-    const toastId = toast.loading('Atualizando usuário...');
+    const toastId = toast.loading("Atualizando...");
     try {
-      await api.put(`/usuarios/${editingUser.id}`, payload);
+      await api.put(`/usuarios/${editingUser.id}`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
       toast.update(toastId, {
-        render: 'Usuário atualizado com sucesso!',
-        type: 'success',
+        render: "Atualizado com sucesso!",
+        type: "success",
         isLoading: false,
         autoClose: 3000,
       });
       closeModal();
       fetchUsuarios();
     } catch (err: any) {
-      const message =
-        err.response?.data?.message || 'Erro ao atualizar o usuário.';
       toast.update(toastId, {
-        render: message,
-        type: 'error',
+        render: err.response?.data?.message || "Erro ao atualizar.",
+        type: "error",
         isLoading: false,
         autoClose: 5000,
       });
@@ -296,27 +324,21 @@ export default function GestorUsuariosPage() {
   }
 
   async function handleDelete(user: Usuario) {
-    if (
-      window.confirm(
-        `Tem certeza que deseja excluir o usuário "${user.nome}"? Esta ação é irreversível.`,
-      )
-    ) {
-      const toastId = toast.loading('Excluindo usuário...');
+    if (window.confirm(`Tem certeza que deseja excluir "${user.nome}"?`)) {
+      const toastId = toast.loading("Excluindo...");
       try {
         await api.delete(`/usuarios/${user.id}`);
         toast.update(toastId, {
-          render: `Usuário "${user.nome}" excluído!`,
-          type: 'info',
+          render: `Excluído com sucesso!`,
+          type: "info",
           isLoading: false,
           autoClose: 3000,
         });
         fetchUsuarios();
       } catch (err: any) {
-        const message =
-          err.response?.data?.message || 'Erro ao excluir o usuário.';
         toast.update(toastId, {
-          render: message,
-          type: 'error',
+          render: "Erro ao excluir.",
+          type: "error",
           isLoading: false,
           autoClose: 5000,
         });
@@ -338,48 +360,6 @@ export default function GestorUsuariosPage() {
     );
   };
 
-  const handleBulkAction = async (
-    action: 'activate' | 'deactivate' | 'delete',
-  ) => {
-    const actionTextMap = {
-      activate: 'ativar',
-      deactivate: 'desativar',
-      delete: 'excluir',
-    };
-    if (
-      window.confirm(
-        `Tem certeza que deseja ${actionTextMap[action]} ${selectedUserIds.length} usuário(s) selecionado(s)?`,
-      )
-    ) {
-      const toastId = toast.loading('Processando ação em massa...');
-      const promises = selectedUserIds.map((id) => {
-        if (action === 'delete') return api.delete(`/usuarios/${id}`);
-        return api.patch(`/usuarios/${id}`, { status: action === 'activate' });
-      });
-
-      try {
-        await Promise.all(promises);
-        toast.update(toastId, {
-          render: 'Ação em massa concluída com sucesso!',
-          type: 'success',
-          isLoading: false,
-          autoClose: 3000,
-        });
-        setSelectedUserIds([]);
-        fetchUsuarios();
-      } catch (err: any) {
-        const message =
-          err.response?.data?.message || 'Erro ao executar ação em massa.';
-        toast.update(toastId, {
-          render: message,
-          type: 'error',
-          isLoading: false,
-          autoClose: 5000,
-        });
-      }
-    }
-  };
-
   const usuariosFiltrados = useMemo(() => {
     return usuarios.filter(
       (user) =>
@@ -390,48 +370,72 @@ export default function GestorUsuariosPage() {
     );
   }, [usuarios, filtro, filtroPapel, filtroStatus]);
 
-  if (isLoading) {
+  if (isLoading) return <Loading />;
+
+  const renderAvatar = (user: Usuario, size: "sm" | "lg" = "sm") => {
+    const className = size === "lg" ? styles.avatarLarge : styles.avatarSmall;
+    if (user.fotoUrl) {
+      return <img src={user.fotoUrl} alt={user.nome} className={className} />;
+    }
     return (
-      <Section>
-        <Loading />
-      </Section>
+      <div
+        className={`${styles.avatarPlaceholder} ${className}`}
+        style={{ backgroundColor: stringToColor(user.nome) }}
+      >
+        {user.nome.charAt(0).toUpperCase()}
+      </div>
     );
-  }
+  };
+
+  const stringToColor = (str: string) => {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const c = (hash & 0x00ffffff).toString(16).toUpperCase();
+    return "#" + "00000".substring(0, 6 - c.length) + c;
+  };
 
   return (
     <Section>
       <ToastContainer position="top-right" autoClose={3000} />
+
       <header className={styles.header}>
-        <h1>Gerenciamento de Usuários</h1>
-        <div className={styles.actions}>
+        <div className={styles.headerContent}>
+          <h1>Gestão de Usuários</h1>
+          <p>Administre todos os membros da sua instituição em um só lugar.</p>
+        </div>
+        <div className={styles.headerActions}>
           <button
             onClick={() => setIsImportModalOpen(true)}
-            className={styles.button}
+            className={styles.btnSecondary}
           >
-            <LuUpload className={styles.iconInline} /> Importar Alunos
+            <Upload size={18} /> Importar
           </button>
-          <button onClick={openCreateModal} className={styles.buttonPrimary}>
-            <LuPlus className={styles.iconInline} /> Novo Usuário
+          <button onClick={openCreateModal} className={styles.btnPrimary}>
+            <Plus size={18} /> Novo Usuário
           </button>
         </div>
       </header>
 
-      <div className={styles.toolbar}>
-        <div className={styles.searchContainer}>
-          <LuSearch className={styles.iconInline} />
+      <div className={styles.controlsBar}>
+        <div className={styles.searchWrapper}>
+          <Search size={20} className={styles.searchIcon} />
           <input
             type="text"
-            placeholder="Buscar por nome ou e-mail..."
+            placeholder="Pesquisar por nome, email..."
             value={filtro}
             onChange={(e) => setFiltro(e.target.value)}
           />
         </div>
-        <div className={styles.filters}>
+
+        <div className={styles.filtersWrapper}>
           <select
             value={filtroPapel}
             onChange={(e) => setFiltroPapel(e.target.value)}
+            className={styles.select}
           >
-            <option value="TODOS">Todos os Papéis</option>
+            <option value="TODOS">Todos os perfis</option>
             <option value="PROFESSOR">Professores</option>
             <option value="ALUNO">Alunos</option>
             <option value="RESPONSAVEL">Responsáveis</option>
@@ -439,315 +443,387 @@ export default function GestorUsuariosPage() {
           <select
             value={filtroStatus}
             onChange={(e) => setFiltroStatus(e.target.value)}
+            className={styles.select}
           >
-            <option value="TODOS">Todos os Status</option>
-            <option value="true">Ativos</option>
-            <option value="false">Inativos</option>
+            <option value="TODOS">Status</option>
+            <option value="true">Ativo</option>
+            <option value="false">Inativo</option>
           </select>
+
+          <div className={styles.viewToggle}>
+            <button
+              className={`${styles.toggleBtn} ${
+                viewMode === "list" ? styles.active : ""
+              }`}
+              onClick={() => setViewMode("list")}
+              title="Lista"
+            >
+              <ListIcon size={20} />
+            </button>
+            <button
+              className={`${styles.toggleBtn} ${
+                viewMode === "grid" ? styles.active : ""
+              }`}
+              onClick={() => setViewMode("grid")}
+              title="Grade"
+            >
+              <LayoutGrid size={20} />
+            </button>
+          </div>
         </div>
       </div>
 
-      {selectedUserIds.length > 0 && (
-        <div className={styles.bulkActionsContainer}>
-          <span>{selectedUserIds.length} selecionado(s)</span>
-          <button onClick={() => handleBulkAction('activate')}>Ativar</button>
-          <button onClick={() => handleBulkAction('deactivate')}>
-            Desativar
-          </button>
-          <button
-            className={styles.bulkDeleteButton}
-            onClick={() => handleBulkAction('delete')}
-          >
-            Excluir
-          </button>
+      {viewMode === "list" ? (
+        <div className={styles.tableWrapper}>
+          <table className={styles.table}>
+            <thead>
+              <tr>
+                <th style={{ width: "40px" }}>
+                  <input
+                    type="checkbox"
+                    onChange={handleSelectAll}
+                    checked={
+                      selectedUserIds.length === usuariosFiltrados.length &&
+                      usuariosFiltrados.length > 0
+                    }
+                  />
+                </th>
+                <th>Usuário</th>
+                <th>Contato</th>
+                <th>Perfil</th>
+                <th>Status</th>
+                <th style={{ textAlign: "right" }}>Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              {usuariosFiltrados.length > 0 ? (
+                usuariosFiltrados.map((user) => (
+                  <tr key={user.id}>
+                    <td>
+                      <input
+                        type="checkbox"
+                        checked={selectedUserIds.includes(user.id)}
+                        onChange={() => handleSelectOne(user.id)}
+                      />
+                    </td>
+                    <td>
+                      <div className={styles.userCell}>
+                        {renderAvatar(user, "sm")}
+                        <div className={styles.userDetails}>
+                          <span className={styles.userName}>{user.nome}</span>
+                          {user.perfil_aluno?.numero_matricula && (
+                            <span className={styles.userMeta}>
+                              Mat: {user.perfil_aluno.numero_matricula}
+                            </span>
+                          )}
+                          {user.perfil_professor?.titulacao && (
+                            <span className={styles.userMeta}>
+                              {user.perfil_professor.titulacao}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <div className={styles.contactCell}>
+                        <div className={styles.contactItem}>
+                          <Mail size={14} /> {user.email}
+                        </div>
+                        {user.perfil_responsavel?.telefone && (
+                          <div className={styles.contactItem}>
+                            <Phone size={14} />{" "}
+                            {user.perfil_responsavel.telefone}
+                          </div>
+                        )}
+                      </div>
+                    </td>
+                    <td>
+                      <span
+                        className={`${styles.badge} ${
+                          styles[user.papel.toLowerCase()]
+                        }`}
+                      >
+                        {user.papel}
+                      </span>
+                    </td>
+                    <td>
+                      <span
+                        className={`${styles.statusDot} ${
+                          user.status ? styles.online : styles.offline
+                        }`}
+                      ></span>
+                      {user.status ? "Ativo" : "Inativo"}
+                    </td>
+                    <td style={{ textAlign: "right" }}>
+                      <div className={styles.actions}>
+                        <button
+                          onClick={() => openEditModal(user)}
+                          className={styles.actionBtn}
+                          title="Editar"
+                        >
+                          <Pencil size={16} />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(user)}
+                          className={`${styles.actionBtn} ${styles.delete}`}
+                          title="Excluir"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={6} className={styles.emptyState}>
+                    Nenhum usuário encontrado.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
-      )}
-
-      <div className={styles.tableContainer}>
-        <table className={styles.userTable}>
-          <thead>
-            <tr>
-              <th className={styles.thCheckbox}>
-                <input
-                  type="checkbox"
-                  onChange={handleSelectAll}
-                  checked={
-                    selectedUserIds.length === usuariosFiltrados.length &&
-                    usuariosFiltrados.length > 0
-                  }
-                />
-              </th>
-              <th>Nome</th>
-              <th>Email</th>
-              <th>Papel</th>
-              <th>Status</th>
-              <th>Ações</th>
-            </tr>
-          </thead>
-          <tbody>
-            {usuariosFiltrados.length > 0 ? (
-              usuariosFiltrados.map((user) => (
-                <tr
-                  key={user.id}
-                  className={
-                    selectedUserIds.includes(user.id) ? styles.selectedRow : ''
-                  }
-                >
-                  <td className={styles.tdCheckbox}>
-                    <input
-                      type="checkbox"
-                      checked={selectedUserIds.includes(user.id)}
-                      onChange={() => handleSelectOne(user.id)}
-                    />
-                  </td>
-                  <td>{user.nome}</td>
-                  <td>{user.email}</td>
-                  <td>
-                    <span
-                      className={`${styles.roleTag} ${
-                        styles[user.papel.toLowerCase()]
-                      }`}
-                    >
-                      {user.papel}
-                    </span>
-                  </td>
-                  <td>
-                    <span
-                      className={
-                        user.status
-                          ? styles.statusActive
-                          : styles.statusInactive
-                      }
-                    >
-                      {user.status ? 'Ativo' : 'Inativo'}
-                    </span>
-                  </td>
-                  <td className={styles.actionButtons}>
+      ) : (
+        <div className={styles.gridWrapper}>
+          {usuariosFiltrados.length > 0 ? (
+            usuariosFiltrados.map((user) => (
+              <div key={user.id} className={styles.userCard}>
+                <div className={styles.cardHeader}>
+                  <span
+                    className={`${styles.badge} ${
+                      styles[user.papel.toLowerCase()]
+                    }`}
+                  >
+                    {user.papel}
+                  </span>
+                  <div className={styles.cardActions}>
                     <button
                       onClick={() => openEditModal(user)}
-                      className={styles.buttonPrimary}
-                      title="Editar"
+                      className={styles.iconBtn}
                     >
-                      <FiEdit className={styles.icon} />
+                      <Pencil size={16} />
                     </button>
                     <button
                       onClick={() => handleDelete(user)}
-                      className={styles.buttonPrimary}
-                      title="Excluir"
+                      className={`${styles.iconBtn} ${styles.danger}`}
                     >
-                      <FiTrash2 className={styles.icon} />
+                      <Trash2 size={16} />
                     </button>
-                  </td>
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan={6} className={styles.emptyRow}>
-                  Nenhum usuário encontrado com os filtros aplicados.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+                  </div>
+                </div>
+                <div className={styles.cardBody}>
+                  {renderAvatar(user, "lg")}
+                  <h3>{user.nome}</h3>
+                  <div className={styles.cardInfo}>
+                    <p>
+                      <Mail size={14} /> {user.email}
+                    </p>
+                    {user.perfil_aluno && (
+                      <p>
+                        <GraduationCap size={14} /> Mat:{" "}
+                        {user.perfil_aluno.numero_matricula}
+                      </p>
+                    )}
+                    {user.perfil_professor && (
+                      <p>
+                        <GraduationCap size={14} />{" "}
+                        {user.perfil_professor.titulacao || "Docente"}
+                      </p>
+                    )}
+                    {user.perfil_responsavel?.telefone && (
+                      <p>
+                        <Phone size={14} /> {user.perfil_responsavel.telefone}
+                      </p>
+                    )}
+                  </div>
+                </div>
+                <div className={styles.cardFooter}>
+                  <div
+                    className={`${styles.statusBadge} ${
+                      user.status ? styles.active : styles.inactive
+                    }`}
+                  >
+                    {user.status ? "Ativo" : "Inativo"}
+                  </div>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className={styles.emptyState}>Nenhum usuário encontrado.</div>
+          )}
+        </div>
+      )}
 
       <Modal
         isOpen={isCreateModalOpen}
         onClose={closeModal}
-        title="Criar Novo Usuário"
-        width={600}
+        title="Novo Cadastro"
       >
-        <form onSubmit={handleSubmit} className={styles.modalForm}>
-          <label className={styles.label}>Nome Completo*</label>
-          <input
-            type='text'
-            name="nome"
-            value={formState.nome}
-            onChange={handleInputChange}
-            required
-          />
-          <label className={styles.label}>Email*</label>
-          <input
-            type="email"
-            name="email"
-            value={formState.email}
-            onChange={handleInputChange}
-            required
-          />
-          <label className={styles.label}>Senha Provisória*</label>
-          <input
-            type="password"
-            name="senha"
-            value={formState.senha}
-            onChange={handleInputChange}
-            required
-          />
-          <label className={styles.label}>Papel*</label>
-          <select
-            name="papel"
-            value={formState.papel}
-            onChange={handleInputChange}
-          >
-            <option value="PROFESSOR">Professor</option>
-            <option value="ALUNO">Aluno</option>
-            <option value="RESPONSAVEL">Responsável</option>
-          </select>
-          {formState.papel === 'ALUNO' && (
-            <>
-              <label className={styles.label}>Número de Matrícula*</label>
-              <input
-                name="numero_matricula"
-                value={formState.numero_matricula}
-                onChange={handleInputChange}
-                required
-              />
-            </>
-          )}
-          {formState.papel === 'PROFESSOR' && (
-            <>
-              <label className={styles.label}>Titulação</label>
-              <input
-                name="titulacao"
-                type="text"
-                value={formState.titulacao}
-                onChange={handleInputChange}
-                placeholder="Ex: Mestre, Doutor"
-              />
-            </>
-          )}
-          {formState.papel === 'RESPONSAVEL' &&
-            (() => {
-              const remainingOptions = alunoOptions.filter(
-                (option) =>
-                  !formState.responsavelAlunos.some(
-                    (aluno) => aluno.alunoId === option.id,
-                  ),
-              );
-
-              return (
-                <div className={styles.responsavelSection}>
-                  <label className={styles.label}>Telefone</label>
+        <form onSubmit={handleSubmit} className={styles.formContainer}>
+          <div className={styles.formLayout}>
+            <div className={styles.formSidebar}>
+              <div className={styles.photoUpload}>
+                <div className={styles.photoPreview}>
+                  {fotoPreview ? (
+                    <img src={fotoPreview} alt="Preview" />
+                  ) : (
+                    <User size={48} color="#cbd5e1" />
+                  )}
+                </div>
+                <label className={styles.uploadBtn}>
+                  <Camera size={16} /> Alterar Foto
                   <input
-                    name="telefone"
-                    value={formState.telefone}
-                    onChange={handleInputChange}
-                    placeholder="(00) 00000-0000"
+                    type="file"
+                    hidden
+                    accept="image/*"
+                    onChange={handleFileChange}
                   />
-                  <div className={styles.responsavelAlunosHeader}>
-                    <h4>Alunos vinculados</h4>
+                </label>
+              </div>
+              <div className={styles.roleSelect}>
+                <label>Perfil de Acesso</label>
+                <select
+                  name="papel"
+                  value={formState.papel}
+                  onChange={handleInputChange}
+                >
+                  <option value="PROFESSOR">Professor</option>
+                  <option value="ALUNO">Aluno</option>
+                  <option value="RESPONSAVEL">Responsável</option>
+                </select>
+              </div>
+            </div>
+
+            <div className={styles.formMain}>
+              <div className={styles.inputGroup}>
+                <label>Nome Completo</label>
+                <input
+                  name="nome"
+                  value={formState.nome}
+                  onChange={handleInputChange}
+                  required
+                  placeholder="Ex: Maria Silva"
+                />
+              </div>
+
+              <div className={styles.row}>
+                <div className={styles.inputGroup}>
+                  <label>Email</label>
+                  <input
+                    type="email"
+                    name="email"
+                    value={formState.email}
+                    onChange={handleInputChange}
+                    required
+                    placeholder="email@exemplo.com"
+                  />
+                </div>
+                <div className={styles.inputGroup}>
+                  <label>Senha Inicial</label>
+                  <input
+                    type="password"
+                    name="senha"
+                    value={formState.senha}
+                    onChange={handleInputChange}
+                    required
+                    placeholder="******"
+                  />
+                </div>
+              </div>
+
+              {formState.papel === "ALUNO" && (
+                <div className={styles.specificFields}>
+                  <div className={styles.inputGroup}>
+                    <label>Número de Matrícula</label>
+                    <input
+                      name="numero_matricula"
+                      value={formState.numero_matricula}
+                      onChange={handleInputChange}
+                      required
+                    />
+                  </div>
+                </div>
+              )}
+
+              {formState.papel === "PROFESSOR" && (
+                <div className={styles.specificFields}>
+                  <div className={styles.inputGroup}>
+                    <label>Titulação</label>
+                    <input
+                      name="titulacao"
+                      value={formState.titulacao}
+                      onChange={handleInputChange}
+                      placeholder="Ex: Mestre, Doutor"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {formState.papel === "RESPONSAVEL" && (
+                <div className={styles.specificFields}>
+                  <div className={styles.inputGroup}>
+                    <label>Telefone</label>
+                    <input
+                      name="telefone"
+                      value={formState.telefone}
+                      onChange={handleInputChange}
+                      placeholder="(00) 00000-0000"
+                    />
+                  </div>
+                  <div className={styles.alunosVinculo}>
+                    <label>Vincular Alunos</label>
+                    {formState.responsavelAlunos.map((respAluno, idx) => (
+                      <div key={idx} className={styles.vinculoRow}>
+                        <select
+                          value={respAluno.alunoId}
+                          onChange={(e) =>
+                            handleResponsavelAlunoChange(
+                              idx,
+                              "alunoId",
+                              e.target.value
+                            )
+                          }
+                        >
+                          <option value="">Selecione...</option>
+                          {alunoOptions.map((opt) => (
+                            <option key={opt.id} value={opt.id}>
+                              {opt.usuario.nome}
+                            </option>
+                          ))}
+                        </select>
+                        <button
+                          type="button"
+                          onClick={() => removeResponsavelAluno(idx)}
+                          className={styles.removeBtn}
+                        >
+                          <X size={16} />
+                        </button>
+                      </div>
+                    ))}
                     <button
                       type="button"
-                      className={styles.addAlunoButton}
                       onClick={addResponsavelAluno}
-                      disabled={remainingOptions.length === 0}
+                      className={styles.addBtnLink}
                     >
-                      <FiPlus /> Adicionar aluno
+                      <Plus size={14} /> Adicionar aluno
                     </button>
                   </div>
-                  {formState.responsavelAlunos.length === 0 ? (
-                    <p className={styles.responsavelEmpty}>
-                      Nenhum aluno selecionado para este responsável.
-                    </p>
-                  ) : (
-                    formState.responsavelAlunos.map(
-                      (responsavelAluno, index) => {
-                        const availableOptions = alunoOptions.filter(
-                          (option) => {
-                            if (responsavelAluno.alunoId === option.id)
-                              return true;
-                            return !formState.responsavelAlunos.some(
-                              (aluno, alunoIndex) =>
-                                alunoIndex !== index &&
-                                aluno.alunoId === option.id,
-                            );
-                          },
-                        );
-
-                        return (
-                          <div
-                            key={`${responsavelAluno.alunoId}-${index}`}
-                            className={styles.responsavelAlunoRow}
-                          >
-                            <label>
-                              Aluno
-                              <select
-                                value={responsavelAluno.alunoId}
-                                onChange={(event) =>
-                                  handleResponsavelAlunoChange(
-                                    index,
-                                    'alunoId',
-                                    event.target.value,
-                                  )
-                                }
-                              >
-                                <option value="">Selecione um aluno</option>
-                                {availableOptions.map((option) => (
-                                  <option key={option.id} value={option.id}>
-                                    {option.usuario.nome} (
-                                    {option.numero_matricula})
-                                  </option>
-                                ))}
-                              </select>
-                            </label>
-                            <label>
-                              Parentesco
-                              <input
-                                type="text"
-                                value={responsavelAluno.parentesco}
-                                onChange={(event) =>
-                                  handleResponsavelAlunoChange(
-                                    index,
-                                    'parentesco',
-                                    event.target.value,
-                                  )
-                                }
-                                placeholder="Ex.: Pai, Mãe, Tio(a)"
-                              />
-                            </label>
-                            <label className={styles.checkboxContainer}>
-                              <input
-                                type="checkbox"
-                                checked={responsavelAluno.principal}
-                                onChange={(event) =>
-                                  handleResponsavelAlunoChange(
-                                    index,
-                                    'principal',
-                                    event.target.checked,
-                                  )
-                                }
-                              />
-                              Principal
-                            </label>
-                            <button
-                              type="button"
-                              className={styles.removeAlunoButton}
-                              onClick={() => removeResponsavelAluno(index)}
-                              title="Remover aluno"
-                            >
-                              <FiTrash2 />
-                            </button>
-                          </div>
-                        );
-                      },
-                    )
-                  )}
-                  <span className={styles.helperText}>
-                    Você poderá gerenciar os vínculos depois na área de
-                    responsáveis.
-                  </span>
                 </div>
-              );
-            })()}
-          <div className={styles.modalActions}>
+              )}
+            </div>
+          </div>
+
+          <div className={styles.modalFooter}>
             <button
               type="button"
               onClick={closeModal}
-              className={styles.cancelButton}
+              className={styles.btnGhost}
             >
               Cancelar
             </button>
-            <button type="submit" className={styles.saveButton}>
-              Salvar
+            <button type="submit" className={styles.btnPrimary}>
+              Criar Usuário
             </button>
           </div>
         </form>
@@ -757,48 +833,79 @@ export default function GestorUsuariosPage() {
         <Modal
           isOpen={isEditModalOpen}
           onClose={closeModal}
-          title={`Editar Usuário: ${editingUser.nome}`}
+          title={`Editar: ${editingUser.nome}`}
         >
-          <form onSubmit={handleUpdate} className={styles.modalForm}>
-            <label className={styles.label}>Nome Completo*</label>
-            <input
-              name="nome"
-              type='text'
-              value={editingUser.nome}
-              onChange={handleEditInputChange}
-              required
-            />
-            <label className={styles.label}>Email</label>
-            <input type="email" value={editingUser.email} disabled />
-            {editingUser.papel === 'PROFESSOR' && (
-              <>
-                <label className={styles.label}>Titulação</label>
-                <input
-                  name="titulacao"
-                  value={editingUser.perfil_professor?.titulacao || ''}
-                  onChange={handleEditInputChange}
-                />
-              </>
-            )}
-            <div className={styles.checkboxContainer}>
-              <input
-                type="checkbox"
-                name="status"
-                checked={!!editingUser.status}
-                onChange={handleEditInputChange}
-                id="status-edit"
-              />
-              <label htmlFor="status-edit">Usuário Ativo</label>
+          <form onSubmit={handleUpdate} className={styles.formContainer}>
+            <div className={styles.formLayout}>
+              <div className={styles.formSidebar}>
+                <div className={styles.photoUpload}>
+                  <div className={styles.photoPreview}>
+                    {fotoPreview ? (
+                      <img src={fotoPreview} alt="Preview" />
+                    ) : (
+                      <User size={48} color="#cbd5e1" />
+                    )}
+                  </div>
+                  <label className={styles.uploadBtn}>
+                    <Camera size={16} /> Trocar Foto
+                    <input
+                      type="file"
+                      hidden
+                      accept="image/*"
+                      onChange={handleFileChange}
+                    />
+                  </label>
+                </div>
+                <div className={styles.toggleStatus}>
+                  <label>Status da Conta</label>
+                  <div className={styles.statusSwitch}>
+                    <input
+                      type="checkbox"
+                      name="status"
+                      checked={!!editingUser.status}
+                      onChange={handleEditInputChange}
+                      id="status-edit"
+                    />
+                    <label htmlFor="status-edit">
+                      {editingUser.status ? "Ativo" : "Inativo"}
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <div className={styles.formMain}>
+                <div className={styles.inputGroup}>
+                  <label>Nome Completo</label>
+                  <input
+                    name="nome"
+                    value={editingUser.nome}
+                    onChange={handleEditInputChange}
+                    required
+                  />
+                </div>
+
+                {editingUser.papel === "PROFESSOR" && (
+                  <div className={styles.inputGroup}>
+                    <label>Titulação</label>
+                    <input
+                      name="titulacao"
+                      value={editingUser.perfil_professor?.titulacao || ""}
+                      onChange={handleEditInputChange}
+                    />
+                  </div>
+                )}
+              </div>
             </div>
-            <div className={styles.modalActions}>
+
+            <div className={styles.modalFooter}>
               <button
                 type="button"
                 onClick={closeModal}
-                className={styles.cancelButton}
+                className={styles.btnGhost}
               >
                 Cancelar
               </button>
-              <button type="submit" className={styles.saveButton}>
+              <button type="submit" className={styles.btnPrimary}>
                 Salvar Alterações
               </button>
             </div>

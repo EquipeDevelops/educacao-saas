@@ -155,34 +155,32 @@ async function getHeaderInfo(user: AuthenticatedRequest['user']) {
   if (!alunoId) {
     throw new Error('Usuário não é um aluno válido.');
   }
-  const matriculaAtiva = await prisma.matriculas.findFirst({
-    where: { alunoId, status: 'ATIVA' },
-    include: {
-      turma: { include: { unidade_escolar: true } },
-    },
-  });
 
   const alunoPerfil = await prisma.usuarios_aluno.findUnique({
     where: { id: alunoId },
-    select: {
-      usuario: {
-        select: {
-          nome: true,
-          papel: true,
-        },
-      },
-    },
+    include: { usuario: { select: { nome: true, fotoUrl: true } } },
   });
+
+  const matriculaAtiva = await prisma.matriculas.findFirst({
+    where: { alunoId, status: 'ATIVA' },
+    include: { turma: { select: { nome: true, serie: true } } },
+  });
+
+  let escolaNome = undefined;
+  if (user.unidadeEscolarId) {
+    const unidadeEscolar = await prisma.unidades_Escolares.findUnique({
+      where: { id: user.unidadeEscolarId },
+      select: { nome: true },
+    });
+    escolaNome = unidadeEscolar?.nome;
+  }
 
   return {
     nome: alunoPerfil?.usuario.nome,
-    papel: alunoPerfil?.usuario.papel,
-    escola:
-      matriculaAtiva?.turma.unidade_escolar.nome || 'Escola não encontrada',
-    turma: matriculaAtiva
-      ? `${matriculaAtiva.turma.serie} ${matriculaAtiva.turma.nome}`
-      : 'Turma não encontrada',
-    anoLetivo: matriculaAtiva?.ano_letivo || new Date().getFullYear(),
+    fotoUrl: alunoPerfil?.usuario.fotoUrl,
+    turma: matriculaAtiva?.turma.nome,
+    ano: matriculaAtiva?.turma.serie,
+    escola: escolaNome,
   };
 }
 
@@ -288,6 +286,8 @@ async function getHomeStats(user: AuthenticatedRequest['user']) {
 
 async function getProximasAulas(user: AuthenticatedRequest['user']) {
   const { perfilId: alunoId } = user;
+  if (!alunoId) return [];
+
   const matriculaAtiva = await prisma.matriculas.findFirst({
     where: { alunoId, status: 'ATIVA' },
   });
@@ -325,6 +325,8 @@ async function getProximasAulas(user: AuthenticatedRequest['user']) {
 
 async function getProximaTarefa(user: AuthenticatedRequest['user']) {
   const { perfilId: alunoId } = user;
+  if (!alunoId) return null;
+
   const matriculaAtiva = await prisma.matriculas.findFirst({
     where: { alunoId, status: 'ATIVA' },
     select: { turmaId: true },
@@ -351,6 +353,8 @@ async function getAgendaDoMes(
   currentMonth: Date,
 ) {
   const { perfilId: alunoId, unidadeEscolarId } = user;
+  if (!alunoId || !unidadeEscolarId) return [];
+
   const matriculaAtiva = await prisma.matriculas.findFirst({
     where: { alunoId, status: 'ATIVA' },
     select: { turmaId: true },
@@ -397,7 +401,7 @@ async function getAgendaDoMes(
     const date = new Date(ano, mes, i);
     const dayOfWeek = date.getDay();
     horarios.forEach((horario: any) => {
-      if (diaSemanaMap[horario.dia_semana] === dayOfWeek) {
+      if (diaSemanaMap[horario.dia_semana as DiaDaSemana] === dayOfWeek) {
         processedEvents.push({
           id: `aula-${horario.id}-${i}`,
           date,
@@ -486,23 +490,13 @@ async function getTarefasPendentes(user: AuthenticatedRequest['user']) {
       id: true,
       titulo: true,
       data_entrega: true,
-      tipo: true,
       componenteCurricular: {
-        select: {
-          materia: {
-            select: {
-              nome: true,
-            },
-          },
-        },
+        select: { materia: { select: { nome: true } } },
       },
     },
-    orderBy: {
-      data_entrega: 'asc',
-    },
-    take: 3,
+    orderBy: { data_entrega: 'asc' },
+    take: 5,
   });
-
   return tarefas;
 }
 
@@ -525,6 +519,7 @@ async function getMensagensRecentes(user: AuthenticatedRequest['user']) {
               id: true,
               nome: true,
               papel: true,
+              fotoUrl: true,
             },
           },
         },
@@ -547,16 +542,17 @@ async function getMensagensRecentes(user: AuthenticatedRequest['user']) {
       (p) => p.usuarioId !== user.id,
     );
     const ultimaMensagem = conversa.mensagens[0];
-
     return {
       id: conversa.id,
-      nomeOutraPessoa: outroParticipante?.usuario.nome || 'Desconhecido',
-      papelUsuarioMensagem: outroParticipante?.usuario.papel,
-      ultimaMensagem: ultimaMensagem?.conteudo || 'Nenhuma mensagem ainda.',
-      dataUltimaMensagem: ultimaMensagem?.criado_em,
+      nome: outroParticipante?.usuario.nome || 'Usuário desconhecido',
+      fotoUrl: outroParticipante?.usuario.fotoUrl,
+      ultimaMensagem: ultimaMensagem?.conteudo || '',
+      data: ultimaMensagem?.criado_em
+        ? ultimaMensagem.criado_em.toISOString()
+        : null,
+      naoLida: false,
     };
   });
-
   return conversasFormatadas;
 }
 
@@ -580,6 +576,7 @@ async function getDashboardData(user: AuthenticatedRequest['user']) {
     getTarefasPendentes(user),
     getMensagensRecentes(user),
   ]);
+
   return {
     alunoInfo,
     stats,
