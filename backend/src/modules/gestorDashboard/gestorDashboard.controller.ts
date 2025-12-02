@@ -1,71 +1,55 @@
 import { Request, Response, NextFunction } from "express";
-import { AuthenticatedRequest } from "../../middlewares/auth";
 import { gestorDashboardService } from "./gestorDashboard.service";
-import { PeriodoAvaliacao } from "@prisma/client";
+import { RequestWithPrisma } from "../../middlewares/prisma-context";
 
 export const gestorDashboardController = {
-  getHorarios: async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const authReq = req as AuthenticatedRequest;
-      const horarios = await gestorDashboardService.getHorarios(authReq.user);
-      res.json(horarios);
-    } catch (error) {
-      next(error);
-    }
-  },
-  getEventos: async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const authReq = req as AuthenticatedRequest;
-      const eventos = await gestorDashboardService.getEventos(authReq.user);
-      res.json(eventos);
-    } catch (error) {
-      next(error);
-    }
-  },
-
   getStats: async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const authReq = req as AuthenticatedRequest;
-      const stats = await gestorDashboardService.getStats(authReq.user);
-      res.json(stats);
+      const authReq = req as RequestWithPrisma;
+      const { unidadeEscolarId } = authReq.user;
+
+      if (!unidadeEscolarId) {
+        return res
+          .status(400)
+          .json({ message: "Usuário não vinculado a uma unidade escolar." });
+      }
+
+      const stats = await gestorDashboardService.getStats(
+        unidadeEscolarId,
+        authReq.prismaWithAudit
+      );
+
+      res.status(200).json(stats);
     } catch (error) {
       next(error);
     }
   },
 
-  getChartData: async (req: Request, res: Response, next: NextFunction) => {
+  getPerformance: async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const authReq = req as AuthenticatedRequest;
-      const ano = req.query.ano ? parseInt(req.query.ano as string) : undefined;
-      const periodo = req.query.periodo as PeriodoAvaliacao | undefined;
+      const authReq = req as RequestWithPrisma;
+      const { unidadeEscolarId } = authReq.user;
 
-      const chartData = await gestorDashboardService.getChartData(
-        authReq.user,
-        { ano, periodo }
+      const data = await gestorDashboardService.getPerformance(
+        unidadeEscolarId!,
+        authReq.prismaWithAudit
       );
-      res.json(chartData);
+      res.status(200).json(data);
     } catch (error) {
       next(error);
     }
   },
 
-  getDesempenhoPorMateria: async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ) => {
+  getAttendance: async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const authReq = req as AuthenticatedRequest;
-      const { turmaId } = req.params;
-      const ano = req.query.ano ? parseInt(req.query.ano as string) : undefined;
-      const periodo = req.query.periodo as PeriodoAvaliacao | undefined;
+      const authReq = req as RequestWithPrisma;
+      const { unidadeEscolarId } = authReq.user;
 
-      const chartData = await gestorDashboardService.getDesempenhoPorMateria(
-        authReq.user,
-        turmaId,
-        { ano, periodo }
+      const data = await gestorDashboardService.getAttendance(
+        unidadeEscolarId!,
+        authReq.prismaWithAudit
       );
-      res.json(chartData);
+      res.status(200).json(data);
     } catch (error) {
       next(error);
     }

@@ -1,81 +1,117 @@
 "use client";
+
+import { useEffect, useState } from "react";
 import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
+  Radar,
+  RadarChart,
+  PolarGrid,
+  PolarAngleAxis,
+  PolarRadiusAxis,
   ResponsiveContainer,
-  CartesianGrid,
+  Tooltip,
 } from "recharts";
-import styles from "./Charts.module.css";
+import { api } from "@/services/api";
+import { Loader2 } from "lucide-react";
 
-interface PerformanceData {
-  turmaId: string;
-  nomeTurma: string;
-  mediaNota: number;
-}
+const emptyData = [
+  { subject: "Matemática", A: 0, fullMark: 10 },
+  { subject: "Português", A: 0, fullMark: 10 },
+  { subject: "História", A: 0, fullMark: 10 },
+  { subject: "Geografia", A: 0, fullMark: 10 },
+  { subject: "Ciências", A: 0, fullMark: 10 },
+  { subject: "Inglês", A: 0, fullMark: 10 },
+];
 
-interface ClassPerformanceChartProps {
-  data: PerformanceData[];
-  onBarClick: (turmaId: string, nomeTurma: string) => void;
-}
+export default function ClassPerformanceChart() {
+  const [data, setData] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-export default function ClassPerformanceChart({
-  data,
-  onBarClick,
-}: ClassPerformanceChartProps) {
-  if (!data || data.length === 0) {
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const response = await api.get("/dashboard/gestor/performance");
+        setData(response.data);
+      } catch (error) {
+        console.error("Erro ao carregar desempenho", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchData();
+  }, []);
+
+  if (loading) {
     return (
-      <div className={styles.chartCard}>
-        <h3 className={styles.chartTitle}>Desempenho Médio por Turma</h3>
-        <div className={styles.emptyState}>
-          <p>Não há notas lançadas para exibir o desempenho.</p>
-          <small>
-            Quando as avaliações forem corrigidas, o gráfico aparecerá aqui.
-          </small>
-        </div>
+      <div
+        style={{
+          height: "300px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <Loader2 className="animate-spin text-blue-500" size={32} />
       </div>
     );
   }
 
+  const showEmptyState = data.length === 0;
+  const chartData = showEmptyState ? emptyData : data;
+
   return (
-    <div className={styles.chartCard}>
-      <h3 className={styles.chartTitle}>Desempenho Médio por Turma</h3>
-      <ResponsiveContainer width="100%" height={300}>
-        <BarChart
-          data={data}
-          margin={{ top: 5, right: 20, left: -10, bottom: 5 }}
+    <div style={{ width: "100%", height: "300px", position: "relative" }}>
+      {showEmptyState && (
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            backgroundColor: "rgba(255,255,255,0.7)",
+            zIndex: 10,
+            flexDirection: "column",
+            gap: "8px",
+          }}
         >
-          <CartesianGrid
-            strokeDasharray="3 3"
-            vertical={false}
-            stroke="#f3f4f6"
+          <p style={{ fontWeight: 600, color: "#64748b" }}>
+            Sem dados de avaliação
+          </p>
+          <span style={{ fontSize: "0.8rem", color: "#94a3b8" }}>
+            As notas aparecerão aqui
+          </span>
+        </div>
+      )}
+
+      <ResponsiveContainer width="100%" height="100%">
+        <RadarChart cx="50%" cy="50%" outerRadius="80%" data={chartData}>
+          <PolarGrid stroke="#e2e8f0" />
+          <PolarAngleAxis
+            dataKey="subject"
+            tick={{ fill: "#64748b", fontSize: 12 }}
           />
-          <XAxis
-            dataKey="nomeTurma"
-            fontSize={12}
-            tickLine={false}
-            axisLine={false}
-          />
-          <YAxis
-            fontSize={12}
-            tickLine={false}
-            axisLine={false}
+          <PolarRadiusAxis
+            angle={30}
             domain={[0, 10]}
+            tick={false}
+            axisLine={false}
           />
-          <Tooltip cursor={{ fill: "rgba(239, 246, 255, 0.6)" }} />
-          <Bar
-            dataKey="mediaNota"
-            fill="#2563eb"
-            radius={[4, 4, 0, 0]}
-            name="Média da Turma"
-            cursor="pointer"
-            onClick={(data: PerformanceData) =>
-              onBarClick(data.turmaId, data.nomeTurma)
-            }
+          <Radar
+            name="Média da Escola"
+            dataKey="A"
+            stroke="#2563eb"
+            fill="#3b82f6"
+            fillOpacity={0.5}
           />
-        </BarChart>
+          <Tooltip
+            contentStyle={{
+              borderRadius: "8px",
+              border: "none",
+              boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
+            }}
+            formatter={(value: number) => [value.toFixed(1), "Média"]}
+          />
+        </RadarChart>
       </ResponsiveContainer>
     </div>
   );

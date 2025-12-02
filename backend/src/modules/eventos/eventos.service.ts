@@ -1,6 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import { AuthenticatedRequest } from "../../middlewares/auth";
-import { api } from "../../config/api";
+import { api } from "../config/api";
 
 const prisma = new PrismaClient();
 

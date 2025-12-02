@@ -6,9 +6,18 @@ export const usuarioController = {
   create: async (req: Request, res: Response, next: NextFunction) => {
     try {
       const authReq = req as RequestWithPrisma;
+      let fotoUrl = null;
+
+      if (req.file) {
+        const protocol = req.protocol;
+        const host = req.get("host");
+        fotoUrl = `${protocol}://${host}/uploads/${req.file.filename}`;
+      }
+
       const newUser = await usuarioService.createUser(
         {
           ...req.body,
+          fotoUrl,
           instituicaoId: authReq.user.instituicaoId!,
           unidadeEscolarId: authReq.user.unidadeEscolarId!,
         },
@@ -61,9 +70,17 @@ export const usuarioController = {
       }
 
       const where = { unidadeEscolarId: authReq.user.unidadeEscolarId! };
+
+      let fotoUrl = undefined;
+      if (req.file) {
+        const protocol = req.protocol;
+        const host = req.get("host");
+        fotoUrl = `${protocol}://${host}/uploads/${req.file.filename}`;
+      }
+
       const updatedUser = await usuarioService.updateUser(
         id,
-        req.body,
+        { ...req.body, ...(fotoUrl && { fotoUrl }) },
         where,
         authReq.prismaWithAudit,
       );
