@@ -1,18 +1,13 @@
 import { Router } from "express";
-import { protect, authorize } from "../../middlewares/auth";
 import { gestorDashboardController } from "./gestorDashboard.controller";
+import { authorize } from "../../middlewares/auth";
 
 const router = Router();
 
-router.use(protect, authorize("GESTOR"));
+router.use(authorize("GESTOR", "ADMINISTRADOR"));
 
 router.get("/stats", gestorDashboardController.getStats);
+router.get("/performance", gestorDashboardController.getPerformance);
+router.get("/attendance", gestorDashboardController.getAttendance);
 
-router.get("/charts", gestorDashboardController.getChartData);
-
-router.get(
-  "/charts/desempenho-turma/:turmaId",
-  gestorDashboardController.getDesempenhoPorMateria
-);
-
-export const gestorDashboardRoutes = router;
+export { router as gestorDashboardRoutes };

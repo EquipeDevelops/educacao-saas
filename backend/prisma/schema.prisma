@@ -130,6 +130,7 @@ model Usuarios {
   topicos_forum_criados    Topico_Forum[]
   arquivos_enviados        Arquivos[]
   passwordResetToken     String?
+  fotoUrl                String?
   passwordResetExpires   DateTime?
   data_nascimento        DateTime?            @db.Date
   cpf_criptografado      Bytes?

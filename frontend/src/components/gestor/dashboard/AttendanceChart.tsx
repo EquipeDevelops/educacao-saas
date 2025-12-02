@@ -1,108 +1,131 @@
 "use client";
+
+import { useEffect, useState } from "react";
 import {
-  BarChart,
-  Bar,
+  AreaChart,
+  Area,
   XAxis,
   YAxis,
+  CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  CartesianGrid,
-  Legend,
 } from "recharts";
-import styles from "./Charts.module.css";
+import { api } from "@/services/api";
+import { Loader2 } from "lucide-react";
 
-interface AttendanceData {
-  nomeTurma: string;
-  presenca: number;
-  justificadas: number;
-  naoJustificadas: number;
-}
+const emptyData = [
+  { name: "Jan", presentes: 0 },
+  { name: "Fev", presentes: 0 },
+  { name: "Mar", presentes: 0 },
+  { name: "Abr", presentes: 0 },
+  { name: "Mai", presentes: 0 },
+  { name: "Jun", presentes: 0 },
+];
 
-interface AttendanceChartProps {
-  data: AttendanceData[];
-}
+export default function AttendanceChart() {
+  const [data, setData] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-const CustomTooltip = ({ active, payload, label }: any) => {
-  if (active && payload && payload.length) {
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const response = await api.get("/dashboard/gestor/attendance");
+        setData(response.data);
+      } catch (error) {
+        console.error("Erro ao carregar frequência", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchData();
+  }, []);
+
+  if (loading) {
     return (
-      <div className={styles.customTooltip}>
-        <p className={styles.tooltipLabel}>{label}</p>
-        <p style={{ color: "#16a34a" }}>{`Presença: ${payload[0].value.toFixed(
-          1
-        )}%`}</p>
-        <p
-          style={{ color: "#f59e0b" }}
-        >{`Faltas Justificadas: ${payload[1].value.toFixed(1)}%`}</p>
-        <p
-          style={{ color: "#ef4444" }}
-        >{`Faltas Não Justificadas: ${payload[2].value.toFixed(1)}%`}</p>
+      <div
+        style={{
+          height: "300px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <Loader2 className="animate-spin text-blue-500" size={32} />
       </div>
     );
   }
-  return null;
-};
 
-export default function AttendanceChart({ data }: AttendanceChartProps) {
-  if (!data || data.length === 0) {
-    return (
-      <div className={styles.chartCard}>
-        <h3 className={styles.chartTitle}>Frequência Média por Turma</h3>
-        <div className={styles.emptyState}>
-          <p>Não há dados de frequência para exibir.</p>
-          <small>
-            Quando as faltas forem registradas, o gráfico aparecerá aqui.
-          </small>
-        </div>
-      </div>
-    );
-  }
+  const hasData = data.some((item) => item.presentes > 0);
+  const chartData = hasData ? data : emptyData;
 
   return (
-    <div className={styles.chartCard}>
-      <h3 className={styles.chartTitle}>Frequência Média por Turma</h3>
-      <ResponsiveContainer width="100%" height={300}>
-        <BarChart
-          data={data}
-          margin={{ top: 5, right: 20, left: -10, bottom: 5 }}
-          stackOffset="expand"
+    <div style={{ width: "100%", height: "300px", position: "relative" }}>
+      {!hasData && (
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            backgroundColor: "rgba(255,255,255,0.7)",
+            zIndex: 10,
+            flexDirection: "column",
+          }}
         >
+          <p style={{ fontWeight: 600, color: "#64748b" }}>
+            Sem registros de frequência
+          </p>
+        </div>
+      )}
+
+      <ResponsiveContainer width="100%" height="100%">
+        <AreaChart
+          data={chartData}
+          margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+        >
+          <defs>
+            <linearGradient id="colorAttendance" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor="#10b981" stopOpacity={0.8} />
+              <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+            </linearGradient>
+          </defs>
           <CartesianGrid
             strokeDasharray="3 3"
             vertical={false}
-            stroke="#f3f4f6"
+            stroke="#e2e8f0"
           />
           <XAxis
-            dataKey="nomeTurma"
-            fontSize={12}
-            tickLine={false}
+            dataKey="name"
             axisLine={false}
+            tickLine={false}
+            tick={{ fill: "#64748b", fontSize: 12 }}
+            dy={10}
           />
           <YAxis
-            tickFormatter={(value) => `${value * 100}%`}
-            fontSize={12}
-            tickLine={false}
             axisLine={false}
+            tickLine={false}
+            tick={{ fill: "#64748b", fontSize: 12 }}
+            domain={[0, 100]}
+            tickFormatter={(value) => `${value}%`}
           />
           <Tooltip
-            content={<CustomTooltip />}
-            cursor={{ fill: "rgba(243, 244, 246, 0.6)" }}
+            contentStyle={{
+              borderRadius: "8px",
+              border: "none",
+              boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
+            }}
+            formatter={(value: number) => [`${value}%`, "Presença"]}
           />
-          <Legend wrapperStyle={{ fontSize: "13px" }} />
-          <Bar dataKey="presenca" stackId="a" fill="#3b82f6" name="Presença" />
-          <Bar
-            dataKey="justificadas"
-            stackId="a"
-            fill="#facc15"
-            name="Faltas Justificadas"
+          <Area
+            type="monotone"
+            dataKey="presentes"
+            stroke="#10b981"
+            strokeWidth={3}
+            fillOpacity={1}
+            fill="url(#colorAttendance)"
           />
-          <Bar
-            dataKey="naoJustificadas"
-            stackId="a"
-            fill="#ef4444"
-            name="Faltas Não Justificadas"
-            radius={[4, 4, 0, 0]}
-          />
-        </BarChart>
+        </AreaChart>
       </ResponsiveContainer>
     </div>
   );
