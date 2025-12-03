@@ -24,6 +24,7 @@
   padding: 10px 20px;
   border: 1px solid var(--cor-borda) !important;
   background-color: white;
+  border-radius: 10px;
   font-weight: 500;
   color: var(--cor-subtexto);
   cursor: pointer;

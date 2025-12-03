@@ -6,8 +6,8 @@
 }
 
 .perfilContainer h1 {
-  font-size: 2rem;
-  font-weight: 600;
+  font-size: 1.5rem;
+  font-weight: 500;
 }
 
 .cardsContainer {
@@ -42,10 +42,10 @@
   justify-content: space-between;
 }
 
-.perfilCard .infoAluno {
+.infoAluno {
   display: flex;
+  gap: 30px;
   align-items: center;
-  gap: 20px;
 }
 
 .infoAluno .infoIniciais {
@@ -59,11 +59,9 @@
   font-size: 1.8rem;
   font-weight: 500;
   color: white;
-}
-
-.infoAluno div h3 {
-  font-size: 1.3rem;
-  font-weight: 400;
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
 }
 
 .infoAluno div > p {
@@ -105,10 +103,12 @@
   justify-content: center;
   gap: 10px;
   align-self: baseline;
+  padding: 10px 20px;
+  font-size: 1rem;
+  border-radius: 10px;
   background-color: white;
   border: 1px solid var(--cor-borda);
   color: var(--cor-texto);
-  border-radius: 10px;
   transition: all 0.2s ease;
 }
 
@@ -231,7 +231,7 @@
   color: var(--cor-envio);
 }
 
-.modalContainer h2{
+.modalContainer h2 {
   font-size: 1.5rem;
   font-weight: 500;
   margin-bottom: 20px;
@@ -244,7 +244,7 @@
 }
 
 .formulario label p {
-  font-size: .95rem;
+  font-size: 0.95rem;
   display: flex;
   align-items: center;
   gap: 5px;
@@ -267,7 +267,11 @@
   background-color: white;
   font-weight: 500;
   font-size: 1.1rem;
-  transition: all .2s ease;
+  transition: all 0.2s ease;
+  padding: 10px 20px;
+  font-size: 1rem;
+  cursor: pointer;
+  border-radius: 10px;
 }
 
 .formulario .buttons button:first-child {

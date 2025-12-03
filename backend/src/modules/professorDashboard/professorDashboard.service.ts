@@ -37,6 +37,7 @@ async function getProfessorProfile(user: AuthenticatedRequest['user']) {
     select: {
       nome: true,
       email: true,
+      fotoUrl: true,
       unidade_escolar: { select: { nome: true } },
       perfil_professor: {
         select: {
@@ -54,6 +55,7 @@ async function getProfessorProfile(user: AuthenticatedRequest['user']) {
   return {
     nome: professor.nome,
     email: professor.email,
+    fotoUrl: professor.fotoUrl,
     unidadeEscolar: professor.unidade_escolar?.nome ?? null,
     titulacao: professor.perfil_professor?.titulacao ?? null,
     areaEspecializacao: professor.perfil_professor?.area_especializacao ?? null,
@@ -594,7 +596,7 @@ async function getTurmaDetails(
   const usuarios = usuarioIds.length
     ? await prisma.usuarios.findMany({
         where: { id: { in: usuarioIds } },
-        select: { id: true, nome: true },
+        select: { id: true, nome: true, fotoUrl: true },
       })
     : [];
 
@@ -610,11 +612,20 @@ async function getTurmaDetails(
         }
         return [
           perfil.id,
-          { usuarioId: usuario.id, nome: usuario.nome },
+          {
+            usuarioId: usuario.id,
+            nome: usuario.nome,
+            fotoUrl: usuario.fotoUrl,
+          },
         ] as const;
       })
-      .filter((entry): entry is [string, { usuarioId: string; nome: string }] =>
-        Boolean(entry),
+      .filter(
+        (
+          entry,
+        ): entry is [
+          string,
+          { usuarioId: string; nome: string; fotoUrl: string | null },
+        ] => Boolean(entry),
       ),
   );
 
@@ -623,6 +634,7 @@ async function getTurmaDetails(
     alunoPerfilId: string;
     usuarioId: string;
     nome: string;
+    fotoUrl: string | null;
   };
 
   const matriculasValidas: MatriculaComUsuario[] = matriculas
@@ -636,6 +648,7 @@ async function getTurmaDetails(
         alunoPerfilId: matricula.alunoId,
         usuarioId: usuarioInfo.usuarioId,
         nome: usuarioInfo.nome,
+        fotoUrl: usuarioInfo.fotoUrl,
       };
     })
     .filter((matricula): matricula is MatriculaComUsuario =>
@@ -739,6 +752,7 @@ async function getTurmaDetails(
     return {
       id: m.usuarioId,
       nome: m.nome,
+      fotoUrl: m.fotoUrl,
       media: parseFloat(media.toFixed(1)),
       presenca: Math.round(presenca),
       status,

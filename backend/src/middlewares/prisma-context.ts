@@ -1,16 +1,17 @@
-import { NextFunction, Response } from "express";
-import { AuthenticatedRequest } from "./auth";
-import { getPrismaClientWithAudit } from "../modules/auditLog/auditLog.service";
+import { NextFunction, Response, Request } from 'express';
+import { AuthenticatedRequest } from './auth';
+import { getPrismaClientWithAudit } from '../modules/auditLog/auditLog.service';
 
 export interface RequestWithPrisma extends AuthenticatedRequest {
   prismaWithAudit?: ReturnType<typeof getPrismaClientWithAudit>;
 }
 
 export const prismaContextMiddleware = (
-  req: RequestWithPrisma,
+  req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
-  req.prismaWithAudit = getPrismaClientWithAudit(req.user);
+  const authReq = req as unknown as RequestWithPrisma;
+  authReq.prismaWithAudit = getPrismaClientWithAudit(authReq.user);
   next();
 };

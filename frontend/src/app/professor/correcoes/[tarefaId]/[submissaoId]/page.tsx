@@ -142,7 +142,7 @@ export default function CorrecaoIndividualPage() {
     ? new Date(tarefa.data_entrega)
     : new Date();
 
-  dataLimiteComTolerancia.setDate(dataLimiteComTolerancia.getDate() + 60);
+  dataLimiteComTolerancia.setDate(dataLimiteComTolerancia.getDate() + 7);
 
   dataLimiteComTolerancia.setHours(23, 59, 59, 999);
 
@@ -210,14 +210,18 @@ export default function CorrecaoIndividualPage() {
             <p>Entrega:</p>
             <p>
               <LuCalendar />{' '}
-              {new Date(submissao?.enviado_em).toLocaleDateString('pt-BR')}
+              {submissao?.enviado_em
+                ? new Date(submissao.enviado_em).toLocaleDateString('pt-BR')
+                : '--'}
             </p>
             <p>
               <LuClock />{' '}
-              {new Date(submissao?.enviado_em).toLocaleTimeString('pt-BR', {
-                hour: '2-digit',
-                minute: '2-digit',
-              })}
+              {submissao?.enviado_em
+                ? new Date(submissao.enviado_em).toLocaleTimeString('pt-BR', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })
+                : '--'}
             </p>
           </div>
         </div>

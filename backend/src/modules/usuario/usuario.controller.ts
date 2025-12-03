@@ -5,12 +5,12 @@ import { RequestWithPrisma } from '../../middlewares/prisma-context';
 export const usuarioController = {
   create: async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const authReq = req as RequestWithPrisma;
+      const authReq = req as unknown as RequestWithPrisma;
       let fotoUrl = null;
 
       if (req.file) {
         const protocol = req.protocol;
-        const host = req.get("host");
+        const host = req.get('host');
         fotoUrl = `${protocol}://${host}/uploads/${req.file.filename}`;
       }
 
@@ -21,7 +21,7 @@ export const usuarioController = {
           instituicaoId: authReq.user.instituicaoId!,
           unidadeEscolarId: authReq.user.unidadeEscolarId!,
         },
-        authReq.prismaWithAudit,
+        authReq.prismaWithAudit as any,
       );
       res.status(201).json(newUser);
     } catch (error) {
@@ -31,7 +31,7 @@ export const usuarioController = {
 
   list: async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const authReq = req as RequestWithPrisma;
+      const authReq = req as unknown as RequestWithPrisma;
       const where = { unidadeEscolarId: authReq.user.unidadeEscolarId! };
       const users = await usuarioService.findAllUsers(where);
       res.status(200).json(users);
@@ -43,12 +43,22 @@ export const usuarioController = {
   getById: async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { id } = req.params;
-      const authReq = req as RequestWithPrisma;
-
-      if (authReq.user.papel !== 'GESTOR' && authReq.user.id !== id) {
-        return res.status(403).json({ message: 'Acesso negado.' });
+      const authReq = req as unknown as RequestWithPrisma;
+      const where = { unidadeEscolarId: authReq.user.unidadeEscolarId! };
+      const user = await usuarioService.findUserById(id, where);
+      if (!user) {
+        return res.status(404).json({ message: 'Usuário não encontrado.' });
       }
+      res.status(200).json(user);
+    } catch (error) {
+      next(error);
+    }
+  },
 
+  getMe: async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const authReq = req as unknown as RequestWithPrisma;
+      const id = authReq.user.id;
       const where = { unidadeEscolarId: authReq.user.unidadeEscolarId! };
       const user = await usuarioService.findUserById(id, where);
       if (!user) {
@@ -63,18 +73,13 @@ export const usuarioController = {
   update: async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { id } = req.params;
-      const authReq = req as RequestWithPrisma;
-
-      if (authReq.user.papel !== 'GESTOR' && authReq.user.id !== id) {
-        return res.status(403).json({ message: 'Acesso negado.' });
-      }
-
+      const authReq = req as unknown as RequestWithPrisma;
       const where = { unidadeEscolarId: authReq.user.unidadeEscolarId! };
 
       let fotoUrl = undefined;
       if (req.file) {
         const protocol = req.protocol;
-        const host = req.get("host");
+        const host = req.get('host');
         fotoUrl = `${protocol}://${host}/uploads/${req.file.filename}`;
       }
 
@@ -82,7 +87,7 @@ export const usuarioController = {
         id,
         { ...req.body, ...(fotoUrl && { fotoUrl }) },
         where,
-        authReq.prismaWithAudit,
+        authReq.prismaWithAudit as any,
       );
       res.status(200).json(updatedUser);
     } catch (error) {
@@ -93,7 +98,7 @@ export const usuarioController = {
   delete: async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { id } = req.params;
-      const authReq = req as RequestWithPrisma;
+      const authReq = req as unknown as RequestWithPrisma;
       const where = { unidadeEscolarId: authReq.user.unidadeEscolarId! };
       await usuarioService.deleteUser(id, where, authReq.prismaWithAudit);
       res.status(204).send();
@@ -104,14 +109,14 @@ export const usuarioController = {
 
   importarAlunos: async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const authReq = req as RequestWithPrisma;
+      const authReq = req as unknown as RequestWithPrisma;
       if (!req.file) {
         return res.status(400).json({ message: 'Nenhum arquivo enviado.' });
       }
       const resultado = await usuarioService.importarAlunos(
         authReq.user,
         req.file.buffer,
-        authReq.prismaWithAudit,
+        authReq.prismaWithAudit as any,
       );
       res.status(200).json({
         message: 'Importação concluída.',

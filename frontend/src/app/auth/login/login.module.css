@@ -19,6 +19,8 @@
     height: 50px;
     border-radius: 20px;
     background-color: var(--cor-primaria);
+    color: white;
+    cursor: pointer;
     font-size: 1.2rem;
     &:hover {
       background-color: var(--cor-primaria-hover);

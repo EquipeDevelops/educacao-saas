@@ -37,8 +37,19 @@ export default function FichaAluno({
 
   return (
     <div className={style.container}>
-      <div className={style.avatarAluno}>
-        <span>{getInitials(alunoInfo?.nome)}</span>
+      <div
+        className={style.avatarAluno}
+        style={{
+          backgroundImage: alunoInfo?.fotoUrl
+            ? `url(${alunoInfo.fotoUrl})`
+            : '',
+        }}
+      >
+        {!alunoInfo?.fotoUrl ? (
+          <span>{getInitials(alunoInfo?.nome)}</span>
+        ) : (
+          ''
+        )}
       </div>
       <div className={style.informacoesAluno}>
         <h2>{tituloExibicao}</h2>

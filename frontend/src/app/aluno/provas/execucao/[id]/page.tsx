@@ -56,7 +56,9 @@ export default function ExecucaoProvaPage() {
   const [questaoAtualIndex, setQuestaoAtualIndex] = useState(0);
   const [showGuide, setShowGuide] = useState(true);
   const [hasStarted, setHasStarted] = useState(false);
-  const [secondsLeft, setSecondsLeft] = useState<number>(tempoLimiteMinutos * 60);
+  const [secondsLeft, setSecondsLeft] = useState<number>(
+    tempoLimiteMinutos * 60,
+  );
   const [confirmModalOpen, setConfirmModalOpen] = useState(false);
   const [examFinished, setExamFinished] = useState(false);
   const [fullscreenPromptVisible, setFullscreenPromptVisible] = useState(false);
@@ -96,7 +98,9 @@ export default function ExecucaoProvaPage() {
     const baseUrl = process.env.NEXT_PUBLIC_API_URL;
     if (!baseUrl) return;
 
-    const normalizedBase = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+    const normalizedBase = baseUrl.endsWith('/')
+      ? baseUrl.slice(0, -1)
+      : baseUrl;
     const url = `${normalizedBase}/submissoes/${submissaoId}/finalizar`;
     const payload = JSON.stringify({ reason: 'abandon' as FinalizeReason });
 
@@ -142,7 +146,10 @@ export default function ExecucaoProvaPage() {
     try {
       await finalizeSubmission('abandon');
     } catch (err) {
-      console.error('Erro ao finalizar a prova por abandono de tela cheia', err);
+      console.error(
+        'Erro ao finalizar a prova por abandono de tela cheia',
+        err,
+      );
     }
 
     alert('Você saiu do modo tela cheia. A prova foi encerrada com nota zero.');
@@ -162,9 +169,11 @@ export default function ExecucaoProvaPage() {
         await element.requestFullscreen();
         return true;
       }
-      const webkitRequest = (element as HTMLElement & {
-        webkitRequestFullscreen?: () => Promise<void> | void;
-      }).webkitRequestFullscreen;
+      const webkitRequest = (
+        element as HTMLElement & {
+          webkitRequestFullscreen?: () => Promise<void> | void;
+        }
+      ).webkitRequestFullscreen;
       if (webkitRequest) {
         await webkitRequest.call(element);
         return true;
@@ -183,7 +192,9 @@ export default function ExecucaoProvaPage() {
       setFullscreenPromptVisible(false);
       return;
     }
-    alert('Não foi possivel voltar ao modo tela cheia. A prova será encerrada.');
+    alert(
+      'Não foi possivel voltar ao modo tela cheia. A prova será encerrada.',
+    );
     await handleFullscreenAbandon();
   }, [enterFullscreen, handleFullscreenAbandon]);
 
@@ -247,7 +258,9 @@ export default function ExecucaoProvaPage() {
     timerRef.current = setInterval(() => {
       setSecondsLeft((prev) => {
         const nextValue =
-          prev === null || prev === undefined ? tempoLimiteMinutos * 60 - 1 : prev - 1;
+          prev === null || prev === undefined
+            ? tempoLimiteMinutos * 60 - 1
+            : prev - 1;
 
         if (nextValue <= 0) {
           clearInterval(timerRef.current as NodeJS.Timeout);
@@ -352,7 +365,33 @@ export default function ExecucaoProvaPage() {
   if (isLoading) return <Loading />;
   if (error) return <ErrorMsg text={error} />;
   if (!tarefa || !questaoAtual)
-    return <ErrorMsg text="Prova não encontrada ou sem questões disponíveis." />;
+    return (
+      <ErrorMsg text="Prova não encontrada ou sem questões disponíveis." />
+    );
+
+  const isExpired = new Date() > new Date(tarefa.data_entrega);
+  if (isExpired) {
+    return (
+      <Section>
+        <ErrorMsg text="O prazo para realização desta prova já encerrou." />
+        <div style={{ textAlign: 'center', marginTop: '20px' }}>
+          <button
+            onClick={() => router.push('/aluno/provas')}
+            style={{
+              background: 'none',
+              border: 'none',
+              textDecoration: 'underline',
+              color: 'var(--cor-primaria)',
+              cursor: 'pointer',
+              fontSize: '1rem',
+            }}
+          >
+            Voltar para provas
+          </button>
+        </div>
+      </Section>
+    );
+  }
 
   return (
     <Section>
@@ -362,9 +401,10 @@ export default function ExecucaoProvaPage() {
             <div className={styles.guideCard}>
               <h1>{tarefa.titulo}</h1>
               <p>
-                Quando a prova comecar, ativaremos o modo tela cheia e você precisa
-                permanecer nesta página até finalizar. Ao sair do modo tela cheia ou
-                fechar a aba, a avaliacão é encerrada automaticamente com nota zero.
+                Quando a prova comecar, ativaremos o modo tela cheia e você
+                precisa permanecer nesta página até finalizar. Ao sair do modo
+                tela cheia ou fechar a aba, a avaliacão é encerrada
+                automaticamente com nota zero.
               </p>
 
               <ul>
@@ -382,8 +422,8 @@ export default function ExecucaoProvaPage() {
               <div className={styles.warning}>
                 <LucideAlertCircle />
                 <span>
-                  Fechar, recarregar ou sair da tela cheia antes do envio encerra a
-                  prova com nota zero.
+                  Fechar, recarregar ou sair da tela cheia antes do envio
+                  encerra a prova com nota zero.
                 </span>
               </div>
 
@@ -507,9 +547,9 @@ export default function ExecucaoProvaPage() {
           <div className={styles.fullscreenWarningCard}>
             <h2>Modo tela cheia necessario</h2>
             <p>
-              Detectamos que voce saiu da tela cheia. Para continuar a prova, clique em
-              &quot;Voltar para a tela cheia&quot;. Se optar por nao retornar, a nota
-              desta avaliacao sera zero.
+              Detectamos que voce saiu da tela cheia. Para continuar a prova,
+              clique em &quot;Voltar para a tela cheia&quot;. Se optar por nao
+              retornar, a nota desta avaliacao sera zero.
             </p>
             <div className={styles.fullscreenWarningActions}>
               <button

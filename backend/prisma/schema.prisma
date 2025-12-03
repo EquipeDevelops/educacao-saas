@@ -129,11 +129,12 @@ model Usuarios {
   mensagens_forum_enviadas Mensagens_Forum[]
   topicos_forum_criados    Topico_Forum[]
   arquivos_enviados        Arquivos[]
+  comentariosBoletim ComentarioBoletim[]
   passwordResetToken     String?
+  fotoUrl                String?
   passwordResetExpires   DateTime?
   data_nascimento        DateTime?            @db.Date
   cpf_criptografado      Bytes?
-  fotoUrl                String?
   metadados              Json?
   EventosCalendario      EventosCalendario[]
 
@@ -795,75 +796,88 @@ model Mensalidade {
   matricula        Matriculas      @relation(fields: [matriculaId], references: [id])
   planoId          String          @db.ObjectId
   plano            Plano           @relation(fields: [planoId], references: [id])
+  unidade        Unidades_Escolares? @relation(fields: [unidadeId], references: [id])
+  unidadeId      String? @db.ObjectId
   ano              Int
   mes              Int // Representa o mês, de 1 (Janeiro) a 12 (Dezembro)
   valor            Float
-  dataVencimento   DateTime
   status           StatusPagamento @default(PENDENTE)
-  dataPagamento    DateTime?
-  unidadeEscolarId String          @db.ObjectId
-  unidadeEscolar   Unidades_Escolares @relation(fields: [unidadeEscolarId], references: [id])
-  pagamentos       Pagamento[]
+  data_pagamento   DateTime?
+  metadados        Json?
+  criado_em        DateTime        @default(now())
+  atualizado_em    DateTime        @updatedAt
 
-  @@unique([matriculaId, ano, mes])
   @@map("mensalidades")
+  @@index([matriculaId])
+  @@index([planoId])
+}
+
+model CategoriaTransacao {
+  id               String             @id @default(auto()) @map("_id") @db.ObjectId
+  nome             String
+  tipo             TipoTransacao
+  unidadeEscolarId String             @db.ObjectId
+  unidadeEscolar   Unidades_Escolares @relation(fields: [unidadeEscolarId], references: [id])
+  transacoes       Transacao[]
+  criado_em        DateTime           @default(now())
+  atualizado_em    DateTime           @updatedAt
+
+  @@map("categorias_transacao")
 }
 
 model Transacao {
-  id               String            @id @default(auto()) @map("_id") @db.ObjectId
-  descricao        String
-  valor            Float
-  tipo             TipoTransacao
-  data             DateTime
-  status           StatusTransacao   @default(PENDENTE) // NOVO CAMPO
-  fornecedor       String?           // NOVO CAMPO (para quem foi pago/de quem recebeu)
-  unidadeEscolarId String            @db.ObjectId
-  unidadeEscolar   Unidades_Escolares @relation(fields: [unidadeEscolarId], references: [id])
-  pagamentos       Pagamento[]
-  categoriaId      String?           @db.ObjectId      // NOVO CAMPO
-  categoria        CategoriaTransacao? @relation(fields: [categoriaId], references: [id]) // NOVA RELAÇÃO
+  id                   String             @id @default(auto()) @map("_id") @db.ObjectId
+  descricao            String
+  valor                Float
+  tipo                 TipoTransacao
+  status               StatusTransacao    @default(PENDENTE)
+  data_vencimento      DateTime
+  data_pagamento       DateTime?
+  categoriaId          String             @db.ObjectId
+  categoria            CategoriaTransacao @relation(fields: [categoriaId], references: [id])
+  unidadeEscolarId     String             @db.ObjectId
+  unidadeEscolar       Unidades_Escolares @relation(fields: [unidadeEscolarId], references: [id])
+  comprovanteUrl       String?
+  metadados            Json?
+  criado_em            DateTime           @default(now())
+  atualizado_em        DateTime           @updatedAt
 
   @@map("transacoes")
 }
 
-model Pagamento {
-  id            String      @id @default(auto()) @map("_id") @db.ObjectId
-  mensalidadeId String?     @db.ObjectId
-  mensalidade   Mensalidade? @relation(fields: [mensalidadeId], references: [id])
-  transacaoId   String?     @db.ObjectId
-  transacao     Transacao?  @relation(fields: [transacaoId], references: [id])
-  valorPago     Float
-  dataPagamento DateTime
-  metodo        String // Ex: "Cartão de Crédito", "Boleto", "PIX"
-  gatewayId     String?     // ID simulado da transação no gateway de pagamento
+model Comunicado {
+  id               String             @id @default(auto()) @map("_id") @db.ObjectId
+  titulo           String
+  descricao        String
+  imagens          String[]
+  layout           String             @default("grid") // grid, carousel, list
+  data_visivel     DateTime
+  unidadeEscolarId String             @db.ObjectId
+  criadoPorId      String             @db.ObjectId
+  criado_em        DateTime           @default(now())
+  atualizado_em    DateTime           @updatedAt
 
-  @@map("pagamentos")
-}
-
-model CategoriaTransacao {
-  id               String      @id @default(auto()) @map("_id") @db.ObjectId
-  nome             String
-  tipo             TipoTransacao 
-  unidadeEscolarId String      @db.ObjectId
-  unidadeEscolar   Unidades_Escolares @relation(fields: [unidadeEscolarId], references: [id])
-  transacoes       Transacao[]
-
-  @@unique([nome, unidadeEscolarId])
-  @@map("categorias_transacao")
+  @@map("comunicados")
+  @@index([unidadeEscolarId])
 }
 
 model ComentarioBoletim {
   id                     String               @id @default(auto()) @map("_id") @db.ObjectId
-  comentario             String
+  conteudo               String?
   criado_em              DateTime             @default(now())
   atualizado_em          DateTime             @updatedAt
   matricula              Matriculas           @relation(fields: [matriculaId], references: [id])
   matriculaId            String               @db.ObjectId
   componenteCurricular   ComponenteCurricular @relation(fields: [componenteCurricularId], references: [id])
   componenteCurricularId String               @db.ObjectId
+  bimestre               Int? // 1, 2, 3, 4
+  autor                  Usuarios?            @relation(fields: [autorId], references: [id])
+  autorId                String?              @db.ObjectId
 
-  @@unique([matriculaId, componenteCurricularId])
   @@map("comentarios_boletim")
+  @@index([matriculaId])
+  @@index([componenteCurricularId])
+  @@unique([matriculaId, componenteCurricularId])
 }
 
 

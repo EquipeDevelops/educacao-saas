@@ -22,6 +22,12 @@
   font-weight: 400;
 }
 
+.avatarAluno{
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+}
+
 .informacoesAluno {
   display: flex;
   flex-direction: column;

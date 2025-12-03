@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import Section from "@/components/section/Section";
 
 type PapelUsuario = "PROFESSOR" | "ALUNO" | "RESPONSAVEL" | "GESTOR";
 

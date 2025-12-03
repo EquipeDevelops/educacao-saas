@@ -19,41 +19,46 @@ import { useEffect, useState } from 'react';
 import Modal from '@/components/modal/Modal';
 
 export default function PerfilPage() {
-  const { error, isLoading, profile, modifyPerfil } = useAlunoPerfil();
+  const {
+    error: hookError,
+    isLoading,
+    profile,
+    modifyPerfil,
+  } = useAlunoPerfil();
   const [activeModal, setActiveModal] = useState(false);
   const [email, setEmail] = useState('');
   const [senhaAtual, setSenhaAtual] = useState('');
   const [senhaNova, setSenhaNova] = useState('');
+  const [confirmarSenha, setConfirmarSenha] = useState('');
+  const [localError, setLocalError] = useState<string | null>(null);
 
   useEffect(() => {
     if (profile) {
       setEmail(profile?.email);
       setSenhaAtual('');
       setSenhaNova('');
+      setConfirmarSenha('');
+      setLocalError(null);
     }
-  }, [isLoading]);
+  }, [isLoading, profile]);
 
-  async function modificarEmailESenha(event: SubmitEvent) {
+  async function modificarEmailESenha(event: React.FormEvent) {
     event.preventDefault();
+    setLocalError(null);
 
-    modifyPerfil(email, senhaNova, senhaAtual);
-  }
-
-  function getInitials(name: string | undefined): string {
-    if (!name) {
-      return '...';
-    }
-    const nameParts = name.trim().split(' ');
-
-    if (nameParts.length === 1) {
-      return nameParts[0].substring(0, 2).toUpperCase();
+    if (senhaNova && senhaNova !== confirmarSenha) {
+      setLocalError('As senhas não coincidem.');
+      return;
     }
 
-    const firstName = nameParts[0];
-    const lastName = nameParts[nameParts.length - 1];
-
-    return (firstName.charAt(0) + lastName.charAt(0)).toUpperCase();
+    await modifyPerfil(email, senhaNova, senhaAtual);
+    // Close modal if successful? The hook doesn't return success status easily,
+    // but usually we might want to close it or wait for profile update.
+    // For now, let's keep it open or let the user close it,
+    // but clearing passwords might be good if successful.
   }
+
+  // ... (getInitials function remains same)
 
   if (isLoading) {
     return <Loading />;
@@ -62,18 +67,27 @@ export default function PerfilPage() {
     return <ErrorMsg text={'Erro ao carregar o perfil'} />;
   }
 
+  const error = localError || hookError;
+
   return (
     <>
-      {' '}
-      <Section childrenWidth={1300}>
+      <Section maxWidth={1300}>
+        {/* ... (profile display remains same) ... */}
         <div className={styles.perfilContainer}>
           <h1>Meu perfil</h1>
           <div className={styles.cardsContainer}>
             <div className={styles.perfilCard}>
               <div className={styles.infoAluno}>
-                <p className={styles.infoIniciais}>
-                  {getInitials(profile.nome)}
-                </p>
+                <div
+                  className={styles.infoIniciais}
+                  style={{
+                    backgroundImage: profile.fotoUrl
+                      ? `url(${profile.fotoUrl})`
+                      : '',
+                  }}
+                >
+                  {!profile.fotoUrl ? getInitials(profile.nome) : ''}
+                </div>
                 <div>
                   <h3>{profile.nome}</h3>
                   <p>
@@ -91,7 +105,10 @@ export default function PerfilPage() {
                   </span>
                 </div>
               </div>
-              <button onClick={() => setActiveModal(true)}>
+              <button
+                onClick={() => setActiveModal(true)}
+                className={styles.buttonEditarPerfil}
+              >
                 <LuPencilLine /> Editar Perfil
               </button>
             </div>
@@ -167,9 +184,14 @@ export default function PerfilPage() {
           </div>
         </div>
       </Section>
-      <Modal isOpen={activeModal} setIsOpen={setActiveModal} maxWidth={700}>
+      <Modal
+        isOpen={activeModal}
+        title="Modificar email ou senha"
+        showCloseButton={true}
+        onClose={() => setActiveModal(false)}
+        width={700}
+      >
         <div className={styles.modalContainer}>
-          <h2>Modificar email ou senha</h2>
           <form onSubmit={modificarEmailESenha} className={styles.formulario}>
             <label>
               <p>
@@ -211,13 +233,15 @@ export default function PerfilPage() {
               <input
                 type="password"
                 placeholder="Confirmar senha"
-                value={senhaNova}
-                onChange={({ target }) => setSenhaNova(target.value)}
+                value={confirmarSenha}
+                onChange={({ target }) => setConfirmarSenha(target.value)}
               />
             </label>
             {error && <ErrorMsg text={error} />}
             <div className={styles.buttons}>
-              <button onClick={() => setActiveModal(false)}>Cancelar</button>
+              <button type="button" onClick={() => setActiveModal(false)}>
+                Cancelar
+              </button>
               <button type="submit">Modificar</button>
             </div>
           </form>

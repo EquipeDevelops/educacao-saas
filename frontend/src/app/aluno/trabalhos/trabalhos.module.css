@@ -71,7 +71,7 @@
   padding: 2px 10px;
   border-radius: 10px;
   color: var(--cor-subtexto);
-  background-color: color-mix(in srgb, var(--cor-cinza) 10%, white 90%)
+  background-color: color-mix(in srgb, var(--cor-cinza) 10%, white 90%);
 }
 
 .materiaPontos span {
@@ -180,7 +180,7 @@
   padding: 2px 10px;
   border-radius: 10px;
   color: var(--cor-subtexto);
-  background-color: color-mix(in srgb, var(--cor-cinza) 10%, white 90%)
+  background-color: color-mix(in srgb, var(--cor-cinza) 10%, white 90%);
 }
 
 .detalhes .info p:last-child {
@@ -308,7 +308,7 @@
 }
 
 .infoAnexo h4 {
-  font-size: .95rem;
+  font-size: 0.95rem;
   font-weight: 500;
 }
 
@@ -366,7 +366,7 @@
   border-radius: 15px;
   gap: 10px;
   margin-top: 50px;
-  transition: all .2s ease;
+  transition: all 0.2s ease;
 }
 
 .linkMessage:hover {
@@ -408,7 +408,85 @@
   align-items: center;
   gap: 5px;
   color: var(--cor-subtexto);
-  font-size: .9rem;
+  font-size: 0.9rem;
+}
+
+/* Filters */
+.filtersContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background: #ffffff;
+  border: 1px solid var(--cor-borda);
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 24px;
+}
+
+.filtersContainer h2 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.1rem;
+  color: var(--cor-texto);
+}
+
+.filtersContainer h2 svg {
+  color: var(--cor-primaria);
+}
+
+.filtersContent {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.filtersGroup {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+}
+
+.filtersGroup label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.9rem;
+  color: var(--cor-subtexto);
+}
+
+.filtersGroup label p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--cor-subtexto);
+}
+
+.filtersGroup select,
+.filtersGroup input[type='date'] {
+  min-width: 220px;
+  border: 1px solid var(--cor-borda);
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 0.95rem;
+  color: var(--cor-texto);
+  background: var(--cor-fundo-card);
+}
+
+.clearButton {
+  padding: 10px 18px;
+  border-radius: 10px;
+  border: 1px solid var(--cor-borda);
+  background: transparent;
+  color: var(--cor-texto);
+  transition: all 0.2s ease;
+}
+
+.clearButton:hover {
+  background: var(--cor-primaria);
+  border-color: var(--cor-primaria);
+  color: #ffffff;
 }
 
 @media (max-width: 1024px) {
@@ -428,3 +506,19 @@
   }
 }
 
+@media (max-width: 768px) {
+  .filtersContent {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .filtersGroup select,
+  .filtersGroup input[type='date'] {
+    min-width: 100%;
+  }
+
+  .clearButton {
+    width: 100%;
+  }
+}

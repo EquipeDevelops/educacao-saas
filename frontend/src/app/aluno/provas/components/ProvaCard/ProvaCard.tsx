@@ -69,6 +69,15 @@ export default function ProvaCard({ tarefa }: ProvaCardProps) {
   const totalPontos = tarefa.pontos ?? 0;
   const professorNome = tarefa.componenteCurricular.professor.usuario.nome;
 
+  const isExpired = new Date() > new Date(tarefa.data_entrega);
+  const isFinished =
+    tarefa.submissao?.status === 'AVALIADA' ||
+    tarefa.submissao?.status === 'ENVIADA' ||
+    tarefa.submissao?.status === 'ENVIADA_COM_ATRASO';
+
+  const buttonText =
+    isExpired && !isFinished ? 'Prazo Encerrado' : statusInfo.text;
+
   return (
     <div className={styles.card}>
       <div className={styles.noteAndShortcuts}>
@@ -113,18 +122,32 @@ export default function ProvaCard({ tarefa }: ProvaCardProps) {
         <p>
           <LuCalendar /> Prazo: {dataEntrega.slice(0, 10)}
         </p>
-        <Link
-          href={statusInfo.link}
-          className={
-            tarefa.submissao?.status === 'NAO_INICIADA'
-              ? styles.activeButton
-              : tarefa.submissao?.status === 'EM_ANDAMENTO'
-              ? styles.activeButton
-              : ''
-          }
-        >
-          {statusInfo.text}
-        </Link>
+        {isExpired && !isFinished ? (
+          <span
+            className={styles.activeButton}
+            style={{
+              backgroundColor: '#fee2e2',
+              color: '#ef4444',
+              cursor: 'not-allowed',
+              border: '1px solid #fca5a5',
+            }}
+          >
+            {buttonText}
+          </span>
+        ) : (
+          <Link
+            href={statusInfo.link}
+            className={
+              tarefa.submissao?.status === 'NAO_INICIADA'
+                ? styles.activeButton
+                : tarefa.submissao?.status === 'EM_ANDAMENTO'
+                ? styles.activeButton
+                : ''
+            }
+          >
+            {buttonText}
+          </Link>
+        )}
       </div>
     </div>
   );

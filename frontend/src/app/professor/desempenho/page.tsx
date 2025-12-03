@@ -84,23 +84,6 @@ export default function DesempenhoPage() {
           ) : (
             desempenho && (
               <>
-                <section className={styles.statsGrid}>
-                  <StatCard
-                    icon={<LuUsers />}
-                    title="Média Geral dos Alunos"
-                    value={desempenho.desempenhoGeral.toFixed(1)}
-                  />
-                  <StatCard
-                    icon={<LuClipboardList />}
-                    title="Taxa de Conclusão de Atividades"
-                    value={`${desempenho.taxaConclusaoGeral}%`}
-                  />
-                  <StatCard
-                    icon={<LuChartBar />}
-                    title="Turmas Lecionadas"
-                    value={desempenho.porTurma.length.toString()}
-                  />
-                </section>
                 <div className={styles.geralContainer}>
                   <DesempenhoTurmas desempenho={desempenho} />
                 </div>
