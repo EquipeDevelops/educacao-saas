@@ -1,11 +1,14 @@
 import { Router } from 'express';
-import { usuarioController } from './usuario.controller';
+import { comunicadoController } from './comunicado.controller';
 import { authorize, protect } from '../../middlewares/auth';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import { validate } from '../../middlewares/validate';
-import { createUserSchema, updateUserSchema } from './usuario.validator';
+import {
+  createComunicadoSchema,
+  updateComunicadoSchema,
+} from './comunicado.validator';
 
 const router = Router();
 
@@ -27,50 +30,39 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
-router.get(
-  '/profile/me',
-  protect,
-  authorize('GESTOR', 'PROFESSOR', 'ALUNO', 'RESPONSAVEL'),
-  usuarioController.getMe,
-);
-
+router.use(protect);
 router.use(authorize('GESTOR'));
 
 router.post(
   '/',
-  upload.single('foto'),
+  upload.array('imagens', 10),
   (req, res, next) => {
     if (req.body.data) {
       Object.assign(req.body, JSON.parse(req.body.data));
+      delete req.body.data;
     }
     next();
   },
-  validate(createUserSchema),
-  usuarioController.create,
+  validate(createComunicadoSchema),
+  comunicadoController.create,
 );
 
-router.get('/', usuarioController.list);
-router.get('/:id', usuarioController.getById);
+router.get('/', comunicadoController.findAll);
 
 router.put(
   '/:id',
-  upload.single('foto'),
+  upload.array('imagens', 10),
   (req, res, next) => {
     if (req.body.data) {
       Object.assign(req.body, JSON.parse(req.body.data));
+      delete req.body.data;
     }
     next();
   },
-  validate(updateUserSchema),
-  usuarioController.update,
+  validate(updateComunicadoSchema),
+  comunicadoController.update,
 );
 
-router.delete('/:id', usuarioController.delete);
+router.delete('/:id', comunicadoController.delete);
 
-router.post(
-  '/importar/alunos',
-  multer({ storage: multer.memoryStorage() }).single('arquivo'),
-  usuarioController.importarAlunos,
-);
-
-export { router as usuarioRoutes };
+export const comunicadoRoutes = router;

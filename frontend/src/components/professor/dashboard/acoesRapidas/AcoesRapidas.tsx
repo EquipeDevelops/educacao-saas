@@ -1,12 +1,13 @@
 import {
   LuBookOpen,
-  LuBookPlus,
   LuChartColumnIncreasing,
   LuFilePlus,
   LuMessageCircle,
   LuPenLine,
   LuUserCheck,
   LuUsers,
+  LuBriefcase,
+  LuBookCheck
 } from 'react-icons/lu';
 import Link from 'next/link';
 import styles from './style.module.css';
@@ -19,12 +20,12 @@ export default function AcoesRapidas() {
       icon: <LuChartColumnIncreasing />,
     },
     { text: 'Frequência', link: '/professor/frequencia', icon: <LuUserCheck /> },
+    { text: 'Diário', link: '/professor/diario', icon: <LuBookCheck /> },
     { text: 'Turmas', link: '/professor/turmas', icon: <LuUsers /> },
     { text: 'Nova Prova', link: '/professor/tarefas', icon: <LuFilePlus /> },
     { text: 'Corrigir', link: '/professor/trabalhos', icon: <LuPenLine /> },
-    { text: 'Nova Atividade', link: '/professor/agenda', icon: <LuBookPlus /> },
-    { text: 'Novo Trabalho', link: '/professor/trabalhos', icon: <LuBookOpen /> },
-    { text: 'Mensagens', link: '/professor/mensagens', icon: <LuMessageCircle /> },
+    { text: 'Nova Atividade', link: '/professor/agenda', icon: <LuBookOpen /> },
+    { text: 'Novo Trabalho', link: '/professor/trabalhos', icon: <LuBriefcase /> },
   ];
 
   return (

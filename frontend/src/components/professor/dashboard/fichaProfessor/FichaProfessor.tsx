@@ -29,8 +29,19 @@ export default function FichaProfessor({
 }: FichaProps) {
   return (
     <header className={styles.container}>
-      <div className={styles.avatarProfessor}>
-        <span>{getInitials(professsorInfo.nome)}</span>
+      <div
+        className={styles.avatarProfessor}
+        style={{
+          backgroundImage: professsorInfo?.fotoUrl
+            ? `url(${professsorInfo.fotoUrl})`
+            : '',
+        }}
+      >
+        {!professsorInfo?.fotoUrl ? (
+          <span>{getInitials(professsorInfo?.nome)}</span>
+        ) : (
+          ''
+        )}
       </div>
       <div className={styles.infoContainer}>
         <h1 className={styles.titulo}>Olá, {professsorInfo.nome}!</h1>

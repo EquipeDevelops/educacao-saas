@@ -26,7 +26,7 @@ export default function ResponderTarefaPage() {
     tarefa,
   } = useResponderTarefa(tarefaId);
 
-  const [modalOpen, setModalOpen] = useState(false)
+  const [modalOpen, setModalOpen] = useState(false);
 
   const [questaoAtualIndex, setQuestaoAtualIndex] = useState(0);
   const questoesOrdenadas = questoes.sort((a, b) => a.sequencia - b.sequencia);
@@ -56,6 +56,26 @@ export default function ResponderTarefaPage() {
   if (error) return <ErrorMsg text={error} />;
   if (!tarefa || !questaoAtual)
     return <ErrorMsg text="Tarefa ou questões não encontradas." />;
+
+  const isExpired = new Date() > new Date((tarefa as any).data_entrega);
+  if (isExpired) {
+    return (
+      <Section>
+        <ErrorMsg text="O prazo para realização desta atividade já encerrou." />
+        <div style={{ textAlign: 'center', marginTop: '20px' }}>
+          <Link
+            href="/aluno/tarefas"
+            style={{
+              textDecoration: 'underline',
+              color: 'var(--cor-primaria)',
+            }}
+          >
+            Voltar para tarefas
+          </Link>
+        </div>
+      </Section>
+    );
+  }
 
   return (
     <Section>
@@ -164,13 +184,22 @@ export default function ResponderTarefaPage() {
           )}
         </div>
       </div>
-      <Modal maxWidth={500} isOpen={modalOpen} setIsOpen={setModalOpen}>
+      <Modal
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+        title="Finalizar Tarefa"
+        width={500}
+      >
         <form className={styles.modalAtiviade}>
           <h2>Que bom que finalizou!</h2>
           <p>Deseja realizar o envio da atividade?</p>
           <div className={styles.buttons}>
-            <button type='button' onClick={() => setModalOpen(false)}>Cancelar</button>
-            <button type='button' onClick={handleFinalizarClick}>Enviar Atividade</button>
+            <button type="button" onClick={() => setModalOpen(false)}>
+              Cancelar
+            </button>
+            <button type="button" onClick={handleFinalizarClick}>
+              Enviar Atividade
+            </button>
           </div>
         </form>
       </Modal>

@@ -276,25 +276,54 @@ export default function EntregasPage() {
 
   const isLate = dataEntrega ? now > dataEntrega : false;
 
+  const dataLimiteComTolerancia = tarefa?.data_entrega
+    ? new Date(tarefa.data_entrega)
+    : new Date();
+
+  dataLimiteComTolerancia.setDate(dataLimiteComTolerancia.getDate() + 7);
+  dataLimiteComTolerancia.setHours(23, 59, 59, 999);
+
+  const isExpired = tarefa?.data_entrega
+    ? new Date() > dataLimiteComTolerancia
+    : false;
+
   return (
     <Section>
       <Link href="/professor/correcoes" className={styles.backLink}>
         <LuArrowLeft /> Voltar para Correções
       </Link>
 
-      {isLate && (
-        <div className={styles.warningCard}>
-          <div className={styles.warningIcon}>
+      {isExpired ? (
+        <div
+          className={styles.warningCard}
+          style={{ borderColor: '#ef4444', backgroundColor: '#fef2f2' }}
+        >
+          <div className={styles.warningIcon} style={{ color: '#ef4444' }}>
             <LuClock />
           </div>
           <div className={styles.warningContent}>
-            <h3>Prazo de entrega encerrado</h3>
-            <p>
-              A data de entrega desta atividade já passou. Você tem até 7 dias
-              de tolerância após o prazo para realizar a correção.
+            <h3 style={{ color: '#b91c1c' }}>Período de correção encerrado</h3>
+            <p style={{ color: '#b91c1c' }}>
+              O prazo de tolerância de 7 dias para correções expirou. Não é mais
+              possível avaliar ou editar notas desta atividade.
             </p>
           </div>
         </div>
+      ) : (
+        isLate && (
+          <div className={styles.warningCard}>
+            <div className={styles.warningIcon}>
+              <LuClock />
+            </div>
+            <div className={styles.warningContent}>
+              <h3>Prazo de entrega encerrado</h3>
+              <p>
+                A data de entrega desta atividade já passou. Você tem até 7 dias
+                de tolerância após o prazo para realizar a correção.
+              </p>
+            </div>
+          </div>
+        )
       )}
 
       {tarefa && (
@@ -416,6 +445,12 @@ export default function EntregasPage() {
                             <button
                               className={styles.avaliarButton}
                               onClick={() => abrirModal(aluno)}
+                              disabled={isExpired}
+                              style={
+                                isExpired
+                                  ? { opacity: 0.5, cursor: 'not-allowed' }
+                                  : {}
+                              }
                             >
                               {aluno.status === 'AVALIADO'
                                 ? 'Editar'
@@ -511,12 +546,25 @@ export default function EntregasPage() {
                               <span className={styles.badgePendente}>
                                 Aguardando Correção
                               </span>
-                              <Link
-                                href={`/professor/correcoes/${tarefaId}/${aluno.submissaoId}`}
-                                className={styles.corrigirButton}
-                              >
-                                Iniciar Correção
-                              </Link>
+                              {isExpired ? (
+                                <span
+                                  className={styles.corrigirButton}
+                                  style={{
+                                    opacity: 0.5,
+                                    cursor: 'not-allowed',
+                                    background: '#ccc',
+                                  }}
+                                >
+                                  Prazo Expirado
+                                </span>
+                              ) : (
+                                <Link
+                                  href={`/professor/correcoes/${tarefaId}/${aluno.submissaoId}`}
+                                  className={styles.corrigirButton}
+                                >
+                                  Iniciar Correção
+                                </Link>
+                              )}
                             </>
                           ) : (
                             <>

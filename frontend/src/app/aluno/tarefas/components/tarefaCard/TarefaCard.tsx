@@ -65,11 +65,15 @@ export default function TarefaCard({
     },
   );
 
+  const isExpired = new Date() > new Date(tarefa.data_entrega);
+
   const actionLabel =
     statusInfo.text === 'Avaliada'
       ? 'Ver Correção'
       : statusInfo.text === 'Enviada'
       ? 'Ver Respostas'
+      : isExpired
+      ? 'Prazo Encerrado'
       : 'Responder';
 
   return (
@@ -111,6 +115,15 @@ export default function TarefaCard({
         </p>
         {readOnly ? (
           <span className={styles.readOnlyBadge}>{statusInfo.text}</span>
+        ) : isExpired &&
+          statusInfo.text !== 'Avaliada' &&
+          statusInfo.text !== 'Enviada' ? (
+          <span
+            className={styles.readOnlyBadge}
+            style={{ backgroundColor: '#fee2e2', color: '#ef4444' }}
+          >
+            {actionLabel}
+          </span>
         ) : (
           <Link
             href={statusInfo.link}

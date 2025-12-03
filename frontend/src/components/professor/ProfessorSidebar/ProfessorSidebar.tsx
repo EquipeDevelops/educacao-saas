@@ -19,6 +19,7 @@ import {
   LuCopyCheck,
   LuFilePenLine,
   LuUserCheck,
+  LuBookCheck,
 } from 'react-icons/lu';
 import { useAuth } from '@/contexts/AuthContext';
 import { VscMortarBoard } from 'react-icons/vsc';
@@ -49,7 +50,7 @@ const navLinks = [
       { href: '/professor/correcoes', text: 'Correções', icon: <LuCopyCheck /> },
       { href: '/professor/notas', text: 'Lançar Notas', icon: <LuFilePenLine /> },
       { href: '/professor/frequencia', text: 'Fazer Frequência', icon: <LuUserCheck /> },
-      { href: '/professor/diario', text: 'Diário de Classe', icon: <LuFile /> },
+      { href: '/professor/diario', text: 'Diário de Classe', icon: <LuBookCheck /> },
       {
         href: '/professor/desempenho',
         text: 'Desempenho',

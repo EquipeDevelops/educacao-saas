@@ -55,6 +55,21 @@ export const usuarioController = {
     }
   },
 
+  getMe: async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const authReq = req as unknown as RequestWithPrisma;
+      const id = authReq.user.id;
+      const where = { unidadeEscolarId: authReq.user.unidadeEscolarId! };
+      const user = await usuarioService.findUserById(id, where);
+      if (!user) {
+        return res.status(404).json({ message: 'Usuário não encontrado.' });
+      }
+      res.status(200).json(user);
+    } catch (error) {
+      next(error);
+    }
+  },
+
   update: async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { id } = req.params;

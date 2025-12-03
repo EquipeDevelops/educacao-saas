@@ -32,6 +32,9 @@
   height: 70px;
   border-radius: 50%;
   font-weight: 400;
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
 }
 
 .listaItens {

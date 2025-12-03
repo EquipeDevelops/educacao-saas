@@ -1,0 +1,153 @@
+.container {
+  padding: var(--esp-8);
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--esp-8);
+}
+
+.header h1 {
+  font-size: 1.8rem;
+  color: var(--cor-texto-destaque);
+  font-weight: var(--peso-fonte-bold);
+}
+
+.addButton {
+  display: flex;
+  align-items: center;
+  gap: var(--esp-2);
+  background-color: var(--cor-primaria);
+  color: white;
+  padding: var(--esp-3) var(--esp-6);
+  border-radius: var(--raio-borda-md);
+  text-decoration: none;
+  font-weight: var(--peso-fonte-medio);
+  transition: background-color 0.2s;
+}
+
+.addButton:hover {
+  background-color: var(--cor-primaria-hover);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: var(--esp-6);
+}
+
+.card {
+  background: var(--cor-fundo-card);
+  border-radius: var(--raio-borda-lg);
+  overflow: hidden;
+  box-shadow: var(--sombra-sm);
+  position: relative;
+  transition: transform 0.2s, box-shadow 0.2s;
+  border: 1px solid var(--cor-borda);
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--sombra-md);
+}
+
+.image {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+}
+
+.content {
+  padding: var(--esp-6);
+}
+
+.content h3 {
+  font-size: 1.2rem;
+  margin-bottom: var(--esp-2);
+  color: var(--cor-texto-destaque);
+  font-weight: var(--peso-fonte-bold);
+}
+
+.date {
+  display: flex;
+  align-items: center;
+  gap: var(--esp-2);
+  font-size: 0.9rem;
+  color: var(--cor-subtexto);
+  margin-bottom: var(--esp-4);
+}
+
+.description {
+  color: var(--cor-texto);
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.actions {
+  position: absolute;
+  top: var(--esp-4);
+  right: var(--esp-4);
+  display: flex;
+  gap: var(--esp-2);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.card:hover .actions {
+  opacity: 1;
+}
+
+.editButton,
+.deleteButton {
+  background: rgba(255, 255, 255, 0.95);
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: var(--sombra-sm);
+}
+
+.editButton {
+  color: var(--cor-primaria);
+}
+
+.editButton:hover {
+  background: var(--cor-primaria);
+  color: white;
+}
+
+.deleteButton {
+  color: var(--cor-perigo);
+}
+
+.deleteButton:hover {
+  background: var(--cor-perigo);
+  color: white;
+}
+
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 200px;
+  color: var(--cor-subtexto);
+}
+
+.emptyState {
+  text-align: center;
+  padding: var(--esp-12);
+  color: var(--cor-subtexto);
+  background: var(--cor-fundo-card);
+  border-radius: var(--raio-borda-lg);
+  border: 1px solid var(--cor-borda);
+}

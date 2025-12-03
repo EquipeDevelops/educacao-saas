@@ -31,11 +31,17 @@ export default function ConfiguracoesPage() {
   const [success, setSuccess] = useState<string | null>(null);
 
   useEffect(() => {
-    if (authLoading || !user) return;
+    if (authLoading) return;
+
+    if (!user) {
+      setIsLoading(false);
+      return;
+    }
 
     async function fetchProfile() {
+      if (!user?.id) return;
       try {
-        const response = await api.get(`/usuarios/${user.id}`);
+        const response = await api.get(`/usuarios/profile/me`);
         setProfile(response.data);
       } catch (err) {
         setError('Não foi possível carregar os dados do perfil.');
