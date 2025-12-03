@@ -863,20 +863,21 @@ model Comunicado {
 
 model ComentarioBoletim {
   id                     String               @id @default(auto()) @map("_id") @db.ObjectId
-  conteudo               String
+  conteudo               String?
   criado_em              DateTime             @default(now())
   atualizado_em          DateTime             @updatedAt
   matricula              Matriculas           @relation(fields: [matriculaId], references: [id])
   matriculaId            String               @db.ObjectId
   componenteCurricular   ComponenteCurricular @relation(fields: [componenteCurricularId], references: [id])
   componenteCurricularId String               @db.ObjectId
-  bimestre               Int // 1, 2, 3, 4
-  autor                  Usuarios             @relation(fields: [autorId], references: [id])
-  autorId                String               @db.ObjectId
+  bimestre               Int? // 1, 2, 3, 4
+  autor                  Usuarios?            @relation(fields: [autorId], references: [id])
+  autorId                String?              @db.ObjectId
 
   @@map("comentarios_boletim")
   @@index([matriculaId])
   @@index([componenteCurricularId])
+  @@unique([matriculaId, componenteCurricularId])
 }
 
 

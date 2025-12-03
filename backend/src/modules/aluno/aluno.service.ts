@@ -557,7 +557,7 @@ async function getBoletim(
   comentariosDb.forEach((c) => {
     if (c.componenteCurricular?.materia?.nome) {
       comentarios[c.componenteCurricular.materia.nome] = {
-        texto: c.comentario,
+        texto: c.conteudo || '',
         autorNome:
           c.componenteCurricular.professor?.usuario?.nome || 'Professor',
         data: c.atualizado_em,
@@ -805,11 +805,12 @@ async function saveComentario(
         componenteCurricularId: componente.id,
       },
     },
-    update: { comentario },
+    update: { conteudo: comentario },
     create: {
       matriculaId: matriculaAtiva.id,
       componenteCurricularId: componente.id,
-      comentario,
+      conteudo: comentario,
+      autorId: user.id,
     },
   });
   console.log('[SAVE_COMENTARIO] Comentário salvo/atualizado com sucesso.');

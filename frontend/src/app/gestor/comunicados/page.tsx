@@ -7,6 +7,7 @@ import { LuPlus, LuTrash2, LuCalendar, LuPencil } from 'react-icons/lu';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { format } from 'date-fns';
+import Section from '@/components/section/Section';
 
 interface Comunicado {
   id: string;
@@ -55,59 +56,65 @@ export default function ComunicadosPage() {
   }
 
   return (
-    <div className={styles.container}>
+    <Section>
       <header className={styles.header}>
-        <h1>Comunicados</h1>
+        <div>
+          <h1>Comunicados</h1>
+          <p>
+            Aqui você pode gerir e criar novos comunicados que vão ser exibidos
+            os alunos e professores da escola.
+          </p>
+        </div>
         <Link href="/gestor/comunicados/novo" className={styles.addButton}>
           <LuPlus /> Novo Comunicado
         </Link>
       </header>
 
-      <div className={styles.grid}>
-        {comunicados.map((comunicado) => {
-          const coverImage = comunicado.imagens?.[0] || comunicado.imagemUrl;
+      {comunicados.length === 0 ? (
+        <div className={styles.gridEmpty}>Nenhum comunicado criado.</div>
+      ) : (
+        <div className={styles.grid}>
+          {comunicados.map((comunicado) => {
+            const coverImage = comunicado.imagens?.[0] || comunicado.imagemUrl;
 
-          return (
-            <div key={comunicado.id} className={styles.card}>
-              {coverImage && (
-                <img
-                  src={coverImage}
-                  alt={comunicado.titulo}
-                  className={styles.image}
-                />
-              )}
-              <div className={styles.content}>
-                <h3>{comunicado.titulo}</h3>
-                <p className={styles.date}>
-                  <LuCalendar />{' '}
-                  {format(new Date(comunicado.data_visivel), 'dd/MM/yyyy')}
-                </p>
-                <p className={styles.description}>{comunicado.descricao}</p>
+            return (
+              <div key={comunicado.id} className={styles.card}>
+                {coverImage && (
+                  <img
+                    src={coverImage}
+                    alt={comunicado.titulo}
+                    className={styles.image}
+                  />
+                )}
+                <div className={styles.content}>
+                  <h3>{comunicado.titulo}</h3>
+                  <p className={styles.date}>
+                    <LuCalendar />{' '}
+                    {format(new Date(comunicado.data_visivel), 'dd/MM/yyyy')}
+                  </p>
+                  <p className={styles.description}>{comunicado.descricao}</p>
+                </div>
+                <div className={styles.actions}>
+                  <Link
+                    href={`/gestor/comunicados/${comunicado.id}`}
+                    className={styles.editButton}
+                    title="Editar"
+                  >
+                    <LuPencil />
+                  </Link>
+                  <button
+                    onClick={() => handleDelete(comunicado.id)}
+                    className={styles.deleteButton}
+                    title="Excluir"
+                  >
+                    <LuTrash2 />
+                  </button>
+                </div>
               </div>
-              <div className={styles.actions}>
-                <Link
-                  href={`/gestor/comunicados/${comunicado.id}`}
-                  className={styles.editButton}
-                  title="Editar"
-                >
-                  <LuPencil />
-                </Link>
-                <button
-                  onClick={() => handleDelete(comunicado.id)}
-                  className={styles.deleteButton}
-                  title="Excluir"
-                >
-                  <LuTrash2 />
-                </button>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {comunicados.length === 0 && (
-        <div className={styles.emptyState}>Nenhum comunicado encontrado.</div>
+            );
+          })}
+        </div>
       )}
-    </div>
+    </Section>
   );
 }

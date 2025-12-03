@@ -7,6 +7,7 @@ import styles from '../novo/page.module.css'; // Reusing styles from create page
 import { LuArrowLeft, LuSave, LuImage, LuX } from 'react-icons/lu';
 import Link from 'next/link';
 import { format } from 'date-fns';
+import Section from '@/components/section/Section';
 
 interface Props {
   params: {
@@ -87,26 +88,6 @@ export default function EditarComunicadoPage({ params }: Props) {
 
     try {
       const data = new FormData();
-      // We need to send existing images as part of the data if the backend supports keeping them.
-      // Currently backend replaces 'imagens' if new files are uploaded?
-      // Wait, my controller implementation for update:
-      // if (imagens) { updateData.imagens = imagens; }
-      // This means if I upload NEW files, it will REPLACE the old list.
-      // This is a problem. I need to merge them in the backend or send the old URLs.
-      // Since I can't easily send old URLs via 'files', I should send them in the body.
-      // But my controller logic for 'imagens' is:
-      // if (req.files) { map to urls } -> updateData.imagens = imagens.
-      // So it overwrites.
-      // I need to change the controller to accept 'existingImagens' in the body and merge.
-      // OR, simpler: The frontend sends 'imagens' as a list of strings (old urls) + new files.
-      // But 'req.files' are separate.
-      // Let's modify the controller to handle this.
-      // Actually, I can send 'imagens' in the body as the list of OLD urls to keep.
-      // And 'req.files' will be the NEW urls.
-      // Then in controller: finalImagens = [...(req.body.imagens || []), ...newFileUrls].
-
-      // I will update the controller in the next step to support this merging.
-      // For now, let's prepare the frontend to send 'existingImagens'.
 
       const payload = {
         ...formData,
@@ -137,7 +118,7 @@ export default function EditarComunicadoPage({ params }: Props) {
   if (loading) return <div className={styles.loading}>Carregando...</div>;
 
   return (
-    <div className={styles.container}>
+    <Section>
       <header className={styles.header}>
         <div className={styles.titleWrapper}>
           <Link href="/gestor/comunicados" className={styles.backButton}>
@@ -264,6 +245,6 @@ export default function EditarComunicadoPage({ params }: Props) {
           </button>
         </div>
       </form>
-    </div>
+    </Section>
   );
 }

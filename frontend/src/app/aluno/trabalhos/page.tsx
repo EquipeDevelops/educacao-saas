@@ -17,6 +17,7 @@ import {
   LuCircleCheck,
   LuCircleArrowDown,
   LuFileArchive,
+  LuFilter,
 } from 'react-icons/lu';
 import Link from 'next/link';
 import Pagination from '@/components/paginacao/Paginacao';
@@ -46,6 +47,8 @@ export default function AtividadesPostadasPage() {
     totalPages,
     page,
     setFilters,
+    filters,
+    materiasUnicas,
     tarefas: trabalhos,
     setPage,
   } = useMinhasTarefas();
@@ -59,7 +62,20 @@ export default function AtividadesPostadasPage() {
 
   useEffect(() => {
     setFilters((prev: any) => ({ ...prev, tipo: ['TRABALHO'] }));
-  }, []);
+  }, [setFilters]);
+
+  const handleFilterChange = (
+    event: React.ChangeEvent<HTMLSelectElement | HTMLInputElement>,
+  ) => {
+    const { name, value } = event.target;
+    setPage(1);
+    setFilters((prev: any) => ({ ...prev, [name]: value }));
+  };
+
+  const clearFilters = () => {
+    setPage(1);
+    setFilters({ status: '', materia: '', data: '', tipo: ['TRABALHO'] });
+  };
 
   function getInitials(name: string | undefined): string {
     if (!name) return '...';
@@ -95,14 +111,60 @@ export default function AtividadesPostadasPage() {
       <div className={styles.container}>
         <h1>Trabalhos</h1>
         <p>Aqui você verá todos os trabalhos postados pelos professores</p>
+
+        <div className={styles.filtersContainer}>
+          <h2>
+            <LuFilter /> Filtros
+          </h2>
+
+          <div className={styles.filtersContent}>
+            <div className={styles.filtersGroup}>
+              <label>
+                <p>Status</p>
+                <select
+                  name="status"
+                  value={filters.status}
+                  onChange={handleFilterChange}
+                >
+                  <option value="">Todos</option>
+                  <option value="Avaliada">Avaliada</option>
+                </select>
+              </label>
+
+              <label>
+                <p>Materia</p>
+                <select
+                  name="materia"
+                  value={filters.materia}
+                  onChange={handleFilterChange}
+                >
+                  <option value="">Todas</option>
+                  {materiasUnicas.map((materia) => (
+                    <option key={materia} value={materia}>
+                      {materia}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label>
+                <p>Data de entrega</p>
+                <input
+                  type="date"
+                  name="data"
+                  value={filters.data}
+                  onChange={handleFilterChange}
+                />
+              </label>
+            </div>
+            <button onClick={clearFilters} className={styles.clearButton}>
+              Limpar filtros
+            </button>
+          </div>
+        </div>
+
         <div className={styles.telasContainer}>
           <div className={styles.trabalhosContainer}>
-            <input
-              type="text"
-              placeholder="Buscar por título, professor, matérias..."
-              className={styles.inputPesquisa}
-            />
-
             <ul className={styles.cardsContainer}>
               {trabalhos.length === 0 ? (
                 <li className={styles.cardTrabalho} style={{ opacity: 0.8 }}>

@@ -6,6 +6,7 @@ import { api } from '@/services/api';
 import styles from './page.module.css';
 import { LuArrowLeft, LuSave, LuImage, LuX } from 'react-icons/lu';
 import Link from 'next/link';
+import Section from '@/components/section/Section';
 
 export default function NovoComunicadoPage() {
   const router = useRouter();
@@ -60,7 +61,7 @@ export default function NovoComunicadoPage() {
   }
 
   return (
-    <div className={styles.container}>
+    <Section>
       <header className={styles.header}>
         <div className={styles.titleWrapper}>
           <Link href="/gestor/comunicados" className={styles.backButton}>
@@ -177,6 +178,6 @@ export default function NovoComunicadoPage() {
           </button>
         </div>
       </form>
-    </div>
+    </Section>
   );
 }

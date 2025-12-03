@@ -36,6 +36,11 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: var(--esp-6);
+  background-color: var(--cor-fundo-card);
+  padding: 20px;
+  border: 1px solid var(--cor-borda);
+  border-radius: 15px;
+  min-height: 500px;
 }
 
 .card {
@@ -46,6 +51,7 @@
   position: relative;
   transition: transform 0.2s, box-shadow 0.2s;
   border: 1px solid var(--cor-borda);
+  height: fit-content;
 }
 
 .card:hover {
@@ -143,11 +149,15 @@
   color: var(--cor-subtexto);
 }
 
-.emptyState {
+.gridEmpty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   text-align: center;
   padding: var(--esp-12);
   color: var(--cor-subtexto);
   background: var(--cor-fundo-card);
   border-radius: var(--raio-borda-lg);
   border: 1px solid var(--cor-borda);
+  min-height: 500px;
 }
