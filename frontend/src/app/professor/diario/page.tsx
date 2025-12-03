@@ -39,7 +39,7 @@ type BnccHabilidade = {
   descricao?: string;
   descricao_habilidade?: string;
   habilidade?: string;
-  [key: string]: any;
+  [key: string]: unknown;
 };
 
 type AlunoMatriculado = {
@@ -214,372 +214,318 @@ function getInitials(name: string) {
     .toUpperCase();
 }
 
-export default function DiarioWizardPage() {
-  const { user, loading: authLoading } = useAuth();
+interface Objetivo {
+  codigo: string;
+  descricao: string;
+}
 
+interface RegistroPresenca {
+  matriculaId: string;
+  situacao: 'PRESENTE' | 'FALTA' | 'FALTA_JUSTIFICADA';
+  observacao?: string;
+}
+
+interface DiarioAula {
+  id: string;
+  tema?: string;
+  atividade?: string;
+  observacoes?: string;
+  objetivos?: Objetivo[];
+  registros_presenca?: RegistroPresenca[];
+  status?: 'RASCUNHO' | 'CONSOLIDADO';
+  data: string;
+  componenteCurricularId: string;
+  componenteCurricular?: {
+    turma?: { nome: string };
+    materia?: { nome: string };
+  };
+}
+
+interface Matricula {
+  id: string;
+  aluno: {
+    usuario: {
+      nome: string;
+    };
+  };
+}
+
+export default function DiarioWizardPage() {
+  const { loading: authLoading } = useAuth();
+
+  const [view, setView] = useState<'list' | 'form'>('list');
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [turmas, setTurmas] = useState<ExtendedTurma[]>([]);
-  const [alunos, setAlunos] = useState<AlunoMatriculado[]>([]);
-  const [bnccSkills, setBnccSkills] = useState<BnccHabilidade[]>([]);
+  const [error, setError] = useState('');
 
-  const [selectedTurmaId, setSelectedTurmaId] = useState<string>('');
+  const [turmas, setTurmas] = useState<ExtendedTurma[]>([]);
+  const [selectedTurmaId, setSelectedTurmaId] = useState('');
   const [dataAula, setDataAula] = useState(() => {
     const hoje = new Date();
     const offset = hoje.getTimezoneOffset() * 60000;
     return new Date(hoje.getTime() - offset).toISOString().split('T')[0];
   });
+
   const [tema, setTema] = useState('');
-  const [conteudo, setConteudo] = useState('');
-  const [duracao, setDuracao] = useState('50');
+  const [atividade, setAtividade] = useState('');
+  const [obs, setObs] = useState('');
 
-  const [bnccStage, setBnccStage] = useState<BnccStage>('fundamental');
-  const [bnccDisciplina, setBnccDisciplina] = useState('matematica');
-  const [bnccAno, setBnccAno] = useState('sexto');
-
-  const [selectedSkills, setSelectedSkills] = useState<BnccHabilidade[]>([]);
-  const [skillSearch, setSkillSearch] = useState('');
-  const [bnccLoading, setBnccLoading] = useState(false);
-  const [showFilters, setShowFilters] = useState(false);
+  const [alunos, setAlunos] = useState<AlunoMatriculado[]>([]);
   const [frequencia, setFrequencia] = useState<
     Record<string, FrequenciaStatus>
   >({});
-  const [loadedFromDraft, setLoadedFromDraft] = useState(false);
 
-  // View control: 'list' shows existing diaries, 'form' shows the wizard
-  const [view, setView] = useState<'list' | 'form'>('list');
-  const [diarios, setDiarios] = useState<any[]>([]);
+  const [bnccStage, setBnccStage] = useState<BnccStage>('fundamental');
+  const [bnccDisciplina, setBnccDisciplina] = useState('');
+  const [bnccAno, setBnccAno] = useState('');
+  const [bnccSkills, setBnccSkills] = useState<BnccHabilidade[]>([]);
+  const [selectedSkills, setSelectedSkills] = useState<Objetivo[]>([]);
+  const [skillSearch, setSkillSearch] = useState('');
+  const [bnccLoading, setBnccLoading] = useState(false);
+
+  const [diarios, setDiarios] = useState<DiarioAula[]>([]);
   const [loadingDiarios, setLoadingDiarios] = useState(false);
-  const [filterTurma, setFilterTurma] = useState<string>('all');
-  const [filterMes, setFilterMes] = useState<string>('all');
-  const [filterStatus, setFilterStatus] = useState<string>('CONSOLIDADO');
+  const [filterTurma, setFilterTurma] = useState('all');
+  const [filterMes, setFilterMes] = useState('all');
+  const [filterStatus, setFilterStatus] = useState('all');
+
+  const [loadedFromDraft, setLoadedFromDraft] = useState(false);
 
   useEffect(() => {
     if (authLoading) return;
+
     async function loadTurmas() {
       try {
-        const res = await api.get('/professor/dashboard/turmas');
-        console.log('Turmas carregadas:', res.data);
+        const res = await api.get('/dashboard/professor/turmas');
         setTurmas(res.data);
-        if (res.data.length > 0) setSelectedTurmaId(res.data[0].componenteId);
-      } catch (err) {
+        if (res.data.length > 0) {
+          setSelectedTurmaId(res.data[0].componenteId);
+        }
+      } catch (err: unknown) {
         setError('Erro ao carregar turmas.');
       } finally {
         setLoading(false);
       }
     }
+
     loadTurmas();
   }, [authLoading]);
 
-  // Load diaries list
-  const loadDiariosList = async () => {
-    setLoadingDiarios(true);
-    try {
-      // Get all diaries for the professor
-      const res = await api.get('/diarios-aula/list');
-      setDiarios(res.data || []);
-    } catch (err) {
-      console.error('Erro ao carregar diários:', err);
-    } finally {
-      setLoadingDiarios(false);
-    }
-  };
-
-  // Load diaries when view is 'list'
   useEffect(() => {
-    if (view === 'list' && !authLoading) {
-      loadDiariosList();
-    }
-  }, [view, authLoading]);
+    if (authLoading) return;
 
-  const selectedTurma = useMemo(
-    () => turmas.find((t) => t.componenteId === selectedTurmaId),
-    [turmas, selectedTurmaId],
-  );
-
-  useEffect(() => {
-    if (selectedTurma) {
-      console.log('--- TURMA SELECIONADA ---');
-      console.log('Dados:', selectedTurma);
-
-      let stage: BnccStage = 'fundamental';
-
-      if (selectedTurma.etapa) {
-        const etapaBanco = selectedTurma.etapa;
-        console.log('Etapa vinda do banco:', etapaBanco);
-
-        if (etapaBanco === 'MEDIO') stage = 'medio';
-        else if (etapaBanco === 'INFANTIL') stage = 'infantil';
-        else stage = 'fundamental';
-      } else {
-        const textoAnalise = `${selectedTurma.serie || ''} ${
-          selectedTurma.nomeTurma || ''
-        }`.toLowerCase();
-
-        if (
-          textoAnalise.includes('médio') ||
-          textoAnalise.includes('medio') ||
-          textoAnalise.includes('em')
-        ) {
-          stage = 'medio';
-        } else if (
-          textoAnalise.includes('infantil') ||
-          textoAnalise.includes('pré') ||
-          textoAnalise.includes('creche')
-        ) {
-          stage = 'infantil';
-        }
-        console.log('Etapa inferida (Fallback):', stage);
+    async function loadDiarios() {
+      setLoadingDiarios(true);
+      try {
+        const res = await api.get('/diarios-aula');
+        setDiarios(res.data);
+      } catch (err: unknown) {
+        console.error('Erro ao carregar diários:', err);
+      } finally {
+        setLoadingDiarios(false);
       }
-
-      const autoAno = inferAnoSlug(
-        selectedTurma.serie || '',
-        selectedTurma.nomeTurma || '',
-        stage,
-      );
-
-      const autoDisciplina = inferDisciplinaSlug(selectedTurma.materia, stage);
-
-      console.log('Filtros Aplicados:', { stage, autoAno, autoDisciplina });
-
-      setBnccStage(stage);
-      setBnccAno(autoAno);
-      setBnccDisciplina(autoDisciplina);
     }
-  }, [selectedTurma]);
+    loadDiarios();
+  }, [authLoading, view]);
 
-  // Consolidated data loading: students, attendance, and all diary fields
   useEffect(() => {
-    if (!selectedTurmaId) return;
+    if (!selectedTurmaId || !dataAula) return;
 
     async function loadAllData() {
       try {
-        setLoadedFromDraft(false);
-
-        // 1. Load Students
-        const resMatriculas = await api.get('/matriculas', {
-          params: { componenteCurricularId: selectedTurmaId },
-        });
-
+        const resMatriculas = await api.get(
+          `/turmas/${selectedTurmaId}/matriculas`,
+        );
         const listaAlunos = resMatriculas.data
-          .map((m: any) => ({
+          .map((m: Matricula) => ({
             id: m.id,
             nome: m.aluno.usuario.nome,
           }))
           .sort((a: AlunoMatriculado, b: AlunoMatriculado) =>
             a.nome.localeCompare(b.nome),
           );
-
         setAlunos(listaAlunos);
 
-        // 2. Initialize attendance as all present
-        const freqInit: Record<string, FrequenciaStatus> = {};
-        listaAlunos.forEach((aluno: AlunoMatriculado) => {
-          freqInit[aluno.id] = 'PRESENTE';
+        const initialFreq: Record<string, FrequenciaStatus> = {};
+        listaAlunos.forEach((a: AlunoMatriculado) => {
+          initialFreq[a.id] = 'PRESENTE';
+        });
+        setFrequencia(initialFreq);
+
+        const resDiario = await api.get('/diarios-aula', {
+          params: {
+            componenteCurricularId: selectedTurmaId,
+            data: new Date(dataAula).toISOString(),
+          },
         });
 
-        // 3. Load existing DiarioAula to pre-fill ALL fields
-        try {
-          const { data: diarioExistente } = await api.get('/diarios-aula', {
-            params: {
-              componenteCurricularId: selectedTurmaId,
-              data: dataAula,
-            },
-          });
+        if (resDiario.data && resDiario.data.length > 0) {
+          const diarioExistente = resDiario.data[0];
+          setLoadedFromDraft(true);
 
-          if (diarioExistente) {
-            // Pre-fill Step 1 fields (Planejamento)
-            if (diarioExistente.tema) setTema(diarioExistente.tema);
-            if (diarioExistente.atividade)
-              setConteudo(diarioExistente.atividade);
+          setTema(diarioExistente.conteudo?.tema || '');
+          setAtividade(diarioExistente.conteudo?.atividade || '');
+          setObs(diarioExistente.conteudo?.observacoes || '');
 
-            // Extract duration from observacoes
-            if (diarioExistente.observacoes) {
-              const match =
-                diarioExistente.observacoes.match(/Duração: (\d+) min/);
-              if (match && match[1]) {
-                setDuracao(match[1]);
-              }
-            } else {
-              setDuracao('50'); // Default if no observacoes
-            }
+          if (
+            diarioExistente.objetivos &&
+            diarioExistente.objetivos.length > 0
+          ) {
+            const skills = diarioExistente.objetivos.map((obj: Objetivo) => ({
+              codigo: obj.codigo,
+              descricao: obj.descricao,
+            }));
+            setSelectedSkills(skills);
+          } else {
+            setSelectedSkills([]);
+          }
 
-            // Pre-fill Step 2 fields (BNCC Skills)
-            if (
-              diarioExistente.objetivos &&
-              diarioExistente.objetivos.length > 0
-            ) {
-              const skills = diarioExistente.objetivos.map((obj: any) => ({
-                codigo: obj.codigo,
-                descricao: obj.descricao,
-              }));
-              setSelectedSkills(skills);
-            } else {
-              setSelectedSkills([]);
-            }
-
-            // Pre-fill Step 3 fields (Attendance)
-            if (diarioExistente.registros_presenca) {
-              diarioExistente.registros_presenca.forEach((reg: any) => {
+          if (diarioExistente.registros_presenca) {
+            diarioExistente.registros_presenca.forEach(
+              (reg: RegistroPresenca) => {
                 let status: FrequenciaStatus = 'PRESENTE';
                 if (reg.situacao === 'FALTA') {
                   status = 'AUSENTE';
                 } else if (reg.situacao === 'FALTA_JUSTIFICADA') {
                   status = 'AUSENTE_JUSTIFICADO';
                 }
-                freqInit[reg.matriculaId] = status;
-              });
-            }
-
-            // Set draft indicator
-            if (diarioExistente.status === 'RASCUNHO') {
-              setLoadedFromDraft(true);
-            }
-          } else {
-            // No diary exists - reset all fields to defaults
-            const [ano, mes, dia] = dataAula.split('-');
-            setTema(`Diário do dia ${dia}/${mes}/${ano}`);
-            setConteudo('');
-            setDuracao('50');
-            setSelectedSkills([]);
+                initialFreq[reg.matriculaId] = status;
+              },
+            );
+            setFrequencia({ ...initialFreq });
           }
-        } catch (diarioErr) {
-          // No existing diary - use defaults
-          console.log('No existing diary found for this date');
-          const [ano, mes, dia] = dataAula.split('-');
-          setTema(`Diário do dia ${dia}/${mes}/${ano}`);
-          setConteudo('');
-          setDuracao('50');
+        } else {
+          setLoadedFromDraft(false);
+          setTema('');
+          setAtividade('');
+          setObs('');
           setSelectedSkills([]);
         }
-
-        setFrequencia(freqInit);
-      } catch (err) {
+      } catch (err: unknown) {
         console.error(err);
       }
     }
+
     loadAllData();
   }, [selectedTurmaId, dataAula]);
 
   useEffect(() => {
+    if (!selectedTurmaId) return;
+    const t = turmas.find((x) => x.componenteId === selectedTurmaId);
+    if (!t) return;
+
+    let st: BnccStage = 'fundamental';
+    if (t.etapa === 'INFANTIL') st = 'infantil';
+    if (t.etapa === 'MEDIO') st = 'medio';
+    setBnccStage(st);
+
+    const disc = inferDisciplinaSlug(t.materia, st);
+    setBnccDisciplina(disc);
+
+    const ano = inferAnoSlug(t.serie || '', t.nomeTurma, st);
+    setBnccAno(ano);
+  }, [selectedTurmaId, turmas]);
+
+  useEffect(() => {
     if (step !== 2) return;
+    if (!bnccDisciplina || !bnccAno) return;
 
     async function fetchBncc() {
       setBnccLoading(true);
-      setBnccSkills([]);
-
       try {
-        const invalidMedio =
-          bnccStage === 'medio' &&
-          !['primeiro', 'segundo', 'terceiro'].includes(bnccAno);
-        if (invalidMedio) {
-          console.warn(
-            'Filtro inválido detectado (Médio + Fundamental). Abortando request.',
-          );
-          setBnccLoading(false);
-          return;
-        }
-
-        const response = await api.get('/bncc', {
+        const res = await api.get('/bncc', {
           params: {
             stage: bnccStage,
             disciplina: bnccDisciplina,
             ano: bnccAno,
           },
         });
+        const habilidades = res.data || [];
 
-        const data = response.data;
-        const habilidades = Array.isArray(data) ? data : data.habilidades || [];
         const habilidadesValidas = habilidades.filter(
-          (h: any) => h && h.codigo && typeof h.codigo === 'string',
+          (h: BnccHabilidade) => h && h.codigo && typeof h.codigo === 'string',
         );
 
         setBnccSkills(habilidadesValidas);
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error('Erro fetch BNCC:', err);
         setBnccSkills([]);
       } finally {
         setBnccLoading(false);
       }
     }
-
-    if (bnccStage && bnccDisciplina && bnccAno) {
-      fetchBncc();
-    }
+    fetchBncc();
   }, [step, bnccStage, bnccDisciplina, bnccAno]);
 
   const toggleSkill = (skill: BnccHabilidade) => {
-    if (!skill.codigo) return;
-    setSelectedSkills((prev) => {
-      const exists = prev.find((s) => s.codigo === skill.codigo);
-      return exists
-        ? prev.filter((s) => s.codigo !== skill.codigo)
-        : [...prev, skill];
-    });
+    const jaTem = selectedSkills.find((s) => s.codigo === skill.codigo);
+    if (jaTem) {
+      setSelectedSkills((prev) =>
+        prev.filter((s) => s.codigo !== skill.codigo),
+      );
+    } else {
+      setSelectedSkills((prev) => [
+        ...prev,
+        {
+          codigo: skill.codigo,
+          descricao: skill.descricao || skill.descricao_habilidade || '',
+        },
+      ]);
+    }
   };
 
-  const toggleFrequencia = (id: string, status: FrequenciaStatus) => {
-    setFrequencia((prev) => ({ ...prev, [id]: status }));
+  const toggleFrequencia = (alunoId: string, novoStatus: FrequenciaStatus) => {
+    setFrequencia((prev) => ({ ...prev, [alunoId]: novoStatus }));
   };
 
   const markAll = (status: FrequenciaStatus) => {
-    const updated = { ...frequencia };
-    Object.keys(updated).forEach((k) => (updated[k] = status));
-    setFrequencia(updated);
+    const novo = { ...frequencia };
+    alunos.forEach((a) => {
+      novo[a.id] = status;
+    });
+    setFrequencia(novo);
   };
 
   const handleSubmit = async () => {
-    if (!selectedTurmaId) {
-      alert('Selecione uma turma.');
-      return;
-    }
-
-    const [ano, mes, dia] = dataAula.split('-');
-    const defaultTema = `Diário do dia ${dia}/${mes}/${ano}`;
-
-    const payload = {
-      componenteCurricularId: selectedTurmaId,
-      data: dataAula,
-      tema: tema.trim() || defaultTema,
-      conteudo,
-      duracao: parseInt(duracao),
-      habilidades: selectedSkills.map((s) => ({
-        codigo: s.codigo,
-        descricao:
-          s.descricao ||
-          s.descricao_habilidade ||
-          s.habilidade ||
-          'Sem descrição',
-      })),
-      frequencia: Object.entries(frequencia).map(([alunoId, status]) => ({
-        alunoId,
-        status,
-      })),
-    };
-
     try {
-      console.log('Enviando Diário:', payload);
-      await api.post('/diarios', payload);
+      const presencasPayload = Object.entries(frequencia).map(
+        ([alunoId, status]) => {
+          let situacao: SituacaoPresenca = 'PRESENTE';
+          if (status === 'AUSENTE') situacao = 'FALTA';
+          if (status === 'AUSENTE_JUSTIFICADO') situacao = 'FALTA_JUSTIFICADA';
 
+          return {
+            matriculaId: alunoId,
+            situacao,
+          };
+        },
+      );
+
+      const payload = {
+        componenteCurricularId: selectedTurmaId,
+        data: new Date(dataAula).toISOString(),
+        conteudo: {
+          tema,
+          atividade,
+          observacoes: obs,
+        },
+        objetivos: selectedSkills,
+        presencas: presencasPayload,
+        status: 'CONSOLIDADO',
+      };
+
+      await api.post('/diarios-aula', payload);
       alert('Diário salvo com sucesso!');
-
-      // Reload the diaries list to show the new/updated diary
-      await loadDiariosList();
-
-      // Return to list view
       setView('list');
-
-      // Reset to Step 1 for next time
-      setStep(1);
-    } catch (err) {
+    } catch (err: unknown) {
       console.error('Erro ao salvar diário:', err);
       alert('Erro ao salvar o diário. Tente novamente.');
     }
   };
+
   const renderStep1 = () => (
     <div className={styles.formGrid}>
-      <div>
+      <div className={styles.fieldGroup}>
         <label>Turma</label>
         <select
           value={selectedTurmaId}
@@ -592,138 +538,104 @@ export default function DiarioWizardPage() {
           ))}
         </select>
       </div>
-      <div>
-        <label>Data</label>
+
+      <div className={styles.fieldGroup}>
+        <label>Data da Aula</label>
         <input
           type="date"
           value={dataAula}
           onChange={(e) => setDataAula(e.target.value)}
         />
       </div>
-      <div className={styles.fullWidth}>
+
+      <div className={styles.fieldGroup} style={{ gridColumn: '1 / -1' }}>
         <label>Tema da Aula</label>
         <input
           type="text"
           value={tema}
           onChange={(e) => setTema(e.target.value)}
-          placeholder="Ex: Introdução..."
+          placeholder="Ex: Introdução à Álgebra"
         />
       </div>
-      <div className={styles.fullWidth}>
-        <label>Conteúdo Detalhado</label>
+
+      <div className={styles.fieldGroup} style={{ gridColumn: '1 / -1' }}>
+        <label>Descrição da Atividade</label>
         <textarea
           rows={4}
-          value={conteudo}
-          onChange={(e) => setConteudo(e.target.value)}
+          value={atividade}
+          onChange={(e) => setAtividade(e.target.value)}
+          placeholder="Descreva o que foi trabalhado em sala..."
         />
       </div>
-      <div>
-        <label>Duração (min)</label>
-        <input
-          type="number"
-          value={duracao}
-          onChange={(e) => setDuracao(e.target.value)}
+
+      <div className={styles.fieldGroup} style={{ gridColumn: '1 / -1' }}>
+        <label>Observações (Opcional)</label>
+        <textarea
+          rows={2}
+          value={obs}
+          onChange={(e) => setObs(e.target.value)}
+          placeholder="Ocorrências, avisos, etc."
         />
       </div>
     </div>
   );
 
   const renderStep2 = () => {
-    const stageLabel = etapaOptions.find((o) => o.value === bnccStage)?.label;
     const discLabel =
-      slugsPorEtapa[bnccStage]?.find((o: any) => o.value === bnccDisciplina)
-        ?.label || bnccDisciplina;
+      slugsPorEtapa[bnccStage]?.find(
+        (o: { value: string; label: string }) => o.value === bnccDisciplina,
+      )?.label || bnccDisciplina;
     const anoLabel =
-      anosPorEtapa[bnccStage]?.find((o: any) => o.value === bnccAno)?.label ||
-      bnccAno;
+      anosPorEtapa[bnccStage]?.find(
+        (o: { value: string; label: string }) => o.value === bnccAno,
+      )?.label || bnccAno;
 
     return (
-      <div>
-        <div
-          className={styles.bnccContextBar}
-          style={{
-            marginBottom: '1rem',
-            padding: '0.75rem',
-            backgroundColor: '#f8f9fa',
-            borderRadius: '6px',
-            border: '1px solid #e9ecef',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-          }}
-        >
-          <div>
-            <strong>Filtrando por:</strong> {discLabel} • {anoLabel}{' '}
-            <span style={{ fontSize: '0.85em', color: '#666' }}>
-              ({stageLabel})
-            </span>
+      <div className={styles.bnccContainer}>
+        <div className={styles.bnccHeader}>
+          <h3>Habilidades BNCC</h3>
+          <p>
+            Selecione as habilidades trabalhadas. O sistema sugeriu com base na
+            turma:
+          </p>
+          <div className={styles.tags}>
+            <span className={styles.tag}>{discLabel}</span>
+            <span className={styles.tag}>{anoLabel}</span>
           </div>
-          <button
-            type="button"
-            onClick={() => setShowFilters(!showFilters)}
-            className={styles.btnNav}
-            style={{
-              fontSize: '0.8rem',
-              padding: '0.3rem 0.6rem',
-              height: 'auto',
-              backgroundColor: '#6c757d',
-            }}
-          >
-            <FiFilter /> {showFilters ? 'Ocultar Filtros' : 'Ajustar Filtros'}
-          </button>
         </div>
 
-        {showFilters && (
-          <div
-            className={styles.bnccFilters}
-            style={{ animation: 'fadeIn 0.3s' }}
-          >
-            <div>
-              <label>Etapa</label>
-              <select
-                value={bnccStage}
-                onChange={(e) => {
-                  const newStage = e.target.value as BnccStage;
-                  setBnccStage(newStage);
-                  setBnccDisciplina(slugsPorEtapa[newStage]?.[0]?.value || '');
-                  setBnccAno(anosPorEtapa[newStage]?.[0]?.value || '');
-                }}
-              >
-                {etapaOptions.map((o) => (
+        <div className={styles.bnccFilters}>
+          <div>
+            <label>Disciplina (BNCC)</label>
+            <select
+              value={bnccDisciplina}
+              onChange={(e) => setBnccDisciplina(e.target.value)}
+            >
+              {(slugsPorEtapa[bnccStage] || []).map(
+                (o: { value: string; label: string }) => (
                   <option key={o.value} value={o.value}>
                     {o.label}
                   </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label>{bnccStage === 'infantil' ? 'Campo' : 'Disciplina'}</label>
-              <select
-                value={bnccDisciplina}
-                onChange={(e) => setBnccDisciplina(e.target.value)}
-              >
-                {(slugsPorEtapa[bnccStage] || []).map((o: any) => (
-                  <option key={o.value} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label>Ano/Série</label>
-              <select
-                value={bnccAno}
-                onChange={(e) => setBnccAno(e.target.value)}
-              >
-                {(anosPorEtapa[bnccStage] || []).map((o: any) => (
-                  <option key={o.value} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
-            </div>
+                ),
+              )}
+            </select>
           </div>
-        )}
+          <div>
+            <label>Ano/Série</label>
+            <select
+              value={bnccAno}
+              onChange={(e) => setBnccAno(e.target.value)}
+            >
+              {(anosPorEtapa[bnccStage] || []).map(
+                (o: { value: string; label: string }) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ),
+              )}
+            </select>
+          </div>
+        </div>
 
         <div className={styles.searchWrapper}>
           <FiSearch className={styles.searchIcon} />

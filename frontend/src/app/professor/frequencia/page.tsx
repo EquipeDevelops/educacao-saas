@@ -22,6 +22,12 @@ type Aluno = {
 
 type Situacao = 'PRESENTE' | 'FALTA' | 'FALTA_JUSTIFICADA';
 
+interface RegistroPresenca {
+  matriculaId: string;
+  situacao: Situacao;
+  observacao?: string;
+}
+
 export default function FrequenciaPage() {
   const { loading: authLoading } = useAuth();
   const [componentes, setComponentes] = useState<Componente[]>([]);
@@ -74,34 +80,32 @@ export default function FrequenciaPage() {
       setFeedback(null);
       setIsConsolidado(false);
       try {
-        const { data: matriculas } = await api.get('/matriculas', {
-          params: { componenteCurricularId: selectedComponenteId },
-        });
-
-        const listaAlunos = matriculas
-          .map((m: any) => ({
-            id: m.id,
-            nome: m.aluno.usuario.nome,
-          }))
-          .sort((a: Aluno, b: Aluno) => a.nome.localeCompare(b.nome));
-
+        const resAlunos = await api.get(
+          `/turmas/${selectedComponenteId}/matriculas`,
+        );
+        const listaAlunos = resAlunos.data.map((m: any) => ({
+          id: m.id,
+          nome: m.aluno.usuario.nome,
+        }));
         setAlunos(listaAlunos);
 
-        const { data: diario } = await api.get('/diarios-aula', {
+        const initialPresencas: Record<string, Situacao> = {};
+        listaAlunos.forEach((a: Aluno) => {
+          initialPresencas[a.id] = 'PRESENTE';
+        });
+
+        const resDiario = await api.get('/diarios-aula', {
           params: {
             componenteCurricularId: selectedComponenteId,
-            data: dataAula,
+            data: new Date(dataAula).toISOString(),
           },
         });
 
-        const novasPresencas: Record<string, Situacao> = {};
+        const novasPresencas = { ...initialPresencas };
         const novasObservacoes: Record<string, string> = {};
 
-        listaAlunos.forEach((aluno: Aluno) => {
-          novasPresencas[aluno.id] = 'PRESENTE';
-        });
-
-        if (diario) {
+        if (resDiario.data && resDiario.data.length > 0) {
+          const diario = resDiario.data[0];
           if (diario.status === 'CONSOLIDADO') {
             setIsConsolidado(true);
             setFeedback({
@@ -112,7 +116,7 @@ export default function FrequenciaPage() {
           }
 
           if (diario.registros_presenca) {
-            diario.registros_presenca.forEach((reg: any) => {
+            diario.registros_presenca.forEach((reg: RegistroPresenca) => {
               novasPresencas[reg.matriculaId] = reg.situacao;
               if (reg.observacao) {
                 novasObservacoes[reg.matriculaId] = reg.observacao;
@@ -168,11 +172,11 @@ export default function FrequenciaPage() {
         type: 'success',
         message: 'Frequência salva como Rascunho com sucesso!',
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Erro ao salvar frequência', error);
       const message =
-        error.response?.data?.message ||
-        'Erro ao salvar frequência. Tente novamente.';
+        (error as { response?: { data?: { message?: string } } }).response?.data
+          ?.message || 'Erro ao salvar frequência. Tente novamente.';
       setFeedback({
         type: 'error',
         message,

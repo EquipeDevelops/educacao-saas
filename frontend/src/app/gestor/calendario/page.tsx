@@ -1,25 +1,25 @@
-"use client";
+'use client';
 
-import { useState, useEffect, useCallback } from "react";
-import { Calendar, dateFnsLocalizer, View, Views } from "react-big-calendar";
-import format from "date-fns/format";
-import parse from "date-fns/parse";
-import startOfWeek from "date-fns/startOfWeek";
-import getDay from "date-fns/getDay";
-import ptBR from "date-fns/locale/pt-BR";
+import { useState, useEffect, useCallback } from 'react';
+import { Calendar, dateFnsLocalizer, View, Views } from 'react-big-calendar';
 import {
+  format,
+  parse,
+  startOfWeek,
+  getDay,
   eachDayOfInterval,
   startOfYear,
   endOfYear,
   setHours,
   setMinutes,
-} from "date-fns";
-import "react-big-calendar/lib/css/react-big-calendar.css";
+} from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import 'react-big-calendar/lib/css/react-big-calendar.css';
 
-import { api } from "@/services/api";
-import styles from "./calendario.module.css";
-import Loading from "@/components/loading/Loading";
-import Modal from "@/components/modal/Modal";
+import { api } from '@/services/api';
+import styles from './calendario.module.css';
+import Loading from '@/components/loading/Loading';
+import Modal from '@/components/modal/Modal';
 import {
   Plus,
   ChevronLeft,
@@ -28,13 +28,13 @@ import {
   AlignLeft,
   Trash2,
   MapPin,
-} from "lucide-react";
-import { toast, ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+} from 'lucide-react';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 // Configuração do Localizer
 const locales = {
-  "pt-BR": ptBR,
+  'pt-BR': ptBR,
 };
 
 const localizer = dateFnsLocalizer({
@@ -54,13 +54,13 @@ interface Evento {
   description?: string;
   location?: string;
   type:
-    | "REUNIAO"
-    | "FERIADO"
-    | "EVENTO_ESCOLAR"
-    | "PROVA"
-    | "RECUPERACAO"
-    | "OUTRO"
-    | "AULA";
+    | 'REUNIAO'
+    | 'FERIADO'
+    | 'EVENTO_ESCOLAR'
+    | 'PROVA'
+    | 'RECUPERACAO'
+    | 'OUTRO'
+    | 'AULA';
   allDay?: boolean;
 }
 
@@ -80,22 +80,22 @@ const eventColors: Record<
   string,
   { bg: string; border: string; text: string }
 > = {
-  REUNIAO: { bg: "#eff6ff", border: "#3b82f6", text: "#1e40af" },
-  FERIADO: { bg: "#fef2f2", border: "#ef4444", text: "#991b1b" },
-  EVENTO_ESCOLAR: { bg: "#f0fdf4", border: "#22c55e", text: "#166534" },
-  PROVA: { bg: "#fff7ed", border: "#f97316", text: "#9a3412" },
-  RECUPERACAO: { bg: "#faf5ff", border: "#a855f7", text: "#6b21a8" },
-  OUTRO: { bg: "#f3f4f6", border: "#9ca3af", text: "#374151" },
-  AULA: { bg: "#f0f9ff", border: "#0ea5e9", text: "#0369a1" }, // Azul Claro para Aulas
+  REUNIAO: { bg: '#eff6ff', border: '#3b82f6', text: '#1e40af' },
+  FERIADO: { bg: '#fef2f2', border: '#ef4444', text: '#991b1b' },
+  EVENTO_ESCOLAR: { bg: '#f0fdf4', border: '#22c55e', text: '#166534' },
+  PROVA: { bg: '#fff7ed', border: '#f97316', text: '#9a3412' },
+  RECUPERACAO: { bg: '#faf5ff', border: '#a855f7', text: '#6b21a8' },
+  OUTRO: { bg: '#f3f4f6', border: '#9ca3af', text: '#374151' },
+  AULA: { bg: '#f0f9ff', border: '#0ea5e9', text: '#0369a1' }, // Azul Claro para Aulas
 };
 
 const tiposEvento = [
-  { label: "Reunião", value: "REUNIAO" },
-  { label: "Evento Escolar", value: "EVENTO_ESCOLAR" },
-  { label: "Prova", value: "PROVA" },
-  { label: "Recuperação", value: "RECUPERACAO" },
-  { label: "Feriado", value: "FERIADO" },
-  { label: "Outro", value: "OUTRO" },
+  { label: 'Reunião', value: 'REUNIAO' },
+  { label: 'Evento Escolar', value: 'EVENTO_ESCOLAR' },
+  { label: 'Prova', value: 'PROVA' },
+  { label: 'Recuperação', value: 'RECUPERACAO' },
+  { label: 'Feriado', value: 'FERIADO' },
+  { label: 'Outro', value: 'OUTRO' },
 ];
 
 export default function CalendarioPage() {
@@ -108,14 +108,14 @@ export default function CalendarioPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<Evento | null>(null);
   const [formState, setFormState] = useState({
-    title: "",
-    start: "",
-    end: "",
-    startTime: "08:00",
-    endTime: "09:00",
-    description: "",
-    location: "",
-    type: "EVENTO_ESCOLAR",
+    title: '',
+    start: '',
+    end: '',
+    startTime: '08:00',
+    endTime: '09:00',
+    description: '',
+    location: '',
+    type: 'EVENTO_ESCOLAR',
     allDay: false,
   });
 
@@ -138,7 +138,7 @@ export default function CalendarioPage() {
       setIsLoading(true);
 
       // 1. Buscar Eventos Únicos
-      const eventosResponse = await api.get("/eventos");
+      const eventosResponse = await api.get('/eventos');
       const formattedEvents: Evento[] = eventosResponse.data.map(
         (evt: any) => ({
           id: evt.id,
@@ -149,12 +149,12 @@ export default function CalendarioPage() {
           type: evt.tipo,
           allDay: evt.dia_inteiro,
           location: evt.local,
-        })
+        }),
       );
 
       // 2. Buscar Horários de Aula (Aulas Recorrentes)
       try {
-        const horariosResponse = await api.get("/horarios"); // Assume rota /horarios
+        const horariosResponse = await api.get('/horarios'); // Assume rota /horarios
         const horarios: HorarioAula[] = horariosResponse.data;
 
         // Gerar eventos de aula para o ano atual
@@ -172,21 +172,21 @@ export default function CalendarioPage() {
 
           // Filtra dias do ano que correspondem ao dia da semana da aula
           const matchingDays = daysOfYear.filter(
-            (d) => getDay(d) === targetDay
+            (d) => getDay(d) === targetDay,
           );
 
           matchingDays.forEach((day) => {
             const [hInicio, mInicio] = horario.hora_inicio
-              .split(":")
+              .split(':')
               .map(Number);
-            const [hFim, mFim] = horario.hora_fim.split(":").map(Number);
+            const [hFim, mFim] = horario.hora_fim.split(':').map(Number);
 
             classEvents.push({
               id: `aula-${horario.id}-${day.getTime()}`, // ID único virtual
               title: `${horario.componenteCurricular.materia.nome} - ${horario.componenteCurricular.turma.nome}`,
               start: setMinutes(setHours(day, hInicio), mInicio),
               end: setMinutes(setHours(day, hFim), mFim),
-              type: "AULA",
+              type: 'AULA',
               allDay: false,
               description: `Aula de ${horario.componenteCurricular.materia.nome}`,
             });
@@ -196,13 +196,14 @@ export default function CalendarioPage() {
         setEvents([...formattedEvents, ...classEvents]);
       } catch (err) {
         console.warn(
-          "Rota de horários não disponível ou erro ao buscar aulas:",
-          err
+          'Rota de horários não disponível ou erro ao buscar aulas:',
+          err,
         );
         setEvents(formattedEvents);
       }
-    } catch (error) {
-      toast.error("Erro ao carregar dados do calendário.");
+    } catch (error: unknown) {
+      console.error(error);
+      toast.error('Erro ao carregar dados do calendário.');
     } finally {
       setIsLoading(false);
     }
@@ -219,14 +220,14 @@ export default function CalendarioPage() {
   // --- Handlers do Modal ---
   const resetForm = () => {
     setFormState({
-      title: "",
-      start: format(new Date(), "yyyy-MM-dd"),
-      end: format(new Date(), "yyyy-MM-dd"),
-      startTime: "08:00",
-      endTime: "09:00",
-      description: "",
-      location: "",
-      type: "EVENTO_ESCOLAR",
+      title: '',
+      start: format(new Date(), 'yyyy-MM-dd'),
+      end: format(new Date(), 'yyyy-MM-dd'),
+      startTime: '08:00',
+      endTime: '09:00',
+      description: '',
+      location: '',
+      type: 'EVENTO_ESCOLAR',
       allDay: false,
     });
     setSelectedEvent(null);
@@ -236,19 +237,19 @@ export default function CalendarioPage() {
     resetForm();
     setFormState((prev) => ({
       ...prev,
-      start: format(start, "yyyy-MM-dd"),
-      end: format(end, "yyyy-MM-dd"),
-      startTime: format(start, "HH:mm"),
-      endTime: format(end, "HH:mm"),
+      start: format(start, 'yyyy-MM-dd'),
+      end: format(end, 'yyyy-MM-dd'),
+      startTime: format(start, 'HH:mm'),
+      endTime: format(end, 'HH:mm'),
     }));
     setIsModalOpen(true);
   };
 
   const handleSelectEvent = (event: Evento) => {
     // Aulas geradas não são editáveis diretamente aqui (são baseadas em horários)
-    if (event.type === "AULA") {
+    if (event.type === 'AULA') {
       toast.info(
-        "Este é um horário de aula recorrente. Edite-o no menu de Horários."
+        'Este é um horário de aula recorrente. Edite-o no menu de Horários.',
       );
       return;
     }
@@ -256,13 +257,13 @@ export default function CalendarioPage() {
     setSelectedEvent(event);
     setFormState({
       title: event.title,
-      start: format(event.start, "yyyy-MM-dd"),
-      end: format(event.end, "yyyy-MM-dd"),
-      startTime: format(event.start, "HH:mm"),
-      endTime: format(event.end, "HH:mm"),
-      description: event.description || "",
-      location: event.location || "",
-      // @ts-ignore
+      start: format(event.start, 'yyyy-MM-dd'),
+      end: format(event.end, 'yyyy-MM-dd'),
+      startTime: format(event.start, 'HH:mm'),
+      endTime: format(event.end, 'HH:mm'),
+      description: event.description || '',
+      location: event.location || '',
+
       type: event.type,
       allDay: event.allDay || false,
     });
@@ -272,14 +273,14 @@ export default function CalendarioPage() {
   const handleInputChange = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    >
+    >,
   ) => {
     const { name, value, type } = e.target;
-    // @ts-ignore
+    // @ts-expect-error - Checked property exists on target but TS doesn't know it's an input
     const checked = e.target.checked;
     setFormState((prev) => ({
       ...prev,
-      [name]: type === "checkbox" ? checked : value,
+      [name]: type === 'checkbox' ? checked : value,
     }));
   };
 
@@ -287,11 +288,11 @@ export default function CalendarioPage() {
     e.preventDefault();
     const startDateTime = new Date(
       `${formState.start}T${
-        formState.allDay ? "00:00:00" : formState.startTime
-      }`
+        formState.allDay ? '00:00:00' : formState.startTime
+      }`,
     );
     const endDateTime = new Date(
-      `${formState.end}T${formState.allDay ? "23:59:59" : formState.endTime}`
+      `${formState.end}T${formState.allDay ? '23:59:59' : formState.endTime}`,
     );
 
     const payload = {
@@ -307,28 +308,32 @@ export default function CalendarioPage() {
     try {
       if (selectedEvent) {
         await api.put(`/eventos/${selectedEvent.id}`, payload);
-        toast.success("Evento atualizado!");
+        toast.success('Evento atualizado!');
       } else {
-        await api.post("/eventos", payload);
-        toast.success("Evento criado!");
+        await api.post('/eventos', payload);
+        toast.success('Evento criado!');
       }
       setIsModalOpen(false);
       fetchEvents();
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || "Erro ao salvar evento.");
+    } catch (error: unknown) {
+      toast.error(
+        (error as { response?: { data?: { message?: string } } }).response?.data
+          ?.message || 'Erro ao salvar evento.',
+      );
     }
   };
 
   const handleDelete = async () => {
     if (!selectedEvent) return;
-    if (window.confirm("Tem certeza que deseja excluir este evento?")) {
+    if (window.confirm('Tem certeza que deseja excluir este evento?')) {
       try {
         await api.delete(`/eventos/${selectedEvent.id}`);
-        toast.success("Evento excluído.");
+        toast.success('Evento excluído.');
         setIsModalOpen(false);
         fetchEvents();
       } catch (error) {
-        toast.error("Erro ao excluir evento.");
+        console.error(error);
+        toast.error('Erro ao excluir evento.');
       }
     }
   };
@@ -340,25 +345,25 @@ export default function CalendarioPage() {
         backgroundColor: style.bg,
         color: style.text,
         borderLeft: `4px solid ${style.border}`,
-        borderTop: "none",
-        borderRight: "none",
-        borderBottom: "none",
-        borderRadius: "4px",
-        fontSize: "0.85rem",
-        fontWeight: "600",
-        padding: "2px 5px",
+        borderTop: 'none',
+        borderRight: 'none',
+        borderBottom: 'none',
+        borderRadius: '4px',
+        fontSize: '0.85rem',
+        fontWeight: '600',
+        padding: '2px 5px',
       },
     };
   };
 
   const CustomToolbar = (toolbar: any) => {
-    const goToBack = () => toolbar.onNavigate("PREV");
-    const goToNext = () => toolbar.onNavigate("NEXT");
-    const goToToday = () => toolbar.onNavigate("TODAY");
+    const goToBack = () => toolbar.onNavigate('PREV');
+    const goToNext = () => toolbar.onNavigate('NEXT');
+    const goToToday = () => toolbar.onNavigate('TODAY');
 
     const label = () => (
       <span className={styles.toolbarLabel}>
-        {format(toolbar.date, "MMMM yyyy", { locale: ptBR })}
+        {format(toolbar.date, 'MMMM yyyy', { locale: ptBR })}
       </span>
     );
 
@@ -380,33 +385,33 @@ export default function CalendarioPage() {
         <div className={styles.viewGroup}>
           <button
             className={`${styles.viewBtn} ${
-              toolbar.view === "month" ? styles.active : ""
+              toolbar.view === 'month' ? styles.active : ''
             }`}
-            onClick={() => toolbar.onView("month")}
+            onClick={() => toolbar.onView('month')}
           >
             Mês
           </button>
           <button
             className={`${styles.viewBtn} ${
-              toolbar.view === "week" ? styles.active : ""
+              toolbar.view === 'week' ? styles.active : ''
             }`}
-            onClick={() => toolbar.onView("week")}
+            onClick={() => toolbar.onView('week')}
           >
             Semana
           </button>
           <button
             className={`${styles.viewBtn} ${
-              toolbar.view === "day" ? styles.active : ""
+              toolbar.view === 'day' ? styles.active : ''
             }`}
-            onClick={() => toolbar.onView("day")}
+            onClick={() => toolbar.onView('day')}
           >
             Dia
           </button>
           <button
             className={`${styles.viewBtn} ${
-              toolbar.view === "agenda" ? styles.active : ""
+              toolbar.view === 'agenda' ? styles.active : ''
             }`}
-            onClick={() => toolbar.onView("agenda")}
+            onClick={() => toolbar.onView('agenda')}
           >
             Agenda
           </button>
@@ -443,20 +448,20 @@ export default function CalendarioPage() {
           events={events}
           startAccessor="start"
           endAccessor="end"
-          style={{ height: "100%", minHeight: "600px" }}
+          style={{ height: '100%', minHeight: '600px' }}
           culture="pt-BR"
           messages={{
-            next: "Próximo",
-            previous: "Anterior",
-            today: "Hoje",
-            month: "Mês",
-            week: "Semana",
-            day: "Dia",
-            agenda: "Agenda",
-            date: "Data",
-            time: "Hora",
-            event: "Evento",
-            noEventsInRange: "Não há eventos neste período.",
+            next: 'Próximo',
+            previous: 'Anterior',
+            today: 'Hoje',
+            month: 'Mês',
+            week: 'Semana',
+            day: 'Dia',
+            agenda: 'Agenda',
+            date: 'Data',
+            time: 'Hora',
+            event: 'Evento',
+            noEventsInRange: 'Não há eventos neste período.',
           }}
           components={{ toolbar: CustomToolbar }}
           view={view}
@@ -473,7 +478,7 @@ export default function CalendarioPage() {
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        title={selectedEvent ? "Editar Evento" : "Novo Evento"}
+        title={selectedEvent ? 'Editar Evento' : 'Novo Evento'}
       >
         <form onSubmit={handleSubmit} className={styles.form}>
           <div className={styles.inputGroup}>

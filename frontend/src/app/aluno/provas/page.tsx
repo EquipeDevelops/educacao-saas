@@ -25,7 +25,7 @@ export default function ProvasPage() {
   } = useMinhasTarefas();
 
   useEffect(() => {
-    setFilters((prev: any) => ({ ...prev, tipo: ['PROVA'] }));
+    setFilters((prev) => ({ ...prev, tipo: ['PROVA'] }));
   }, [setFilters]);
 
   const handleFilterChange = (
@@ -33,7 +33,7 @@ export default function ProvasPage() {
   ) => {
     const { name, value } = event.target;
     setPage(1);
-    setFilters((prev: any) => ({ ...prev, [name]: value }));
+    setFilters((prev) => ({ ...prev, [name]: value }));
   };
 
   const clearFilters = () => {

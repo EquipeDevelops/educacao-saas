@@ -1,34 +1,34 @@
-"use client";
+'use client';
 
-import { useState, useEffect, FormEvent } from "react";
-import { api } from "@/services/api";
-import styles from "./categorias.module.css";
-import { FiPlus, FiTrash2 } from "react-icons/fi";
-import Loading from "@/components/loading/Loading";
-import { toast, ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import { useState, useEffect, FormEvent } from 'react';
+import { api } from '@/services/api';
+import styles from './categorias.module.css';
+import { FiPlus, FiTrash2 } from 'react-icons/fi';
+import Loading from '@/components/loading/Loading';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 type Categoria = {
   id: string;
   nome: string;
-  tipo: "RECEITA" | "DESPESA";
+  tipo: 'RECEITA' | 'DESPESA';
 };
 
 export default function CategoriasPage() {
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [formState, setFormState] = useState({
-    nome: "",
-    tipo: "DESPESA" as "RECEITA" | "DESPESA",
+    nome: '',
+    tipo: 'DESPESA' as 'RECEITA' | 'DESPESA',
   });
 
   async function fetchCategorias() {
     setIsLoading(true);
     try {
-      const { data } = await api.get("/categorias-transacao");
+      const { data } = await api.get('/categorias-transacao');
       setCategorias(data);
-    } catch (error) {
-      toast.error("Erro ao carregar categorias.");
+    } catch {
+      toast.error('Erro ao carregar categorias.');
     } finally {
       setIsLoading(false);
     }
@@ -40,21 +40,23 @@ export default function CategoriasPage() {
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    const toastId = toast.loading("Criando categoria...");
+    const toastId = toast.loading('Criando categoria...');
     try {
-      await api.post("/categorias-transacao", formState);
+      await api.post('/categorias-transacao', formState);
       toast.update(toastId, {
-        render: "Categoria criada!",
-        type: "success",
+        render: 'Categoria criada!',
+        type: 'success',
         isLoading: false,
         autoClose: 2000,
       });
-      setFormState({ nome: "", tipo: "DESPESA" });
+      setFormState({ nome: '', tipo: 'DESPESA' });
       fetchCategorias();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast.update(toastId, {
-        render: error.response?.data?.message || "Erro ao criar.",
-        type: "error",
+        render:
+          (error as { response?: { data?: { message?: string } } }).response
+            ?.data?.message || 'Erro ao criar.',
+        type: 'error',
         isLoading: false,
         autoClose: 4000,
       });
@@ -63,22 +65,23 @@ export default function CategoriasPage() {
 
   async function handleDelete(id: string, nome: string) {
     if (window.confirm(`Tem certeza que quer deletar a categoria "${nome}"?`)) {
-      const toastId = toast.loading("Deletando...");
+      const toastId = toast.loading('Deletando...');
       try {
         await api.delete(`/categorias-transacao/${id}`);
         toast.update(toastId, {
-          render: "Categoria deletada!",
-          type: "info",
+          render: 'Categoria deletada!',
+          type: 'info',
           isLoading: false,
           autoClose: 2000,
         });
         fetchCategorias();
-      } catch (error: any) {
+      } catch (error: unknown) {
         toast.update(toastId, {
           render:
-            error.response?.data?.message ||
-            "Erro ao deletar. Verifique se ela não está em uso.",
-          type: "error",
+            (error as { response?: { data?: { message?: string } } }).response
+              ?.data?.message ||
+            'Erro ao deletar. Verifique se ela não está em uso.',
+          type: 'error',
           isLoading: false,
           autoClose: 5000,
         });
@@ -86,8 +89,8 @@ export default function CategoriasPage() {
     }
   }
 
-  const receitas = categorias.filter((c) => c.tipo === "RECEITA");
-  const despesas = categorias.filter((c) => c.tipo === "DESPESA");
+  const receitas = categorias.filter((c) => c.tipo === 'RECEITA');
+  const despesas = categorias.filter((c) => c.tipo === 'DESPESA');
 
   if (isLoading) return <Loading />;
 
@@ -115,7 +118,10 @@ export default function CategoriasPage() {
             <select
               value={formState.tipo}
               onChange={(e) =>
-                setFormState({ ...formState, tipo: e.target.value as any })
+                setFormState({
+                  ...formState,
+                  tipo: e.target.value as 'RECEITA' | 'DESPESA',
+                })
               }
             >
               <option value="DESPESA">Despesa</option>

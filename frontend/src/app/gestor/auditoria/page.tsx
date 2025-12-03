@@ -1,14 +1,25 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import { api } from "@/services/api";
-import styles from "./auditoria.module.css";
-import { FiCalendar, FiFilter, FiActivity } from "react-icons/fi";
-import Loading from "@/components/loading/Loading";
-import { format } from "date-fns";
+import { useState, useEffect } from 'react';
+import { api } from '@/services/api';
+import styles from './auditoria.module.css';
+import { FiCalendar, FiFilter, FiActivity } from 'react-icons/fi';
+import Loading from '@/components/loading/Loading';
+import { format } from 'date-fns';
+
+interface LogEntryType {
+  id: string;
+  acao: string;
+  autorNome: string;
+  entidade: string;
+  detalhes: Record<string, unknown>;
+  timestamp: string;
+}
+
+import { ReactNode } from 'react';
 
 const ActionIcon = ({ action }: { action: string }) => {
-  const iconMap: any = {
+  const iconMap: Record<string, ReactNode> = {
     CREATE: <span className={`${styles.icon} ${styles.create}`}>+</span>,
     UPDATE: <span className={`${styles.icon} ${styles.update}`}>✎</span>,
     DELETE: <span className={`${styles.icon} ${styles.delete}`}>-</span>,
@@ -16,34 +27,58 @@ const ActionIcon = ({ action }: { action: string }) => {
   return iconMap[action] || <span className={styles.icon}>i</span>;
 };
 
-const LogEntry = ({ log }: { log: any }) => {
-  const formatDetails = (log: any) => {
+const LogEntry = ({ log }: { log: LogEntryType }) => {
+  const formatDetails = (log: LogEntryType) => {
     const { acao, detalhes } = log;
-    let mainEntity = "";
+
+    const getString = (
+      obj: Record<string, unknown> | undefined,
+      key: string,
+    ): string => {
+      if (!obj || typeof obj !== 'object') return '';
+      const val = obj[key];
+      return typeof val === 'string' ? val : '';
+    };
 
     try {
-      if (acao === "CREATE") {
-        mainEntity = detalhes?.nome || detalhes?.titulo || "";
-        return `o item "${mainEntity}"`;
+      if (acao === 'CREATE') {
+        const mainEntity =
+          getString(detalhes, 'nome') || getString(detalhes, 'titulo');
+        return mainEntity ? `o item "${mainEntity}"` : 'um item';
       }
-      if (acao === "DELETE") {
-        mainEntity = detalhes?.nome || detalhes?.titulo || "";
-        return `o item "${mainEntity}"`;
+      if (acao === 'DELETE') {
+        const mainEntity =
+          getString(detalhes, 'nome') || getString(detalhes, 'titulo');
+        return mainEntity ? `o item "${mainEntity}"` : 'um item';
       }
-      if (acao === "UPDATE") {
+      if (acao === 'UPDATE') {
+        const deObj =
+          detalhes && typeof detalhes === 'object' && 'de' in detalhes
+            ? (detalhes.de as Record<string, unknown>)
+            : undefined;
+        const paraObj =
+          detalhes && typeof detalhes === 'object' && 'para' in detalhes
+            ? (detalhes.para as Record<string, unknown>)
+            : undefined;
+
         const from =
-          detalhes?.de?.nome || detalhes?.de?.titulo || "dado anterior";
+          getString(deObj, 'nome') ||
+          getString(deObj, 'titulo') ||
+          'dado anterior';
         const to =
-          detalhes?.para?.nome || detalhes?.para?.titulo || "novo dado";
+          getString(paraObj, 'nome') ||
+          getString(paraObj, 'titulo') ||
+          'novo dado';
+
         if (from !== to) {
           return `o item de "${from}" para "${to}"`;
         }
-        return "um item";
+        return 'um item';
       }
     } catch (e) {
-      console.error("Erro ao formatar detalhes do log:", e);
+      console.error('Erro ao formatar detalhes do log:', e);
     }
-    return "um item";
+    return 'um item';
   };
 
   return (
@@ -51,12 +86,12 @@ const LogEntry = ({ log }: { log: any }) => {
       <ActionIcon action={log.acao} />
       <div className={styles.logContent}>
         <p className={styles.logText}>
-          <strong>{log.autorNome}</strong>{" "}
-          {log.acao === "CREATE"
-            ? "criou"
-            : log.acao === "UPDATE"
-            ? "atualizou"
-            : "deletou"}{" "}
+          <strong>{log.autorNome}</strong>{' '}
+          {log.acao === 'CREATE'
+            ? 'criou'
+            : log.acao === 'UPDATE'
+            ? 'atualizou'
+            : 'deletou'}{' '}
           <strong>{log.entidade.toLowerCase()}</strong>: {formatDetails(log)}
         </p>
         <span className={styles.logTimestamp}>
@@ -71,15 +106,16 @@ export default function AuditoriaPage() {
   const [logs, setLogs] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filters, setFilters] = useState({
-    dataInicio: "",
-    dataFim: "",
-    autorId: "",
-    entidade: "",
+    dataInicio: '',
+    dataFim: '',
+    autorId: '',
+    entidade: '',
   });
 
   useEffect(() => {
     fetchLogs();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters]);
 
   const fetchLogs = async () => {
     setIsLoading(true);
@@ -95,14 +131,14 @@ export default function AuditoriaPage() {
       const response = await api.get(`/audit-logs?${params}`);
       setLogs(response.data);
     } catch (error) {
-      console.error("Erro ao buscar logs:", error);
+      console.error('Erro ao buscar logs:', error);
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleFilterChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
   ) => {
     setFilters({ ...filters, [e.target.name]: e.target.value });
   };
@@ -161,7 +197,7 @@ export default function AuditoriaPage() {
         {isLoading ? (
           <Loading />
         ) : logs.length > 0 ? (
-          logs.map((log: any) => <LogEntry key={log.id} log={log} />)
+          logs.map((log: LogEntryType) => <LogEntry key={log.id} log={log} />)
         ) : (
           <p className={styles.emptyState}>
             Nenhum registro encontrado para os filtros selecionados.

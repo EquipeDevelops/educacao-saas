@@ -57,7 +57,9 @@ export default function ResponderTarefaPage() {
   if (!tarefa || !questaoAtual)
     return <ErrorMsg text="Tarefa ou questões não encontradas." />;
 
-  const isExpired = new Date() > new Date((tarefa as any).data_entrega);
+  const isExpired =
+    new Date() >
+    new Date((tarefa as unknown as { data_entrega: string }).data_entrega);
   if (isExpired) {
     return (
       <Section>

@@ -34,7 +34,7 @@ export default function CorrecoesPage() {
   const [tipoUI, setTipoUI] = useState<TipoUI>('TODOS');
 
   useEffect(() => {
-    setFilters((prev: any) => ({
+    setFilters((prev) => ({
       ...prev,
       status: 'Avaliada',
       tipo: TODOS_TIPOS,
@@ -46,13 +46,13 @@ export default function CorrecoesPage() {
   ) => {
     const { name, value } = e.target;
     setPage(1);
-    setFilters((prev: any) => ({ ...prev, [name]: value }));
+    setFilters((prev) => ({ ...prev, [name]: value }));
   };
 
   const setTipoSingle = (tipo: TipoUI) => {
     setPage(1);
     setTipoUI(tipo);
-    setFilters((prev: any) => ({
+    setFilters((prev) => ({
       ...prev,
       status: 'Avaliada',
       tipo: tipo === 'TODOS' ? TODOS_TIPOS : [tipo],

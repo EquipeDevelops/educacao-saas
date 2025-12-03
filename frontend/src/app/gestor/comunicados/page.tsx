@@ -5,9 +5,9 @@ import { api } from '@/services/api';
 import styles from './page.module.css';
 import { LuPlus, LuTrash2, LuCalendar, LuPencil } from 'react-icons/lu';
 import Link from 'next/link';
-import { useAuth } from '@/contexts/AuthContext';
 import { format } from 'date-fns';
 import Section from '@/components/section/Section';
+import Image from 'next/image';
 
 interface Comunicado {
   id: string;
@@ -20,7 +20,6 @@ interface Comunicado {
 }
 
 export default function ComunicadosPage() {
-  const { user } = useAuth();
   const [comunicados, setComunicados] = useState<Comunicado[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -80,10 +79,13 @@ export default function ComunicadosPage() {
             return (
               <div key={comunicado.id} className={styles.card}>
                 {coverImage && (
-                  <img
+                  <Image
                     src={coverImage}
                     alt={comunicado.titulo}
                     className={styles.image}
+                    width={400}
+                    height={200}
+                    style={{ objectFit: 'cover' }}
                   />
                 )}
                 <div className={styles.content}>

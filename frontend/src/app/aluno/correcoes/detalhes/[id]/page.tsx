@@ -3,14 +3,14 @@
 import ErrorMsg from '@/components/errorMsg/ErrorMsg';
 import Loading from '@/components/loading/Loading';
 import Section from '@/components/section/Section';
-import { useCorrecaoData } from '@/hooks/tarefas/useCorrecaoData';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { LuArrowLeft, LuMessageSquare } from 'react-icons/lu';
 import InfoPricipais from '../components/InfoPrincipais/InfoPricipais';
 import styles from './detalhes.module.css';
-import Gabarito from '../components/questoes/Questoes';
 import Questoes from '../components/questoes/Questoes';
+import { useCorrecaoData } from '@/hooks/tarefas/useCorrecaoData';
+import { CorrecaoData } from '@/types/correcaoTarefas';
 
 export default function Detalhes() {
   const params = useParams();
@@ -85,8 +85,10 @@ export default function Detalhes() {
                 {tarefa.tipo === 'PROVA' ? 'da prova' : 'do questionário'}
               </h2>
               <ul>
-                {correcaoMap.map((questoes) => {
-                  return <Questoes questoes={questoes} />;
+                {correcaoMap.map((questoes: CorrecaoData) => {
+                  return (
+                    <Questoes key={questoes.questao.id} questoes={questoes} />
+                  );
                 })}
               </ul>
             </div>
@@ -94,7 +96,9 @@ export default function Detalhes() {
             ''
           )}
           <div className={styles.feedbackContainer}>
-            <h2><LuMessageSquare /> FeedBack</h2>
+            <h2>
+              <LuMessageSquare /> FeedBack
+            </h2>
             <p>{submissao.feedback}</p>
           </div>
         </div>

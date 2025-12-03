@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
-import { useState, useEffect, FormEvent, useMemo } from "react";
-import { api } from "@/services/api";
-import styles from "./relatorios.module.css";
-import { FiDownload } from "react-icons/fi";
-import { toast, ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import { useState, useEffect, FormEvent, useCallback } from 'react';
+import { api } from '@/services/api';
+import styles from './relatorios.module.css';
+import { FiDownload } from 'react-icons/fi';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import {
   PieChart,
   Pie,
@@ -18,18 +18,18 @@ import {
   YAxis,
   CartesianGrid,
   ResponsiveContainer,
-} from "recharts";
-import StatCard from "@/components/gestor/dashboard/StatCard";
-import Loading from "@/components/loading/Loading";
-import { FiTrendingUp, FiTrendingDown, FiDollarSign } from "react-icons/fi";
+} from 'recharts';
+import StatCard from '@/components/gestor/dashboard/StatCard';
+import Loading from '@/components/loading/Loading';
+import { FiTrendingUp, FiTrendingDown, FiDollarSign } from 'react-icons/fi';
 
 interface Transacao {
   id: string;
   descricao: string;
   valor: number;
-  tipo: "RECEITA" | "DESPESA";
+  tipo: 'RECEITA' | 'DESPESA';
   data: string;
-  status: "PENDENTE" | "PAGO";
+  status: 'PENDENTE' | 'PAGO';
   fornecedor?: string | null;
   categoria?: { nome: string } | null;
 }
@@ -45,25 +45,33 @@ interface RelatorioDetalhado {
 }
 
 const COLORS = [
-  "#0088FE",
-  "#00C49F",
-  "#FFBB28",
-  "#FF8042",
-  "#AF19FF",
-  "#FF1943",
+  '#0088FE',
+  '#00C49F',
+  '#FFBB28',
+  '#FF8042',
+  '#AF19FF',
+  '#FF1943',
 ];
 
-const CustomTooltip = ({ active, payload, label }: any) => {
+const CustomTooltip = ({
+  active,
+  payload,
+  label,
+}: {
+  active?: boolean;
+  payload?: Array<{name: string; value: number; color: string}>;
+  label?: string;
+}) => {
   if (active && payload && payload.length) {
     return (
       <div className={styles.customTooltip}>
         <p className="label">{`${label}`}</p>
-        {payload.map((p: any, index: number) => (
+        {payload.map((p, index: number) => (
           <p key={index} style={{ color: p.color }}>{`${
             p.name
-          }: ${p.value.toLocaleString("pt-BR", {
-            style: "currency",
-            currency: "BRL",
+          }: ${p.value.toLocaleString('pt-BR', {
+            style: 'currency',
+            currency: 'BRL',
           })}`}</p>
         ))}
       </div>
@@ -78,71 +86,74 @@ export default function RelatoriosFinanceirosPage() {
   const [dataInicio, setDataInicio] = useState(
     new Date(new Date().getFullYear(), new Date().getMonth(), 1)
       .toISOString()
-      .split("T")[0]
+      .split('T')[0],
   );
   const [dataFim, setDataFim] = useState(
-    new Date().toISOString().split("T")[0]
+    new Date().toISOString().split('T')[0],
   );
 
-  const handleGerarRelatorio = async (e?: FormEvent) => {
-    if (e) e.preventDefault();
-    setIsLoading(true);
-    setRelatorio(null);
+  const handleGerarRelatorio = useCallback(
+    async (e?: FormEvent) => {
+      if (e) e.preventDefault();
+      setIsLoading(true);
+      setRelatorio(null);
 
-    const params = new URLSearchParams({ dataInicio, dataFim });
+      const params = new URLSearchParams({ dataInicio, dataFim });
 
-    try {
-      const response = await api.get(
-        `/financeiro/relatorios/detalhado?${params.toString()}`
-      );
-      setRelatorio(response.data);
-    } catch (err) {
-      toast.error("Erro ao gerar o relatório.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+      try {
+        const response = await api.get(
+          `/financeiro/relatorios/detalhado?${params.toString()}`,
+        );
+        setRelatorio(response.data);
+      } catch {
+        toast.error('Erro ao gerar o relatório.');
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [dataInicio, dataFim],
+  );
 
   useEffect(() => {
     handleGerarRelatorio();
-  }, []);
+  }, [handleGerarRelatorio]);
 
   const exportarCSV = () => {
     if (!relatorio || relatorio.transacoes.length === 0) {
-      toast.warn("Não há dados para exportar.");
+      toast.warn('Não há dados para exportar.');
       return;
     }
 
     const headers = [
-      "Data",
-      "Descrição",
-      "Categoria",
-      "Fornecedor/Pagador",
-      "Tipo",
-      "Status",
-      "Valor (R$)",
+      'Data',
+      'Descrição',
+      'Categoria',
+      'Fornecedor/Pagador',
+      'Tipo',
+      'Status',
+      'Valor (R$)',
     ];
     const rows = relatorio.transacoes.map((t) =>
       [
-        new Date(t.data).toLocaleDateString("pt-BR"),
+        new Date(t.data).toLocaleDateString('pt-BR'),
         `"${t.descricao.replace(/"/g, '""')}"`,
-        t.categoria?.nome || "N/A",
-        t.fornecedor || "N/A",
+        t.categoria?.nome || 'N/A',
+        t.fornecedor || 'N/A',
         t.tipo,
         t.status,
-        t.valor.toFixed(2).replace(".", ","),
-      ].join(",")
+        t.valor.toFixed(2).replace('.', ','),
+      ].join(','),
     );
 
     const csvContent =
-      "data:text/csv;charset=utf-8," + [headers.join(","), ...rows].join("\n");
+      'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows].join('\n');
 
     const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
     link.setAttribute(
-      "download",
-      `relatorio_detalhado_${dataInicio}_a_${dataFim}.csv`
+      'download',
+      `relatorio_detalhado_${dataInicio}_a_${dataFim}.csv`,
     );
     document.body.appendChild(link);
     link.click();
@@ -179,7 +190,7 @@ export default function RelatoriosFinanceirosPage() {
           />
         </div>
         <button type="submit" disabled={isLoading}>
-          {isLoading ? "Gerando..." : "Gerar Relatório"}
+          {isLoading ? 'Gerando...' : 'Gerar Relatório'}
         </button>
       </form>
 
@@ -190,28 +201,28 @@ export default function RelatoriosFinanceirosPage() {
           <section className={styles.summaryGrid}>
             <StatCard
               icon={<FiTrendingUp />}
-              label="Total de Receitas"
-              value={relatorio.totais.receitas.toLocaleString("pt-BR", {
-                style: "currency",
-                currency: "BRL",
+              title="Total de Receitas"
+              value={relatorio.totais.receitas.toLocaleString('pt-BR', {
+                style: 'currency',
+                currency: 'BRL',
               })}
               color="green"
             />
             <StatCard
               icon={<FiTrendingDown />}
-              label="Total de Despesas"
-              value={relatorio.totais.despesas.toLocaleString("pt-BR", {
-                style: "currency",
-                currency: "BRL",
+              title="Total de Despesas"
+              value={relatorio.totais.despesas.toLocaleString('pt-BR', {
+                style: 'currency',
+                currency: 'BRL',
               })}
               color="orange"
             />
             <StatCard
               icon={<FiDollarSign />}
-              label="Saldo do Período"
+              title="Saldo do Período"
               value={(
                 relatorio.totais.receitas - relatorio.totais.despesas
-              ).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+              ).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
               color="blue"
             />
           </section>
@@ -228,10 +239,10 @@ export default function RelatoriosFinanceirosPage() {
                   <XAxis dataKey="mes" fontSize={12} />
                   <YAxis
                     tickFormatter={(value: number) =>
-                      new Intl.NumberFormat("pt-BR", {
-                        style: "currency",
-                        currency: "BRL",
-                        notation: "compact",
+                      new Intl.NumberFormat('pt-BR', {
+                        style: 'currency',
+                        currency: 'BRL',
+                        notation: 'compact',
                       }).format(value)
                     }
                     fontSize={12}
@@ -265,26 +276,19 @@ export default function RelatoriosFinanceirosPage() {
                     cy="50%"
                     outerRadius={80}
                     labelLine={false}
-                    label={({
-                      cx,
-                      cy,
-                      midAngle,
-                      innerRadius,
-                      outerRadius,
-                      percent,
-                    }) => {
-                      const radius =
-                        innerRadius + (outerRadius - innerRadius) * 1.3;
-                      const x =
-                        cx + radius * Math.cos(-midAngle * (Math.PI / 180));
-                      const y =
-                        cy + radius * Math.sin(-midAngle * (Math.PI / 180));
+                    {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                    label={(props: any) => {
+                      const { cx, cy, midAngle, innerRadius, outerRadius, percent } = props;
+                      if (!cx || !cy || typeof midAngle === 'undefined' || !innerRadius || !outerRadius || !percent) return null;
+                      const radius = innerRadius + (outerRadius - innerRadius) * 1.3;
+                      const x = cx + radius * Math.cos(-midAngle * (Math.PI / 180));
+                      const y = cy + radius * Math.sin(-midAngle * (Math.PI / 180));
                       return (
                         <text
                           x={x}
                           y={y}
                           fill="#666"
-                          textAnchor={x > cx ? "start" : "end"}
+                          textAnchor={x > cx ? 'start' : 'end'}
                           dominantBaseline="central"
                           fontSize={12}
                         >
@@ -302,9 +306,9 @@ export default function RelatoriosFinanceirosPage() {
                   </Pie>
                   <Tooltip
                     formatter={(value: number) =>
-                      value.toLocaleString("pt-BR", {
-                        style: "currency",
-                        currency: "BRL",
+                      value.toLocaleString('pt-BR', {
+                        style: 'currency',
+                        currency: 'BRL',
                       })
                     }
                   />
@@ -338,22 +342,22 @@ export default function RelatoriosFinanceirosPage() {
               <tbody>
                 {relatorio.transacoes.map((t) => (
                   <tr key={t.id}>
-                    <td>{new Date(t.data).toLocaleDateString("pt-BR")}</td>
+                    <td>{new Date(t.data).toLocaleDateString('pt-BR')}</td>
                     <td>{t.descricao}</td>
-                    <td>{t.categoria?.nome || "-"}</td>
+                    <td>{t.categoria?.nome || '-'}</td>
                     <td>
                       <span
                         className={
-                          t.tipo === "RECEITA" ? styles.receita : styles.despesa
+                          t.tipo === 'RECEITA' ? styles.receita : styles.despesa
                         }
                       >
                         {t.tipo}
                       </span>
                     </td>
                     <td>
-                      {t.valor.toLocaleString("pt-BR", {
-                        style: "currency",
-                        currency: "BRL",
+                      {t.valor.toLocaleString('pt-BR', {
+                        style: 'currency',
+                        currency: 'BRL',
                       })}
                     </td>
                   </tr>

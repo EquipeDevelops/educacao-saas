@@ -1,13 +1,13 @@
-"use client";
+'use client';
 
-import { useState, useEffect, FormEvent } from "react";
-import { api } from "@/services/api";
-import styles from "./planos.module.css";
-import { FiPlus, FiEdit, FiTrash2, FiDollarSign } from "react-icons/fi";
-import Modal from "@/components/modal/Modal";
-import Loading from "@/components/loading/Loading";
-import { toast, ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import { useState, useEffect, FormEvent } from 'react';
+import { api } from '@/services/api';
+import styles from './planos.module.css';
+import { FiPlus, FiEdit, FiTrash2 } from 'react-icons/fi';
+import Modal from '@/components/modal/Modal';
+import Loading from '@/components/loading/Loading';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 type Plano = {
   id: string;
@@ -17,8 +17,8 @@ type Plano = {
 };
 
 const initialState = {
-  nome: "",
-  descricao: "",
+  nome: '',
+  descricao: '',
   valor: 0,
 };
 
@@ -33,10 +33,10 @@ export default function PlanosPage() {
   async function fetchPlanos() {
     setIsLoading(true);
     try {
-      const response = await api.get("/financeiro/planos");
+      const response = await api.get('/financeiro/planos');
       setPlanos(response.data);
-    } catch (err) {
-      toast.error("Falha ao carregar os planos de mensalidade.");
+    } catch {
+      toast.error('Falha ao carregar os planos de mensalidade.');
     } finally {
       setIsLoading(false);
     }
@@ -51,7 +51,7 @@ export default function PlanosPage() {
       setEditingPlano(plano);
       setFormState({
         nome: plano.nome,
-        descricao: plano.descricao || "",
+        descricao: plano.descricao || '',
         valor: plano.valor,
       });
     } else {
@@ -66,34 +66,36 @@ export default function PlanosPage() {
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     const toastId = toast.loading(
-      editingPlano ? "Atualizando plano..." : "Criando plano..."
+      editingPlano ? 'Atualizando plano...' : 'Criando plano...',
     );
 
     try {
       if (editingPlano) {
         await api.put(`/financeiro/planos/${editingPlano.id}`, formState);
         toast.update(toastId, {
-          render: "Plano atualizado!",
-          type: "success",
+          render: 'Plano atualizado!',
+          type: 'success',
           isLoading: false,
           autoClose: 3000,
         });
       } else {
-        await api.post("/financeiro/planos", formState);
+        await api.post('/financeiro/planos', formState);
         toast.update(toastId, {
-          render: "Plano criado!",
-          type: "success",
+          render: 'Plano criado!',
+          type: 'success',
           isLoading: false,
           autoClose: 3000,
         });
       }
       closeModal();
       fetchPlanos();
-    } catch (err: any) {
-      const message = err.response?.data?.message || "Erro ao salvar o plano.";
+    } catch (err: unknown) {
+      const message =
+        (err as { response?: { data?: { message?: string } } }).response?.data
+          ?.message || 'Erro ao salvar o plano.';
       toast.update(toastId, {
         render: message,
-        type: "error",
+        type: 'error',
         isLoading: false,
         autoClose: 5000,
       });
@@ -104,22 +106,23 @@ export default function PlanosPage() {
     if (
       window.confirm(`Tem certeza que deseja excluir o plano "${plano.nome}"?`)
     ) {
-      const toastId = toast.loading("Excluindo...");
+      const toastId = toast.loading('Excluindo...');
       try {
         await api.delete(`/financeiro/planos/${plano.id}`);
         toast.update(toastId, {
-          render: "Plano excluído!",
-          type: "info",
+          render: 'Plano excluído!',
+          type: 'info',
           isLoading: false,
           autoClose: 3000,
         });
         fetchPlanos();
-      } catch (err: any) {
+      } catch (err: unknown) {
         const message =
-          err.response?.data?.message || "Erro ao excluir o plano.";
+          (err as { response?: { data?: { message?: string } } }).response?.data
+            ?.message || 'Erro ao excluir o plano.';
         toast.update(toastId, {
           render: message,
-          type: "error",
+          type: 'error',
           isLoading: false,
           autoClose: 5000,
         });
@@ -160,12 +163,12 @@ export default function PlanosPage() {
             </div>
             <div className={styles.cardBody}>
               <p className={styles.cardDescription}>
-                {plano.descricao || "Sem descrição."}
+                {plano.descricao || 'Sem descrição.'}
               </p>
               <p className={styles.cardValor}>
-                {plano.valor.toLocaleString("pt-BR", {
-                  style: "currency",
-                  currency: "BRL",
+                {plano.valor.toLocaleString('pt-BR', {
+                  style: 'currency',
+                  currency: 'BRL',
                 })}
                 <span>/mês</span>
               </p>
@@ -178,7 +181,7 @@ export default function PlanosPage() {
         <Modal
           isOpen={isModalOpen}
           onClose={closeModal}
-          title={editingPlano ? "Editar Plano" : "Criar Novo Plano"}
+          title={editingPlano ? 'Editar Plano' : 'Criar Novo Plano'}
         >
           <form onSubmit={handleSubmit} className={styles.modalForm}>
             <label className={styles.label}>

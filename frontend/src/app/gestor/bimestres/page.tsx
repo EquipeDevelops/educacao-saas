@@ -1,15 +1,15 @@
-"use client";
+'use client';
 
-import { useEffect, useMemo, useState } from "react";
-import { api } from "@/services/api";
-import styles from "./bimestres.module.css";
+import { useEffect, useMemo, useState } from 'react';
+import { api } from '@/services/api';
+import styles from './bimestres.module.css';
 import {
   FiCalendar,
   FiSave,
   FiEdit2,
   FiPlusCircle,
   FiRefreshCw,
-} from "react-icons/fi";
+} from 'react-icons/fi';
 
 type Bimestre = {
   id: string;
@@ -29,11 +29,11 @@ type FormState = {
 };
 
 const periodosDisponiveis = [
-  { value: "PRIMEIRO_BIMESTRE", label: "1º Bimestre" },
-  { value: "SEGUNDO_BIMESTRE", label: "2º Bimestre" },
-  { value: "TERCEIRO_BIMESTRE", label: "3º Bimestre" },
-  { value: "QUARTO_BIMESTRE", label: "4º Bimestre" },
-  { value: "RECUPERACAO_FINAL", label: "Recuperação Final" },
+  { value: 'PRIMEIRO_BIMESTRE', label: '1º Bimestre' },
+  { value: 'SEGUNDO_BIMESTRE', label: '2º Bimestre' },
+  { value: 'TERCEIRO_BIMESTRE', label: '3º Bimestre' },
+  { value: 'QUARTO_BIMESTRE', label: '4º Bimestre' },
+  { value: 'RECUPERACAO_FINAL', label: 'Recuperação Final' },
 ];
 
 const toDateInputValue = (iso: string) => iso.slice(0, 10);
@@ -47,10 +47,10 @@ export default function BimestresGestorPage() {
   const [success, setSuccess] = useState<string | null>(null);
 
   const [formState, setFormState] = useState<FormState>({
-    periodo: "PRIMEIRO_BIMESTRE",
-    dataInicio: "",
-    dataFim: "",
-    nome: "",
+    periodo: 'PRIMEIRO_BIMESTRE',
+    dataInicio: '',
+    dataFim: '',
+    nome: '',
     anoLetivo: anoAtual,
   });
 
@@ -72,14 +72,14 @@ export default function BimestresGestorPage() {
     setError(null);
     setSuccess(null);
     try {
-      const response = await api.get("/bimestres", {
+      const response = await api.get('/bimestres', {
         params: { anoLetivo: String(ano) },
       });
       setBimestres(response.data);
-    } catch (err: any) {
+    } catch (err: unknown) {
       setError(
-        err.response?.data?.message ||
-          "Falha ao carregar bimestres cadastrados."
+        (err as { response?: { data?: { message?: string } } }).response?.data
+          ?.message || 'Falha ao carregar bimestres cadastrados.',
       );
     } finally {
       setIsLoading(false);
@@ -91,13 +91,12 @@ export default function BimestresGestorPage() {
   }, [anoSelecionado]);
 
   const handleFormChange = (
-    event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+    event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
   ) => {
     const { name, value } = event.target;
     setFormState((prev) => ({
       ...prev,
-      [name]:
-        name === "anoLetivo" ? Number(value) : value,
+      [name]: name === 'anoLetivo' ? Number(value) : value,
     }));
   };
 
@@ -108,32 +107,33 @@ export default function BimestresGestorPage() {
 
     const { periodo, dataInicio, dataFim, anoLetivo, nome } = formState;
     if (!periodo || !dataInicio || !dataFim) {
-      setError("Preencha período, data inicial e data final.");
+      setError('Preencha período, data inicial e data final.');
       return;
     }
 
     try {
-      await api.post("/bimestres", {
+      await api.post('/bimestres', {
         periodo,
         dataInicio: new Date(dataInicio).toISOString(),
         dataFim: new Date(dataFim).toISOString(),
         anoLetivo,
         nome: nome.trim() ? nome : undefined,
       });
-      setSuccess("Bimestre cadastrado com sucesso!");
+      setSuccess('Bimestre cadastrado com sucesso!');
       setFormState((prev) => ({
         ...prev,
-        dataInicio: "",
-        dataFim: "",
-        nome: "",
-        periodo: "PRIMEIRO_BIMESTRE",
+        dataInicio: '',
+        dataFim: '',
+        nome: '',
+        periodo: 'PRIMEIRO_BIMESTRE',
         anoLetivo,
       }));
       fetchBimestres(anoSelecionado);
-    } catch (err: any) {
+    } catch (err: unknown) {
       setError(
-        err.response?.data?.message ||
-          "Não foi possível criar o bimestre. Verifique as informações."
+        (err as { response?: { data?: { message?: string } } }).response?.data
+          ?.message ||
+          'Não foi possível criar o bimestre. Verifique as informações.',
       );
     }
   };
@@ -143,7 +143,7 @@ export default function BimestresGestorPage() {
       id: bimestre.id,
       dataInicio: toDateInputValue(bimestre.dataInicio),
       dataFim: toDateInputValue(bimestre.dataFim),
-      nome: bimestre.nome || "",
+      nome: bimestre.nome || '',
     });
     setSuccess(null);
     setError(null);
@@ -160,13 +160,13 @@ export default function BimestresGestorPage() {
         dataFim: new Date(dataFim).toISOString(),
         nome: nome.trim() ? nome : undefined,
       });
-      setSuccess("Bimestre atualizado com sucesso!");
+      setSuccess('Bimestre atualizado com sucesso!');
       setEditing(null);
       fetchBimestres(anoSelecionado);
-    } catch (err: any) {
+    } catch (err: unknown) {
       setError(
-        err.response?.data?.message ||
-          "Não foi possível atualizar o bimestre."
+        (err as { response?: { data?: { message?: string } } }).response?.data
+          ?.message || 'Não foi possível atualizar o bimestre.',
       );
     }
   };
@@ -179,7 +179,8 @@ export default function BimestresGestorPage() {
         <div>
           <h1>Gestão de Bimestres</h1>
           <p>
-            Cadastre os períodos avaliativos da escola e mantenha as notas sempre no bimestre correto.
+            Cadastre os períodos avaliativos da escola e mantenha as notas
+            sempre no bimestre correto.
           </p>
         </div>
         <button
@@ -301,15 +302,15 @@ export default function BimestresGestorPage() {
               return (
                 <div
                   key={bimestre.id}
-                  className={`${styles.card} ${ativo ? styles.active : ""}`}
+                  className={`${styles.card} ${ativo ? styles.active : ''}`}
                 >
                   <header className={styles.cardHeader}>
                     <span className={styles.periodo}>
                       {bimestre.nome ||
                         periodosDisponiveis.find(
-                          (p) => p.value === bimestre.periodo
+                          (p) => p.value === bimestre.periodo,
                         )?.label ||
-                        bimestre.periodo.replace(/_/g, " ")}
+                        bimestre.periodo.replace(/_/g, ' ')}
                     </span>
                     <button
                       className={styles.editButton}
@@ -319,17 +320,14 @@ export default function BimestresGestorPage() {
                     </button>
                   </header>
                   <p className={styles.cardDates}>
-                    {new Date(bimestre.dataInicio).toLocaleDateString('pt-BR')} até{" "}
-                    {new Date(bimestre.dataFim).toLocaleDateString('pt-BR')}
+                    {new Date(bimestre.dataInicio).toLocaleDateString('pt-BR')}{' '}
+                    até {new Date(bimestre.dataFim).toLocaleDateString('pt-BR')}
                   </p>
                   <span className={styles.cardBadge}>
-                    {ativo ? "Em vigência" : "Fora da vigência"}
+                    {ativo ? 'Em vigência' : 'Fora da vigência'}
                   </span>
                   {estaEmEdicao && (
-                    <form
-                      className={styles.editForm}
-                      onSubmit={handleUpdate}
-                    >
+                    <form className={styles.editForm} onSubmit={handleUpdate}>
                       <label>
                         Nome exibido
                         <input
@@ -337,9 +335,7 @@ export default function BimestresGestorPage() {
                           value={editing.nome}
                           onChange={(e) =>
                             setEditing((prev) =>
-                              prev
-                                ? { ...prev, nome: e.target.value }
-                                : prev
+                              prev ? { ...prev, nome: e.target.value } : prev,
                             )
                           }
                         />
@@ -354,7 +350,7 @@ export default function BimestresGestorPage() {
                               setEditing((prev) =>
                                 prev
                                   ? { ...prev, dataInicio: e.target.value }
-                                  : prev
+                                  : prev,
                               )
                             }
                             required
@@ -369,7 +365,7 @@ export default function BimestresGestorPage() {
                               setEditing((prev) =>
                                 prev
                                   ? { ...prev, dataFim: e.target.value }
-                                  : prev
+                                  : prev,
                               )
                             }
                             required
@@ -377,10 +373,7 @@ export default function BimestresGestorPage() {
                         </label>
                       </div>
                       <div className={styles.editActions}>
-                        <button
-                          type="button"
-                          onClick={() => setEditing(null)}
-                        >
+                        <button type="button" onClick={() => setEditing(null)}>
                           Cancelar
                         </button>
                         <button type="submit">

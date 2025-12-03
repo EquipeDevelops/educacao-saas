@@ -9,7 +9,7 @@ import Modal from '@/components/modal/Modal';
 import BarraDeProgresso from '@/components/progressBar/BarraDeProgresso';
 import { useResponderTarefa } from '@/hooks/tarefas/useResponderTarefa';
 import styles from './styles.module.css';
-import { LuClock3, LuActivity } from 'react-icons/lu';
+import { LuClock3 } from 'react-icons/lu';
 import { api } from '@/services/api';
 import { LucideAlertCircle } from 'lucide-react';
 
@@ -369,7 +369,9 @@ export default function ExecucaoProvaPage() {
       <ErrorMsg text="Prova não encontrada ou sem questões disponíveis." />
     );
 
-  const isExpired = new Date() > new Date(tarefa.data_entrega);
+  const isExpired =
+    new Date() >
+    new Date((tarefa as unknown as { data_entrega: string }).data_entrega);
   if (isExpired) {
     return (
       <Section>
@@ -573,8 +575,9 @@ export default function ExecucaoProvaPage() {
 
       <Modal
         isOpen={confirmModalOpen}
-        setIsOpen={setConfirmModalOpen}
-        maxWidth={420}
+        onClose={() => setConfirmModalOpen(false)}
+        width={420}
+        title="Confirmar envio"
       >
         <div className={styles.modalContent}>
           <h2>Deseja enviar a prova?</h2>

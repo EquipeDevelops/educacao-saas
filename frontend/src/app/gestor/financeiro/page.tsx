@@ -1,13 +1,13 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import Link from "next/link";
-import { api } from "@/services/api";
-import styles from "./financeiro.module.css";
-import StatCard from "@/components/gestor/dashboard/StatCard";
-import Loading from "@/components/loading/Loading";
-import { toast, ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { api } from '@/services/api';
+import styles from './financeiro.module.css';
+import StatCard from '@/components/gestor/dashboard/StatCard';
+import Loading from '@/components/loading/Loading';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import {
   FiDollarSign,
   FiTrendingUp,
@@ -17,7 +17,7 @@ import {
   FiBarChart2,
   FiUsers,
   FiTag,
-} from "react-icons/fi";
+} from 'react-icons/fi';
 
 interface FinanceiroDashboardData {
   receitaMes: number;
@@ -32,11 +32,11 @@ export default function FinanceiroPage() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const response = await api.get("/gestor/dashboard/stats");
+        const response = await api.get('/gestor/dashboard/stats');
         setData(response.data);
-      } catch (error) {
+      } catch {
         toast.error(
-          "Não foi possível carregar os dados do dashboard financeiro."
+          'Não foi possível carregar os dados do dashboard financeiro.',
         );
       } finally {
         setIsLoading(false);
@@ -60,28 +60,28 @@ export default function FinanceiroPage() {
       <section className={styles.statsGrid}>
         <StatCard
           icon={<FiTrendingUp />}
-          label="Receita do Mês"
-          value={(data?.receitaMes || 0).toLocaleString("pt-BR", {
-            style: "currency",
-            currency: "BRL",
+          title="Receita do Mês"
+          value={(data?.receitaMes || 0).toLocaleString('pt-BR', {
+            style: 'currency',
+            currency: 'BRL',
           })}
           color="green"
         />
         <StatCard
           icon={<FiTrendingDown />}
-          label="Despesa do Mês"
-          value={(data?.despesaMes || 0).toLocaleString("pt-BR", {
-            style: "currency",
-            currency: "BRL",
+          title="Despesa do Mês"
+          value={(data?.despesaMes || 0).toLocaleString('pt-BR', {
+            style: 'currency',
+            currency: 'BRL',
           })}
           color="orange"
         />
         <StatCard
           icon={<FiDollarSign />}
-          label="Inadimplência (Vencido)"
-          value={(data?.inadimplencia || 0).toLocaleString("pt-BR", {
-            style: "currency",
-            currency: "BRL",
+          title="Inadimplência (Vencido)"
+          value={(data?.inadimplencia || 0).toLocaleString('pt-BR', {
+            style: 'currency',
+            currency: 'BRL',
           })}
           color="blue"
         />

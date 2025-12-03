@@ -27,7 +27,7 @@ export default function Pagination({
     if (totalPages <= 0) return [];
     const half = Math.floor(maxButtons / 2);
     let start = Math.max(1, clampedPage - half);
-    let end = Math.min(totalPages, start + maxButtons - 1);
+    const end = Math.min(totalPages, start + maxButtons - 1);
 
     start = Math.max(1, Math.min(start, Math.max(1, end - maxButtons + 1)));
 

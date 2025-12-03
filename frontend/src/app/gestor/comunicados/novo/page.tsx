@@ -7,6 +7,7 @@ import styles from './page.module.css';
 import { LuArrowLeft, LuSave, LuImage, LuX } from 'react-icons/lu';
 import Link from 'next/link';
 import Section from '@/components/section/Section';
+import Image from 'next/image';
 
 export default function NovoComunicadoPage() {
   const router = useRouter();
@@ -151,7 +152,13 @@ export default function NovoComunicadoPage() {
             <div className={styles.previewGrid}>
               {previews.map((url, index) => (
                 <div key={index} className={styles.previewItem}>
-                  <img src={url} alt={`Preview ${index}`} />
+                  <Image
+                    src={url}
+                    alt={`Preview ${index}`}
+                    width={100}
+                    height={100}
+                    style={{ objectFit: 'cover' }}
+                  />
                   <button
                     type="button"
                     onClick={() => removeImage(index)}

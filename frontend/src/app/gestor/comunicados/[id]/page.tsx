@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { api } from '@/services/api';
-import styles from '../novo/page.module.css'; // Reusing styles from create page
+import styles from '../novo/page.module.css';
 import { LuArrowLeft, LuSave, LuImage, LuX } from 'react-icons/lu';
 import Link from 'next/link';
 import { format } from 'date-fns';

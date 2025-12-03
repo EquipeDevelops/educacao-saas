@@ -15,7 +15,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     if (!loading && !isAuthenticated && user?.papel !== 'ALUNO') {
       router.push('/auth/login');
     }
-  }, [isAuthenticated, loading, router]);
+  }, [isAuthenticated, loading, router, user?.papel]);
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh' }}>

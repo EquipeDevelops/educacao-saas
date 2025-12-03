@@ -10,10 +10,10 @@ export default function Questoes({
   questoes: { questao, resposta },
 }: GabaritoProps) {
   let acertou = false;
-  let respostaAluno = '';
-  let respostaCorreta = '';
+  let respostaAluno: string | undefined = '';
+  let respostaCorreta: string | undefined = '';
   const respostaEsperada = (
-    (questao.payload as Record<string, any> | null) ?? {}
+    (questao.payload as Record<string, unknown> | null) ?? {}
   ).respostaEsperada as string | undefined;
 
   if (!resposta) {
@@ -45,8 +45,8 @@ export default function Questoes({
     }
 
     case 'DISCURSIVA': {
-      respostaAluno = resposta?.resposta_texto;
-      respostaCorreta = respostaEsperada || resposta?.feedback;
+      respostaAluno = resposta?.resposta_texto ?? undefined;
+      respostaCorreta = respostaEsperada || resposta?.feedback || undefined;
       if (resposta?.nota && resposta.nota === questao.pontos) {
         acertou = true;
       }

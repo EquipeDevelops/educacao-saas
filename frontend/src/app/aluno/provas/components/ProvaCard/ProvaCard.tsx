@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { TarefaComStatus } from '@/types/tarefas';
 import styles from './style.module.css';
-import { LuCalendar, LuClock3, LuFileText, LuUser } from 'react-icons/lu';
+import { LuCalendar, LuClock3, LuFileText } from 'react-icons/lu';
 
 type StatusInfo = {
   text: string;

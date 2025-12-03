@@ -8,7 +8,7 @@ import ErrorMsg from '@/components/errorMsg/ErrorMsg';
 import { useAuth } from '@/contexts/AuthContext';
 import { api } from '@/services/api';
 import styles from './notas.module.css';
-import { LuCircleX, LuClock } from 'react-icons/lu';
+import { LuClock } from 'react-icons/lu';
 import { CircleCheck, CircleX, Download } from 'lucide-react';
 
 type Avaliacao = {
@@ -54,11 +54,11 @@ type BoletimMap = Record<string, MateriaData>;
 
 type BoletimApiResponse = {
   boletim: BoletimMap;
-  dadosAluno: any;
-  mediaGeralBimestre: any;
+  dadosAluno: unknown;
+  mediaGeralBimestre: unknown;
   frequenciaGeral: number;
-  comentarios: any;
-  statsTurma: any;
+  comentarios: unknown;
+  statsTurma: unknown;
 };
 
 const formatNota = (nota?: number | null) =>
@@ -104,7 +104,7 @@ export default function NotasAlunoPage() {
         setLoadingNotas(true);
         setError(null);
         const { data } = await api.get<BoletimApiResponse>(
-          `/alunos/${user.id}/boletim`,
+          `/alunos/${user?.id}/boletim`,
           { signal: controller.signal },
         );
         setBoletim(data.boletim);
@@ -287,7 +287,7 @@ export default function NotasAlunoPage() {
                               <td
                                 key={periodo}
                                 className={`${styles.nota} ${
-                                  periodoData?.media >= 6
+                                  (periodoData?.media ?? -1) >= 6
                                     ? styles.notaBoa
                                     : periodoData?.media === null
                                     ? styles.semNota
