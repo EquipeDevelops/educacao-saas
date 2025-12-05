@@ -61,7 +61,7 @@ export default function AtividadesPostadasPage() {
   }, [page, trabalhos]);
 
   useEffect(() => {
-    setFilters((prev: any) => ({ ...prev, tipo: ['TRABALHO'] }));
+    setFilters((prev) => ({ ...prev, tipo: ['TRABALHO'] }));
   }, [setFilters]);
 
   const handleFilterChange = (
@@ -69,7 +69,7 @@ export default function AtividadesPostadasPage() {
   ) => {
     const { name, value } = event.target;
     setPage(1);
-    setFilters((prev: any) => ({ ...prev, [name]: value }));
+    setFilters((prev) => ({ ...prev, [name]: value }));
   };
 
   const clearFilters = () => {

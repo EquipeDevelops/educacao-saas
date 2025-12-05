@@ -58,7 +58,14 @@ export default function PerfilPage() {
     // but clearing passwords might be good if successful.
   }
 
-  // ... (getInitials function remains same)
+  function getInitials(name: string) {
+    return name
+      .split(' ')
+      .map((n) => n[0])
+      .slice(0, 2)
+      .join('')
+      .toUpperCase();
+  }
 
   if (isLoading) {
     return <Loading />;

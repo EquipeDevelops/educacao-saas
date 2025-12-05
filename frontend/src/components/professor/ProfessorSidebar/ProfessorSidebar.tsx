@@ -47,10 +47,26 @@ const navLinks = [
         text: 'Atividades',
         icon: <LuBookOpen />,
       },
-      { href: '/professor/correcoes', text: 'Correções', icon: <LuCopyCheck /> },
-      { href: '/professor/notas', text: 'Lançar Notas', icon: <LuFilePenLine /> },
-      { href: '/professor/frequencia', text: 'Fazer Frequência', icon: <LuUserCheck /> },
-      { href: '/professor/diario', text: 'Diário de Classe', icon: <LuBookCheck /> },
+      {
+        href: '/professor/correcoes',
+        text: 'Correções',
+        icon: <LuCopyCheck />,
+      },
+      {
+        href: '/professor/notas',
+        text: 'Lançar Notas',
+        icon: <LuFilePenLine />,
+      },
+      {
+        href: '/professor/frequencia',
+        text: 'Fazer Frequência',
+        icon: <LuUserCheck />,
+      },
+      {
+        href: '/professor/diario',
+        text: 'Diário de Classe',
+        icon: <LuBookCheck />,
+      },
       {
         href: '/professor/desempenho',
         text: 'Desempenho',
@@ -70,67 +86,86 @@ const navLinks = [
   },
 ];
 
-export default function ProfessorSidebar() {
+interface ProfessorSidebarProps {
+  isOpen?: boolean;
+  onClose?: () => void;
+}
+
+export default function ProfessorSidebar({
+  isOpen,
+  onClose,
+}: ProfessorSidebarProps) {
   const pathname = usePathname();
   const { signOut } = useAuth();
 
   return (
-    <aside className={styles.sidebar}>
-      <div>
-        <div className={styles.titleContainer}>
-          <div className={styles.iconContainer}>
-            <VscMortarBoard />
-          </div>
-          <div className={styles.title}>
-            <h1>EduPortal</h1>
-            <p>Portal do Professor</p>
-          </div>
-        </div>
-        <nav className={styles.nav}>
-          {navLinks.map((section) => (
-            <div key={section.category} className={styles.navSection}>
-              <h3 className={styles.navCategory}>{section.category}</h3>
-              {section.links.map((link) => {
-                const isActive =
-                  pathname === link.href ||
-                  (link.href !== '/professor' &&
-                    pathname.startsWith(link.href));
-                return (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    className={`${styles.navLink} ${
-                      isActive ? styles.activeLink : ''
-                    }`}
-                  >
-                    <span className={styles.icon}>{link.icon}</span>
-                    {link.text}
-                  </Link>
-                );
-              })}
+    <>
+      <div
+        className={`${styles.overlay} ${isOpen ? styles.open : ''}`}
+        onClick={onClose}
+      />
+      <aside className={`${styles.sidebar} ${isOpen ? styles.open : ''}`}>
+        <div>
+          <div className={styles.titleContainer}>
+            <div className={styles.iconContainer}>
+              <VscMortarBoard />
             </div>
-          ))}
-        </nav>
-      </div>
+            <div className={styles.title}>
+              <h1>EduPortal</h1>
+              <p>Portal do Professor</p>
+            </div>
+            <button className={styles.closeButton} onClick={onClose}>
+              ×
+            </button>
+          </div>
+          <nav className={styles.nav}>
+            {navLinks.map((section) => (
+              <div key={section.category} className={styles.navSection}>
+                <h3 className={styles.navCategory}>{section.category}</h3>
+                {section.links.map((link) => {
+                  const isActive =
+                    pathname === link.href ||
+                    (link.href !== '/professor' &&
+                      pathname.startsWith(link.href));
+                  return (
+                    <Link
+                      key={link.href}
+                      href={link.href}
+                      className={`${styles.navLink} ${
+                        isActive ? styles.activeLink : ''
+                      }`}
+                      onClick={onClose}
+                    >
+                      <span className={styles.icon}>{link.icon}</span>
+                      {link.text}
+                    </Link>
+                  );
+                })}
+              </div>
+            ))}
+          </nav>
+        </div>
 
-      <div className={styles.sidebarFooter}>
-        <Link
-          href="/professor/configuracoes"
-          className={`${styles.navLink} ${
-            pathname === '/professor/configuracoes' ? styles.activeLink : ''
-          }`}
-        >
-          <LuSettings className={styles.icon} />
-          <span>Configurações</span>
-        </Link>
-        <button
-          onClick={signOut}
-          className={`${styles.navLink} ${styles.logoutButton}`}
-        >
-          <LuLogOut className={styles.icon} />
-          <span>Sair</span>
-        </button>
-      </div>
-    </aside>
+        <div className={styles.sidebarFooter}>
+          <Link
+            href="/professor/configuracoes"
+            className={`${styles.navLink} ${
+              pathname === '/professor/configuracoes' ? styles.activeLink : ''
+            }`}
+            onClick={onClose}
+          >
+            <LuSettings className={styles.icon} />
+            <span>Configurações</span>
+          </Link>
+          <button
+            onClick={signOut}
+            className={`${styles.navLink} ${styles.logoutButton}`}
+          >
+            <LuLogOut className={styles.icon} />
+            <span>Sair</span>
+          </button>
+        </div>
+      </aside>
+    </>
   );
 }

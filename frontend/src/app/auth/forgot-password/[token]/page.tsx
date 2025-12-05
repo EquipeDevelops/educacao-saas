@@ -1,16 +1,16 @@
-"use client";
+'use client';
 
-import { useState, FormEvent } from "react";
-import { useParams, useRouter } from "next/navigation";
-import { api } from "@/services/api";
+import { useState, FormEvent } from 'react';
+import { useParams, useRouter } from 'next/navigation';
+import { api } from '@/services/api';
 
 export default function ResetPasswordPage() {
   const params = useParams();
   const router = useRouter();
   const token = params.token as string;
 
-  const [senha, setSenha] = useState("");
-  const [confirmacaoSenha, setConfirmacaoSenha] = useState("");
+  const [senha, setSenha] = useState('');
+  const [confirmacaoSenha, setConfirmacaoSenha] = useState('');
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -18,7 +18,7 @@ export default function ResetPasswordPage() {
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     if (senha !== confirmacaoSenha) {
-      setError("As senhas não coincidem.");
+      setError('As senhas não coincidem.');
       return;
     }
     setIsLoading(true);
@@ -29,56 +29,57 @@ export default function ResetPasswordPage() {
         senha,
         confirmacaoSenha,
       });
-      setMessage("Senha redefinida com sucesso! Você já pode fazer o login.");
-      setTimeout(() => router.push("/login"), 3000);
-    } catch (err: any) {
+      setMessage('Senha redefinida com sucesso! Você já pode fazer o login.');
+      setTimeout(() => router.push('/login'), 3000);
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { message?: string } } };
       setError(
-        err.response?.data?.message ||
-          "Token inválido, expirado ou erro ao redefinir a senha."
+        error.response?.data?.message ||
+          'Token inválido, expirado ou erro ao redefinir a senha.',
       );
     } finally {
       setIsLoading(false);
     }
   }
 
-  const styles = {
+  const styles: Record<string, React.CSSProperties> = {
     container: {
-      display: "flex",
-      flexDirection: "column",
-      alignItems: "center",
-      justifyContent: "center",
-      height: "100vh",
-      fontFamily: "sans-serif",
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      height: '100vh',
+      fontFamily: 'sans-serif',
     },
     form: {
-      display: "flex",
-      flexDirection: "column",
-      gap: "1rem",
-      width: "350px",
-      padding: "2rem",
-      border: "1px solid #ccc",
-      borderRadius: "8px",
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '1rem',
+      width: '350px',
+      padding: '2rem',
+      border: '1px solid #ccc',
+      borderRadius: '8px',
     },
-    input: { padding: "0.5rem", borderRadius: "4px", border: "1px solid #ccc" },
+    input: { padding: '0.5rem', borderRadius: '4px', border: '1px solid #ccc' },
     button: {
-      padding: "0.75rem",
-      borderRadius: "4px",
-      border: "none",
-      backgroundColor: "#28a745",
-      color: "white",
-      cursor: "pointer",
+      padding: '0.75rem',
+      borderRadius: '4px',
+      border: 'none',
+      backgroundColor: '#28a745',
+      color: 'white',
+      cursor: 'pointer',
     },
     message: {
-      color: "green",
-      marginTop: "1rem",
-      textAlign: "center" as "center",
+      color: 'green',
+      marginTop: '1rem',
+      textAlign: 'center' as const,
     },
-    error: { color: "red", marginTop: "1rem" },
+    error: { color: 'red', marginTop: '1rem' },
   };
 
   return (
-    <div style={styles.container as any}>
-      <form onSubmit={handleSubmit} style={styles.form as any}>
+    <div style={styles.container}>
+      <form onSubmit={handleSubmit} style={styles.form}>
         <h1>Redefinir Senha</h1>
         {message ? (
           <p style={styles.message}>{message}</p>
@@ -101,7 +102,7 @@ export default function ResetPasswordPage() {
               style={styles.input}
             />
             <button type="submit" disabled={isLoading} style={styles.button}>
-              {isLoading ? "Salvando..." : "Redefinir Senha"}
+              {isLoading ? 'Salvando...' : 'Redefinir Senha'}
             </button>
           </>
         )}

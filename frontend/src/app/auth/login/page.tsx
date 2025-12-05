@@ -24,6 +24,7 @@ export default function LoginPage() {
     try {
       await signIn({ email, senha });
     } catch (err) {
+      console.error(err);
       setError('Falha no login. Verifique seu email e senha.');
       setIsLoading(false);
     }

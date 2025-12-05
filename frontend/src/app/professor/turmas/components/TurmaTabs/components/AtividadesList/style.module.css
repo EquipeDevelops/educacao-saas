@@ -182,3 +182,10 @@
   justify-content: center;
   padding: 10px 0 5px;
 }
+
+@media (max-width: 768px) {
+  .filtersGrid {
+    flex-direction: column;
+    gap: 10px;
+  }
+}

@@ -1,21 +1,21 @@
-"use client";
+'use client';
 
-import { useState, useEffect, FormEvent } from "react";
-import { api } from "@/services/api";
-import styles from "./transacoes.module.css";
-import { FiPlus, FiTrash2 } from "react-icons/fi";
-import Modal from "@/components/modal/Modal";
-import Loading from "@/components/loading/Loading";
-import { toast, ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import { useState, useEffect, FormEvent } from 'react';
+import { api } from '@/services/api';
+import styles from './transacoes.module.css';
+import { FiPlus, FiTrash2 } from 'react-icons/fi';
+import Modal from '@/components/modal/Modal';
+import Loading from '@/components/loading/Loading';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 type Transacao = {
   id: string;
   descricao: string;
   valor: number;
-  tipo: "RECEITA" | "DESPESA";
+  tipo: 'RECEITA' | 'DESPESA';
   data: string;
-  status: "PENDENTE" | "PAGO";
+  status: 'PENDENTE' | 'PAGO';
   fornecedor?: string | null;
   categoria?: { nome: string } | null;
 };
@@ -23,17 +23,17 @@ type Transacao = {
 type Categoria = {
   id: string;
   nome: string;
-  tipo: "RECEITA" | "DESPESA";
+  tipo: 'RECEITA' | 'DESPESA';
 };
 
 const initialState = {
-  descricao: "",
+  descricao: '',
   valor: 0,
-  tipo: "DESPESA" as "RECEITA" | "DESPESA",
-  data: new Date().toISOString().split("T")[0],
-  status: "PAGO" as "PENDENTE" | "PAGO",
-  fornecedor: "",
-  categoriaId: "",
+  tipo: 'DESPESA' as 'RECEITA' | 'DESPESA',
+  data: new Date().toISOString().split('T')[0],
+  status: 'PAGO' as 'PENDENTE' | 'PAGO',
+  fornecedor: '',
+  categoriaId: '',
 };
 
 export default function TransacoesPage() {
@@ -48,13 +48,13 @@ export default function TransacoesPage() {
     setIsLoading(true);
     try {
       const [transacoesRes, categoriasRes] = await Promise.all([
-        api.get("/financeiro/transacoes"),
-        api.get("/categorias-transacao"),
+        api.get('/financeiro/transacoes'),
+        api.get('/categorias-transacao'),
       ]);
       setTransacoes(transacoesRes.data);
       setCategorias(categoriasRes.data);
-    } catch (err) {
-      toast.error("Falha ao carregar as transações.");
+    } catch {
+      toast.error('Falha ao carregar as transações.');
     } finally {
       setIsLoading(false);
     }
@@ -65,7 +65,7 @@ export default function TransacoesPage() {
   }, []);
 
   const filteredCategorias = categorias.filter(
-    (c) => c.tipo === formState.tipo
+    (c) => c.tipo === formState.tipo,
   );
 
   const openModal = () => {
@@ -77,29 +77,30 @@ export default function TransacoesPage() {
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
-    const toastId = toast.loading("Registrando transação...");
+    const toastId = toast.loading('Registrando transação...');
 
     try {
-      await api.post("/financeiro/transacoes", {
+      await api.post('/financeiro/transacoes', {
         ...formState,
         data: new Date(formState.data).toISOString(),
         valor: Number(formState.valor),
         categoriaId: formState.categoriaId || undefined,
       });
       toast.update(toastId, {
-        render: "Transação registrada!",
-        type: "success",
+        render: 'Transação registrada!',
+        type: 'success',
         isLoading: false,
         autoClose: 3000,
       });
       closeModal();
       fetchData();
-    } catch (err: any) {
+    } catch (err: unknown) {
       const message =
-        err.response?.data?.message || "Erro ao registrar transação.";
+        (err as { response?: { data?: { message?: string } } }).response?.data
+          ?.message || 'Erro ao registrar transação.';
       toast.update(toastId, {
         render: message,
-        type: "error",
+        type: 'error',
         isLoading: false,
         autoClose: 5000,
       });
@@ -109,24 +110,26 @@ export default function TransacoesPage() {
   async function handleDelete(transacao: Transacao) {
     if (
       window.confirm(
-        `Tem certeza que deseja excluir a transação "${transacao.descricao}"?`
+        `Tem certeza que deseja excluir a transação "${transacao.descricao}"?`,
       )
     ) {
-      const toastId = toast.loading("Excluindo...");
+      const toastId = toast.loading('Excluindo...');
       try {
         await api.delete(`/financeiro/transacoes/${transacao.id}`);
         toast.update(toastId, {
-          render: "Transação excluída!",
-          type: "info",
+          render: 'Transação excluída!',
+          type: 'info',
           isLoading: false,
           autoClose: 3000,
         });
         fetchData();
-      } catch (err: any) {
-        const message = err.response?.data?.message || "Erro ao excluir.";
+      } catch (err: unknown) {
+        const message =
+          (err as { response?: { data?: { message?: string } } }).response?.data
+            ?.message || 'Erro ao excluir.';
         toast.update(toastId, {
           render: message,
-          type: "error",
+          type: 'error',
           isLoading: false,
           autoClose: 5000,
         });
@@ -165,11 +168,11 @@ export default function TransacoesPage() {
             {transacoes.map((t) => (
               <tr key={t.id}>
                 <td>{t.descricao}</td>
-                <td>{t.categoria?.nome || "-"}</td>
+                <td>{t.categoria?.nome || '-'}</td>
                 <td>
                   <span
                     className={
-                      t.tipo === "RECEITA"
+                      t.tipo === 'RECEITA'
                         ? styles.tipoReceita
                         : styles.tipoDespesa
                     }
@@ -177,11 +180,11 @@ export default function TransacoesPage() {
                     {t.tipo}
                   </span>
                 </td>
-                <td>{new Date(t.data).toLocaleDateString("pt-BR")}</td>
+                <td>{new Date(t.data).toLocaleDateString('pt-BR')}</td>
                 <td>
-                  {t.valor.toLocaleString("pt-BR", {
-                    style: "currency",
-                    currency: "BRL",
+                  {t.valor.toLocaleString('pt-BR', {
+                    style: 'currency',
+                    currency: 'BRL',
                   })}
                 </td>
                 <td>
@@ -236,8 +239,8 @@ export default function TransacoesPage() {
               onChange={(e) =>
                 setFormState({
                   ...formState,
-                  tipo: e.target.value as any,
-                  categoriaId: "",
+                  tipo: e.target.value as 'RECEITA' | 'DESPESA',
+                  categoriaId: '',
                 })
               }
             >
@@ -278,7 +281,10 @@ export default function TransacoesPage() {
               name="status"
               value={formState.status}
               onChange={(e) =>
-                setFormState({ ...formState, status: e.target.value as any })
+                setFormState({
+                  ...formState,
+                  status: e.target.value as 'PENDENTE' | 'PAGO',
+                })
               }
             >
               <option value="PAGO">Pago/Recebido</option>

@@ -1,16 +1,16 @@
-"use client";
+'use client';
 
-import { useState, useEffect, useMemo, ChangeEvent } from "react";
-import { api } from "@/services/api";
-import styles from "./turmas.module.css";
-import TurmaCard from "./components/TurmaCard/TurmaCard";
-import { LuFilter } from "react-icons/lu";
-import Pagination from "@/components/paginacao/Paginacao";
-import MessageResult from "@/components/messageResult/MessageResult";
-import Section from "@/components/section/Section";
-import Loading from "@/components/loading/Loading";
-import ErrorMsg from "@/components/errorMsg/ErrorMsg";
-import { useAuth } from "@/contexts/AuthContext";
+import { useState, useEffect, useMemo, ChangeEvent } from 'react';
+import { api } from '@/services/api';
+import styles from './turmas.module.css';
+import TurmaCard from './components/TurmaCard/TurmaCard';
+import { LuFilter } from 'react-icons/lu';
+import Pagination from '@/components/paginacao/Paginacao';
+import MessageResult from '@/components/messageResult/MessageResult';
+import Section from '@/components/section/Section';
+import Loading from '@/components/loading/Loading';
+import ErrorMsg from '@/components/errorMsg/ErrorMsg';
+import { useAuth } from '@/contexts/AuthContext';
 
 export type TurmaDashboardInfo = {
   componenteId: string;
@@ -25,9 +25,9 @@ export type TurmaDashboardInfo = {
 const TURMAS_PER_PAGE = 6;
 
 const getDesempenhoCategoria = (media: number) => {
-  if (media >= 7) return "ALTO";
-  if (media >= 5) return "MEDIO";
-  return "BAIXO";
+  if (media >= 7) return 'ALTO';
+  if (media >= 5) return 'MEDIO';
+  return 'BAIXO';
 };
 
 export default function MinhasTurmasPage() {
@@ -36,21 +36,23 @@ export default function MinhasTurmasPage() {
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [filters, setFilters] = useState({
-    materia: "",
-    desempenho: "",
-    busca: "",
+    materia: '',
+    desempenho: '',
+    busca: '',
   });
   const { loading: authLoading } = useAuth();
+
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
   useEffect(() => {
     if (authLoading) return;
     async function fetchTurmas() {
       try {
-        const response = await api.get("/professor/dashboard/turmas");
+        const response = await api.get('/professor/dashboard/turmas');
         setTurmas(response.data);
       } catch (err) {
-        console.error("Erro ao buscar turmas:", err);
-        setError("Não foi possível carregar suas turmas.");
+        console.error('Erro ao buscar turmas:', err);
+        setError('Não foi possível carregar suas turmas.');
       } finally {
         setLoading(false);
       }
@@ -90,7 +92,7 @@ export default function MinhasTurmasPage() {
 
   const totalPages = Math.max(
     1,
-    Math.ceil(turmasFiltradas.length / TURMAS_PER_PAGE)
+    Math.ceil(turmasFiltradas.length / TURMAS_PER_PAGE),
   );
   const safePage = Math.min(page, totalPages);
 
@@ -104,7 +106,7 @@ export default function MinhasTurmasPage() {
   }, [turmasFiltradas, safePage]);
 
   const handleFilterChange = (
-    e: ChangeEvent<HTMLSelectElement | HTMLInputElement>
+    e: ChangeEvent<HTMLSelectElement | HTMLInputElement>,
   ) => {
     const { name, value } = e.target;
     setPage(1);
@@ -112,12 +114,12 @@ export default function MinhasTurmasPage() {
   };
 
   const clearFilters = () => {
-    setFilters({ materia: "", desempenho: "", busca: "" });
+    setFilters({ materia: '', desempenho: '', busca: '' });
     setPage(1);
   };
 
   const hasAppliedFilters = Boolean(
-    filters.materia || filters.desempenho || filters.busca
+    filters.materia || filters.desempenho || filters.busca,
   );
 
   if (loading || authLoading) {
@@ -125,7 +127,7 @@ export default function MinhasTurmasPage() {
       <Section>
         <Loading />
       </Section>
-    )
+    );
   }
 
   if (error) {
@@ -133,11 +135,11 @@ export default function MinhasTurmasPage() {
       <Section>
         <ErrorMsg text={error} />
       </Section>
-    )
+    );
   }
 
   return (
-    <Section >
+    <Section>
       <header className={styles.header}>
         <div>
           <h1>Minhas Turmas</h1>
@@ -149,7 +151,13 @@ export default function MinhasTurmasPage() {
         <>
           <section className={styles.filtersContainer}>
             <div className={styles.filtersHeader}>
-              <h2>
+              <button
+                className={styles.mobileToggleBtn}
+                onClick={() => setMobileFiltersOpen(!mobileFiltersOpen)}
+              >
+                <LuFilter /> {mobileFiltersOpen ? 'Fechar Filtros' : 'Aplicar Filtros'}
+              </button>
+              <h2 className={styles.desktopTitle}>
                 <LuFilter /> Filtros
               </h2>
               <button
@@ -162,7 +170,11 @@ export default function MinhasTurmasPage() {
               </button>
             </div>
 
-            <div className={styles.filtersGrid}>
+            <div
+              className={`${styles.filtersGrid} ${
+                mobileFiltersOpen ? styles.open : ''
+              }`}
+            >
               <label>
                 <span>Buscar</span>
                 <input

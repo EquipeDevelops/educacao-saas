@@ -18,7 +18,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid color-mix(in srgb, currentColor 20%, white 80%) ;
+  border: 1px solid color-mix(in srgb, currentColor 20%, white 80%);
   border-radius: 15px;
   background-color: var(--cor-primaria-light);
   color: var(--cor-primaria);
@@ -33,11 +33,29 @@
 
 .title {
   color: var(--cor-subtexto);
-  font-size: .9rem;
+  font-size: 0.9rem;
 }
 
 .value {
   color: var(--cor-primaria);
   font-weight: 500;
   font-size: 1.75rem;
+}
+
+@media (max-width: 768px) {
+  .card {
+    width: 100%;
+    flex-direction: row;
+    justify-content: flex-start;
+    padding: 15px;
+    gap: 15px;
+  }
+
+  .content {
+    align-items: flex-start;
+  }
+
+  .value {
+    font-size: 1.5rem;
+  }
 }

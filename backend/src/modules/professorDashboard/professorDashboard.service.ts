@@ -2,6 +2,7 @@ import { PrismaClient, StatusSubmissao } from '@prisma/client';
 import { AuthenticatedRequest } from '../../middlewares/auth';
 import HorarioAulaService from '../horarioAula/horarioAula.service';
 import { conversaService } from '../conversa/conversa.service';
+import { comunicadoService } from '../comunicado/comunicado.service';
 
 const prisma = new PrismaClient();
 
@@ -898,6 +899,7 @@ async function getDashboardOverview(user: AuthenticatedRequest['user']) {
     atividadesPendentes,
     desempenho,
     conversas,
+    comunicados,
   ] = await Promise.all([
     getProfessorProfile(user),
     getHeaderInfo(user),
@@ -906,6 +908,9 @@ async function getDashboardOverview(user: AuthenticatedRequest['user']) {
     getAtividadesPendentes(user),
     getDesempenhoTurmas(user),
     user.id ? conversaService.findAllForUser(user.id) : Promise.resolve([]),
+    user.unidadeEscolarId
+      ? comunicadoService.findAll(user.unidadeEscolarId)
+      : Promise.resolve([]),
   ]);
 
   return {
@@ -916,6 +921,7 @@ async function getDashboardOverview(user: AuthenticatedRequest['user']) {
     atividadesPendentes,
     desempenho,
     conversas,
+    comunicados,
   };
 }
 

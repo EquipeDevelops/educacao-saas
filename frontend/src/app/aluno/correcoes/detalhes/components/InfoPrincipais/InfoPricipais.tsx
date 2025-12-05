@@ -1,4 +1,4 @@
-import { ApiTarefa, TarefaComStatus } from '@/types/tarefas';
+import { ApiTarefa } from '@/types/tarefas';
 import styles from './info.module.css';
 import { LuBook, LuCopyCheck, LuFilePenLine } from 'react-icons/lu';
 import BarraDeProgresso from '@/components/progressBar/BarraDeProgresso';
@@ -29,7 +29,7 @@ export default function InfoPricipais({
   const isQuestionario = tarefa.tipo === 'QUESTIONARIO';
   const isProva = tarefa.tipo === 'PROVA';
 
-  const porcentagemNota = (nota_aluno / tarefa.pontos) * 100;
+  const porcentagemNota = ((nota_aluno ?? 0) / tarefa.pontos) * 100;
 
   function getInitials(name: string | undefined): string {
     if (!name) return '...';
@@ -103,7 +103,7 @@ export default function InfoPricipais({
                 {totalAcertos}/{totalQuestoes} Corretas
               </p>
             </div>
-            <BarraDeProgresso porcentagem={porcentagemAcertos} />
+            <BarraDeProgresso porcentagem={porcentagemAcertos ?? 0} />
           </div>
         ) : (
           ''

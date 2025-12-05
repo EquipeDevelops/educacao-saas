@@ -1,15 +1,15 @@
-"use client";
+'use client';
 
-import { useState, useEffect, FormEvent } from "react";
-import { api } from "@/services/api";
-import styles from "./mensalidades.module.css";
-import { FiFilter, FiPlus, FiDollarSign } from "react-icons/fi";
-import Modal from "@/components/modal/Modal";
-import Loading from "@/components/loading/Loading";
-import { toast, ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import { useState, useEffect, FormEvent, useCallback } from 'react';
+import { api } from '@/services/api';
+import styles from './mensalidades.module.css';
+import { FiPlus } from 'react-icons/fi';
+import Modal from '@/components/modal/Modal';
+import Loading from '@/components/loading/Loading';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
-type Plano = { id: string; nome: string };
+type Plano = { id: string; nome: string; valor: number };
 type Turma = { id: string; nome: string; serie: string };
 type Mensalidade = {
   id: string;
@@ -17,7 +17,7 @@ type Mensalidade = {
   ano: number;
   valor: number;
   dataVencimento: string;
-  status: "PENDENTE" | "PAGO" | "ATRASADO" | "CANCELADO";
+  status: 'PENDENTE' | 'PAGO' | 'ATRASADO' | 'CANCELADO';
   matricula: {
     aluno: {
       usuario: {
@@ -31,18 +31,18 @@ type Mensalidade = {
 };
 
 const meses = [
-  { value: 1, label: "Janeiro" },
-  { value: 2, label: "Fevereiro" },
-  { value: 3, label: "Março" },
-  { value: 4, label: "Abril" },
-  { value: 5, label: "Maio" },
-  { value: 6, label: "Junho" },
-  { value: 7, label: "Julho" },
-  { value: 8, label: "Agosto" },
-  { value: 9, label: "Setembro" },
-  { value: 10, label: "Outubro" },
-  { value: 11, label: "Novembro" },
-  { value: 12, label: "Dezembro" },
+  { value: 1, label: 'Janeiro' },
+  { value: 2, label: 'Fevereiro' },
+  { value: 3, label: 'Março' },
+  { value: 4, label: 'Abril' },
+  { value: 5, label: 'Maio' },
+  { value: 6, label: 'Junho' },
+  { value: 7, label: 'Julho' },
+  { value: 8, label: 'Agosto' },
+  { value: 9, label: 'Setembro' },
+  { value: 10, label: 'Outubro' },
+  { value: 11, label: 'Novembro' },
+  { value: 12, label: 'Dezembro' },
 ];
 
 const anos = [new Date().getFullYear(), new Date().getFullYear() + 1];
@@ -57,24 +57,24 @@ export default function MensalidadesPage() {
   const [gerarState, setGerarState] = useState({
     mes: new Date().getMonth() + 1,
     ano: new Date().getFullYear(),
-    planoId: "",
-    turmaId: "",
+    planoId: '',
+    turmaId: '',
   });
 
   const [isPagarModalOpen, setIsPagarModalOpen] = useState(false);
   const [pagarState, setPagarState] = useState({
-    mensalidadeId: "",
+    mensalidadeId: '',
     valorPago: 0,
-    metodo: "PIX",
+    metodo: 'PIX',
   });
 
-  async function fetchData() {
+  const fetchData = useCallback(async () => {
     setIsLoading(true);
     try {
       const [mensalidadesRes, planosRes, turmasRes] = await Promise.all([
-        api.get("/financeiro/mensalidades"),
-        api.get("/financeiro/planos"),
-        api.get("/turmas"),
+        api.get('/financeiro/mensalidades'),
+        api.get('/financeiro/planos'),
+        api.get('/turmas'),
       ]);
       setMensalidades(mensalidadesRes.data);
       setPlanos(planosRes.data);
@@ -86,19 +86,19 @@ export default function MensalidadesPage() {
       if (turmasRes.data.length > 0 && !gerarState.turmaId) {
         setGerarState((prev) => ({ ...prev, turmaId: turmasRes.data[0].id }));
       }
-    } catch (err) {
-      toast.error("Falha ao carregar dados.");
+    } catch {
+      toast.error('Falha ao carregar dados.');
     } finally {
       setIsLoading(false);
     }
-  }
+  }, [gerarState.planoId, gerarState.turmaId]);
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [fetchData]);
 
   const handleGerarChange = (
-    e: React.ChangeEvent<HTMLSelectElement | HTMLInputElement>
+    e: React.ChangeEvent<HTMLSelectElement | HTMLInputElement>,
   ) => {
     setGerarState((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
@@ -106,30 +106,31 @@ export default function MensalidadesPage() {
   const handleGerarMensalidades = async (e: FormEvent) => {
     e.preventDefault();
     if (!gerarState.planoId || !gerarState.turmaId) {
-      toast.error("Selecione a turma e o plano.");
+      toast.error('Selecione a turma e o plano.');
       return;
     }
-    const toastId = toast.loading("Gerando mensalidades...");
+    const toastId = toast.loading('Gerando mensalidades...');
     try {
-      const resultado = await api.post("/financeiro/mensalidades/gerar", {
+      const resultado = await api.post('/financeiro/mensalidades/gerar', {
         ...gerarState,
         mes: Number(gerarState.mes),
         ano: Number(gerarState.ano),
       });
       toast.update(toastId, {
         render: resultado.data.message,
-        type: "success",
+        type: 'success',
         isLoading: false,
         autoClose: 4000,
       });
       setIsGerarModalOpen(false);
       fetchData();
-    } catch (err: any) {
+    } catch (err: unknown) {
       const message =
-        err.response?.data?.message || "Erro ao gerar mensalidades.";
+        (err as { response?: { data?: { message?: string } } }).response?.data
+          ?.message || 'Erro ao gerar mensalidades.';
       toast.update(toastId, {
         render: message,
-        type: "error",
+        type: 'error',
         isLoading: false,
         autoClose: 5000,
       });
@@ -140,36 +141,37 @@ export default function MensalidadesPage() {
     setPagarState({
       mensalidadeId: mensalidade.id,
       valorPago: mensalidade.valor,
-      metodo: "PIX",
+      metodo: 'PIX',
     });
     setIsPagarModalOpen(true);
   };
 
   const handleProcessarPagamento = async (e: FormEvent) => {
     e.preventDefault();
-    const toastId = toast.loading("Processando pagamento...");
+    const toastId = toast.loading('Processando pagamento...');
     try {
       await api.post(
         `/financeiro/mensalidades/${pagarState.mensalidadeId}/pagar`,
         {
           valorPago: Number(pagarState.valorPago),
           metodo: pagarState.metodo,
-        }
+        },
       );
       toast.update(toastId, {
-        render: "Pagamento registrado!",
-        type: "success",
+        render: 'Pagamento registrado!',
+        type: 'success',
         isLoading: false,
         autoClose: 3000,
       });
       setIsPagarModalOpen(false);
       fetchData();
-    } catch (err: any) {
+    } catch (err: unknown) {
       const message =
-        err.response?.data?.message || "Erro ao processar pagamento.";
+        (err as { response?: { data?: { message?: string } } }).response?.data
+          ?.message || 'Erro ao processar pagamento.';
       toast.update(toastId, {
         render: message,
-        type: "error",
+        type: 'error',
         isLoading: false,
         autoClose: 5000,
       });
@@ -216,25 +218,25 @@ export default function MensalidadesPage() {
                   {m.mes}/{m.ano}
                 </td>
                 <td>
-                  {new Date(m.dataVencimento).toLocaleDateString("pt-BR")}
+                  {new Date(m.dataVencimento).toLocaleDateString('pt-BR')}
                 </td>
                 <td>
-                  {m.valor.toLocaleString("pt-BR", {
-                    style: "currency",
-                    currency: "BRL",
+                  {m.valor.toLocaleString('pt-BR', {
+                    style: 'currency',
+                    currency: 'BRL',
                   })}
                 </td>
                 <td>
                   <span
                     className={`${styles.statusBadge} ${
-                      styles["status" + m.status]
+                      styles['status' + m.status]
                     }`}
                   >
                     {m.status}
                   </span>
                 </td>
                 <td>
-                  {m.status === "PENDENTE" && (
+                  {m.status === 'PENDENTE' && (
                     <button
                       className={`${styles.actionButton} ${styles.pagarButton}`}
                       onClick={() => openPagarModal(m)}
@@ -242,7 +244,7 @@ export default function MensalidadesPage() {
                       Registrar Pagamento
                     </button>
                   )}
-                  {m.status === "PAGO" && (
+                  {m.status === 'PAGO' && (
                     <button
                       className={`${styles.actionButton} ${styles.comprovanteButton}`}
                     >
@@ -315,9 +317,9 @@ export default function MensalidadesPage() {
               {planos.map((p) => (
                 <option key={p.id} value={p.id}>{`${
                   p.nome
-                } (${p.valor.toLocaleString("pt-BR", {
-                  style: "currency",
-                  currency: "BRL",
+                } (${p.valor.toLocaleString('pt-BR', {
+                  style: 'currency',
+                  currency: 'BRL',
                 })})`}</option>
               ))}
             </select>

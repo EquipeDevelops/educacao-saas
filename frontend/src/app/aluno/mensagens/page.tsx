@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { api } from '@/services/api';
 import { useAuth } from '@/contexts/AuthContext';
 import styles from './style.module.css';
@@ -42,7 +42,6 @@ export default function MensagensPage() {
     null,
   );
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [newMessage, setNewMessage] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState<
@@ -61,7 +60,7 @@ export default function MensagensPage() {
         fetchConversaDetalhes(response.data[0].id);
       }
     } catch (err) {
-      setError('Não foi possível carregar suas conversas.');
+      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -70,6 +69,7 @@ export default function MensagensPage() {
   useEffect(() => {
     if (authLoading) return;
     fetchConversas();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authLoading]);
 
   useEffect(() => {
@@ -84,7 +84,7 @@ export default function MensagensPage() {
       const response = await api.get(`/conversas/${conversaId}`);
       setSelectedConversa(response.data);
     } catch (err) {
-      setError('Erro ao carregar os detalhes da conversa.');
+      console.error(err);
     }
   };
 
@@ -113,7 +113,7 @@ export default function MensagensPage() {
         fetchConversaDetalhes(selectedConversa.id),
       ]);
     } catch (err) {
-      setError('Erro ao enviar mensagem.');
+      console.error(err);
       setSelectedConversa((prev) =>
         prev
           ? {
@@ -133,14 +133,16 @@ export default function MensagensPage() {
       fetchConversas(novaConversa.id);
     } catch (error) {
       console.error('Erro ao iniciar conversa', error);
-      setError('Não foi possível iniciar a conversa.');
     }
   };
 
-  const getOtherParticipant = (conversa: Conversa) => {
-    return conversa.participantes.find((p) => p.usuario.id !== user?.id)
-      ?.usuario;
-  };
+  const getOtherParticipant = useCallback(
+    (conversa: Conversa) => {
+      return conversa.participantes.find((p) => p.usuario.id !== user?.id)
+        ?.usuario;
+    },
+    [user],
+  );
 
   const filteredConversas = useMemo(() => {
     let filtered = [...conversas];
@@ -165,7 +167,8 @@ export default function MensagensPage() {
     }
 
     return filtered;
-  }, [conversas, activeTab, searchTerm, user]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [conversas, activeTab, searchTerm, user, getOtherParticipant]);
 
   if (loading || authLoading) {
     return <Loading />;

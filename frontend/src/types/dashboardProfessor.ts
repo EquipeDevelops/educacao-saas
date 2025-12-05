@@ -26,7 +26,7 @@ export type ProfessorAtividadePendente = {
   turma: string;
   submissoes: number;
   dataEntrega: string;
-  tipo: 'QUESTIONARIO' | 'TRABALHO' | 'PROVA'
+  tipo: 'QUESTIONARIO' | 'TRABALHO' | 'PROVA';
 };
 
 export type ProfessorDesempenho = {
@@ -61,6 +61,17 @@ export type ProfessorHeaderInfo = {
   turmas: string[];
   unidadeEscolar: string | null;
   notificationCount: number;
+  comunicados: Comunicado[];
+};
+
+export type Comunicado = {
+  id: string;
+  titulo: string;
+  descricao: string;
+  data_visivel: string;
+  layout: 'grid' | 'carousel' | 'list';
+  imagens: string[];
+  criado_em: string;
 };
 
 export type ProfessorDashboardResponse = {
@@ -71,4 +82,5 @@ export type ProfessorDashboardResponse = {
   atividadesPendentes: ProfessorAtividadePendente[];
   desempenho: ProfessorDesempenho;
   conversas: ProfessorConversa[];
+  comunicados: Comunicado[];
 };

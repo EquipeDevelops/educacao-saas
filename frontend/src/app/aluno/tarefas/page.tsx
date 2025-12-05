@@ -25,15 +25,15 @@ export default function MinhasTarefasPage() {
   } = useMinhasTarefas();
 
   useEffect(() => {
-    setFilters((prev: any) => ({ ...prev, tipo: ['QUESTIONARIO'] }));
-  }, []);
+    setFilters((prev) => ({ ...prev, tipo: ['QUESTIONARIO'] }));
+  }, [setFilters]);
 
   const handleFilterChange = (
     e: React.ChangeEvent<HTMLSelectElement | HTMLInputElement>,
   ) => {
     const { name, value } = e.target;
     setPage(1);
-    setFilters((prev: any) => ({ ...prev, [name]: value }));
+    setFilters((prev) => ({ ...prev, [name]: value }));
   };
 
   const clearFilters = () => {
@@ -76,19 +76,19 @@ export default function MinhasTarefasPage() {
 
               <label>
                 <p>Matéria</p>
-                  <select
-                    name="materia"
-                    value={filters.materia}
-                    onChange={handleFilterChange}
-                    aria-label="Filtrar por matéria"
-                  >
-                    <option value="">Todas</option>
-                    {materiasUnicas.map((materia) => (
-                      <option key={materia} value={materia}>
-                        {materia}
-                      </option>
-                    ))}
-                  </select>
+                <select
+                  name="materia"
+                  value={filters.materia}
+                  onChange={handleFilterChange}
+                  aria-label="Filtrar por matéria"
+                >
+                  <option value="">Todas</option>
+                  {materiasUnicas.map((materia) => (
+                    <option key={materia} value={materia}>
+                      {materia}
+                    </option>
+                  ))}
+                </select>
               </label>
 
               <label>

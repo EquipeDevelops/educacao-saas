@@ -1,5 +1,5 @@
-import { Prisma, PrismaClient } from "@prisma/client";
-import { CreateTurmaInput } from "./turma.validator";
+import { Prisma, PrismaClient } from '@prisma/client';
+import { CreateTurmaInput } from './turma.validator';
 
 const prisma = new PrismaClient();
 
@@ -24,13 +24,13 @@ const findAll = (unidadeEscolarId: string) => {
       anoLetivo: true,
       _count: {
         select: {
-          matriculas: { where: { status: "ATIVA" } },
+          matriculas: { where: { status: 'ATIVA' } },
           componentes_curriculares: true,
         },
       },
     },
     orderBy: {
-      serie: "asc",
+      serie: 'asc',
     },
   });
 };
@@ -47,7 +47,7 @@ const findById = (id: string, unidadeEscolarId: string) => {
 const update = (
   id: string,
   data: Prisma.TurmasUpdateInput,
-  unidadeEscolarId: string
+  unidadeEscolarId: string,
 ) => {
   return prisma.turmas.updateMany({
     where: {
@@ -60,7 +60,7 @@ const update = (
 
 const remove = async (id: string, unidadeEscolarId: string) => {
   console.log(
-    `[TurmaService] Iniciando processo de remoção COMPLETO para turma ID: ${id}`
+    `[TurmaService] Iniciando processo de remoção COMPLETO para turma ID: ${id}`,
   );
 
   const turmaExists = await prisma.turmas.findFirst({
@@ -73,7 +73,7 @@ const remove = async (id: string, unidadeEscolarId: string) => {
   }
 
   console.log(
-    `[TurmaService] Turma ${id} encontrada. Iniciando transação para deletar TODAS as dependências.`
+    `[TurmaService] Turma ${id} encontrada. Iniciando transação para deletar TODAS as dependências.`,
   );
 
   try {
@@ -94,14 +94,14 @@ const remove = async (id: string, unidadeEscolarId: string) => {
 
           if (submissaoIds.length > 0) {
             console.log(
-              `[TurmaService] Deletando respostas de ${submissaoIds.length} submissão(ões)...`
+              `[TurmaService] Deletando respostas de ${submissaoIds.length} submissão(ões)...`,
             );
             await tx.respostas_Submissao.deleteMany({
               where: { submissaoId: { in: submissaoIds } },
             });
 
             console.log(
-              `[TurmaService] Deletando ${submissaoIds.length} submissão(ões)...`
+              `[TurmaService] Deletando ${submissaoIds.length} submissão(ões)...`,
             );
             await tx.submissoes.deleteMany({
               where: { id: { in: submissaoIds } },
@@ -109,21 +109,21 @@ const remove = async (id: string, unidadeEscolarId: string) => {
           }
 
           console.log(
-            `[TurmaService] Deletando opções de questões de ${tarefaIds.length} tarefa(s)...`
+            `[TurmaService] Deletando opções de questões de ${tarefaIds.length} tarefa(s)...`,
           );
           await tx.opcoes_Multipla_Escolha.deleteMany({
             where: { questao: { tarefaId: { in: tarefaIds } } },
           });
 
           console.log(
-            `[TurmaService] Deletando questões de ${tarefaIds.length} tarefa(s)...`
+            `[TurmaService] Deletando questões de ${tarefaIds.length} tarefa(s)...`,
           );
           await tx.questoes.deleteMany({
             where: { tarefaId: { in: tarefaIds } },
           });
 
           console.log(
-            `[TurmaService] Deletando ${tarefaIds.length} tarefa(s)...`
+            `[TurmaService] Deletando ${tarefaIds.length} tarefa(s)...`,
           );
           await tx.tarefas.deleteMany({ where: { id: { in: tarefaIds } } });
         }
@@ -136,14 +136,14 @@ const remove = async (id: string, unidadeEscolarId: string) => {
 
       if (matriculaIds.length > 0) {
         console.log(
-          `[TurmaService] Deletando avaliações parciais para ${matriculaIds.length} matrícula(s)...`
+          `[TurmaService] Deletando avaliações parciais para ${matriculaIds.length} matrícula(s)...`,
         );
         await tx.avaliacaoParcial.deleteMany({
           where: { matriculaId: { in: matriculaIds } },
         });
 
         console.log(
-          `[TurmaService] Deletando registros de falta para ${matriculaIds.length} matrícula(s)...`
+          `[TurmaService] Deletando registros de falta para ${matriculaIds.length} matrícula(s)...`,
         );
         await tx.registroFalta.deleteMany({
           where: { matriculaId: { in: matriculaIds } },
@@ -157,7 +157,7 @@ const remove = async (id: string, unidadeEscolarId: string) => {
       await tx.matriculas.deleteMany({ where: { turmaId: id } });
 
       console.log(
-        `[TurmaService] Deletando componentes curriculares da turma ${id}...`
+        `[TurmaService] Deletando componentes curriculares da turma ${id}...`,
       );
       await tx.componenteCurricular.deleteMany({ where: { turmaId: id } });
 
@@ -166,16 +166,45 @@ const remove = async (id: string, unidadeEscolarId: string) => {
     });
 
     console.log(
-      `[TurmaService] Transação concluída com sucesso para a turma ${id}.`
+      `[TurmaService] Transação concluída com sucesso para a turma ${id}.`,
     );
     return { count: 1 };
   } catch (error) {
     console.error(
       `[TurmaService] ERRO na transação de exclusão da turma ${id}:`,
-      error
+      error,
     );
     throw error;
   }
+};
+
+const findMatriculas = (turmaId: string) => {
+  return prisma.matriculas.findMany({
+    where: {
+      turmaId,
+      status: 'ATIVA',
+    },
+    include: {
+      aluno: {
+        include: {
+          usuario: {
+            select: {
+              nome: true,
+              email: true,
+              fotoUrl: true,
+            },
+          },
+        },
+      },
+    },
+    orderBy: {
+      aluno: {
+        usuario: {
+          nome: 'asc',
+        },
+      },
+    },
+  });
 };
 
 export const turmaService = {
@@ -184,4 +213,5 @@ export const turmaService = {
   findById,
   update,
   remove,
+  findMatriculas,
 };

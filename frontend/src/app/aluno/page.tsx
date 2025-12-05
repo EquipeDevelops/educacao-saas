@@ -19,12 +19,12 @@ export default function AlunoPage() {
     tarefasPendentes,
     mensagensRecentes,
   } = useAlunoDashboard();
-  
+
   if (isLoading) {
     return <Loading />;
   }
   if (error) {
-    <ErrorMsg text={error} />;
+    return <ErrorMsg text={error} />;
   }
 
   return (
