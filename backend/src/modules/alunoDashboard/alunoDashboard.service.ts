@@ -556,6 +556,23 @@ async function getMensagensRecentes(user: AuthenticatedRequest['user']) {
   return conversasFormatadas;
 }
 
+async function getComunicados(user: AuthenticatedRequest['user']) {
+  if (!user.unidadeEscolarId) return [];
+
+  const comunicados = await prisma.comunicado.findMany({
+    where: {
+      unidadeEscolarId: user.unidadeEscolarId,
+      data_visivel: { lte: new Date() },
+    },
+    orderBy: {
+      criado_em: 'desc',
+    },
+    take: 10, // Limit to recent 10 notifications
+  });
+
+  return comunicados;
+}
+
 async function getDashboardData(user: AuthenticatedRequest['user']) {
   const [
     alunoInfo,
@@ -566,6 +583,7 @@ async function getDashboardData(user: AuthenticatedRequest['user']) {
     agendaEventos,
     tarefasPendentes,
     mensagensRecentes,
+    comunicados,
   ] = await Promise.all([
     getHeaderInfo(user),
     getHomeStats(user),
@@ -575,6 +593,7 @@ async function getDashboardData(user: AuthenticatedRequest['user']) {
     getAgendaDoMes(user, new Date()),
     getTarefasPendentes(user),
     getMensagensRecentes(user),
+    getComunicados(user),
   ]);
 
   return {
@@ -586,6 +605,7 @@ async function getDashboardData(user: AuthenticatedRequest['user']) {
     agendaEventos,
     tarefasPendentes,
     mensagensRecentes,
+    comunicados,
   };
 }
 

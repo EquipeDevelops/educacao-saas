@@ -6,7 +6,6 @@ import StatCard from '@/components/professor/dashboard/StatCard/StatCard';
 import AgendaSemana from '@/components/professor/dashboard/AgendaSemana/AgendaSemana';
 import AtividadesPendentes from '@/components/professor/dashboard/AtividadesPendentes/AtividadesPendentes';
 import MensagensRecentes from '@/components/professor/dashboard/MensagensRecentes/MensagensRecentes';
-import DesempenhoTurmas from '@/components/professor/dashboard/DesempenhoTurmas/DesempenhoTurmas';
 import Loading from '@/components/loading/Loading';
 import ErrorMsg from '@/components/errorMsg/ErrorMsg';
 import { useAuth } from '@/contexts/AuthContext';
@@ -14,13 +13,14 @@ import { useProfessorDashboard } from '@/hooks/dashboardProfessor/useProfessorDa
 import styles from './home.module.css';
 import FichaProfessor from '@/components/professor/dashboard/fichaProfessor/FichaProfessor';
 import AcoesRapidas from '@/components/professor/dashboard/acoesRapidas/AcoesRapidas';
+import ComunicadosList from '@/components/professor/dashboard/ComunicadosList/ComunicadosList';
 
 export default function ProfessorHomePage() {
   const { user } = useAuth();
   const { data, isLoading, error } = useProfessorDashboard();
 
   console.log(isLoading);
-  
+
   if (isLoading) {
     return <Loading />;
   }

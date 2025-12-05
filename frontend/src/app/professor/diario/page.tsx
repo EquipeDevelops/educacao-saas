@@ -296,7 +296,7 @@ export default function DiarioWizardPage() {
 
     async function loadTurmas() {
       try {
-        const res = await api.get('/dashboard/professor/turmas');
+        const res = await api.get('/professor/dashboard/turmas');
         setTurmas(res.data);
         if (res.data.length > 0) {
           setSelectedTurmaId(res.data[0].componenteId);
@@ -317,7 +317,7 @@ export default function DiarioWizardPage() {
     async function loadDiarios() {
       setLoadingDiarios(true);
       try {
-        const res = await api.get('/diarios-aula');
+        const res = await api.get('/diarios-aula/list');
         setDiarios(res.data);
       } catch (err: unknown) {
         console.error('Erro ao carregar diários:', err);
@@ -333,8 +333,11 @@ export default function DiarioWizardPage() {
 
     async function loadAllData() {
       try {
+        const turma = turmas.find((t) => t.componenteId === selectedTurmaId);
+        if (!turma) return;
+
         const resMatriculas = await api.get(
-          `/turmas/${selectedTurmaId}/matriculas`,
+          `/turmas/${turma.turmaId}/matriculas`,
         );
         const listaAlunos = resMatriculas.data
           .map((m: Matricula) => ({

@@ -80,8 +80,13 @@ export default function FrequenciaPage() {
       setFeedback(null);
       setIsConsolidado(false);
       try {
+        const componente = componentes.find(
+          (c) => c.id === selectedComponenteId,
+        );
+        if (!componente) return;
+
         const resAlunos = await api.get(
-          `/turmas/${selectedComponenteId}/matriculas`,
+          `/turmas/${componente.turma.id}/matriculas`,
         );
         const listaAlunos = resAlunos.data.map((m: any) => ({
           id: m.id,

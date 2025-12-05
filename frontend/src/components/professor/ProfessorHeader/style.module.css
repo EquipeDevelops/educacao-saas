@@ -17,6 +17,27 @@
   margin: 0 auto;
 }
 
+.menuButton {
+  display: none;
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: var(--cor-subtexto);
+  cursor: pointer;
+  padding: 0;
+  margin-right: 10px;
+}
+
+@media (max-width: 768px) {
+  .menuButton {
+    display: block;
+  }
+
+  .header {
+    padding: 15px 20px;
+  }
+}
+
 .profInfo {
   display: flex;
   align-items: center;
@@ -29,24 +50,100 @@
   margin: 0;
 }
 
-.profDate{
+.profDate {
   color: var(--cor-subtexto);
   font-size: 0.9rem;
   text-transform: capitalize;
 }
 
+.notificationContainer {
+  position: relative;
+}
+
+.modalNotification {
+  position: absolute;
+  top: 60px;
+  z-index: 1000;
+  right: 0px;
+  background-color: white;
+  border-radius: 12px;
+  border: 1px solid var(--cor-borda);
+  box-shadow: 0px 10px 25px rgba(0, 0, 0, 0.1);
+  width: 350px;
+  max-height: 400px;
+  overflow-y: auto;
+  padding: 20px;
+  animation: slideDown 0.2s ease-out;
+}
+
+.modalNotification h2 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.2rem;
+  font-weight: 500;
+}
+
+.profText {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.modalNotification h2 span {
+  background-color: var(--cor-primaria);
+  color: white;
+  border-radius: 5px;
+  width: 5px;
+  height: 20px;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .notificationButton {
   padding: 0px;
   background-color: transparent;
+  position: relative;
   font-size: 1.3rem;
   color: var(--cor-subtexto);
+  cursor: pointer;
+  height: 40px;
+  width: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  transition: all 0.2s ease;
+}
+
+.notificationButton:hover {
+  color: var(--cor-primaria);
+  background-color: var(--cor-primaria-light);
 }
 
 .notificationButton span {
-  margin-left: 4px;
   font-size: 0.8rem;
+  background-color: var(--cor-perigo);
+  color: white;
+  border-radius: 50%;
+  min-width: 18px;
+  min-height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-weight: 600;
-  color: var(--cor-texto);
+  top: 0px;
+  right: 0px;
+  position: absolute;
 }
 
 .profInitials {
@@ -61,3 +158,8 @@
   background-color: var(--cor-primaria);
 }
 
+@media (max-width: 768px) {
+  .profText {
+    display: none;
+  }
+}

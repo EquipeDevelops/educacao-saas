@@ -11,6 +11,7 @@ import {
   MensagemRecente,
 } from '@/types/statusAluno';
 import { EventoCalendario } from '@/components/aluno/dashboard/agendaSemanal/AgendaSemanalAluno';
+import { Comunicado } from '@/types/dashboardProfessor';
 
 export function useAlunoDashboard() {
   const { user, loading: authLoading } = useAuth();
@@ -28,6 +29,7 @@ export function useAlunoDashboard() {
   const [mensagensRecentes, setMensagensRecentes] = useState<MensagemRecente[]>(
     [],
   );
+  const [comunicados, setComunicados] = useState<Comunicado[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -48,6 +50,7 @@ export function useAlunoDashboard() {
           agendaEventos,
           tarefasPendentes,
           mensagensRecentes,
+          comunicados,
         } = response.data;
 
         setAlunoInfo(alunoInfo);
@@ -58,6 +61,7 @@ export function useAlunoDashboard() {
         setAgendaEventos(agendaEventos);
         setTarefasPendentes(tarefasPendentes);
         setMensagensRecentes(mensagensRecentes);
+        setComunicados(comunicados || []);
       } catch (err: any) {
         console.error(err);
         setError(
@@ -80,6 +84,7 @@ export function useAlunoDashboard() {
     agendaEventos,
     tarefasPendentes,
     mensagensRecentes,
+    comunicados,
     isLoading,
     error,
   };

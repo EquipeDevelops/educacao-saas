@@ -2,16 +2,22 @@
 
 import { User } from '@/types/users';
 import styles from './style.module.css';
-import { LuBell } from 'react-icons/lu';
+import { LuBell, LuMenu } from 'react-icons/lu';
 import type {
+  Comunicado,
   ProfessorHeaderInfo,
   ProfessorInfo,
 } from '@/types/dashboardProfessor';
+import { useState, useEffect, useRef } from 'react';
+import ComunicadosList from '../dashboard/ComunicadosList/ComunicadosList';
+import Modal from '@/components/modal/Modal';
+import ComunicadoDetails from '../dashboard/ComunicadoDetails/ComunicadoDetails';
 
 type ProfessorHeaderProps = {
   user: User | null;
-  headerInfo?: ProfessorHeaderInfo | null;
+  comunicados?: Comunicado[] | [];
   professorInfo?: ProfessorInfo | null;
+  onToggleSidebar?: () => void;
 };
 
 function getInitials(name?: string) {
@@ -25,8 +31,9 @@ function getInitials(name?: string) {
 
 export default function ProfessorHeader({
   user,
-  headerInfo,
+  comunicados,
   professorInfo,
+  onToggleSidebar,
 }: ProfessorHeaderProps) {
   const displayName = user?.nome ?? professorInfo?.nome ?? 'Professor';
   const formattedDate = new Date().toLocaleDateString('pt-BR', {
@@ -34,37 +41,118 @@ export default function ProfessorHeader({
     day: 'numeric',
     month: 'long',
   });
+  const [modalNotification, setModalNotification] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [selectedComunicado, setSelectedComunicado] =
+    useState<Comunicado | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const notificationRef = useRef<HTMLDivElement>(null);
 
-  const turmasLine =
-    headerInfo?.turmas && headerInfo.turmas.length > 0
-      ? headerInfo.turmas.join(' � ')
-      : null;
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        notificationRef.current &&
+        !notificationRef.current.contains(event.target as Node)
+      ) {
+        setModalNotification(false);
+      }
+    }
 
-  const unidadeEscolarLine =
-    headerInfo?.unidadeEscolar ??
-    professorInfo?.unidadeEscolar ??
-    'Portal do Professor';
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (comunicados) {
+      const readComunicados = JSON.parse(
+        localStorage.getItem('readComunicados') || '[]',
+      );
+      const unread = comunicados.filter(
+        (c) => !readComunicados.includes(c.id),
+      ).length;
+      setUnreadCount(unread);
+    }
+  }, [comunicados]);
+
+  const handleOpenNotifications = () => {
+    setModalNotification((prev) => !prev);
+    if (!modalNotification && comunicados && comunicados.length > 0) {
+      const readComunicados = JSON.parse(
+        localStorage.getItem('readComunicados') || '[]',
+      );
+      const newReadIds = comunicados.map((c) => c.id);
+      const updatedReadComunicados = [
+        ...new Set([...readComunicados, ...newReadIds]),
+      ];
+      localStorage.setItem(
+        'readComunicados',
+        JSON.stringify(updatedReadComunicados),
+      );
+      setUnreadCount(0);
+    }
+  };
+
+  const handleSelectComunicado = (comunicado: Comunicado) => {
+    setSelectedComunicado(comunicado);
+    setIsModalOpen(true);
+    setModalNotification(false);
+  };
 
   return (
     <header className={styles.header}>
       <div className={styles.headerInfo}>
-        <div className={styles.profInfo}>
-          <div className={styles.profInitials}>{getInitials(displayName)}</div>
+        <button
+          className={styles.menuButton}
+          onClick={onToggleSidebar}
+          aria-label="Menu"
+        >
+          <LuMenu />
+        </button>
+        <div className={styles.profText}>
+          <div className={styles.profInitials}>
+            {displayName.substring(0, 2).toUpperCase()}
+          </div>
           <div>
-            <p className={styles.profName}>Prof. {displayName}</p>
-            <p className={styles.profDate}>{formattedDate}</p>
+            <h1 className={styles.profName}>Olá, {displayName}</h1>
+            <div className={styles.dateWrapper}>
+              <p className={styles.profDate}>{formattedDate}</p>
+            </div>
           </div>
         </div>
-        <button
-          className={styles.notificationButton}
-          aria-label="Notificações"
-        >
-          <LuBell />
-          {headerInfo?.notificationCount ? (
-            <span>{headerInfo.notificationCount}</span>
-          ) : null}
-        </button>
+        <div className={styles.notificationContainer} ref={notificationRef}>
+          <button
+            className={styles.notificationButton}
+            aria-label="Notificações"
+            onClick={handleOpenNotifications}
+          >
+            <LuBell />
+            {unreadCount > 0 && <span>{unreadCount}</span>}
+          </button>
+          {modalNotification && comunicados && comunicados.length > 0 && (
+            <div className={styles.modalNotification}>
+              <h2>
+                <span></span>Notificações
+              </h2>
+              <ComunicadosList
+                comunicados={comunicados}
+                onSelect={handleSelectComunicado}
+              />
+            </div>
+          )}
+        </div>
       </div>
+
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        title="Detalhes do Comunicado"
+      >
+        {selectedComunicado && (
+          <ComunicadoDetails comunicado={selectedComunicado} />
+        )}
+      </Modal>
     </header>
   );
 }

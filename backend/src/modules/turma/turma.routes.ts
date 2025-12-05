@@ -1,52 +1,60 @@
-import { Router } from "express";
-import { turmaController } from "./turma.controller";
-import { validate } from "../../middlewares/validate";
-import { protect, authorize } from "../../middlewares/auth";
+import { Router } from 'express';
+import { turmaController } from './turma.controller';
+import { validate } from '../../middlewares/validate';
+import { protect, authorize } from '../../middlewares/auth';
 import {
   createTurmaSchema,
   updateTurmaSchema,
   paramsSchema,
-} from "./turma.validator";
-import { z } from "zod";
+} from './turma.validator';
+import { z } from 'zod';
 
 const router = Router();
 
 router.post(
-  "/",
+  '/',
   protect,
-  authorize("GESTOR"),
+  authorize('GESTOR'),
   validate(createTurmaSchema),
-  turmaController.create
+  turmaController.create,
 );
 router.put(
-  "/:id",
+  '/:id',
   protect,
-  authorize("GESTOR"),
+  authorize('GESTOR'),
   validate(updateTurmaSchema),
-  turmaController.update
+  turmaController.update,
 );
 
 router.delete(
-  "/:id",
+  '/:id',
   protect,
-  authorize("GESTOR"),
+  authorize('GESTOR'),
   validate(z.object({ params: paramsSchema })),
-  turmaController.remove
+  turmaController.remove,
 );
 
 router.get(
-  "/",
+  '/',
   protect,
-  authorize("GESTOR", "PROFESSOR"),
-  turmaController.findAll
+  authorize('GESTOR', 'PROFESSOR'),
+  turmaController.findAll,
 );
 
 router.get(
-  "/:id",
+  '/:id',
   protect,
-  authorize("GESTOR", "PROFESSOR"),
+  authorize('GESTOR', 'PROFESSOR'),
   validate(z.object({ params: paramsSchema })),
-  turmaController.findById
+  turmaController.findById,
+);
+
+router.get(
+  '/:id/matriculas',
+  protect,
+  authorize('GESTOR', 'PROFESSOR'),
+  validate(z.object({ params: paramsSchema })),
+  turmaController.findMatriculas,
 );
 
 export const turmaRoutes = router;

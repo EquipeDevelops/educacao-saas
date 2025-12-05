@@ -276,7 +276,6 @@ export default function RelatoriosFinanceirosPage() {
                     cy="50%"
                     outerRadius={80}
                     labelLine={false}
-                    {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                     label={(props: any) => {
                       const { cx, cy, midAngle, innerRadius, outerRadius, percent } = props;
                       if (!cx || !cy || typeof midAngle === 'undefined' || !innerRadius || !outerRadius || !percent) return null;

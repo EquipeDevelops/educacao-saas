@@ -105,3 +105,27 @@
 .viewAll:hover {
   background-color: var(--cor-bt-white-hover);
 }
+
+@media (max-width: 768px) {
+  .item {
+    padding: 15px;
+  }
+
+  .infoContainer {
+    gap: 10px;
+  }
+
+  .avatar {
+    width: 35px;
+    height: 35px;
+    font-size: 0.9rem;
+  }
+
+  .itemName {
+    font-size: 0.95rem;
+  }
+
+  .itemPreview {
+    font-size: 0.85rem;
+  }
+}

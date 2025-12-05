@@ -5,6 +5,80 @@
   flex-direction: column;
   justify-content: space-between;
   padding: 20px;
+  top: 0;
+  z-index: 100;
+  transition: transform 0.3s ease-in-out;
+}
+
+.overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 99;
+  opacity: 0;
+  transition: opacity 0.3s ease-in-out;
+}
+
+.closeButton {
+  display: none;
+  background: none;
+  border: none;
+  color: white;
+  font-size: 2rem;
+  cursor: pointer;
+  padding: 0;
+  margin-left: auto;
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    position: fixed;
+    height: 100vh;
+    left: 0;
+    transform: translateX(-100%);
+    width: 280px;
+    overflow-y: auto;
+  }
+
+  /* Custom Scrollbar for Sidebar */
+  .sidebar::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  .sidebar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .sidebar::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+  }
+
+  .sidebar::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(255, 255, 255, 0.4);
+  }
+
+  .sidebar.open {
+    transform: translateX(0);
+  }
+
+  .overlay {
+    display: block;
+    pointer-events: none;
+  }
+
+  .overlay.open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .closeButton {
+    display: block;
+  }
 }
 
 .logo {
@@ -109,6 +183,7 @@
   height: 40px;
   background-color: var(--cor-primaria);
   border-radius: 10px;
+  flex-shrink: 0;
 }
 
 .iconContainer svg {
@@ -120,9 +195,11 @@
   font-size: 1.2rem;
   color: white;
   font-weight: 400;
+  margin: 0;
 }
 
 .title p {
   color: var(--cor-icons);
   font-size: 0.9rem;
+  margin: 0;
 }

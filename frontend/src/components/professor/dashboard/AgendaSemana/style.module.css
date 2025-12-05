@@ -42,7 +42,7 @@
 }
 
 .diaSelecionado {
-  background-color: var(--cor-primaria-light) ;
+  background-color: var(--cor-primaria-light);
   border: 1px solid color-mix(in srgb, var(--cor-primaria) 20%, white 80%);
 }
 
@@ -77,7 +77,7 @@
 .eventMateria {
   color: white;
   font-weight: 500;
-  font-size: .8rem;
+  font-size: 0.8rem;
   margin-bottom: 5px;
 }
 
@@ -89,4 +89,23 @@
   font-weight: 500;
   margin-top: 5px;
   color: white;
+}
+
+@media (max-width: 768px) {
+  .grid {
+    display: flex;
+    overflow-x: auto;
+    padding-bottom: 10px;
+    gap: 15px;
+    /* Hide scrollbar for Chrome, Safari and Opera */
+    &::-webkit-scrollbar {
+      display: none;
+    }
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+  }
+
+  .dayColumn {
+    min-width: 140px;
+  }
 }

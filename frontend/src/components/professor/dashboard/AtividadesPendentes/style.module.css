@@ -119,3 +119,33 @@
 .viewAll:hover {
   background-color: var(--cor-bt-white-hover);
 }
+
+@media (max-width: 768px) {
+  .item {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+  }
+
+  .containerInfo {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    width: 100%;
+  }
+
+  .containerInfo ul {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .containerInfo h4 {
+    text-align: center;
+  }
+
+  .data {
+    align-items: center;
+  }
+}

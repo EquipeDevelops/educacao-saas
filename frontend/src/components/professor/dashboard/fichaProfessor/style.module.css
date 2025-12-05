@@ -48,7 +48,21 @@
   gap: 5px;
   background-color: color-mix(in srgb, var(--cor-primaria) 80%, white 20%);
   color: white;
-  font-size: .9rem;
+  font-size: 0.9rem;
   padding: 5px 10px;
   border-radius: 8px;
+}
+
+@media (max-width: 768px) {
+  .container {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .listaItens {
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+  }
 }
