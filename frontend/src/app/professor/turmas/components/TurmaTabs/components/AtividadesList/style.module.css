@@ -184,8 +184,55 @@
 }
 
 @media (max-width: 768px) {
-  .filtersGrid {
+  .filters {
     flex-direction: column;
     gap: 10px;
+  }
+  
+  .filters .search, .filters select {
+    width: 100% !important;
+    max-width: none !important;
+  } 
+  
+  .list {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .itemRow {
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .infoAtividade {
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .content h3 {
+    display: flex;
+    flex-direction: column-reverse;
+    font-size: 1.2rem;
+  }
+
+  .content h3 span {
+    font-size: .85rem;
+  }
+
+  .statusContainer {
+    display: flex;
+    flex-direction: column-reverse;
+    gap: 0px;
+    width: 100%;
+  }
+
+  .barContainer {
+    max-width: none;
+  }
+
+  .buttonLink {
+    width: 100%;
+    text-align: center;
   }
 }

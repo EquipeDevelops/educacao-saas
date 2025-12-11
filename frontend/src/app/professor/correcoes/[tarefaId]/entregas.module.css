@@ -343,6 +343,7 @@
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
+  font-size: 1rem;
 }
 
 .messageButton:hover {
@@ -362,6 +363,7 @@
   border: 1px solid var(--cor-borda);
   color: var(--cor-texto);
   padding: 10px 20px;
+  font-size: 1rem;
   border-radius: 10px;
   font-weight: 500;
   cursor: pointer;
@@ -578,19 +580,60 @@
 }
 
 @media (max-width: 768px) {
+  .headerList {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, 1fr);
+    margin-top: 10px;
+  }
+
   .statsGrid {
     grid-template-columns: 1fr;
   }
 
+  .statCard {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+  }
+
   .entregaRow {
     flex-direction: column;
-    align-items: flex-start;
-    gap: 1rem;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .alunoInfo {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+  }
+
+  .alunoInfo div {
+    text-align: center;
+  }
+
+  .alunoInfo div:last-child p {
+    font-size: 1.2rem;
   }
 
   .actionArea {
+    flex-direction: column;
     width: 100%;
     justify-content: space-between;
+  }
+
+  .actionArea a, .actionArea button {
+    width: 100%;
+    text-align: center;
+  }
+
+  .gradeDisplay {
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
   .corrigirButton,

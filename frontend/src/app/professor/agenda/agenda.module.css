@@ -3,10 +3,11 @@
 }
 
 .statsGrid {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   background-color: white;
   padding: 20px;
-  width: fit-content;
+  width: 100%;
   border: 1px solid var(--cor-borda);
   border-radius: 15px;
   gap: 20px;
@@ -40,7 +41,7 @@
   color: var(--cor-subtexto);
   background-color: rgb(247, 247, 247);
   border-radius: 5px;
-  font-size: .9rem;
+  font-size: 0.9rem;
 }
 
 .statsAulas p span {
@@ -113,4 +114,24 @@
   color: #030303;
   margin-top: 0.5rem;
   margin-bottom: 1rem;
+}
+
+@media (max-width: 1024px) {
+  .calendarSection {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .statsGrid {
+    grid-template-columns: 1fr 1fr;
+    padding: 15px;
+    gap: 15px;
+  }
+}
+
+@media (max-width: 480px) {
+  .statsGrid {
+    grid-template-columns: 1fr;
+  }
 }

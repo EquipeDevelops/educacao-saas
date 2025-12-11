@@ -77,10 +77,13 @@
   align-items: center;
   gap: 10px;
   padding: 10px 20px;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 500;
   background-color: var(--cor-primaria);
   color: white;
   transition: all 0.2s ease;
-  font-weight: 500;
+  cursor: pointer;
 }
 
 .actionButton:hover {

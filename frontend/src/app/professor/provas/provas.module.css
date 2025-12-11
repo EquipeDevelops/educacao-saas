@@ -252,6 +252,7 @@
   padding: 10px 20px;
   border-radius: 10px;
   font-weight: 500;
+  font-size: 1rem;
   display: inline-flex;
   align-items: center;
   cursor: pointer;
@@ -271,6 +272,7 @@
   padding: 0.5rem 1.1rem;
   border-radius: 8px;
   font-weight: 600;
+  font-size: 1rem;
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
@@ -316,3 +318,104 @@
   display: flex;
   justify-content: center;
 }
+
+@media (max-width: 1200px) {
+  .provaContent {
+    grid-template-columns: auto 1fr 1fr;
+  }
+
+  .cardFooterActions {
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 5px !important;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 768px) {
+  .header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+  }
+
+  .header h1 {
+    text-align: center;
+  }
+
+  .header p {
+    text-align: center;
+  }
+
+  .header .actionButton {
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+  }
+
+  .provaCard {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .provaContent {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+  }
+
+  .provaInfo {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    margin-bottom: 10px;
+  }
+
+  .provaInfo h3 {
+    font-size: 1.2rem;
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .provaInfo h3 span {
+    font-size: .85rem;
+  }
+
+  .provaInfo .listItens {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .provaEntregas {
+    max-width: none;
+    width: 100%;
+  }
+
+  .cardFooterActions {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+  }
+
+  .cardFooterActions .secondaryButton {
+    font-size: 1rem !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .statsGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
