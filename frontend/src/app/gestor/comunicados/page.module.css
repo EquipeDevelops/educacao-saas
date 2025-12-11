@@ -161,3 +161,32 @@
   border: 1px solid var(--cor-borda);
   min-height: 500px;
 }
+
+@media (max-width: 768px) {
+  .header {
+    flex-direction: column;
+    gap: var(--esp-4);
+    align-items: flex-start;
+  }
+
+  .header h1 {
+    font-size: 1.5rem;
+  }
+
+  .addButton {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .grid {
+    grid-template-columns: 1fr;
+    padding: 10px;
+  }
+
+  .actions {
+    opacity: 1; /* Always show actions on mobile since there is no hover */
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 20px;
+    padding: 2px;
+  }
+}

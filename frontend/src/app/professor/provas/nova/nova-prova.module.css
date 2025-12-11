@@ -54,7 +54,7 @@
 }
 
 .header h1 {
-  font-size: 2rem;
+  font-size: 1.5rem;
   font-weight: 700;
   color: var(--cor-texto-destaque);
 }
@@ -238,19 +238,21 @@
 .previewButton,
 .publishButton {
   padding: 10px 20px;
+  font-size: 1rem;
   border-radius: 10px;
   font-weight: 500;
   cursor: pointer;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 5px;
   transition: all 0.2s;
   border: 1px solid transparent;
 }
 
 .cancelButton {
-  background-color: transparent;
-  color: var(--cor-subtexto);
+  background-color: var(--cor-perigo-light);
+  color: var(--cor-perigo);
 }
 .draftButton,
 .previewButton {
@@ -266,7 +268,8 @@
 }
 
 .cancelButton:hover {
-  background-color: #f1f3f5;
+  background-color: var(--cor-perigo);
+  color: var(--cor-perigo-light);
 }
 .draftButton:hover,
 .previewButton:hover {
@@ -331,4 +334,50 @@
   display: flex;
   justify-content: flex-end;
   gap: 1rem;
+}
+
+@media (max-width: 768px) {
+  .bimestreBanner {
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .bimestreBanner div:last-child {
+    text-align: center;
+  }
+
+  .bimestreIcon {
+    display: none;
+  }
+
+  .header {
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .header h1, .header p {
+    text-align: center;
+  }
+
+  .header .actionButton {
+    width: 100% !important;
+  }
+
+  .grid2cols {
+    grid-template-columns: 1fr;
+  }
+
+  .grid3cols {
+    grid-template-columns: 1fr;
+  }
+
+  .tempoOptions {
+    flex-wrap: wrap;
+  }
+
+  .footer {
+    flex-direction: column-reverse;
+    gap: 20px;
+  }
 }

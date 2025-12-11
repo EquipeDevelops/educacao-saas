@@ -31,10 +31,11 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 router.use(protect);
-router.use(authorize('GESTOR'));
+// router.use(authorize('GESTOR')); // Removed global restriction
 
 router.post(
   '/',
+  authorize('GESTOR'), // Restrict creation to GESTOR
   upload.array('imagens', 10),
   (req, res, next) => {
     if (req.body.data) {
@@ -51,6 +52,7 @@ router.get('/', comunicadoController.findAll);
 
 router.put(
   '/:id',
+  authorize('GESTOR'), // Restrict update to GESTOR
   upload.array('imagens', 10),
   (req, res, next) => {
     if (req.body.data) {
@@ -63,6 +65,6 @@ router.put(
   comunicadoController.update,
 );
 
-router.delete('/:id', comunicadoController.delete);
+router.delete('/:id', authorize('GESTOR'), comunicadoController.delete); // Restrict delete to GESTOR
 
 export const comunicadoRoutes = router;

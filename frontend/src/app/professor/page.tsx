@@ -14,6 +14,7 @@ import styles from './home.module.css';
 import FichaProfessor from '@/components/professor/dashboard/fichaProfessor/FichaProfessor';
 import AcoesRapidas from '@/components/professor/dashboard/acoesRapidas/AcoesRapidas';
 import ComunicadosList from '@/components/professor/dashboard/ComunicadosList/ComunicadosList';
+import ComunicadosModal from '@/components/comunicados/ComunicadosModal';
 
 export default function ProfessorHomePage() {
   const { user } = useAuth();
@@ -76,6 +77,7 @@ export default function ProfessorHomePage() {
           <AcoesRapidas />
           <AtividadesPendentes atividades={data?.atividadesPendentes ?? []} />
           <MensagensRecentes conversas={data?.conversas ?? []} />
+          <ComunicadosModal />
         </div>
       )}
     </Section>

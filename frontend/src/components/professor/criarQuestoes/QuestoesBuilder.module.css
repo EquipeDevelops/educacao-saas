@@ -52,6 +52,7 @@
   background-color: white;
   border: 1px solid color-mix(in srgb, var(--cor-primaria) 20%, white 80%);
   padding: 10px 20px;
+  font-size: 1rem;
   border-radius: 10px;
   cursor: pointer;
   font-weight: 500;
@@ -287,11 +288,12 @@
 
 .addOptionButton {
   margin-top: 0.5rem;
+  padding: 10px 20px;
   background: transparent;
   border: 1px dashed var(--cor-borda);
-  border-radius: 8px;
-  padding: 0.35rem 0.75rem;
-  font-weight: 600;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 500;
   cursor: pointer;
   color: var(--cor-primaria);
   display: inline-flex;
@@ -302,4 +304,36 @@
 .addOptionButton:hover {
   border-color: var(--cor-primaria);
   background-color: var(--cor-primaria-light);
+}
+
+@media (max-width: 768px) {
+  .questionTypeButtons {
+    justify-content: center;
+    width: 100%;
+  }
+
+  .questionTypeButton {
+    width: 100%;
+    max-width: 300px;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .questionHeader {
+    flex-direction: column;
+    gap: 20px;
+    align-items: center;
+  }
+
+  .questionHeader small {
+    text-align: center;
+  }
+
+  .container {
+    padding-bottom: 20px; 
+  }
+
+  .emptyState p {
+    text-align: center;
+  }
 }

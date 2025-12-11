@@ -9,6 +9,7 @@ import AgendaSemanalAluno from '@/components/aluno/dashboard/agendaSemanal/Agend
 import { useAlunoDashboard } from '@/hooks/dashboardAluno/useDashboardAluno';
 import AtividadesPendentes from '@/components/aluno/dashboard/atividadesPendentes/AtividadesPendentes';
 import MensagensRecentes from '@/components/aluno/dashboard/mensagensRecentes/MensagensRecentes';
+import ComunicadosModal from '@/components/comunicados/ComunicadosModal';
 
 export default function AlunoPage() {
   const {
@@ -37,6 +38,7 @@ export default function AlunoPage() {
             <AtividadesPendentes atividades={tarefasPendentes} />
             <MensagensRecentes mensagens={mensagensRecentes} />
             <AgendaSemanalAluno eventos={agendaEventos} />
+            <ComunicadosModal />
           </div>
         </div>
       </Section>
