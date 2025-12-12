@@ -295,11 +295,13 @@ input:checked + .slider:before {
 .draftButton,
 .publishButton {
   padding: 10px 20px;
-  border-radius: 8px;
+  border-radius: 10px;
+  font-size: 1rem;
   font-weight: 500;
-  cursor: pointer;
   display: flex;
   align-items: center;
+  justify-content: center;
+  cursor: pointer;
   gap: 5px;
   transition: all 0.2s;
 }
@@ -352,4 +354,57 @@ input:checked + .slider:before {
 
 .publishButton:hover {
   background-color: var(--cor-primaria-hover);
+}
+
+@media (max-width: 768px) {
+  .header {
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .header h1, .header p {
+    text-align: center;
+  }
+
+  .bimestreBanner {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .bimestreBanner div:last-child {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .bannerHint {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .bannerHint svg {
+    font-size: 1.2rem;
+  }
+
+  .bimestreIcon {
+    display: none;
+  }
+
+  .grid2cols {
+    grid-template-columns: 1fr;
+  }
+
+  .grid3cols {
+    grid-template-columns: 1fr;
+  }
+
+  .tempoOptions {
+    flex-wrap: wrap;
+  }
+
+  .footer {
+    flex-direction: column-reverse;
+    gap: 20px;
+  }
 }

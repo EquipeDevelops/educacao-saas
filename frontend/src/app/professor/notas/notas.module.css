@@ -228,6 +228,12 @@
   font-size: 0.9rem;
 }
 
+.correcoesMeta div {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
 .correcoesMeta span:nth-child(1),
 .correcoesMeta span:nth-child(2) {
   padding: 2px 10px;
@@ -344,22 +350,63 @@
 }
 
 @media (max-width: 900px) {
-  .card {
-    padding: 28px 24px;
-  }
-
   .selectionPanel {
     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   }
 }
 
-@media (max-width: 640px) {
-  .pageContainer {
-    padding: 24px 16px 40px;
+@media (max-width: 768px) {
+  .bimestreBanner {
+    flex-direction: column;
+    align-items: center;
   }
 
-  .card {
-    padding: 24px;
+  .bimestreBanner div:last-child {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .bannerHint {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .bannerHint svg {
+    font-size: 1.2rem;
+  }
+
+  .bimestreIcon {
+    display: none;
+  }
+
+  .emptyState {
+    flex-direction: column;
+    justify-self: center;
+    text-align: center;
+  }
+
+  .emptyState svg {
+    font-size: 1.2rem;
+  }
+
+  .correcoesItem {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+  }
+
+  .correcoesMain h3 {
+    text-align: center;
+    margin-bottom: 10px;
+    font-size: 1rem;
+    width: 100%;
+  }
+
+  .correcoesMeta {
+    flex-direction: column;
+
   }
 
   .table {

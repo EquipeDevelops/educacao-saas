@@ -411,7 +411,7 @@ export default function ProfessorNotasPage() {
         );
         return [...filtered, data];
       });
-      setFeedbackSuccess('Nota registrada com sucesso (anteriores removidas).');
+      setFeedbackSuccess('Nota registrada com sucesso');
     } catch (error: any) {
       const message =
         error?.response?.data?.message ||
@@ -483,17 +483,6 @@ export default function ProfessorNotasPage() {
           )}
         </div>
 
-        {(feedbackError || feedbackSuccess) && (
-          <div
-            className={`${styles.feedback} ${
-              feedbackError ? styles.feedbackError : styles.feedbackSuccess
-            }`}
-          >
-            {feedbackError ? <LuCircleAlert /> : <LuCircleCheck />}
-            <span>{feedbackError ?? feedbackSuccess}</span>
-          </div>
-        )}
-
         <section className={styles.correcoesSection}>
           <header className={styles.sectionHeader}>
             <h2>
@@ -521,22 +510,24 @@ export default function ProfessorNotasPage() {
                         <h3>{avaliacao.tarefa?.titulo}</h3>
                       </div>
                       <div className={styles.correcoesMeta}>
-                        <span>
-                          {avaliacao.tarefa
-                            ? tarefaTipoLabels[avaliacao.tarefa.tipo] ??
-                              avaliacao.tarefa.tipo
-                            : tarefaTipoLabels[avaliacao.tipo] ??
-                              avaliacao.tipo}
-                        </span>
-                        <span>
-                          {getPeriodoLabel(
-                            avaliacao.bimestre?.periodo ?? avaliacao.periodo,
-                          )}
-                        </span>
-                        <span>
+                        <div>
+                          <span>
+                            {avaliacao.tarefa
+                              ? tarefaTipoLabels[avaliacao.tarefa.tipo] ??
+                                avaliacao.tarefa.tipo
+                              : tarefaTipoLabels[avaliacao.tipo] ??
+                                avaliacao.tipo}
+                          </span>
+                          <span>
+                            {getPeriodoLabel(
+                              avaliacao.bimestre?.periodo ?? avaliacao.periodo,
+                            )}
+                          </span>
+                        </div>
+                        <p>
                           Entregue em:{' '}
                           {dateFormatter.format(new Date(avaliacao.data))}
-                        </span>
+                        </p>
                       </div>
                     </div>
                     <p className={styles.correcoesNota}>
@@ -646,6 +637,17 @@ export default function ProfessorNotasPage() {
             {savingNota ? 'Salvando...' : 'Registrar nota'}
           </button>
         </section>
+
+        {(feedbackError || feedbackSuccess) && (
+          <div
+            className={`${styles.feedback} ${
+              feedbackError ? styles.feedbackError : styles.feedbackSuccess
+            }`}
+          >
+            {feedbackError ? <LuCircleAlert /> : <LuCircleCheck />}
+            <span>{feedbackError ?? feedbackSuccess}</span>
+          </div>
+        )}
 
         <section className={styles.tableSection}>
           <header className={styles.sectionHeader}>

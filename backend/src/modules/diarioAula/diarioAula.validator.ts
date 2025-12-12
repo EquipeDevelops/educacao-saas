@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 export const createDiarioAulaSchema = z.object({
+  id: z.string().optional(), // Para upsert de diários existentes
   componenteCurricularId: z.string(),
   data: z.string().datetime(), // ISO string
   conteudo: z
@@ -12,6 +13,15 @@ export const createDiarioAulaSchema = z.object({
       observacoes: z.string().optional(),
     })
     .optional(),
+  objetivos: z
+    .array(
+      z.object({
+        codigo: z.string(),
+        descricao: z.string(),
+      }),
+    )
+    .optional()
+    .default([]), // Habilidades BNCC
   presencas: z.array(
     z.object({
       matriculaId: z.string(),
@@ -19,6 +29,7 @@ export const createDiarioAulaSchema = z.object({
       observacao: z.string().optional(),
     }),
   ),
+  status: z.enum(['RASCUNHO', 'CONSOLIDADO']).optional().default('RASCUNHO'),
 });
 
 export const getDiarioAulaSchema = z.object({

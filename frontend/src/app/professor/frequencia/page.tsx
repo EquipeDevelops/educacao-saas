@@ -40,6 +40,7 @@ export default function FrequenciaPage() {
   const [alunos, setAlunos] = useState<Aluno[]>([]);
   const [presencas, setPresencas] = useState<Record<string, Situacao>>({});
   const [observacoes, setObservacoes] = useState<Record<string, string>>({});
+  const [diarioId, setDiarioId] = useState<string | null>(null);
 
   const [loadingComponentes, setLoadingComponentes] = useState(true);
   const [loadingDados, setLoadingDados] = useState(false);
@@ -79,6 +80,7 @@ export default function FrequenciaPage() {
       setLoadingDados(true);
       setFeedback(null);
       setIsConsolidado(false);
+      setDiarioId(null);
       try {
         const componente = componentes.find(
           (c) => c.id === selectedComponenteId,
@@ -99,6 +101,11 @@ export default function FrequenciaPage() {
           initialPresencas[a.id] = 'PRESENTE';
         });
 
+        console.log('Buscando diário com params:', {
+          componenteCurricularId: selectedComponenteId,
+          data: new Date(dataAula).toISOString(),
+        });
+
         const resDiario = await api.get('/diarios-aula', {
           params: {
             componenteCurricularId: selectedComponenteId,
@@ -106,11 +113,26 @@ export default function FrequenciaPage() {
           },
         });
 
+        console.log('Resposta busca diário:', resDiario.data);
+
         const novasPresencas = { ...initialPresencas };
         const novasObservacoes: Record<string, string> = {};
 
-        if (resDiario.data && resDiario.data.length > 0) {
-          const diario = resDiario.data[0];
+        let diario = null;
+        if (Array.isArray(resDiario.data) && resDiario.data.length > 0) {
+          diario = resDiario.data[0];
+        } else if (
+          resDiario.data &&
+          !Array.isArray(resDiario.data) &&
+          (resDiario.data as any).id
+        ) {
+          diario = resDiario.data;
+        }
+
+        if (diario) {
+          setDiarioId(diario.id);
+          console.log('Diário encontrado, ID:', diario.id);
+
           if (diario.status === 'CONSOLIDADO') {
             setIsConsolidado(true);
             setFeedback({
@@ -160,28 +182,44 @@ export default function FrequenciaPage() {
       const defaultTema = `Diário do dia ${dia}/${mes}/${ano}`;
 
       const payload = {
+        ...(diarioId ? { id: diarioId } : {}),
         componenteCurricularId: selectedComponenteId,
         data: new Date(dataAula).toISOString(),
         conteudo: {
           tema: defaultTema,
+          atividade: 'Registro de frequência',
+          observacoes: '',
         },
         presencas: Object.entries(presencas).map(([matriculaId, situacao]) => ({
           matriculaId,
           situacao,
-          observacao: observacoes[matriculaId],
+          observacao: observacoes[matriculaId] || '',
         })),
+        objetivos: [],
+        status: 'RASCUNHO',
       };
 
-      await api.post('/diarios-aula', payload);
+      console.log('Enviando payload frequência:', payload);
+
+      const response = await api.post('/diarios-aula', payload);
+
+      // Update diarioId if a new one was created
+      if (response.data && response.data.id) {
+        setDiarioId(response.data.id);
+        console.log('Frequência salva, novo ID:', response.data.id);
+      }
+
       setFeedback({
         type: 'success',
         message: 'Frequência salva como Rascunho com sucesso!',
       });
-    } catch (error: unknown) {
-      console.error('Erro ao salvar frequência', error);
+    } catch (error: any) {
+      console.error('Erro ao salvar frequência:', error);
+      console.error('Detalhes do erro:', error.response?.data);
+
       const message =
-        (error as { response?: { data?: { message?: string } } }).response?.data
-          ?.message || 'Erro ao salvar frequência. Tente novamente.';
+        error.response?.data?.message ||
+        'Erro ao salvar frequência. Tente novamente.';
       setFeedback({
         type: 'error',
         message,
@@ -209,22 +247,7 @@ export default function FrequenciaPage() {
             frequências salvas aqui serão registradas como rascunho para o
             diário de classe.
           </p>
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              backgroundColor: 'var(--cor-primaria-light)',
-              color: 'var(--cor-primaria)',
-              padding: '10px 20px',
-              borderRadius: '10px',
-              marginBottom: '1rem',
-              fontSize: '0.9rem',
-              border:
-                '1px solid color-mix(in srgb, var(--cor-primaria) 20%, white 80%)',
-              margin: '1rem 0',
-            }}
-          >
+          <div className={styles.feedback}>
             <FiAlertTriangle />
             <span>
               <strong>Atenção:</strong> Os dados salvos aqui são registrados

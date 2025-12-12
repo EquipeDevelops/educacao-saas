@@ -42,6 +42,7 @@ export async function getByDate(
       data: dateObj,
     },
     include: {
+      objetivos: true, // Habilidades BNCC
       registros_presenca: true,
     },
   });
@@ -50,11 +51,17 @@ export async function getByDate(
 }
 
 export async function upsert(
-  data: CreateDiarioAulaInput,
+  data: CreateDiarioAulaInput & {
+    id?: string;
+    objetivos?: { codigo: string; descricao: string }[];
+    status?: 'RASCUNHO' | 'CONSOLIDADO';
+  },
   user: AuthenticatedRequest['user'],
 ) {
   console.log(
-    `[DiarioAula] upsert - Componente: ${data.componenteCurricularId}, Data: ${data.data}`,
+    `[DiarioAula] upsert - Componente: ${data.componenteCurricularId}, Data: ${
+      data.data
+    }, ID: ${data.id || 'novo'}`,
   );
 
   if (!user.perfilId) {
@@ -81,47 +88,73 @@ export async function upsert(
   const dataAula = new Date(data.data);
   dataAula.setUTCHours(0, 0, 0, 0);
 
-  // Check if exists
-  let diario = await prisma.diarioAula.findFirst({
-    where: {
-      componenteCurricularId: data.componenteCurricularId,
-      data: dataAula,
-    },
-  });
+  // Check if exists by id or by componenteCurricular + date
+  let diario = null;
+  if (data.id) {
+    diario = await prisma.diarioAula.findUnique({
+      where: { id: data.id },
+    });
+  }
+
+  if (!diario) {
+    diario = await prisma.diarioAula.findFirst({
+      where: {
+        componenteCurricularId: data.componenteCurricularId,
+        data: dataAula,
+      },
+    });
+  }
+
+  const diarioData = {
+    componenteCurricularId: data.componenteCurricularId,
+    data: dataAula,
+    objetivoCodigo: data.conteudo?.objetivoCodigo || 'GERAL',
+    objetivoDescricao:
+      data.conteudo?.objetivoDescricao || 'Registro de frequência',
+    tema: data.conteudo?.tema,
+    atividade: data.conteudo?.atividade,
+    observacoes: data.conteudo?.observacoes,
+    status: data.status || 'RASCUNHO',
+    professorId: user.perfilId!,
+    unidadeEscolarId: user.unidadeEscolarId!,
+  };
 
   if (!diario) {
     console.log(
       `[DiarioAula] Criando novo diário para ${dataAula.toISOString()}`,
     );
-    // Este serviço é usado pela tela de Frequência (coleta diária)
-    // Os dados ficam como RASCUNHO até serem consolidados no Diário de Classe
     diario = await prisma.diarioAula.create({
-      data: {
-        componenteCurricularId: data.componenteCurricularId,
-        data: dataAula,
-        objetivoCodigo: data.conteudo?.objetivoCodigo || 'GERAL',
-        objetivoDescricao:
-          data.conteudo?.objetivoDescricao || 'Registro de frequência',
-        tema: data.conteudo?.tema,
-        atividade: data.conteudo?.atividade,
-        observacoes: data.conteudo?.observacoes,
-        status: 'RASCUNHO', // Não afeta cálculo de frequência até consolidação
-        professorId: user.perfilId!,
-        unidadeEscolarId: user.unidadeEscolarId!,
-      },
+      data: diarioData,
     });
-  } else if (data.conteudo) {
+  } else {
     console.log(`[DiarioAula] Atualizando diário existente ${diario.id}`);
     diario = await prisma.diarioAula.update({
       where: { id: diario.id },
-      data: {
-        objetivoCodigo: data.conteudo.objetivoCodigo,
-        objetivoDescricao: data.conteudo.objetivoDescricao,
-        tema: data.conteudo.tema,
-        atividade: data.conteudo.atividade,
-        observacoes: data.conteudo.observacoes,
-      },
+      data: diarioData,
     });
+  }
+
+  // Handle BNCC objectives
+  if (data.objetivos && data.objetivos.length > 0) {
+    console.log(
+      `[DiarioAula] Processando ${data.objetivos.length} objetivos BNCC`,
+    );
+
+    // Delete existing objectives
+    await prisma.diarioAulaObjetivo.deleteMany({
+      where: { diarioAulaId: diario.id },
+    });
+
+    // Create new objectives
+    for (const obj of data.objetivos) {
+      await prisma.diarioAulaObjetivo.create({
+        data: {
+          diarioAulaId: diario.id,
+          codigo: obj.codigo,
+          descricao: obj.descricao,
+        },
+      });
+    }
   }
 
   // Handle presences
@@ -149,7 +182,16 @@ export async function upsert(
     results.push(presence);
   }
 
-  return { diario, presencas: results };
+  // Fetch complete diary with relations
+  const diarioComplete = await prisma.diarioAula.findUnique({
+    where: { id: diario.id },
+    include: {
+      objetivos: true,
+      registros_presenca: true,
+    },
+  });
+
+  return diarioComplete;
 }
 
 export async function getAll(user: AuthenticatedRequest['user']) {

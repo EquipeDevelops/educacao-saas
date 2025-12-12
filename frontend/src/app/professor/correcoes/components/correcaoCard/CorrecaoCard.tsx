@@ -89,7 +89,7 @@ export default function CorrecaoCard({ correcao }: { correcao: CorrecaoInfo }) {
           </p>
           <BarraDeProgresso
             porcentagem={percentual}
-            className={percentual === 100 ? styles.completa : ''}
+            className={percentual === 100 ? styles.completa : styles.barraProgresso}
           />
         </div>
         <Link href={`/professor/correcoes/${correcao.id}`}>

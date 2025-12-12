@@ -170,7 +170,9 @@
   gap: 10px;
   padding: 10px 20px;
   border: 1px solid var(--cor-borda);
-  color: var(--cor-texto);
+  background-color: white;
+  border: 1px solid var(--cor-primaria);
+  color: var(--cor-primaria);
   border-radius: 10px;
   font-weight: 500;
   transition: all 0.2s ease;
@@ -179,7 +181,10 @@
 .cardActionsContainer a:hover {
   background-color: var(--cor-primaria);
   color: white;
-  border-color: var(--cor-primaria);
+}
+
+.barraProgresso {
+  background-color: var(--cor-primaria) !important;
 }
 
 .completa {
@@ -227,23 +232,26 @@
 
 @media (max-width: 768px) {
   .cardInfoContainer {
-    flex-direction: column;
-    align-items: flex-start;
+    flex-direction: column !important;
+    align-items: center;
   }
 
-  .cardIcon {
-    display: none; /* Hide icon on mobile to save space, or keep it */
-  }
-
-  /* Or keep icon but adjust layout */
   .cardInfoContainer {
-    flex-direction: row;
+    gap: 10px;
   }
-  .cardIcon {
-    display: flex;
-    width: 40px;
-    height: 40px;
+
+  .tituloContainer {
+    flex-direction: column;
+    gap: 0px;
+  }
+
+  .tituloContainer h3 {
     font-size: 1.2rem;
+    margin-bottom: 5px;
+  }
+
+  .tituloContainer div p{
+    font-size: .8rem;
   }
 
   .cardActionsContainer {
@@ -257,7 +265,7 @@
 
   .infoCards {
     display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   }
 
   .infoCards li {
@@ -265,21 +273,10 @@
     text-align: center;
     align-items: center;
   }
-}
 
-@media (max-width: 550px) {
-  .cardInfoContainer {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .infoCards {
-    grid-template-columns: 1fr;
-  }
-
-  .tituloContainer {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 10px;
+  .infoGerais {
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 }

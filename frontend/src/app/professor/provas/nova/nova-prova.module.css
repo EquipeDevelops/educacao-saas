@@ -337,13 +337,24 @@
 }
 
 @media (max-width: 768px) {
-  .bimestreBanner {
+    .bimestreBanner {
     flex-direction: column;
-    gap: 20px;
+    align-items: center;
   }
 
   .bimestreBanner div:last-child {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .bannerHint {
+    flex-direction: column;
     text-align: center;
+  }
+
+  .bannerHint svg {
+    font-size: 1.2rem;
   }
 
   .bimestreIcon {

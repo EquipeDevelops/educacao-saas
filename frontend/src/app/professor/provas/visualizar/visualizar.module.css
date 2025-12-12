@@ -135,3 +135,190 @@
 .optionItem label {
   font-size: 1rem;
 }
+
+.headerActions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.printButton {
+  background: none;
+  border: 1px solid var(--cor-borda);
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  color: var(--cor-texto);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.printButton:hover {
+  background-color: #f8f9fa;
+  border-color: var(--cor-primaria);
+  color: var(--cor-primaria);
+}
+
+.printHeader {
+  display: none; /* Hidden by default, shown in print */
+}
+
+@media print {
+  @page {
+    margin: 1cm;
+    size: auto;
+  }
+
+  /* Hide everything else - Moved to global style in page.tsx */
+
+  /* Show only the page container and its children */
+  .pageContainer,
+  .pageContainer * {
+    visibility: visible;
+  }
+
+  .pageContainer {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    background-color: white;
+    max-width: none;
+    z-index: 9999; /* Ensure it's on top */
+  }
+
+  .headerActions {
+    display: none !important;
+  }
+
+  .printHeader {
+    display: block;
+    margin-bottom: 2rem;
+    border: 2px solid #000; /* Main border */
+    padding: 0;
+  }
+
+  .schoolInfo {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 1rem;
+    border-bottom: 1px solid #000;
+    justify-content: center; /* Center school info */
+  }
+
+  .schoolLogoPlaceholder {
+    width: 60px;
+    height: 60px;
+    border: 1px solid #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    text-align: center;
+    font-size: 0.7rem;
+    border-radius: 50%; /* Make it circular */
+  }
+
+  .schoolText {
+    text-align: center;
+  }
+
+  .schoolText h2 {
+    margin: 0;
+    font-size: 1.4rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .schoolText p {
+    margin: 0;
+    font-size: 0.9rem;
+    font-style: italic;
+    color: #333;
+  }
+
+  .examInfoGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0; /* Remove gap to use borders */
+  }
+
+  .infoField {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center; /* Align vertically */
+    padding: 0.5rem 1rem;
+    border-bottom: 1px solid #000;
+    font-size: 0.95rem;
+  }
+
+  /* Add right border to odd items to create grid lines */
+  .infoField:nth-child(odd) {
+    border-right: 1px solid #000;
+  }
+
+  /* Remove bottom border for the last row if needed, or keep for consistency */
+  .infoField:nth-last-child(1),
+  .infoField:nth-last-child(2) {
+    border-bottom: none;
+  }
+
+  .infoField strong {
+    min-width: auto; /* Let it shrink */
+    white-space: nowrap;
+  }
+
+  .lineField {
+    flex-grow: 1;
+    border-bottom: 1px dotted #000; /* Dotted line for writing */
+    height: 1em;
+    margin-left: 0.5rem;
+  }
+
+  .header {
+    border: none;
+    box-shadow: none;
+    padding: 0;
+    margin-bottom: 1rem;
+  }
+
+  .header h1 {
+    text-align: center;
+    font-size: 1.8rem;
+    margin-top: 1rem;
+    border-bottom: 1px solid #000;
+    padding-bottom: 0.5rem;
+  }
+
+  .subHeader {
+    display: none; /* Hide default subheader in print */
+  }
+
+  .questaoCard {
+    break-inside: avoid;
+    border: none;
+    border-bottom: 1px solid #eee;
+    padding: 1rem 0;
+    margin-bottom: 1rem;
+    box-shadow: none;
+  }
+
+  .questaoHeader {
+    border-bottom: none;
+    margin-bottom: 0.5rem;
+  }
+
+  .questaoHeader span {
+    border: 1px solid #000;
+    background: none;
+    color: black;
+    font-weight: bold;
+  }
+}

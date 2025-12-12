@@ -235,7 +235,37 @@
   cursor: not-allowed;
 }
 
+.feedback {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: var(--cor-primaria-light);
+  color: var(--cor-primaria);
+  padding: 10px 20px;
+  border-radius: 10px;
+  margin-bottom: 1rem;
+  font-size: 1rem;
+  border: 1px solid color-mix(in srgb, var(--cor-primaria) 20%, white 80%);
+  margin: 1rem 0;
+}
+
 @media (max-width: 768px) {
+  .header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    text-align: center;
+  }
+
+  .feedback {
+    flex-direction: column;
+  }
+
+  .feedback svg {
+    font-size: 1.2rem;
+  }
+
   .controls {
     grid-template-columns: 1fr;
   }
@@ -252,4 +282,6 @@
   .statusOptions {
     justify-content: space-between;
   }
+
+
 }

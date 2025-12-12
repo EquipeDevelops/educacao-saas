@@ -19,6 +19,7 @@ import {
   LuSend,
   LuStar,
   LuX,
+  LuPrinter,
 } from 'react-icons/lu';
 import Loading from '@/components/loading/Loading';
 import { useAuth } from '@/contexts/AuthContext'; // 1. Importar AuthContext
@@ -427,6 +428,31 @@ export default function NovaProvaPage() {
               disabled={loading}
             >
               <LuEye /> Visualizar
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                const previewData = {
+                  titulo,
+                  descricao,
+                  pontos,
+                  questoes,
+                  componente: componentes.find((c) => c.id === componenteId),
+                };
+                sessionStorage.setItem(
+                  'provaPreviewData',
+                  JSON.stringify(previewData),
+                );
+                window.open(
+                  '/professor/provas/visualizar?print=true',
+                  '_blank',
+                );
+              }}
+              className={styles.draftButton}
+              disabled={loading}
+              title="Imprimir ou Salvar como PDF"
+            >
+              <LuPrinter /> Imprimir / PDF
             </button>
             <button
               type="button"

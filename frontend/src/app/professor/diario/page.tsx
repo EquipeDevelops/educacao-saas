@@ -236,7 +236,10 @@ interface DiarioAula {
   data: string;
   componenteCurricularId: string;
   componenteCurricular?: {
-    turma?: { nome: string };
+    turma?: {
+      nome: string;
+      serie?: string;
+    };
     materia?: { nome: string };
   };
 }
@@ -290,6 +293,7 @@ export default function DiarioWizardPage() {
   const [filterStatus, setFilterStatus] = useState('all');
 
   const [loadedFromDraft, setLoadedFromDraft] = useState(false);
+  const [diarioId, setDiarioId] = useState<string | null>(null);
 
   useEffect(() => {
     if (authLoading) return;
@@ -317,7 +321,9 @@ export default function DiarioWizardPage() {
     async function loadDiarios() {
       setLoadingDiarios(true);
       try {
+        console.log('Buscando lista de diários...');
         const res = await api.get('/diarios-aula/list');
+        console.log('Lista de diários recebida:', res.data);
         setDiarios(res.data);
       } catch (err: unknown) {
         console.error('Erro ao carregar diários:', err);
@@ -332,13 +338,20 @@ export default function DiarioWizardPage() {
     if (!selectedTurmaId || !dataAula) return;
 
     async function loadAllData() {
+      console.log('loadAllData iniciado', { selectedTurmaId, dataAula, view });
       try {
         const turma = turmas.find((t) => t.componenteId === selectedTurmaId);
-        if (!turma) return;
+        if (!turma) {
+          console.log('Turma não encontrada na lista local');
+          return;
+        }
 
+        console.log('Buscando matrículas e diário...');
         const resMatriculas = await api.get(
           `/turmas/${turma.turmaId}/matriculas`,
         );
+        // ... (rest of matriculas logic)
+
         const listaAlunos = resMatriculas.data
           .map((m: Matricula) => ({
             id: m.id,
@@ -348,6 +361,7 @@ export default function DiarioWizardPage() {
             a.nome.localeCompare(b.nome),
           );
         setAlunos(listaAlunos);
+        setDiarioId(null); // Reset ID before search
 
         const initialFreq: Record<string, FrequenciaStatus> = {};
         listaAlunos.forEach((a: AlunoMatriculado) => {
@@ -362,22 +376,54 @@ export default function DiarioWizardPage() {
           },
         });
 
-        if (resDiario.data && resDiario.data.length > 0) {
-          const diarioExistente = resDiario.data[0];
+        console.log('Resposta busca diário (loadAllData):', resDiario.data);
+
+        let diarioExistente = null;
+        if (Array.isArray(resDiario.data) && resDiario.data.length > 0) {
+          diarioExistente = resDiario.data[0];
+        } else if (
+          resDiario.data &&
+          !Array.isArray(resDiario.data) &&
+          (resDiario.data as any).id
+        ) {
+          diarioExistente = resDiario.data;
+        }
+
+        if (diarioExistente) {
+          console.log('Diário existente encontrado:', diarioExistente);
           setLoadedFromDraft(true);
+          setDiarioId(diarioExistente.id);
 
-          setTema(diarioExistente.conteudo?.tema || '');
-          setAtividade(diarioExistente.conteudo?.atividade || '');
-          setObs(diarioExistente.conteudo?.observacoes || '');
+          // Check for fields at root or inside conteudo object
+          const tema =
+            diarioExistente.tema || diarioExistente.conteudo?.tema || '';
+          const atividade =
+            diarioExistente.atividade ||
+            diarioExistente.conteudo?.atividade ||
+            '';
+          const observacoes =
+            diarioExistente.observacoes ||
+            diarioExistente.conteudo?.observacoes ||
+            '';
 
-          if (
-            diarioExistente.objetivos &&
-            diarioExistente.objetivos.length > 0
-          ) {
-            const skills = diarioExistente.objetivos.map((obj: Objetivo) => ({
+          setTema(tema);
+          setAtividade(atividade);
+          setObs(observacoes);
+
+          const objetivos =
+            diarioExistente.objetivos ||
+            diarioExistente.conteudo?.objetivos ||
+            [];
+
+          console.log('Objetivos encontrados:', objetivos);
+          console.log('Quantidade de objetivos:', objetivos.length);
+
+          if (objetivos.length > 0) {
+            const skills = objetivos.map((obj: Objetivo) => ({
               codigo: obj.codigo,
               descricao: obj.descricao,
             }));
+            console.log('Skills mapeadas:', skills);
             setSelectedSkills(skills);
           } else {
             setSelectedSkills([]);
@@ -398,6 +444,7 @@ export default function DiarioWizardPage() {
             setFrequencia({ ...initialFreq });
           }
         } else {
+          console.log('Nenhum diário encontrado, iniciando limpo.');
           setLoadedFromDraft(false);
           setTema('');
           setAtividade('');
@@ -405,12 +452,12 @@ export default function DiarioWizardPage() {
           setSelectedSkills([]);
         }
       } catch (err: unknown) {
-        console.error(err);
+        console.error('Erro em loadAllData:', err);
       }
     }
 
     loadAllData();
-  }, [selectedTurmaId, dataAula]);
+  }, [selectedTurmaId, dataAula, view]);
 
   useEffect(() => {
     if (!selectedTurmaId) return;
@@ -431,9 +478,17 @@ export default function DiarioWizardPage() {
 
   useEffect(() => {
     if (step !== 2) return;
-    if (!bnccDisciplina || !bnccAno) return;
+    if (!bnccDisciplina || !bnccAno) {
+      console.log('[BNCC] Aguardando parâmetros:', { bnccDisciplina, bnccAno });
+      return;
+    }
 
     async function fetchBncc() {
+      console.log('[BNCC] Iniciando fetch:', {
+        bnccStage,
+        bnccDisciplina,
+        bnccAno,
+      });
       setBnccLoading(true);
       try {
         const res = await api.get('/bncc', {
@@ -444,24 +499,100 @@ export default function DiarioWizardPage() {
           },
         });
         const habilidades = res.data || [];
+        console.log('[BNCC] Raw response:', habilidades.length, 'habilidades');
 
         const habilidadesValidas = habilidades.filter(
           (h: BnccHabilidade) => h && h.codigo && typeof h.codigo === 'string',
         );
+        console.log(
+          '[BNCC] Após filtro:',
+          habilidadesValidas.length,
+          'válidas',
+        );
 
         setBnccSkills(habilidadesValidas);
+        console.log('[BNCC] Estado atualizado');
       } catch (err: unknown) {
-        console.error('Erro fetch BNCC:', err);
+        console.error('[BNCC] Erro ao buscar:', err);
         setBnccSkills([]);
       } finally {
         setBnccLoading(false);
+        console.log('[BNCC] Loading finalizado');
       }
     }
     fetchBncc();
   }, [step, bnccStage, bnccDisciplina, bnccAno]);
 
+  // Cleanup loading state when leaving step 2
+  useEffect(() => {
+    if (step !== 2 && bnccLoading) {
+      console.log('[BNCC] Limpando loading ao sair do step 2');
+      setBnccLoading(false);
+    }
+  }, [step, bnccLoading]);
+
+  useEffect(() => {
+    if (step !== 3 || !selectedTurmaId || !dataAula) return;
+
+    async function refreshAttendance() {
+      try {
+        const resDiario = await api.get('/diarios-aula', {
+          params: {
+            componenteCurricularId: selectedTurmaId,
+            data: new Date(dataAula).toISOString(),
+          },
+        });
+
+        let diarioExistente = null;
+        if (Array.isArray(resDiario.data) && resDiario.data.length > 0) {
+          diarioExistente = resDiario.data[0];
+        } else if (
+          resDiario.data &&
+          !Array.isArray(resDiario.data) &&
+          (resDiario.data as any).id
+        ) {
+          diarioExistente = resDiario.data;
+        }
+
+        if (diarioExistente) {
+          setDiarioId(diarioExistente.id);
+          const newFreq = { ...frequencia };
+          let updated = false;
+
+          if (diarioExistente.registros_presenca) {
+            diarioExistente.registros_presenca.forEach(
+              (reg: RegistroPresenca) => {
+                let status: FrequenciaStatus = 'PRESENTE';
+                if (reg.situacao === 'FALTA') {
+                  status = 'AUSENTE';
+                } else if (reg.situacao === 'FALTA_JUSTIFICADA') {
+                  status = 'AUSENTE_JUSTIFICADO';
+                }
+
+                if (newFreq[reg.matriculaId] !== status) {
+                  newFreq[reg.matriculaId] = status;
+                  updated = true;
+                }
+              },
+            );
+          }
+
+          if (updated) {
+            setFrequencia(newFreq);
+            setLoadedFromDraft(true);
+          }
+        }
+      } catch (err) {
+        console.error('Erro ao atualizar frequência:', err);
+      }
+    }
+
+    refreshAttendance();
+  }, [step, selectedTurmaId, dataAula]);
+
   const toggleSkill = (skill: BnccHabilidade) => {
     const jaTem = selectedSkills.find((s) => s.codigo === skill.codigo);
+    console.log('Toggle Skill:', skill.codigo, 'Já tem?', !!jaTem);
     if (jaTem) {
       setSelectedSkills((prev) =>
         prev.filter((s) => s.codigo !== skill.codigo),
@@ -505,6 +636,7 @@ export default function DiarioWizardPage() {
       );
 
       const payload = {
+        ...(diarioId ? { id: diarioId } : {}),
         componenteCurricularId: selectedTurmaId,
         data: new Date(dataAula).toISOString(),
         conteudo: {
@@ -517,12 +649,22 @@ export default function DiarioWizardPage() {
         status: 'CONSOLIDADO',
       };
 
-      await api.post('/diarios-aula', payload);
+      console.log('Enviando payload diário:', payload);
+
+      const res = await api.post('/diarios-aula', payload);
+      console.log('Resposta do salvamento:', res.data);
+
       alert('Diário salvo com sucesso!');
       setView('list');
-    } catch (err: unknown) {
+      setStep(1);
+    } catch (err: any) {
       console.error('Erro ao salvar diário:', err);
-      alert('Erro ao salvar o diário. Tente novamente.');
+      console.error('Detalhes do erro:', err.response?.data);
+      alert(
+        `Erro ao salvar: ${
+          err.response?.data?.message || err.message || 'Erro desconhecido'
+        }`,
+      );
     }
   };
 
@@ -593,6 +735,12 @@ export default function DiarioWizardPage() {
         (o: { value: string; label: string }) => o.value === bnccAno,
       )?.label || bnccAno;
 
+    console.log('[BNCC] Renderizando step 2:', {
+      loading: bnccLoading,
+      skillsCount: bnccSkills.length,
+      selectedCount: selectedSkills.length,
+    });
+
     return (
       <div className={styles.bnccContainer}>
         <div className={styles.bnccHeader}>
@@ -640,6 +788,29 @@ export default function DiarioWizardPage() {
           </div>
         </div>
 
+        {selectedSkills.length > 0 && (
+          <div className={styles.selectedSkillsSummary}>
+            <h4>Habilidades Selecionadas ({selectedSkills.length}):</h4>
+            <div className={styles.selectedTags}>
+              {selectedSkills.map((s) => (
+                <span key={s.codigo} className={styles.selectedTag}>
+                  <strong>{s.codigo}</strong>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setSelectedSkills((prev) =>
+                        prev.filter((i) => i.codigo !== s.codigo),
+                      )
+                    }
+                  >
+                    <FiX />
+                  </button>
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
         <div className={styles.searchWrapper}>
           <FiSearch className={styles.searchIcon} />
           <input
@@ -651,61 +822,89 @@ export default function DiarioWizardPage() {
         </div>
 
         <div className={styles.bnccList}>
-          {bnccLoading && (
-            <p className={styles.loading}>Buscando na base BNCC...</p>
-          )}
-          {!bnccLoading && bnccSkills.length === 0 && (
+          {bnccLoading ? (
             <div
-              style={{ textAlign: 'center', padding: '2rem', color: '#666' }}
+              style={{
+                gridColumn: '1 / -1',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                minHeight: '300px',
+              }}
+            >
+              <Loading />
+            </div>
+          ) : !bnccDisciplina || !bnccAno ? (
+            <div
+              style={{
+                gridColumn: '1 / -1',
+                textAlign: 'center',
+                padding: '2rem',
+                color: '#666',
+              }}
+            >
+              <Loading />
+              <p style={{ marginTop: '1rem' }}>Carregando configuração...</p>
+            </div>
+          ) : bnccSkills.length === 0 ? (
+            <div
+              style={{
+                gridColumn: '1 / -1',
+                textAlign: 'center',
+                padding: '2rem',
+                color: '#666',
+              }}
             >
               <p>Nenhuma habilidade encontrada.</p>
               <small>
-                Stage: {bnccStage} | Ano: {bnccAno}
+                Stage: {bnccStage} | Disciplina: {bnccDisciplina} | Ano:{' '}
+                {bnccAno}
               </small>
             </div>
+          ) : (
+            bnccSkills
+              .filter(
+                (s) =>
+                  !skillSearch ||
+                  s.codigo.toLowerCase().includes(skillSearch.toLowerCase()) ||
+                  (s.descricao &&
+                    s.descricao
+                      .toLowerCase()
+                      .includes(skillSearch.toLowerCase())),
+              )
+              .map((skill, index) => {
+                const uniqueKey = skill.codigo || `skill-${index}`;
+                const isSel = selectedSkills.some(
+                  (s) => s.codigo === skill.codigo,
+                );
+                return (
+                  <div
+                    key={uniqueKey}
+                    className={`${styles.bnccItem} ${
+                      isSel ? styles.selected : ''
+                    }`}
+                    onClick={() => toggleSkill(skill)}
+                  >
+                    <span className={styles.bnccCode}>
+                      {skill.codigo || 'S/C'}
+                    </span>
+                    <p>{skill.descricao}</p>
+                    {isSel && (
+                      <FiCheckCircle
+                        className={styles.checkIcon}
+                        style={{
+                          color: '#22c55e',
+                          position: 'absolute',
+                          top: '1rem',
+                          right: '1rem',
+                          fontSize: '1.2rem',
+                        }}
+                      />
+                    )}
+                  </div>
+                );
+              })
           )}
-          {bnccSkills
-            .filter(
-              (s) =>
-                !skillSearch ||
-                s.codigo.toLowerCase().includes(skillSearch.toLowerCase()) ||
-                (s.descricao &&
-                  s.descricao
-                    .toLowerCase()
-                    .includes(skillSearch.toLowerCase())),
-            )
-            .map((skill, index) => {
-              const uniqueKey = skill.codigo || `skill-${index}`;
-              const isSel = selectedSkills.some(
-                (s) => s.codigo === skill.codigo,
-              );
-              return (
-                <div
-                  key={uniqueKey}
-                  className={`${styles.bnccItem} ${
-                    isSel ? styles.selected : ''
-                  }`}
-                  onClick={() => toggleSkill(skill)}
-                >
-                  <span className={styles.bnccCode}>
-                    {skill.codigo || 'S/C'}
-                  </span>
-                  <p>{skill.descricao}</p>
-                  {isSel && (
-                    <FiCheckCircle
-                      className={styles.checkIcon}
-                      style={{
-                        color: '#22c55e',
-                        position: 'absolute',
-                        top: '1rem',
-                        right: '1rem',
-                        fontSize: '1.2rem',
-                      }}
-                    />
-                  )}
-                </div>
-              );
-            })}
         </div>
       </div>
     );
@@ -917,68 +1116,76 @@ export default function DiarioWizardPage() {
           </div>
         ) : (
           <div className={styles.diariosList}>
-            {diariosFiltered.map((diario) => {
-              const turmaInfo = diario.componenteCurricular;
-              const dataFormatada = new Date(diario.data).toLocaleDateString(
-                'pt-BR',
-              );
+            {diariosFiltered
+              .filter((diario) => diario.status === 'CONSOLIDADO')
+              .map((diario) => {
+                const turmaInfo = diario.componenteCurricular;
+                const dataFormatada = new Date(diario.data).toLocaleDateString(
+                  'pt-BR',
+                );
 
-              return (
-                <div key={diario.id} className={styles.diarioCard}>
-                  <div className={styles.diarioHeader}>
-                    <div>
-                      <h3>{diario.tema || 'Sem título'}</h3>
-                      <p className={styles.turmaInfo}>
-                        {turmaInfo?.turma?.nome} - {turmaInfo?.materia?.nome}
-                      </p>
-                    </div>
-                    <span
-                      className={`${styles.statusBadge} ${
-                        diario.status === 'CONSOLIDADO'
-                          ? styles.consolidado
-                          : styles.rascunho
-                      }`}
-                    >
-                      {diario.status === 'CONSOLIDADO'
-                        ? 'Consolidado'
-                        : 'Rascunho'}
-                    </span>
-                  </div>
-                  <div className={styles.diarioBody}>
-                    <div className={styles.diarioInfo}>
-                      <span>
-                        <FiCalendar /> {dataFormatada}
+                return (
+                  <div key={diario.id} className={styles.diarioCard}>
+                    <div className={styles.diarioHeader}>
+                      <div>
+                        <h3>{diario.tema || 'Sem título'}</h3>
+                        <p className={styles.turmaInfo}>
+                          {turmaInfo?.turma?.serie
+                            ? `${turmaInfo.turma.serie} - ${turmaInfo.turma.nome}`
+                            : turmaInfo?.turma?.nome || 'Sem turma'}{' '}
+                        </p>
+                        <p className={styles.turmaInfo}>
+                          {turmaInfo?.materia?.nome || 'Sem matéria'}
+                        </p>
+                      </div>
+                      <span
+                        className={`${styles.statusBadge} ${
+                          diario.status === 'CONSOLIDADO'
+                            ? styles.consolidado
+                            : styles.rascunho
+                        }`}
+                      >
+                        {diario.status === 'CONSOLIDADO'
+                          ? 'Consolidado'
+                          : 'Rascunho'}
                       </span>
-                      {diario.objetivos && diario.objetivos.length > 0 && (
+                    </div>
+                    <div className={styles.diarioBody}>
+                      <div className={styles.diarioInfo}>
                         <span>
-                          <FiBook /> {diario.objetivos.length} habilidades BNCC
+                          <FiCalendar /> {dataFormatada}
                         </span>
+                        {diario.objetivos && diario.objetivos.length > 0 && (
+                          <span>
+                            <FiBook /> {diario.objetivos.length} habilidades
+                            BNCC
+                          </span>
+                        )}
+                      </div>
+                      {diario.atividade && (
+                        <p className={styles.preview}>
+                          {diario.atividade.substring(0, 100)}...
+                        </p>
                       )}
                     </div>
-                    {diario.atividade && (
-                      <p className={styles.preview}>
-                        {diario.atividade.substring(0, 100)}...
-                      </p>
-                    )}
+                    <div className={styles.diarioFooter}>
+                      <button
+                        className={styles.btnEdit}
+                        onClick={() => {
+                          setSelectedTurmaId(diario.componenteCurricularId);
+                          setDataAula(
+                            new Date(diario.data).toISOString().split('T')[0],
+                          );
+                          setView('form');
+                          setStep(1);
+                        }}
+                      >
+                        <FiEdit2 /> Editar
+                      </button>
+                    </div>
                   </div>
-                  <div className={styles.diarioFooter}>
-                    <button
-                      className={styles.btnEdit}
-                      onClick={() => {
-                        setSelectedTurmaId(diario.componenteCurricularId);
-                        setDataAula(
-                          new Date(diario.data).toISOString().split('T')[0],
-                        );
-                        setView('form');
-                        setStep(1);
-                      }}
-                    >
-                      <FiEdit2 /> Editar
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
+                );
+              })}
           </div>
         )}
       </Section>

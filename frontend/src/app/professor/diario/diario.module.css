@@ -154,7 +154,7 @@
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 1rem;
   max-height: 600px;
-  overflow-y: auto;
+  overflow-y: scroll;
   padding: 0.5rem;
 }
 
@@ -168,7 +168,6 @@
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
-  position: relative;
 }
 
 .bnccItem:hover {
@@ -211,6 +210,53 @@
   top: 1rem;
   right: 1rem;
   font-size: 1.2rem;
+}
+
+.selectedSkillsSummary {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background-color: var(--cor-fundo);
+  border: 1px solid var(--cor-borda);
+  border-radius: 8px;
+}
+
+.selectedSkillsSummary h4 {
+  margin: 0 0 1rem;
+  font-size: 1rem;
+  color: var(--cor-texto-destaque);
+}
+
+.selectedTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.selectedTag {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.8rem;
+  background-color: var(--cor-primaria-light);
+  border: 1px solid var(--cor-primaria);
+  border-radius: 20px;
+  font-size: 0.85rem;
+  color: var(--cor-primaria-dark);
+}
+
+.selectedTag button {
+  background: none;
+  border: none;
+  color: var(--cor-primaria);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  padding: 0;
+  font-size: 1rem;
+}
+
+.selectedTag button:hover {
+  color: var(--cor-perigo);
 }
 
 /* Attendance Styles */
@@ -350,7 +396,7 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 10px 20px !important;
+  padding: 10px 20px;
   border-radius: 10px;
   background-color: var(--cor-primaria);
   font-weight: 600;
@@ -362,8 +408,14 @@
 
 .btnBack {
   background-color: transparent;
-  color: var(--cor-subtexto);
+  color: var(--cor-texto);
   border: 1px solid var(--cor-borda);
+  padding: 10px 20px;
+  border-radius: 10px;
+  background-color: white;
+  font-weight: 500;
+  font-size: 1rem;
+  cursor: pointer;
 }
 
 .btnBack:hover {
@@ -414,6 +466,20 @@
 }
 
 /* ===== List View Styles (Standardized) ===== */
+
+.bnccHeader {
+  margin-bottom: 20px;
+}
+
+.bnccHeader h3 {
+  font-size: 1.5rem;
+}
+
+.tags {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
 
 .filtersContainer {
   background-color: var(--cor-fundo-card);
@@ -523,12 +589,20 @@
 }
 
 .turmaInfo {
-  font-size: 0.85rem;
+  display: inline-block;
+  margin-right: 10px;
+  font-size: .9rem;
+  padding: 2px 10px;
+  font-weight: 500;
   color: var(--cor-subtexto);
-  margin: 0;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
+  background-color: white;
+  border: 1px solid color-mix(in srgb, currentColor 20%, white 80%);
+  border-radius: 10px;
+}
+
+.turmaInfo:last-child {
+  background-color: var(--cor-primaria-light);
+  color: var(--cor-primaria);
 }
 
 .statusBadge {

@@ -35,6 +35,7 @@
 
 .sugestoesBadges {
   display: flex;
+  align-items: center;
   flex-wrap: wrap;
   gap: 0.75rem;
 }
@@ -66,6 +67,7 @@
 
 .addRequisito {
   display: flex;
+  flex-direction: column;
   gap: 1rem;
   margin-bottom: 1.5rem;
 }
@@ -79,6 +81,8 @@
 
 .addButton {
   padding: 10px 20px;
+  font-size: 1rem;
+  border-radius: 10px;
   background-color: var(--cor-primaria);
   color: white;
   font-weight: 500;
@@ -128,9 +132,21 @@
   color: var(--cor-perigo);
   cursor: pointer;
   font-size: 1.1rem;
+  border-radius: 10px;
 }
 
 .requisitosList button:hover {
   background-color: var(--cor-perigo);
   color: var(--cor-perigo-light);
+}
+
+@media (max-width: 450px) {
+  .badge {
+    width: 100%;
+  }
+
+  .requisitosList ul li {
+    width: 100%;
+    justify-content: space-between;
+  }
 }

@@ -550,7 +550,8 @@ export default function EntregasPage() {
                                 <span
                                   className={styles.corrigirButton}
                                   style={{
-                                    opacity: 0.5,
+                                    width: '100%',
+                                    color: 'var(--cor-subtexto)',
                                     cursor: 'not-allowed',
                                     background: '#ccc',
                                   }}
