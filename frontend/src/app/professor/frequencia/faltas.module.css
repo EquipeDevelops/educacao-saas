@@ -179,11 +179,12 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 12px 24px;
+  padding: 10px 20px;
+  font-size: 1rem;
   background: var(--cor-primaria);
   color: white;
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   font-weight: 500;
   cursor: pointer;
   transition: background 0.2s;
@@ -283,5 +284,13 @@
     justify-content: space-between;
   }
 
+  .label {
+    font-size: 0.8rem;
+  }
+
+  .saveButton {
+    width: 100%;
+    justify-content: center;
+  }
 
 }

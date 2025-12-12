@@ -28,6 +28,8 @@ export default function FichaAluno({
     return (firstName.charAt(0) + lastName.charAt(0)).toUpperCase();
   }
 
+  console.log(alunoInfo.fotoUrl);
+
   const nomeAluno = alunoInfo?.nome || 'Aluno';
   const tituloExibicao = titulo
     ? `${titulo} ${nomeAluno}`.trim()
@@ -39,16 +41,11 @@ export default function FichaAluno({
     <div className={style.container}>
       <div
         className={style.avatarAluno}
-        style={{
-          backgroundImage: alunoInfo?.fotoUrl
-            ? `url(${alunoInfo.fotoUrl})`
-            : '',
-        }}
       >
-        {!alunoInfo?.fotoUrl ? (
-          <span>{getInitials(alunoInfo?.nome)}</span>
+        {alunoInfo?.fotoUrl ? (
+          <img src={alunoInfo.fotoUrl} alt="Foto do aluno" />
         ) : (
-          ''
+          <span>{getInitials(alunoInfo?.nome)}</span>
         )}
       </div>
       <div className={style.informacoesAluno}>

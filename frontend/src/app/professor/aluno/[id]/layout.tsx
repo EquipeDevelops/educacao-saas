@@ -22,7 +22,7 @@ export default function AlunoProfileLayout({
   const params = useParams();
   const alunoId = params.id as string;
   const [aluno, setAluno] = useState<{
-    usuario: { nome: string };
+    usuario: { nome: string; fotoUrl?: string };
     numero_matricula: string;
     matriculas: {
       ano_letivo: number;
@@ -90,8 +90,19 @@ export default function AlunoProfileLayout({
       ) : (
         <header className={styles.profileHeader}>
           <div className={styles.profileInfo}>
-            <div className={styles.avatar}>
-              <FiUser />
+            <div
+              className={styles.avatar}
+              style={
+                aluno?.usuario.fotoUrl
+                  ? {
+                      backgroundImage: `url(${aluno.usuario.fotoUrl})`,
+                      backgroundSize: 'cover',
+                      backgroundPosition: 'center',
+                    }
+                  : {}
+              }
+            >
+              {!aluno?.usuario.fotoUrl && <FiUser />}
             </div>
             <div className={styles.info}>
               <h1>{aluno?.usuario.nome}</h1>

@@ -38,7 +38,7 @@ export type ApiTarefa = {
       serie: string;
       _count?: { matriculas: number };
     };
-    professor: { usuario: { nome: string } };
+    professor: { usuario: { nome: string; fotoUrl: string | null } };
   };
   pontos: number;
   _count: {

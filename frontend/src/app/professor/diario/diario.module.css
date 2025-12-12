@@ -590,7 +590,6 @@
 
 .turmaInfo {
   display: inline-block;
-  margin-right: 10px;
   font-size: .9rem;
   padding: 2px 10px;
   font-weight: 500;
@@ -603,11 +602,12 @@
 .turmaInfo:last-child {
   background-color: var(--cor-primaria-light);
   color: var(--cor-primaria);
+    margin-left: 10px;
 }
 
 .statusBadge {
-  padding: 0.3rem 0.7rem;
-  border-radius: 20px;
+  padding: 5px 10px;
+  border-radius: 10px;
   font-size: 0.75rem;
   font-weight: 600;
   white-space: nowrap;
@@ -670,13 +670,13 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.6rem 1.2rem;
+  padding: 10px 20px;
+  font-size: 1rem;
   background-color: transparent;
   color: var(--cor-primaria);
   border: 1px solid var(--cor-primaria);
   border-radius: 8px;
-  font-weight: 600;
-  font-size: 0.9rem;
+  font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
 }
@@ -684,8 +684,6 @@
 .btnEdit:hover {
   background-color: var(--cor-primaria);
   color: #fff;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 6px rgba(1, 107, 228, 0.2);
 }
 
 .loadingBox,
@@ -733,5 +731,53 @@
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@media (max-width: 768px) {
+  .header {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    gap: 1rem;
+  }
+
+  .btnNew {
+    align-self: center;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .diariosList {
+    grid-template-columns: 1fr;
+  }
+
+  .diarioHeader {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 10px;
+  }
+
+  .statusBadge {
+    font-size: .9rem;
+  }
+
+  .diarioBody {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .preview {
+    font-size: 1rem;
+  }
+
+  .btnEdit {
+    width: 100%;
+    justify-content: center;
   }
 }

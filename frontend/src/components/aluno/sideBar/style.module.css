@@ -97,7 +97,7 @@
 }
 
 .iconContainer svg {
-  font-size: 1.75rem ;
+  font-size: 1.75rem;
   color: white;
 }
 
@@ -109,5 +109,38 @@
 
 .title p {
   color: var(--cor-icons);
-  font-size: .9rem;
+  font-size: 0.9rem;
+}
+
+.overlay {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: 280px;
+    z-index: 1000;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    overflow-y: auto;
+  }
+
+  .container.open {
+    transform: translateX(0);
+  }
+
+  .overlay {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+  }
 }

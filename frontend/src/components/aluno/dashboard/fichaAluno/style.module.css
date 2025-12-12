@@ -20,12 +20,13 @@
   height: 70px;
   border-radius: 50%;
   font-weight: 400;
+  overflow: hidden;
 }
 
-.avatarAluno{
-  background-position: center;
-  background-size: cover;
-  background-repeat: no-repeat;
+.avatarAluno img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .informacoesAluno {
@@ -53,10 +54,23 @@
 }
 
 .info p {
-  font-size: .9rem;
+  font-size: 0.9rem;
   padding: 5px 10px;
   background-color: color-mix(in srgb, var(--cor-primaria) 80%, white 20%);
   border: 1px solid color-mix(in srgb, var(--cor-primaria) 70%, white 30%);
   color: white;
   border-radius: 10px;
+}
+
+@media (max-width: 768px) {
+  .container {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .info {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
 }

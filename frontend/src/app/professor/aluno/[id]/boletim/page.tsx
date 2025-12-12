@@ -258,7 +258,7 @@ export default function BoletimAlunoParaProfessorPage() {
   }
 
   return (
-    <Section>
+    <div>
       <div>
         {boletimData && (
           <>
@@ -558,6 +558,6 @@ export default function BoletimAlunoParaProfessorPage() {
           !loading &&
           !error && <p>Nenhuma nota lançada para este aluno ainda.</p>}
       </div>
-    </Section>
+    </div>
   );
 }

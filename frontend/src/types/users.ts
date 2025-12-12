@@ -3,4 +3,5 @@ export type User = {
   nome: string;
   email: string;
   papel: 'ADMINISTRADOR' | 'PROFESSOR' | 'ALUNO' | 'GESTOR' | 'RESPONSAVEL';
+  fotoUrl?: string;
 };

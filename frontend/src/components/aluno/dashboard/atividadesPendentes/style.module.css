@@ -40,10 +40,10 @@
   padding: 20px;
   border: 1px solid color-mix(in srgb, var(--cor-primaria) 20%, white 80%);
   background-color: var(--cor-primaria-light);
-  transition: all .2s ease;
+  transition: all 0.2s ease;
 
   &:hover {
-    background-color: var(--cor-icons) ;
+    background-color: var(--cor-icons);
   }
 
   & h3 {
@@ -59,7 +59,7 @@
       background-color: color-mix(in srgb, var(--cor-primaria) 20%, white 85%);
       border: 1px solid color-mix(in srgb, var(--cor-primaria) 20%, white 80%);
       border-radius: 10px;
-      font-size: .9rem;
+      font-size: 0.9rem;
       color: var(--cor-subtexto);
       font-weight: 400;
       position: relative;
@@ -88,7 +88,7 @@
 }
 
 .atividadeTitulo {
-  font-size: .9rem;
+  font-size: 0.9rem;
   color: var(--cor-subtexto);
 }
 
@@ -116,10 +116,39 @@
   width: 100%;
   text-align: center;
   color: var(--cor-texto);
-  transition: all .2s ease;
+  transition: all 0.2s ease;
 
   &:hover {
     background-color: rgba(0, 0, 0, 0.048);
     color: var(--cor-texto-destaque);
+  }
+}
+
+@media (max-width: 768px) {
+  .atividade {
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    justify-content: center;
+
+    & h3 {
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+      font-size: 1.2rem;
+
+      & span::before {
+        display: none;
+      }
+    }
+  }
+
+  .atividade div p {
+    text-align: center;
+    font-size: 1rem;
+  }
+
+  .atividadePrazo {
+    align-self: center;
   }
 }

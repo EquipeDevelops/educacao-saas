@@ -62,7 +62,7 @@ export default function LoginPage() {
         <button type="submit" disabled={isLoading} className={styles.button}>
           {isLoading ? 'Carregando...' : 'Entrar'}
         </button>
-        <Link href="/forgot-password" className={styles.forgotPasswordLink}>
+        <Link href="/auth/forgot-password" className={styles.forgotPasswordLink}>
           Não lembro a senha
         </Link>
       </form>

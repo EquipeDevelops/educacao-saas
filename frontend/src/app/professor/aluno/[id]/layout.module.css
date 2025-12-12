@@ -79,6 +79,7 @@
 
 .actions button {
   padding: 10px 20px;
+  font-size: 1rem;
   background-color: var(--cor-primaria);
   color: white;
   display: flex;
@@ -109,7 +110,7 @@
   font-weight: 500;
   padding: 10px 20px;
   border-radius: 10px;
-  transition: all .2s ease;
+  transition: all 0.2s ease;
 }
 
 .tabs a:hover {
@@ -124,4 +125,37 @@
 
 .activeTab:hover {
   background-color: var(--cor-primaria-light) !important;
+}
+
+@media (max-width: 768px) {
+
+  .profileHeader {
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .profileInfo {
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    text-align: center;
+  }
+
+  .profileInfo ul {
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    justify-content: center;
+  }
+
+  .info ul li:nth-child(2):before,
+  .info ul li:nth-child(3):before {
+    width: 0px;
+  }
+
+  .tabs {
+    margin: 0 auto;
+    margin-bottom: 20px;
+  }
 }

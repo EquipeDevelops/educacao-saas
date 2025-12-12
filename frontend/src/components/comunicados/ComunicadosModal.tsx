@@ -59,7 +59,6 @@ export default function ComunicadosModal() {
   const handleNext = () => {
     const currentComunicado = comunicados[currentIndex];
 
-    // Mark as read in localStorage
     const readComunicados = JSON.parse(
       localStorage.getItem('read_comunicados') || '[]',
     );
@@ -76,12 +75,6 @@ export default function ComunicadosModal() {
   };
 
   const handleClose = () => {
-    // Optional: Mark current as read even if closed explicitly?
-    // Usually "Close" means "Dismiss for now" or "I've seen enough".
-    // But to prevent it from popping up again immediately, we might want to mark it.
-    // However, the user requirement is "aparecer... até ele ver todos".
-    // If they close, maybe we shouldn't mark as read? Or maybe we mark ONLY the current one?
-    // Let's mark the current one as read so they don't see it again, but next time they'll see the next one.
     const currentComunicado = comunicados[currentIndex];
     const readComunicados = JSON.parse(
       localStorage.getItem('read_comunicados') || '[]',

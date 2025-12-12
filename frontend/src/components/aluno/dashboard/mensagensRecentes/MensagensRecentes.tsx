@@ -21,8 +21,7 @@ function getInitials(name: string): string {
 export default function MensagensRecentes({
   mensagens = [],
 }: MensagensRecentesProps) {
-  console.log(mensagens);
-  
+  console.log('Mensagens recebidas:', mensagens);
 
   return (
     <div className={styles.container}>
@@ -31,42 +30,38 @@ export default function MensagensRecentes({
       </h2>
       <div className={styles.list}>
         {mensagens.length > 0 ? (
-          mensagens.map((msg) => {
-            return (
-              <>
-                {msg.ultimaMensagem !== 'Nenhuma mensagem ainda.' ? (
-                  <Link
-                    key={msg.id}
-                    href={`/aluno/mensagens?conversaId=${msg.id}`}
-                    className={styles.item}
-                  >
-                    <div className={styles.avatar}>
-                      {getInitials(msg.nomeOutraPessoa)}
-                    </div>
-                    <div className={styles.content}>
-                      <div className={styles.info}>
-                        <span className={styles.nome}>
-                          {msg.papelUsuarioMensagem === 'PROFESSOR'
-                            ? 'Prof. '
-                            : ''}
-                          {msg.nomeOutraPessoa}
-                        </span>
-                        <span className={styles.data}>
-                          {new Date(msg.dataUltimaMensagem).toLocaleDateString(
-                            'pt-BR',
-                            { day: '2-digit', month: '2-digit' },
-                          )}
-                        </span>
-                      </div>
-                      <p className={styles.mensagem}>{msg.ultimaMensagem}</p>
-                    </div>
-                  </Link>
-                ) : (
-                  ''
-                )}
-              </>
-            );
-          })
+          mensagens
+            .filter(
+              (msg) =>
+                msg.ultimaMensagem &&
+                msg.ultimaMensagem !== 'Nenhuma mensagem ainda.',
+            )
+            .map((msg) => (
+              <Link
+                key={msg.id}
+                href={`/aluno/mensagens?conversaId=${msg.id}`}
+                className={styles.item}
+              >
+                <div className={styles.avatar} style={{  backgroundImage: msg.fotoUrl ? `url(${msg.fotoUrl})` : '' }}>
+                  {msg.fotoUrl ? '' : getInitials(msg.nome)}
+                </div>
+                <div className={styles.content}>
+                  <div className={styles.info}>
+                    <span className={styles.nome}>
+                      {msg.papelUsuarioMensagem === 'PROFESSOR' ? 'Prof. ' : ''}
+                      {msg.nome}
+                    </span>
+                    <span className={styles.data}>
+                      {new Date(msg.data).toLocaleDateString(
+                        'pt-BR',
+                        { day: '2-digit', month: '2-digit' },
+                      )}
+                    </span>
+                  </div>
+                  <p className={styles.mensagem}>{msg.ultimaMensagem}</p>
+                </div>
+              </Link>
+            ))
         ) : (
           <p className={styles.semMensagens}>Nenhuma mensagem recente.</p>
         )}

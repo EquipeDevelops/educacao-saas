@@ -59,6 +59,9 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
 .content {
@@ -78,7 +81,7 @@
 }
 
 .data {
-  font-size: .9rem;
+  font-size: 0.9rem;
   color: var(--cor-subtexto);
 }
 
@@ -115,5 +118,34 @@
   &:hover {
     background-color: rgba(0, 0, 0, 0.048);
     color: var(--cor-texto-destaque);
+  }
+}
+
+@media (max-width: 768px) {
+  .item {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+  }
+
+  .avatar {
+    width: 60px;
+    height: 60px;
+  }
+
+  .nome {
+    text-align: center;
+    font-size: 1.2rem;
+  }
+
+  .info {
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .mensagem {
+    font-size: 1rem;
   }
 }

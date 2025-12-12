@@ -198,9 +198,20 @@ export default function AtividadesPostadasPage() {
                       <div className={styles.infoAdicionais}>
                         <div className={styles.professor}>
                           <span>
-                            {getInitials(
-                              trabalho.componenteCurricular.professor.usuario
-                                .nome,
+                            {trabalho.componenteCurricular.professor.usuario
+                              .fotoUrl ? (
+                              <img
+                                src={
+                                  trabalho.componenteCurricular.professor
+                                    .usuario.fotoUrl
+                                }
+                                alt="Foto do professor"
+                              />
+                            ) : (
+                              getInitials(
+                                trabalho.componenteCurricular.professor.usuario
+                                  .nome,
+                              )
                             )}
                           </span>
                           <p>
@@ -282,9 +293,20 @@ export default function AtividadesPostadasPage() {
                 <div className={styles.professorEPrazo}>
                   <div className={styles.professorNome}>
                     <span>
-                      {getInitials(
-                        trabalhoSelecionado.componenteCurricular.professor
-                          .usuario.nome,
+                      {trabalhoSelecionado.componenteCurricular.professor
+                        .usuario.fotoUrl ? (
+                        <img
+                          src={
+                            trabalhoSelecionado.componenteCurricular.professor
+                              .usuario.fotoUrl
+                          }
+                          alt="Foto do professor"
+                        />
+                      ) : (
+                        getInitials(
+                          trabalhoSelecionado.componenteCurricular.professor
+                            .usuario.nome,
+                        )
                       )}
                     </span>
                     <p>

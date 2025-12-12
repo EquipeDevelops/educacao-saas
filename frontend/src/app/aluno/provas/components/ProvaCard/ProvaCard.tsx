@@ -68,6 +68,7 @@ export default function ProvaCard({ tarefa }: ProvaCardProps) {
   });
   const totalPontos = tarefa.pontos ?? 0;
   const professorNome = tarefa.componenteCurricular.professor.usuario.nome;
+  const professorFoto = tarefa.componenteCurricular.professor.usuario.fotoUrl;
 
   const isExpired = new Date() > new Date(tarefa.data_entrega);
   const isFinished =
@@ -105,7 +106,13 @@ export default function ProvaCard({ tarefa }: ProvaCardProps) {
         <h2>{tarefa.titulo}</h2>
         <ul>
           <li>
-            <span>{getInitials(professorNome)}</span>
+            <span>
+              {professorFoto ? (
+                <img src={professorFoto} alt="Foto do professor" />
+              ) : (
+                getInitials(professorNome)
+              )}
+            </span>
             <p>Prof. {professorNome}</p>
           </li>
           <li>
@@ -123,17 +130,7 @@ export default function ProvaCard({ tarefa }: ProvaCardProps) {
           <LuCalendar /> Prazo: {dataEntrega.slice(0, 10)}
         </p>
         {isExpired && !isFinished ? (
-          <span
-            className={styles.activeButton}
-            style={{
-              backgroundColor: '#fee2e2',
-              color: '#ef4444',
-              cursor: 'not-allowed',
-              border: '1px solid #fca5a5',
-            }}
-          >
-            {buttonText}
-          </span>
+          <span className={styles.expirado}>{buttonText}</span>
         ) : (
           <Link
             href={statusInfo.link}

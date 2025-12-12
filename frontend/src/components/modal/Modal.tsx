@@ -32,7 +32,7 @@ export default function Modal({
 
   return (
     <div className={styles.modalContainer} onClick={handleOverlayClick}>
-      <div className={styles.modalContent} style={{ minWidth: `${width}px` }}>
+      <div className={styles.modalContent} style={{ maxWidth: `${width}px` }}>
         <header className={styles.modalHeader}>
           <h2>{title}</h2>
           {showCloseButton && (

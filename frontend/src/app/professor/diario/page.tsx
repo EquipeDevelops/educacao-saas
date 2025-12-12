@@ -1031,7 +1031,7 @@ export default function DiarioWizardPage() {
     }
 
     return (
-      <Section>
+      <>
         <header className={styles.header}>
           <div>
             <h1>Meus Diários de Classe</h1>
@@ -1188,7 +1188,7 @@ export default function DiarioWizardPage() {
               })}
           </div>
         )}
-      </Section>
+      </>
     );
   };
 
@@ -1205,12 +1205,10 @@ export default function DiarioWizardPage() {
       </Section>
     );
 
-  // Show list view or form view
   if (view === 'list') {
     return <Section>{renderListView()}</Section>;
   }
 
-  // Form view (existing wizard)
   return (
     <Section>
       <header className={styles.header}>

@@ -1,4 +1,4 @@
-'use client'
+'use client';
 
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, usePathname } from 'next/navigation';
@@ -23,8 +23,20 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh' }}>
-      {!hideSidebar && <AlunoSideBar />}
-      <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
+      {!hideSidebar && (
+        <AlunoSideBar
+          isOpen={isSidebarOpen}
+          onClose={() => setIsSidebarOpen(false)}
+        />
+      )}
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          width: '100%',
+          minWidth: 0,
+        }}
+      >
         {!hideSidebar && (
           <StudentHeader
             user={user}

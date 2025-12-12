@@ -368,3 +368,19 @@
 .exportButton:hover {
   background-color: var(--cor-primaria-hover);
 }
+
+@media (max-width: 768px) {
+  .statCard {
+    align-items: center;
+    justify-content: center;
+  }
+
+  .statValue {
+    margin-bottom: 10px;
+  }
+
+  .chartsContainer {
+    grid-template-columns: 1fr;
+  }
+}
+

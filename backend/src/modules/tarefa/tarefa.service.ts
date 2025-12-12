@@ -31,7 +31,9 @@ const fullInclude = {
         },
       },
       materia: { select: { nome: true } },
-      professor: { select: { usuario: { select: { nome: true } } } },
+      professor: {
+        select: { usuario: { select: { nome: true, fotoUrl: true } } },
+      },
     },
   },
   bimestre: true,

@@ -99,8 +99,10 @@ export default function StudentHeader({
           <LuMenu />
         </button>
         <div className={styles.profText}>
-          <div className={styles.profInitials}>
-            {displayName.substring(0, 2).toUpperCase()}
+          <div
+            className={styles.profInitials}
+          >
+            {user?.fotoUrl ? <img src={user.fotoUrl} alt="Foto do professor" /> : displayName.substring(0, 2).toUpperCase()}
           </div>
           <div>
             <h1 className={styles.profName}>Olá, {displayName}</h1>

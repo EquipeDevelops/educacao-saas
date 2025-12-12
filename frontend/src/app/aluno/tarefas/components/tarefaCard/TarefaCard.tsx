@@ -100,7 +100,14 @@ export default function TarefaCard({
         <div className={styles.otherInfos}>
           <div className={styles.professor}>
             <span>
-              {getInitials(tarefa.componenteCurricular.professor.usuario.nome)}
+              {tarefa.componenteCurricular.professor.usuario.fotoUrl ? (
+                <img
+                  src={tarefa.componenteCurricular.professor.usuario.fotoUrl}
+                  alt="Foto do professor"
+                />
+              ) : (
+                getInitials(tarefa.componenteCurricular.professor.usuario.nome)
+              )}
             </span>
             <p>Prof. {tarefa.componenteCurricular.professor.usuario.nome}</p>
           </div>

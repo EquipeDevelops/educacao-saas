@@ -111,8 +111,19 @@ export default function ProfessorHeader({
           <LuMenu />
         </button>
         <div className={styles.profText}>
-          <div className={styles.profInitials}>
-            {displayName.substring(0, 2).toUpperCase()}
+          <div
+            className={styles.profInitials}
+            style={
+              user?.fotoUrl
+                ? {
+                    backgroundImage: `url(${user.fotoUrl})`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                  }
+                : {}
+            }
+          >
+            {!user?.fotoUrl && getInitials(displayName)}
           </div>
           <div>
             <h1 className={styles.profName}>Olá, {displayName}</h1>
@@ -148,6 +159,7 @@ export default function ProfessorHeader({
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         title="Detalhes do Comunicado"
+        width={850}
       >
         {selectedComunicado && (
           <ComunicadoDetails comunicado={selectedComunicado} />

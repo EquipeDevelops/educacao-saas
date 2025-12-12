@@ -28,18 +28,8 @@
   margin-right: 10px;
 }
 
-@media (max-width: 768px) {
-  .menuButton {
-    display: block;
-  }
-
-  .header {
-    padding: 15px 20px;
-  }
-}
-
 .profInfo {
-  display: flex;
+  display: none;
   align-items: center;
   gap: 10px;
 }
@@ -156,4 +146,19 @@
   width: 40px;
   height: 40px;
   background-color: var(--cor-primaria);
+  overflow: hidden;
+}
+
+@media (max-width: 768px) {
+  .menuButton {
+    display: block;
+  }
+
+  .header {
+    padding: 15px 20px;
+  }
+
+  .profText {
+    display: none;
+  }
 }

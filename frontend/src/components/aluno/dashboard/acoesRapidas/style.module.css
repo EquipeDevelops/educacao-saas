@@ -42,7 +42,7 @@
     background-color: var(--cor-primaria-light);
     border-radius: 15px;
     width: 180px;
-    font-size: .95rem;
+    font-size: 0.95rem;
     padding: 10px;
     transition: all 0.2s ease;
 
@@ -62,6 +62,22 @@
 
     &:hover {
       background-color: var(--cor-icons);
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .container {
+    grid-row: 2 / 3;
+    grid-column: 1 / 2;
+  }
+
+  .actionsLinks {
+    gap: 10px;
+
+    & a {
+      width: calc(50% - 5px);
+      font-size: 0.85rem;
     }
   }
 }

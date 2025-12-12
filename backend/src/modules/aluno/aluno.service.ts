@@ -57,7 +57,7 @@ const findOneByUserId = async (usuarioId: string) => {
     select: {
       id: true,
       numero_matricula: true,
-      usuario: { select: { id: true, nome: true, email: true } },
+      usuario: { select: { id: true, nome: true, email: true, fotoUrl: true } },
       matriculas: {
         where: { status: 'ATIVA' },
         select: {
